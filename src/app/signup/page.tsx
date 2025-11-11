@@ -14,19 +14,35 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/icons/logo"
-import { signInWithGoogle, signInWithEmail } from "@/firebase/auth";
+import { signUpWithEmail, signInWithGoogle } from "@/firebase/auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/firebase/firestore";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [handle, setHandle] = useState('');
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      const userCredential = await signInWithGoogle();
+      const user = userCredential.user;
+      
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        userId: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        avatarUrl: user.photoURL,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
       router.push('/dashboard');
     } catch (error) {
       console.error("Google Sign-In Error:", error);
@@ -38,16 +54,36 @@ export default function LoginPage() {
     }
   };
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!handle.startsWith('@')) {
+        toast({
+            title: "Invalid Handle",
+            description: "Handle must start with @",
+            variant: "destructive",
+        });
+        return;
+    }
     try {
-      await signInWithEmail(email, password);
+      const userCredential = await signUpWithEmail(email, password);
+      const user = userCredential.user;
+
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        userId: user.uid,
+        email: user.email,
+        displayName: displayName,
+        handle: handle,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
       router.push('/dashboard');
-    } catch (error) {
-      console.error("Email Sign-In Error:", error);
+    } catch (error: any) {
+      console.error("Email Sign-Up Error:", error);
        toast({
         title: "Error",
-        description: "Invalid email or password. Please try again.",
+        description: error.message || "Failed to sign up. Please try again.",
         variant: "destructive",
       });
     }
@@ -60,14 +96,36 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
              <Logo className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl">Create an Account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your details to get started.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleEmailSignIn}>
+          <form onSubmit={handleEmailSignUp}>
             <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="displayName">Display Name</Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  placeholder="John Doe"
+                  required
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="handle">Handle</Label>
+                <Input
+                  id="handle"
+                  type="text"
+                  placeholder="@john"
+                  required
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                />
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -80,15 +138,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input 
                   id="password" 
                   type="password" 
@@ -98,7 +148,7 @@ export default function LoginPage() {
                 />
               </div>
               <Button type="submit" className="w-full">
-                Login
+                Create Account
               </Button>
             </div>
           </form>
@@ -113,12 +163,12 @@ export default function LoginPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-            Login with Google
+            Sign up with Google
           </Button>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/login" className="underline">
+              Log in
             </Link>
           </div>
         </CardContent>

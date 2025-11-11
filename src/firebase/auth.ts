@@ -5,6 +5,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { app } from './config';
@@ -15,6 +16,10 @@ const googleProvider = new GoogleAuthProvider();
 export const signInWithGoogle = () => {
   return signInWithPopup(auth, googleProvider);
 };
+
+export const signUpWithEmail = (email: string, password: string):Promise<any> => {
+    return createUserWithEmailAndPassword(auth, email, password);
+}
 
 export const signInWithEmail = (email: string, password: string):Promise<any> => {
     return signInWithEmailAndPassword(auth, email, password);

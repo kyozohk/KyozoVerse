@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/hooks/use-auth.tsx";
+import { useAuth } from "@/hooks/use-auth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -15,15 +15,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      if (!firebaseUser && pathname !== '/login') {
-         // router.push('/login');
+      if (!firebaseUser && !['/login', '/signup', '/'].includes(pathname)) {
+         router.push('/login');
       }
     });
 
     return () => unsubscribe();
   }, [setUser, router, pathname]);
 
-  if (loading) {
+  if (loading && !['/login', '/signup', '/'].includes(pathname)) {
     return (
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
