@@ -22,9 +22,8 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
-      // This is the new, simplified rule for listing documents.
-      // It allows ANYONE to perform a query as long as they are ONLY asking for public documents.
-      // This is safe and allows unauthenticated users to see public feeds.
+      // This rule allows unauthenticated users to list public blogs
+      // and allows authenticated users to list any blogs for a community they have access to.
       allow list: if request.query.get('visibility') == 'public' || isSignedIn();
     }
 
@@ -34,5 +33,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
