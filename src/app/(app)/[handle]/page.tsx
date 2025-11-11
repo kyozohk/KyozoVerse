@@ -91,7 +91,7 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const handle = useMemo(() => params.handle, [params.handle]);
+  const handle = params.handle;
 
   useEffect(() => {
     if (!handle) return;
@@ -307,5 +307,3 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
     </div>
   );
 }
-
-    
