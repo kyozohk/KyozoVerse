@@ -1,43 +1,71 @@
 
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Logo } from '@/components/icons/logo'
+"use client";
+
+import { useState } from 'react';
+import Image from 'next/image';
+import { CustomButton } from '@/components/ui/CustomButton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { RequestAccessForm } from '@/components/auth/request-access-form';
 
 export default function Home() {
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="p-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Logo className="h-8 w-8 text-primary" />
-          <span className="font-bold text-lg">KyozoVerse</span>
-        </Link>
-        <nav>
-          <Button asChild variant="ghost">
-            <Link href="/login">Log In</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/kyozo-demo">Get Started</Link>
-          </Button>
-        </nav>
+    <div className="flex flex-col min-h-screen bg-transparent">
+      <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center">
+        <Image src="/logo.png" alt="Kyozo Logo" width={100} height={28} />
+        <button className="text-foreground">
+          <svg
+            className="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
       </header>
-      <main className="flex-1 flex items-center justify-center text-center p-4">
-        <div className="space-y-6 max-w-2xl">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tighter text-foreground">
-            Welcome to the <span className="text-primary">KyozoVerse</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto">
-            Create, manage, and grow your communities like never before. A unified platform for creators and members.
-          </p>
-          <div>
-            <Button size="lg" asChild>
-              <Link href="/kyozo-demo">Explore Communities</Link>
-            </Button>
-          </div>
+
+      <main className="flex-1 flex flex-col items-center justify-center text-center p-4">
+        <h1 className="text-6xl md:text-8xl font-bold tracking-tight font-serif" style={{lineHeight: 1.2}}>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-blue-400 to-green-500">
+            Discover your
+            <br />
+            creative universe
+          </span>
+        </h1>
+
+        <div className="mt-12">
+          <CustomButton
+            onClick={() => setIsWaitlistOpen(true)}
+          >
+            Join the waitlist
+          </CustomButton>
         </div>
       </main>
-      <footer className="p-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} KyozoVerse. All rights reserved.
-      </footer>
+
+      <Dialog open={isWaitlistOpen} onOpenChange={setIsWaitlistOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Request to Join</DialogTitle>
+            <DialogDescription>
+              Enter your email to request access to our platform.
+            </DialogDescription>
+          </DialogHeader>
+          <RequestAccessForm />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 export const metadata: Metadata = {
   title: 'KyozoVerse',
   description: 'The universe of communities.',
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -19,7 +22,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="font-body antialiased">
+      <body 
+        className="font-body antialiased" 
+        style={{
+          backgroundImage: `url('/bg/light_app_bg.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
         <FirebaseClientProvider firebase={getFirebase()}>
           {children}
         </FirebaseClientProvider>
