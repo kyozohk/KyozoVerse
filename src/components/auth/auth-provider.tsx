@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -5,8 +6,9 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 import { PostCardSkeleton } from "@/components/feed/post-card-skeleton";
 
-// Add console logs for debugging
-const publicPaths = ['/login', '/signup', '/'];
+const staticPublicPaths = ['/login', '/signup', '/'];
+// These are paths that are part of the app's internal structure and should be protected.
+const protectedBasePaths = ['/settings'];
 
 // Function to check if the current path is a handle/slug page
 const isHandlePath = (path: string) => {
@@ -20,15 +22,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicPath = publicPaths.includes(pathname) || isHandlePath(pathname);
+  const isStaticPublicPath = staticPublicPaths.includes(pathname);
   
-  console.log('AuthProvider - Path check', { 
-    pathname, 
-    isPublicPath, 
-    isHandlePath: isHandlePath(pathname),
-    user: !!user,
-    loading 
-  });
+  // Check if the current path starts with any of the protected base paths.
+  const isProtectedRoute = protectedBasePaths.some(path => pathname.startsWith(path));
+
+  // A path is considered public if it's in our static list, or if it's not an explicitly protected route.
+  // This allows dynamic community routes like `/[handle]` to be publicly accessible.
+  const isPublicPath = isStaticPublicPath || !isProtectedRoute;
 
   useEffect(() => {
     console.log('AuthProvider - Auth check effect', { user: !!user, loading, isPublicPath });

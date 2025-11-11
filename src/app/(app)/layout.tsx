@@ -16,12 +16,14 @@ export default function AppLayout({
       <AuthProvider>
         <div className="flex h-screen bg-background text-foreground overflow-hidden">
           <MainSidebar />
-          <CommunitySidebar />
-          <div className="flex-1 flex flex-col">
-            <Header />
-            <main className="flex-1 overflow-y-auto bg-secondary p-4 sm:p-6 lg:p-8">
-              {children}
-            </main>
+          <div className="flex flex-1">
+            <CommunitySidebar />
+            <div className="flex-1 flex flex-col">
+              <Header />
+              <main className="flex-1 overflow-y-auto bg-secondary p-4 sm:p-6 lg:p-8">
+                {children}
+              </main>
+            </div>
           </div>
         </div>
       </AuthProvider>

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
@@ -131,6 +131,7 @@ export default function CommunitySidebar() {
   const { user } = useAuth();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOwnerOfCurrentCommunity, setIsOwnerOfCurrentCommunity] = useState(false);
   const [selectedCommunityHandle, setSelectedCommunityHandle] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const pathname = usePathname();
@@ -138,26 +139,33 @@ export default function CommunitySidebar() {
 
 
   useEffect(() => {
+    const handleFromPath = pathname.split('/')[1];
+    
     if (!user) {
       setLoading(false);
+      setIsOwnerOfCurrentCommunity(false);
       return;
     };
+
     const q = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+    
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userCommunities = querySnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
-      setCommunities(userCommunities);
-      
-      const handleFromPath = pathname.split('/')[1];
-      const communityInPath = userCommunities.find(c => c.handle === handleFromPath);
+        const userCommunities = querySnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
+        setCommunities(userCommunities);
 
-      if (communityInPath) {
-        setSelectedCommunityHandle(communityInPath.handle);
-      } else if (userCommunities.length > 0) {
-        setSelectedCommunityHandle(userCommunities[0].handle);
-        router.replace(`/${userCommunities[0].handle}`);
-      }
-
-      setLoading(false);
+        const currentCommunity = userCommunities.find(c => c.handle === handleFromPath);
+        setIsOwnerOfCurrentCommunity(!!currentCommunity);
+        
+        if (currentCommunity) {
+            setSelectedCommunityHandle(currentCommunity.handle);
+        } else if (userCommunities.length > 0) {
+             // If not viewing an owned community, default to the first one in the list for the dropdown
+            setSelectedCommunityHandle(userCommunities[0].handle);
+        } else {
+            setSelectedCommunityHandle(null);
+        }
+        
+        setLoading(false);
     }, (error) => {
         console.error("Error fetching communities:", error);
         errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -168,7 +176,7 @@ export default function CommunitySidebar() {
     });
 
     return () => unsubscribe();
-  }, [user, pathname, router]);
+  }, [user, pathname]);
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
@@ -177,8 +185,12 @@ export default function CommunitySidebar() {
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
 
+  if (!isOwnerOfCurrentCommunity) {
+      return null;
+  }
+
   return (
-    <div className="hidden border-r bg-card lg:block w-72 ml-20">
+    <div className="hidden border-r bg-card lg:block w-72">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             {loading ? (

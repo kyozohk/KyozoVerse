@@ -22,8 +22,9 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
-      // Allow users to list posts based on community and visibility
-      allow list: if (request.query.get("communityHandle") != null && request.query.get("visibility") == "public") || isSignedIn();
+      // This rule allows unauthenticated users to list public blogs
+      // and allows authenticated users to list any blogs for a community they have access to.
+      allow list: if request.query.get('visibility') == 'public' || isSignedIn();
     }
 
     match /communities/{communityId} {

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { storage } from '@/firebase/storage';
@@ -14,15 +14,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ThumbsUp, MessageSquare, Share2, UploadCloud, X } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Share2, UploadCloud, X, Users, Settings, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { type Post, type User } from '@/lib/types';
+import { type Post, type User, type UserRole, type Community } from '@/lib/types';
 import Image from 'next/image';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useDropzone } from 'react-dropzone';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { getCommunityByHandle, getUserRoleInCommunity } from '@/lib/community-utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) => void, file: File | null }) {
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -84,6 +86,7 @@ function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) =>
 
 export default function CommunityFeedPage() {
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [postImage, setPostImage] = useState<File | null>(null);
@@ -91,6 +94,17 @@ export default function CommunityFeedPage() {
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('guest');
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [activeTab, setActiveTab] = useState('feed');
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [joinFormData, setJoinFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: ''
+  });
+  
   const { toast } = useToast();
   const params = useParams();
   const handle = params.handle as string;
@@ -98,31 +112,64 @@ export default function CommunityFeedPage() {
   console.log('[handle]/page.tsx - Component rendered', { 
     handle, 
     isAuthenticated: !!user, 
-    authLoading,
-    pathname: window.location.pathname
+    authLoading
   });
+  
+  // Fetch community data and user role
+  useEffect(() => {
+    async function fetchCommunityAndRole() {
+      if (!handle) return;
+      
+      try {
+        const communityData = await getCommunityByHandle(handle);
+        console.log('Community data:', communityData);
+        
+        if (communityData) {
+          setCommunity(communityData);
+          
+          if (user) {
+            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+            console.log('User role in community:', role);
+            setUserRole(role);
+            
+            // If user is owner, default to dashboard tab
+            if (role === 'owner' || role === 'admin') {
+              setActiveTab('dashboard');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching community data:', error);
+      }
+    }
+    
+    fetchCommunityAndRole();
+  }, [handle, user]);
 
   useEffect(() => {
-    console.log('[handle]/page.tsx - useEffect triggered', { handle, user: !!user });
-    if (!handle) {
-      console.log('[handle]/page.tsx - No handle found, returning');
+    console.log('[handle]/page.tsx - useEffect triggered', { handle, user: !!user, userRole });
+    if (!handle || !community) {
+      console.log('[handle]/page.tsx - No handle or community found, returning');
       return;
     }
 
     const postsCollection = collection(db, "blogs");
     
+    // Construct different queries based on auth state and user role
     const constraints = [];
     constraints.push(where("communityHandle", "==", handle));
     
-    if (!user) {
+    // If user is not a member, only show public posts
+    if (userRole === 'guest') {
         constraints.push(where("visibility", "==", "public"));
     }
+    // For members, admins, and owners, we'll filter on the client side
     
     constraints.push(orderBy("createdAt", "desc"));
     
     const q = query(postsCollection, ...constraints);
 
-    console.log('[handle]/page.tsx - Setting up Firestore query', { handle, constraints });
+    console.log('[handle]/page.tsx - Setting up Firestore query', { handle, userRole, constraints });
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       console.log('[handle]/page.tsx - Received Firestore snapshot', { docsCount: querySnapshot.docs.length });
       const postsData: (Post & { id: string })[] = [];
@@ -150,7 +197,20 @@ export default function CommunityFeedPage() {
           createdAt: postData.createdAt?.toDate(),
         });
       }
-      setPosts(postsData);
+      
+      // Filter posts based on user role
+      let visiblePosts = postsData;
+      
+      if (userRole === 'guest') {
+        // Guests only see public posts
+        visiblePosts = postsData.filter(p => p.visibility === 'public');
+      } else if (userRole === 'member') {
+        // Members see public and members-only posts
+        visiblePosts = postsData.filter(p => p.visibility === 'public' || p.visibility === 'members-only');
+      }
+      // Owners and admins see all posts
+      
+      setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
         console.error('[handle]/page.tsx - Firestore error', error);
@@ -163,10 +223,10 @@ export default function CommunityFeedPage() {
     });
 
     return () => unsubscribe();
-  }, [handle, user, toast]);
+  }, [handle, user, userRole, community]);
 
   const handleCreatePost = async () => {
-    if (!user || (!newPostContent.trim() && !postImage)) return;
+    if (!user || !community || (!newPostContent.trim() && !postImage)) return;
     setIsSubmitting(true);
 
     try {
@@ -177,6 +237,12 @@ export default function CommunityFeedPage() {
             mediaUrl = await getDownloadURL(uploadResult.ref);
         }
 
+        // Determine visibility based on user role
+        let visibility = isPublic ? 'public' : 'members-only';
+        if (userRole === 'owner' || userRole === 'admin') {
+          visibility = isPublic ? 'public' : 'private';
+        }
+
         const postData = {
             title: newPostTitle,
             content: { 
@@ -185,32 +251,40 @@ export default function CommunityFeedPage() {
             },
             authorId: user.uid,
             communityHandle: handle,
+            communityId: community.communityId,
             likes: 0,
             comments: 0,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            visibility: isPublic ? 'public' : 'private',
+            visibility: visibility,
             type: postImage ? 'image' : 'text',
         };
 
       addDoc(collection(db, "blogs"), postData)
+        .then(() => {
+          setNewPostTitle('');
+          setNewPostContent('');
+          setPostImage(null);
+          setIsPublic(true);
+          toast({
+            title: "Success",
+            description: "Your post has been published.",
+          });
+        })
         .catch(async (serverError) => {
+            console.error("Server error creating post:", serverError);
             const permissionError = new FirestorePermissionError({
                 path: '/blogs',
                 operation: 'create',
                 requestResourceData: postData,
             });
             errorEmitter.emit('permission-error', permissionError);
+            toast({
+              title: "Error",
+              description: "Could not create post. You may not have permission.",
+              variant: "destructive",
+            });
         });
-
-      setNewPostTitle('');
-      setNewPostContent('');
-      setPostImage(null);
-      setIsPublic(true);
-      toast({
-        title: "Success",
-        description: "Your post has been published.",
-      });
     } catch (error) {
       // This catch block is for client-side errors (e.g., storage upload)
       console.error("Error creating post: ", error);
@@ -224,52 +298,89 @@ export default function CommunityFeedPage() {
     }
   };
 
-  return (
-    <div className="container mx-auto max-w-3xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">@{handle}</h1>
-        <p className="text-muted-foreground">Catch up on what's happening in the community.</p>
-      </div>
+  // Handle joining the community
+  const handleJoinCommunity = () => {
+    if (!user) {
+      setShowJoinForm(true);
+    } else if (community) {
+      // User is logged in but not a member
+      joinCommunity(user.uid, community.communityId, {
+        displayName: user.displayName || '',
+        email: user.email || '',
+        avatarUrl: user.photoURL || ''
+      }).then(() => {
+        toast({
+          title: "Success",
+          description: `You've joined ${community.name}!`,
+        });
+        // Refresh user role
+        getUserRoleInCommunity(user.uid, community.communityId).then(role => {
+          setUserRole(role);
+        });
+      }).catch(error => {
+        console.error("Error joining community:", error);
+        toast({
+          title: "Error",
+          description: "Could not join community. Please try again.",
+          variant: "destructive",
+        });
+      });
+    }
+  };
 
-      {user && (
-        <Card className="mb-6">
-          <CardContent className="p-4 pb-0">
-            <div className="flex gap-4">
-              <Avatar>
-                <AvatarImage src={user?.photoURL || undefined} />
-                <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-2">
-                  <Input
-                      placeholder="Title"
-                      value={newPostTitle}
-                      onChange={(e) => setNewPostTitle(e.target.value)}
-                      className="flex-1 font-bold"
-                  />
-                  <Textarea
-                    placeholder="What's on your mind?"
-                    value={newPostContent}
-                    onChange={(e) => setNewPostContent(e.target.value)}
-                    className="flex-1"
-                  />
-              </div>
-            </div>
-            <Dropzone onFileChange={setPostImage} file={postImage} />
-          </CardContent>
-          <CardFooter className="flex justify-between items-center p-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="is-public" checked={isPublic} onCheckedChange={(checked) => setIsPublic(Boolean(checked))} />
-              <Label htmlFor="is-public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Public
-              </Label>
-            </div>
-            <Button onClick={handleCreatePost} disabled={isSubmitting || (!newPostContent.trim() && !postImage)}>
-              {isSubmitting ? 'Posting...' : 'Post'}
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
+  // Handle join form success
+  const handleJoinSuccess = () => {
+    setShowJoinForm(false);
+    // The user will be automatically logged in and the page will refresh
+  };
 
+  // Render post creation form
+  const renderPostCreationForm = () => {
+    if (!user || userRole === 'guest') return null;
+    
+    return (
+      <Card className="mb-6">
+        <CardContent className="p-4 pb-0">
+          <div className="flex gap-4">
+            <Avatar>
+              <AvatarImage src={user?.photoURL || undefined} />
+              <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 space-y-2">
+                <Input
+                    placeholder="Title"
+                    value={newPostTitle}
+                    onChange={(e) => setNewPostTitle(e.target.value)}
+                    className="flex-1 font-bold"
+                />
+                <Textarea
+                  placeholder="What's on your mind?"
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="flex-1"
+                />
+            </div>
+          </div>
+          <Dropzone onFileChange={setPostImage} file={postImage} />
+        </CardContent>
+        <CardFooter className="flex justify-between items-center p-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox id="is-public" checked={isPublic} onCheckedChange={(checked) => setIsPublic(Boolean(checked))} />
+            <Label htmlFor="is-public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              {userRole === 'owner' || userRole === 'admin' ? 'Public' : 'Visible to all'}
+            </Label>
+          </div>
+          <Button onClick={handleCreatePost} disabled={isSubmitting || (!newPostContent.trim() && !postImage)}>
+            {isSubmitting ? 'Posting...' : 'Post'}
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  };
+
+  // Render posts feed
+  const renderFeed = () => {
+    return (
       <div className="space-y-6">
         {loading ? (
           <>
@@ -288,12 +399,17 @@ export default function CommunityFeedPage() {
               <CardHeader className="flex flex-row items-center gap-4">
                 <Avatar>
                   <AvatarImage src={post.author?.avatarUrl} />
-                  <AvatarFallback>{post.author?.displayName?.charAt(0) || post.author?.handle?.charAt(0) || 'U'}</AvatarFallback>
+                  <AvatarFallback>{post.author?.displayName?.charAt(0) || (post.author as any)?.handle?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
                     <p className="font-bold">{post.author?.displayName}</p>
                     <p className="text-sm text-muted-foreground">
-                        {post.author?.handle ? `@${post.author.handle}` : ''} &middot; {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}
+                        {(post.author as any)?.handle ? `@${(post.author as any).handle}` : ''} &middot; {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}
+                        {post.visibility !== 'public' && (
+                          <span className="ml-2 px-1.5 py-0.5 text-xs bg-secondary rounded-full">
+                            {post.visibility === 'private' ? 'Private' : 'Members'}
+                          </span>
+                        )}
                     </p>
                 </div>
               </CardHeader>
@@ -317,11 +433,77 @@ export default function CommunityFeedPage() {
                     <Share2 className="h-4 w-4" />
                     <span>Share</span>
                 </Button>
-            </CardFooter>
+              </CardFooter>
             </Card>
           ))
         )}
       </div>
+    );
+  };
+
+  // Import the components
+  const { JoinForm } = require('@/components/community/join-form');
+  const { CommunityDashboard } = require('@/components/community/dashboard');
+
+  // Main render
+  return (
+    <div className="container mx-auto max-w-4xl">
+      {/* Community Header */}
+      <div className="mb-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">@{handle}</h1>
+            <p className="text-muted-foreground">
+              {community?.tagline || "Catch up on what's happening in the community."}
+            </p>
+          </div>
+          
+          {/* Join button for guests */}
+          {userRole === 'guest' && (
+            <Button onClick={handleJoinCommunity}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Join Community
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Join Form Modal */}
+      {showJoinForm && community && (
+        <div className="mb-6">
+          <JoinForm 
+            communityId={community.communityId} 
+            communityName={community.name} 
+            onSuccess={handleJoinSuccess}
+            onCancel={() => setShowJoinForm(false)}
+          />
+        </div>
+      )}
+
+      {/* Tabs for owners and admins */}
+      {(userRole === 'owner' || userRole === 'admin') && community ? (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="feed">Community Feed</TabsTrigger>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          </TabsList>
+          <TabsContent value="feed" className="mt-4">
+            {renderPostCreationForm()}
+            {renderFeed()}
+          </TabsContent>
+          <TabsContent value="dashboard" className="mt-4">
+            <CommunityDashboard community={community} userId={user?.uid || ''} />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        // Regular feed for members and guests
+        <>
+          {renderPostCreationForm()}
+          {renderFeed()}
+        </>
+      )}
     </div>
   );
 }
+
+    

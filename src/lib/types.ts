@@ -9,7 +9,11 @@ export type User = {
   tags?: string[];
   firstName?: string;
   lastName?: string;
+  phoneNumber?: string;
+  handle?: string;
 };
+
+export type UserRole = 'owner' | 'admin' | 'member' | 'guest';
 
 export type Community = {
   communityId: string;
@@ -19,6 +23,21 @@ export type Community = {
   communityProfileImage?: string;
   memberCount: number;
   ownerId: string;
+  description?: string;
+  isPrivate?: boolean;
+};
+
+export type CommunityMember = {
+  userId: string;
+  communityId: string;
+  role: UserRole;
+  joinedAt: any; // Firestore Timestamp
+  status: 'active' | 'pending' | 'banned';
+  userDetails?: {
+    displayName?: string;
+    avatarUrl?: string;
+    email?: string;
+  };
 };
 
 export type Post = {
@@ -33,6 +52,7 @@ export type Post = {
   authorId: string;
   author: User; // Denormalized author data
   communityHandle: string;
+  communityId?: string;
   likes: number;
   comments: number;
   createdAt: any; // Firestore Timestamp
