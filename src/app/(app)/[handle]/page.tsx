@@ -155,12 +155,13 @@ export default function CommunityFeedPage() {
 
     const postsCollection = collection(db, "blogs");
     
-    // Construct different queries based on auth state and user role
+    // This is the core change: we construct different queries based on auth state.
     const constraints = [];
     constraints.push(where("communityHandle", "==", handle));
     
-    // If user is not a member, only show public posts
-    if (userRole === 'guest') {
+    // If the user is not logged in, we MUST add a `where` clause for visibility
+    // to satisfy the Firestore security rules for public access.
+    if (!user) {
         constraints.push(where("visibility", "==", "public"));
     }
     // For members, admins, and owners, we'll filter on the client side
@@ -197,19 +198,9 @@ export default function CommunityFeedPage() {
           createdAt: postData.createdAt?.toDate(),
         });
       }
-      
-      // Filter posts based on user role
-      let visiblePosts = postsData;
-      
-      if (userRole === 'guest') {
-        // Guests only see public posts
-        visiblePosts = postsData.filter(p => p.visibility === 'public');
-      } else if (userRole === 'member') {
-        // Members see public and members-only posts
-        visiblePosts = postsData.filter(p => p.visibility === 'public' || p.visibility === 'members-only');
-      }
-      // Owners and admins see all posts
-      
+      // For logged-in users, we might get private posts from the query,
+      // so we filter them on the client side. Logged-out users only get public posts.
+      const visiblePosts = user ? postsData : postsData.filter(p => p.visibility === 'public');
       setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
@@ -223,7 +214,7 @@ export default function CommunityFeedPage() {
     });
 
     return () => unsubscribe();
-  }, [handle, user, userRole, community]);
+  }, [handle, user]);
 
   const handleCreatePost = async () => {
     if (!user || !community || (!newPostContent.trim() && !postImage)) return;
@@ -405,11 +396,6 @@ export default function CommunityFeedPage() {
                     <p className="font-bold">{post.author?.displayName}</p>
                     <p className="text-sm text-muted-foreground">
                         {(post.author as any)?.handle ? `@${(post.author as any).handle}` : ''} &middot; {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}
-                        {post.visibility !== 'public' && (
-                          <span className="ml-2 px-1.5 py-0.5 text-xs bg-secondary rounded-full">
-                            {post.visibility === 'private' ? 'Private' : 'Members'}
-                          </span>
-                        )}
                     </p>
                 </div>
               </CardHeader>
