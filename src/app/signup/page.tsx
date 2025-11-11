@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link"
@@ -25,7 +26,8 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [handle, setHandle] = useState('');
 
   const handleGoogleSignIn = async () => {
@@ -56,7 +58,7 @@ export default function SignupPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!handle.startsWith('@')) {
+    if (handle && !handle.startsWith('@')) {
         toast({
             title: "Invalid Handle",
             description: "Handle must start with @",
@@ -67,11 +69,14 @@ export default function SignupPage() {
     try {
       const userCredential = await signUpWithEmail(email, password);
       const user = userCredential.user;
+      const displayName = `${firstName} ${lastName}`.trim();
 
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         userId: user.uid,
         email: user.email,
+        firstName: firstName,
+        lastName: lastName,
         displayName: displayName,
         handle: handle,
         createdAt: serverTimestamp(),
@@ -104,24 +109,36 @@ export default function SignupPage() {
         <CardContent>
           <form onSubmit={handleEmailSignUp}>
             <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                  id="displayName"
-                  type="text"
-                  placeholder="John Doe"
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="John"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="handle">Handle</Label>
                 <Input
                   id="handle"
                   type="text"
-                  placeholder="@john"
-                  required
+                  placeholder="@johndoe"
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
                 />
