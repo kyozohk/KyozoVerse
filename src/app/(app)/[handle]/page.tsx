@@ -92,16 +92,11 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
   const { handle } = params;
 
   useEffect(() => {
-    let queries = [
-        where("communityHandle", "==", handle),
-        orderBy("createdAt", "desc")
-    ];
+    
+    const q = user 
+        ? query(collection(db, "blogs"), where("communityHandle", "==", handle), orderBy("createdAt", "desc"))
+        : query(collection(db, "blogs"), where("communityHandle", "==", handle), where("visibility", "==", "public"), orderBy("createdAt", "desc"));
 
-    if (!user) {
-        queries.push(where("visibility", "==", "public"));
-    }
-
-    const q = query(collection(db, "blogs"), ...queries);
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
       for (const postDoc of querySnapshot.docs) {
@@ -255,7 +250,7 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
                 <div>
                     <p className="font-bold">{post.author?.displayName}</p>
                     <p className="text-sm text-muted-foreground">
-                        {post.author?.handle} &middot; {new Date(post.createdAt).toLocaleDateString()}
+                        {post.author?.handle ? `@${post.author.handle}` : ''} &middot; {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}
                     </p>
                 </div>
               </CardHeader>

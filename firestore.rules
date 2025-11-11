@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -17,7 +18,7 @@ service cloud.firestore {
     }
 
     match /blogs/{blogId} {
-      allow read: if resource.data.visibility == 'public' || isSignedIn();
+      allow read: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid) || (isSignedIn() && resource.data.visibility != 'public');
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
