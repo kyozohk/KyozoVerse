@@ -1,3 +1,4 @@
+
 import {
   getAuth,
   GoogleAuthProvider,
@@ -7,6 +8,7 @@ import {
   User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInAnonymously as firebaseSignInAnonymously,
   isSignInWithEmailLink,
   sendSignInLinkToEmail,
@@ -58,4 +60,8 @@ export const isEmailLink = (link: string): boolean => {
 
 export const signInWithEmailLink = async (email: string, link: string): Promise<any> => {
   return await firebaseSignInWithEmailLink(auth, email, link);
+};
+
+export const resetPassword = (email: string) => {
+  return sendPasswordResetEmail(auth, email);
 };

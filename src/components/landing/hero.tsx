@@ -7,40 +7,30 @@ import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative w-full py-24 px-4 md:py-32 overflow-hidden bg-background">
-      <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-16">
-          <h1 className="mb-8">
-            <GradientText
-              as="span"
-              className="block text-5xl md:text-7xl lg:text-8xl font-bold leading-tight"
-              style={{ fontFamily: 'var(--display-font)' }}
-            >
-              Discover your
-            </GradientText>
-            <GradientText
-              as="span"
-              className="block text-5xl md:text-7xl lg:text-8xl font-bold leading-tight"
-              style={{ fontFamily: 'var(--display-font)' }}
-            >
-              creative universe
-            </GradientText>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-8">
-            Connect with like-minded creators, share your work, and explore a universe of creative possibilities.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <CustomButton size="large" icon={ArrowRight}>
-              Join Now
-            </CustomButton>
-            <CustomButton size="large" variant="outline">
-              Learn More
-            </CustomButton>
-          </div>
-        </div>
-      </div>
+    <section className="relative w-full py-24 px-4 md:py-32 overflow-hidden">
+       <h1
+          className="text-6xl md:text-8xl font-serif font-medium tracking-tight"
+          style={{
+            lineHeight: 1.1,
+            fontFamily: '"Playfair Display", "Gloock", serif',
+          }}
+        >
+          <span
+            className="text-transparent bg-clip-text"
+            style={{
+              backgroundImage:
+                'linear-gradient(90deg, #7c3aed, #4f46e5 35%, #0ea5e9 60%, #10b981 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              MozBackgroundClip: 'text',
+              MozTextFillColor: 'transparent',
+            }}
+          >
+            Discover your
+            <br />
+            creative universe
+          </span>
+        </h1>
     </section>
   );
 }

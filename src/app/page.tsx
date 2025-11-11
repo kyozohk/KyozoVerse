@@ -6,20 +6,53 @@ import Image from 'next/image';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { RequestAccessForm } from '@/components/auth/request-access-form';
+import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { FirebaseError } from 'firebase/app';
 
 export default function Home() {
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
-  
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const { signIn } = useAuth();
+
   const openWaitlist = () => {
     setIsSignInOpen(false);
+    setIsResetPasswordOpen(false);
     setIsWaitlistOpen(true);
   };
-  
+
   const openSignIn = () => {
     setIsWaitlistOpen(false);
+    setIsResetPasswordOpen(false);
     setIsSignInOpen(true);
+  };
+
+  const openResetPassword = () => {
+    setIsSignInOpen(false);
+    setIsWaitlistOpen(false);
+    setIsResetPasswordOpen(true);
+  };
+
+  const handleSignIn = async () => {
+    setError(null);
+    try {
+      await signIn(email, password);
+      setIsSignInOpen(false);
+    } catch (error: any) {
+        let description = "An unexpected error occurred. Please try again.";
+        if (error instanceof FirebaseError) {
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                description = "Invalid credentials. Please check your email and password and try again.";
+            }
+        }
+        setError(description);
+    }
   };
 
   return (
@@ -86,25 +119,41 @@ export default function Home() {
               <Input 
                 label="Email" 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              <Input 
-                label="Password" 
-                type="password" 
-              />
+              <div>
+                <PasswordInput 
+                  label="Password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                {error && (
+                  <p className="text-red-500 text-sm mt-2">
+                    {error} <a href="#" className="text-primary hover:underline" onClick={openResetPassword}>Forgot password?</a>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           
           <div className="mt-6">
             <div className="mb-4">
-              <button className="w-full button">Sign In</button>
+              <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
             </div>
-            
-            <div className="text-center text-sm text-secondary">
+
+            <div className="text-center text-sm text-secondary mt-4">
               Don't have an account? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>
         </div>
       </Dialog>
+
+      <ResetPasswordDialog
+        open={isResetPasswordOpen}
+        onClose={() => setIsResetPasswordOpen(false)}
+        onGoBack={openSignIn}
+      />
     </div>
   );
 }
