@@ -139,55 +139,44 @@ export default function CommunitySidebar() {
 
 
   useEffect(() => {
+    const handleFromPath = pathname.split('/')[1];
+    
     if (!user) {
       setLoading(false);
       setIsOwnerOfCurrentCommunity(false);
       return;
     };
 
-    const handleFromPath = pathname.split('/')[1];
-
-    async function checkOwnershipAndFetchCommunities() {
-      // Fetch all communities owned by the user for the dropdown
-      const ownedCommunitiesQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
-      const unsubscribe = onSnapshot(ownedCommunitiesQuery, (querySnapshot) => {
+    const q = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const userCommunities = querySnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
         setCommunities(userCommunities);
 
-        const communityInPath = userCommunities.find(c => c.handle === handleFromPath);
-
-        if (communityInPath) {
-          setSelectedCommunityHandle(communityInPath.handle);
+        const currentCommunity = userCommunities.find(c => c.handle === handleFromPath);
+        setIsOwnerOfCurrentCommunity(!!currentCommunity);
+        
+        if (currentCommunity) {
+            setSelectedCommunityHandle(currentCommunity.handle);
         } else if (userCommunities.length > 0) {
-          // If not viewing an owned community, default to the first one they own in the select, but don't redirect
-          setSelectedCommunityHandle(userCommunities[0].handle);
+             // If not viewing an owned community, default to the first one in the list for the dropdown
+            setSelectedCommunityHandle(userCommunities[0].handle);
+        } else {
+            setSelectedCommunityHandle(null);
         }
         
         setLoading(false);
-      }, (error) => {
-          console.error("Error fetching communities:", error);
-          errorEmitter.emit('permission-error', new FirestorePermissionError({
-              path: '/communities',
-              operation: 'list',
-          }));
-          setLoading(false);
-      });
+    }, (error) => {
+        console.error("Error fetching communities:", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: '/communities',
+            operation: 'list',
+        }));
+        setLoading(false);
+    });
 
-      // Check if the user is the owner of the *current* community being viewed
-      if (handleFromPath) {
-        const currentCommunityQuery = query(collection(db, 'communities'), where('handle', '==', handleFromPath), where('ownerId', '==', user.uid));
-        const currentCommunitySnapshot = await getDocs(currentCommunityQuery);
-        setIsOwnerOfCurrentCommunity(!currentCommunitySnapshot.empty);
-      } else {
-        setIsOwnerOfCurrentCommunity(false);
-      }
-
-      return () => unsubscribe();
-    }
-
-    checkOwnershipAndFetchCommunities();
-
-  }, [user, pathname, router]);
+    return () => unsubscribe();
+  }, [user, pathname]);
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
@@ -201,7 +190,7 @@ export default function CommunitySidebar() {
   }
 
   return (
-    <div className="hidden border-r bg-card lg:block w-72 ml-20">
+    <div className="hidden border-r bg-card lg:block w-72">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             {loading ? (

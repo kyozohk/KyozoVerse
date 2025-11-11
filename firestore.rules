@@ -23,7 +23,7 @@ service cloud.firestore {
       allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
       // Allow users to list posts. Client-side code must filter based on visibility.
-      allow list: if isSignedIn() || request.query.get('visibility') == 'public';
+      allow list: if request.query.get('visibility') == 'public' || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userId == request.auth.uid);
     }
 
     match /communities/{communityId} {
