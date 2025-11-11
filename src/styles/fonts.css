@@ -1,0 +1,13 @@
+/* Font declarations */
+@font-face {
+  font-family: 'Canicule Display';
+  src: url('/fonts/canicule-display-trial.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fallback fonts similar to Canicule Display */
+:root {
+  --display-font: 'Canicule Display', 'Playfair Display', 'Times New Roman', serif;
+}

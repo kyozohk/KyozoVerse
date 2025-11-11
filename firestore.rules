@@ -7,13 +7,17 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+    
+    function isAnonymous() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
 
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isAnonymous();
       allow write: if isOwner(userId);
     }
 
@@ -30,7 +34,23 @@ service cloud.firestore {
     }
 
     match /accessRequests/{requestId} {
-      allow read, write: if false; // Can only be written from the server
+      // Allow anyone to create access requests (no authentication required)
+      allow create: if true;
+      // Only allow admins to read all requests
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Allow users to read their own requests
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    match /notifications/{notificationId} {
+      // Allow creating notifications if signed in (including anonymous users)
+      allow create: if isSignedIn() || isAnonymous();
+      // Allow users to read their own notifications
+      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Allow admins to read all notifications
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }

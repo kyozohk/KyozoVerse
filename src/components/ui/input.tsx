@@ -1,22 +1,107 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-Input.displayName = "Input"
+// Import styles
+import "@/styles/components.css"
 
-export { Input }
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  required?: boolean;
+  floatingLabel?: boolean;
+  wrapperClassName?: string;
+}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ 
+    className, 
+    type, 
+    label, 
+    error, 
+    required, 
+    floatingLabel = true, // Default to true for floating labels
+    wrapperClassName,
+    placeholder,
+    ...props 
+  }, ref) => {
+    const [isFocused, setIsFocused] = React.useState(false);
+    const [hasValue, setHasValue] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    const inputId = React.useId();
+    
+    // Combine the forwarded ref with our local ref
+    React.useImperativeHandle(ref, () => inputRef.current!);
+    
+    // Check if the input has a value
+    React.useEffect(() => {
+      if (inputRef.current) {
+        setHasValue(!!inputRef.current.value);
+      }
+    }, [props.value, props.defaultValue]);
+    
+    // Handle input changes to track if the field has a value
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setHasValue(!!e.target.value);
+      if (props.onChange) {
+        props.onChange(e);
+      }
+    };
+    
+    const showFloatingLabel = isFocused || hasValue;
+    
+    return (
+      <div className={cn("inputWrapper", wrapperClassName)}>
+        {label && !floatingLabel && (
+          <label htmlFor={inputId} className="label">
+            {label}
+            {required && <span className="required">*</span>}
+          </label>
+        )}
+        
+        <div className={cn("inputContainer", error ? "hasError" : "")}>
+          <input
+            id={inputId}
+            type={type}
+            className={cn(
+              "input",
+              error ? "hasError" : "",
+              className
+            )}
+            ref={inputRef}
+            placeholder={showFloatingLabel && floatingLabel ? '' : placeholder}
+            onFocus={(e) => {
+              setIsFocused(true);
+              if (props.onFocus) props.onFocus(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              if (props.onBlur) props.onBlur(e);
+            }}
+            onChange={handleChange}
+            {...props}
+          />
+          
+          {floatingLabel && label && (
+            <label 
+              htmlFor={inputId}
+              className={cn(
+                "floatingLabel", 
+                showFloatingLabel ? "active" : "",
+                placeholder && !showFloatingLabel ? "hidden" : ""
+              )}
+            >
+              {label}
+              {required && <span className="required">*</span>}
+            </label>
+          )}
+        </div>
+        
+        {error && <div className="errorMessage">{error}</div>}
+      </div>
+    );
+  }
+);
+
+Input.displayName = "Input";
+
+export { Input };

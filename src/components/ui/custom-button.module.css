@@ -1,5 +1,6 @@
 .customButton {
-    background-image: url('/text_bg.png');
+    /* background-image: url('/text_bg.png'); */
+    background-color: #6A4A7C77;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

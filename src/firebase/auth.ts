@@ -7,6 +7,10 @@ import {
   User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously as firebaseSignInAnonymously,
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailLink as firebaseSignInWithEmailLink
 } from 'firebase/auth';
 import { app } from './config';
 
@@ -21,7 +25,7 @@ export const signUpWithEmail = (email: string, password: string):Promise<any> =>
     return createUserWithEmailAndPassword(auth, email, password);
 }
 
-export const signInWithEmail = (email: string, password: string):Promise<any> => {
+export const signInWithEmailPassword = (email: string, password: string):Promise<any> => {
     return signInWithEmailAndPassword(auth, email, password);
 }
 
@@ -31,4 +35,27 @@ export const signOut = () => {
 
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback);
+};
+
+// Anonymous authentication
+export const signInAnonymously = async (): Promise<any> => {
+  return await firebaseSignInAnonymously(auth);
+};
+
+// Email link authentication (passwordless)
+export const sendSignInLink = async (email: string, redirectUrl: string): Promise<void> => {
+  const actionCodeSettings = {
+    url: redirectUrl,
+    handleCodeInApp: true,
+  };
+  
+  return await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+};
+
+export const isEmailLink = (link: string): boolean => {
+  return isSignInWithEmailLink(auth, link);
+};
+
+export const signInWithEmailLink = async (email: string, link: string): Promise<any> => {
+  return await firebaseSignInWithEmailLink(auth, email, link);
 };

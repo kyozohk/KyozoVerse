@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+// No need for Firestore imports as we're using the API
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -46,7 +47,8 @@ export function RequestAccessForm() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsSubmitting(true);
         try {
-            const res = await fetch('/api/send-invite', {
+            // Use the API endpoint instead of direct Firestore access
+            const response = await fetch('/api/send-invite', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,13 +56,25 @@ export function RequestAccessForm() {
                 body: JSON.stringify(values),
             });
 
-            const result = await res.json();
-
-            if (res.ok) {
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Use the test invite link from the API response
+                const testInviteLink = result.testInviteLink || `${window.location.origin}/invite/${btoa(values.email)}`;
+                
+                // Show toast with success message
                 toast({
                     title: 'Request Submitted',
-                    description: result.message,
+                    description: result.message || 'Your request has been submitted successfully!',
                 });
+                
+                // Show alert with invite link and email info for testing
+                const emailInfo = result.emailSent ? 
+                    `\n\nEmails sent to:\n- Admin: ${result.emailDetails?.adminEmail}\n- User: ${result.emailDetails?.userEmail}` : 
+                    '\n\nNo emails were sent.';
+                
+                alert(`Test Invite Link: ${testInviteLink}${emailInfo}\n\nThis is a test link for development purposes.`);
+                
                 form.reset();
             } else {
                 toast({
@@ -69,7 +83,7 @@ export function RequestAccessForm() {
                     variant: 'destructive',
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error submitting access request:', error);
             toast({
                 title: 'Error',

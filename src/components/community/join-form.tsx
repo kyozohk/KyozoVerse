@@ -72,10 +72,16 @@ export function JoinForm({ communityId, communityName, onSuccess, onCancel }: Jo
         email: formData.email
       });
 
+      // Generate a test invite link
+      const testInviteLink = `${window.location.origin}/community/${communityId}/invite/${btoa(formData.email)}`;
+      
       toast({
         title: "Welcome!",
         description: `You've successfully joined ${communityName}!`,
       });
+      
+      // Show alert with invite link for testing
+      alert(`Test Invite Link: ${testInviteLink}\n\nThis is a test link for development purposes.`);
 
       onSuccess();
     } catch (error: any) {

@@ -1,8 +1,14 @@
+/* Import custom theme variables and fonts */
+@import '@/styles/themes/theme-variables.css';
+@import '@/styles/fonts.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 @layer base {
