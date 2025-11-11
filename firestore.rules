@@ -20,12 +20,10 @@ service cloud.firestore {
     match /blogs/{blogId} {
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
-      // This rule allows reading single documents based on visibility or ownership.
       allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
-      // This rule allows querying the collection.
-      // Logged-out users can only query for public posts.
-      // Logged-in users can query for any post (the client-side code will filter further).
-      allow list: if isSignedIn() || (request.query.where.size() > 0 && request.query.where[0][2] == 'public');
+      
+      // Allow users to list posts based on community and visibility
+      allow list: if (request.query.get("communityHandle") != null && request.query.get("visibility") == "public") || isSignedIn();
     }
 
     match /communities/{communityId} {
