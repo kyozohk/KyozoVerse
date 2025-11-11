@@ -80,6 +80,7 @@ function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) =>
 }
 
 export default function CommunityFeedPage({ params }: { params: { handle: string } }) {
+  const { handle } = params;
   const { user } = useAuth();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
@@ -89,7 +90,6 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { handle } = params;
 
   useEffect(() => {
     
