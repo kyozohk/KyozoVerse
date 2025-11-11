@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { storage } from '@/firebase/storage';
@@ -81,7 +82,7 @@ function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) =>
     );
 }
 
-export default function CommunityFeedPage({ params }: { params: { handle: string } }) {
+export default function CommunityFeedPage() {
   const { user } = useAuth();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
@@ -91,14 +92,17 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const handle = params.handle;
+  const params = useParams();
+  const handle = params.handle as string;
 
   useEffect(() => {
     if (!handle) return;
 
     const postsCollection = collection(db, "blogs");
-    const constraints = [where("communityHandle", "==", handle)];
-
+    
+    const constraints = [];
+    constraints.push(where("communityHandle", "==", handle));
+    
     if (!user) {
         constraints.push(where("visibility", "==", "public"));
     }

@@ -2,17 +2,16 @@ import React from 'react';
 import MainSidebar from '@/components/layout/main-sidebar';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import Header from '@/components/layout/header';
-import { AuthProvider } from '@/hooks/use-auth';
+import { FirebaseProvider } from '@/firebase/provider';
+import { getFirebase } from '@/firebase';
 
 export default function AppLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: { handle: string };
 }) {
   return (
-    <AuthProvider>
+    <FirebaseProvider {...getFirebase()}>
       <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <MainSidebar />
         <CommunitySidebar />
@@ -23,6 +22,6 @@ export default function AppLayout({
           </main>
         </div>
       </div>
-    </AuthProvider>
+    </FirebaseProvider>
   );
 }
