@@ -19,7 +19,6 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, error, wrapperClassName, checked, onCheckedChange, ...props }, ref) => {
     const id = React.useId();
     
-    // Handle checkbox change
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (onCheckedChange) {
         onCheckedChange(e.target.checked);
@@ -38,7 +37,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             onChange={handleChange}
             {...props}
           />
-          <div className="checkbox">
+          <div className={cn("checkbox", checked && "bg-primary-purple")}>
             <Check className="checkIcon" />
           </div>
           {label && (

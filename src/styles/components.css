@@ -10,10 +10,10 @@
   padding: 0.75rem 2rem;
   font-size: 1.125rem;
   font-weight: 600;
-  border: 2px solid var(--button-border);
   border-radius: var(--button-radius);
   color: var(--button-text-color);
-  background-color: var(--button-bg);
+  background-color: rgba(132, 52, 132, 0.3);
+  border: 1px solid var(--button-border);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -23,285 +23,103 @@
 .button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-  background-color: var(--button-bg-hover);
-}
-
-.button:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  opacity: 0.9;
-}
-
-.button:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(var(--primary-purple-rgb), 0.4);
-}
-
-.button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.button-primary {
-  background-color: var(--primary-purple);
-  color: white;
-  border-color: var(--primary-purple);
-}
-
-.button-outline {
-  background-color: transparent;
-  color: var(--button-text-color);
-  border: 2px solid var(--button-border);
-}
-
-.button-waitlist {
-  background-color: var(--primary-purple-light);
-  color: var(--primary-purple);
-  border-color: var(--primary-purple);
-  font-weight: 700;
-  font-size: 1.5rem;
-  padding: 1rem 2.5rem;
-}
-
-.button-small {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
-.button-large {
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
-}
-
-.button-icon {
-  margin-right: 0.5rem;
 }
 
 /* Input styles */
 .inputWrapper {
-  margin-left: 1px;
-  margin-bottom: 0.5rem; /* Consistent spacing */
+  margin-bottom: 0.75rem;
   width: 100%;
-  margin-top: 0.5rem; /* Changed from 8px for consistency */
-}
-
-.label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--dark-text-color);
-}
-
-.required {
-  color: var(--primary-purple);
-  margin-left: 0.25rem;
 }
 
 .inputContainer {
   position: relative;
   width: 100%;
-  box-sizing: border-box;
-  margin-right: 1px;
-}
-
-.inputContainer::before {
-  content: '';
-  position: absolute;
-  top: -0.5px;
-  left: -0.5px;
-  right: -0.5px;
-  bottom: -0.5px;
-  border-radius: 8px; /* Rounded corners instead of fully rounded */
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  z-index: 0;
-  border: 0.5px solid transparent;
-  background-image: linear-gradient(var(--card-bg), var(--card-bg)), linear-gradient(90deg, var(--primary-purple), var(--primary-purple));
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-}
-
-.inputContainer.hasError::before {
-  opacity: 1;
-  background-image: linear-gradient(var(--card-bg), var(--card-bg)), linear-gradient(90deg, var(--error-color), var(--error-color));
 }
 
 .input {
-  position: relative;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
   background-color: transparent;
-  color: var(--text-color);
-  box-sizing: border-box;
   border: 1px solid var(--input-border-color);
   border-radius: 8px;
-  transition: all 0.2s ease;
-  z-index: 1;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  font-size: 1rem;
+  color: #222;
+  transition: border-color 0.2s ease;
 }
 
 .input:focus {
   outline: none;
-  border-color: transparent; /* Hide the input border on focus */
-  color: var(--text-color); /* Ensure text color is visible on focus */
-}
-
-.input:focus + .inputContainer::before {
-  opacity: 1;
-}
-
-.input:focus-visible {
-  outline: none;
-}
-
-.input::placeholder {
-  color: var(--text-tertiary);
-  font-weight: 100;
-  font-size: 0.75rem;
-  font-family: var(--font-family-light, var(--font-family));
-  letter-spacing: 0.03em;
-}
-
-.input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Focus state with gradient border */
-.inputContainer:focus-within::before {
-  opacity: 1;
-}
-
-/* Error state */
-.hasError {
-  border-color: var(--error-color) !important;
-}
-
-.hasError:focus {
-  border-color: var(--error-color) !important;
-}
-
-.hasError::placeholder {
-  color: var(--error-color);
-  opacity: 0.8;
-  font-style: italic;
+  border-color: #843484;
 }
 
 .floatingLabel {
   position: absolute;
+  top: 0.5rem;
   left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
   font-size: 1rem;
   color: var(--text-secondary);
   pointer-events: none;
   transition: all 0.2s ease;
-  font-weight: 300;
-  z-index: 2;
 }
 
-.floatingLabel.active {
-  top: -0.175rem;
+.input:focus ~ .floatingLabel,
+.input:not(:placeholder-shown) ~ .floatingLabel {
+  top: -0.75rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  background-color: var(--background-color);
-  padding: 0 0.5rem;
-  color: var(--primary-purple);
-  z-index: 2;
-}
-
-.floatingLabel.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.errorMessage {
-  color: var(--error-color);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-  margin-left: 0.5rem;
+  color: #843484;
+  background-color: #ffffff;
+  padding: 0 0.25rem;
 }
 
 /* Checkbox styles */
 .checkboxWrapper {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  margin-right: 10px;
-  padding: 2px;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  border: none;
 }
 
 .checkboxContainer {
   display: flex;
   align-items: center;
   cursor: pointer;
-  user-select: none;
-  gap: 0;
-  position: relative;
 }
 
 .checkboxInput {
   position: absolute;
   opacity: 0;
   cursor: pointer;
-  height: 0;
-  width: 0;
 }
 
 .checkbox {
-  position: relative;
-  height: 20px;
   width: 20px;
-  min-width: 20px;
+  height: 20px;
   background-color: transparent;
-  border: 1px solid var(--checkbox-border);
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.checkbox .checkIcon {
-  display: none;
-  width: 14px;
-  height: 14px;
+  transition: background-color 0.2s ease;
+  border: 1px solid var(--input-border-color);
 }
 
 .checkboxInput:checked ~ .checkbox {
-  background-color: var(--checkbox-bg-checked);
-  border-color: var(--checkbox-bg-checked);
+  background-color: var(--primary-purple);
+  border-color: var(--primary-purple);
+}
+
+.checkIcon {
+  display: none;
+  color: white;
 }
 
 .checkboxInput:checked ~ .checkbox .checkIcon {
   display: block;
-  color: var(--checkbox-text);
-  width: 14px;
-  height: 14px;
-}
-
-.checkboxInput:focus ~ .checkbox {
-  box-shadow: 0 0 0 2px rgba(var(--primary-purple-rgb), 0.4);
 }
 
 .checkboxLabel {
-  display: flex;
-  align-items: center;
+  margin-left: 0.5rem;
   font-size: 0.875rem;
-  color: var(--text-color);
-  cursor: pointer;
-  line-height: 1.2;
-  margin-left: 8px;
-}
-
-.checkboxInput:disabled ~ .checkmark {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.checkboxInput:disabled ~ .checkboxLabel {
-  opacity: 0.5;
-  cursor: not-allowed;
+  color: var(--text-secondary);
 }

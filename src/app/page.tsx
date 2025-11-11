@@ -63,7 +63,7 @@ export default function Home() {
               Enter your email to request access to our platform.
             </DialogDescription>
           </DialogHeader>
-          <RequestAccessForm />
+          <RequestAccessForm onCancel={() => setIsWaitlistOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
