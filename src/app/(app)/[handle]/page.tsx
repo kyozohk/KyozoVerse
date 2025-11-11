@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { storage } from '@/firebase/storage';
@@ -20,6 +20,8 @@ import Image from 'next/image';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useDropzone } from 'react-dropzone';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) => void, file: File | null }) {
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -80,7 +82,6 @@ function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) =>
 }
 
 export default function CommunityFeedPage({ params }: { params: { handle: string } }) {
-  const { handle } = params;
   const { user } = useAuth();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
@@ -90,12 +91,21 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const handle = useMemo(() => params.handle, [params.handle]);
 
   useEffect(() => {
+    if (!handle) return;
+
+    const postsCollection = collection(db, "blogs");
+    const constraints = [where("communityHandle", "==", handle)];
+
+    if (!user) {
+        constraints.push(where("visibility", "==", "public"));
+    }
     
-    const q = user 
-        ? query(collection(db, "blogs"), where("communityHandle", "==", handle), orderBy("createdAt", "desc"))
-        : query(collection(db, "blogs"), where("communityHandle", "==", handle), where("visibility", "==", "public"), orderBy("createdAt", "desc"));
+    constraints.push(orderBy("createdAt", "desc"));
+    
+    const q = query(postsCollection, ...constraints);
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
@@ -104,10 +114,15 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
         
         let authorData: User | null = null;
         if(postData.authorId) {
-            const userRef = doc(db, "users", postData.authorId);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-                authorData = userSnap.data() as User;
+            try {
+                const userRef = doc(db, "users", postData.authorId);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    authorData = userSnap.data() as User;
+                }
+            } catch (error) {
+                // If we can't fetch author, proceed without it.
+                // This could be a permissions issue for private user data.
             }
         }
         
@@ -121,13 +136,12 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
-        console.error("Error fetching posts:", error);
-        setLoading(false);
-        toast({
-            title: "Error",
-            description: "Could not fetch community feed.",
-            variant: "destructive",
+        const permissionError = new FirestorePermissionError({
+            path: `blogs where communityHandle == ${handle}`,
+            operation: 'list',
         });
+        errorEmitter.emit('permission-error', permissionError);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -145,21 +159,31 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
             mediaUrl = await getDownloadURL(uploadResult.ref);
         }
 
-      await addDoc(collection(db, "blogs"), {
-        title: newPostTitle,
-        content: { 
-            text: newPostContent,
-            mediaUrls: mediaUrl ? [mediaUrl] : []
-        },
-        authorId: user.uid,
-        communityHandle: handle,
-        likes: 0,
-        comments: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        visibility: isPublic ? 'public' : 'private',
-        type: postImage ? 'image' : 'text',
-      });
+        const postData = {
+            title: newPostTitle,
+            content: { 
+                text: newPostContent,
+                mediaUrls: mediaUrl ? [mediaUrl] : []
+            },
+            authorId: user.uid,
+            communityHandle: handle,
+            likes: 0,
+            comments: 0,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            visibility: isPublic ? 'public' : 'private',
+            type: postImage ? 'image' : 'text',
+        };
+
+      addDoc(collection(db, "blogs"), postData)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: '/blogs',
+                operation: 'create',
+                requestResourceData: postData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
 
       setNewPostTitle('');
       setNewPostContent('');
@@ -170,6 +194,7 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
         description: "Your post has been published.",
       });
     } catch (error) {
+      // This catch block is for client-side errors (e.g., storage upload)
       console.error("Error creating post: ", error);
       toast({
         title: "Error",
@@ -282,3 +307,5 @@ export default function CommunityFeedPage({ params }: { params: { handle: string
     </div>
   );
 }
+
+    
