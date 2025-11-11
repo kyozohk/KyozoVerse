@@ -4,7 +4,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth } from 'firebase/auth';
-import { AuthProvider } from '@/hooks/use-auth';
+import { AuthProvider as AuthContextProvider } from '@/hooks/use-auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export interface FirebaseServices {
@@ -18,10 +18,10 @@ const FirebaseContext = createContext<FirebaseServices | undefined>(undefined);
 export function FirebaseProvider({ children, ...services }: { children: ReactNode } & FirebaseServices) {
   return (
     <FirebaseContext.Provider value={services}>
-      <AuthProvider>
+      <AuthContextProvider>
         {children}
         {process.env.NODE_ENV === 'development' && <FirebaseErrorListener />}
-      </AuthProvider>
+      </AuthContextProvider>
     </FirebaseContext.Provider>
   );
 }
@@ -45,5 +45,3 @@ export function useFirestore() {
 export function useAuth() {
   return useFirebase().auth;
 }
-
-    
