@@ -17,6 +17,7 @@ import { Logo } from "@/components/icons/logo"
 import { signInWithGoogle, signInWithEmail } from "@/firebase/auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { FirebaseError } from "firebase/app";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,9 +46,15 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error) {
       console.error("Email Sign-In Error:", error);
+      let description = "An unexpected error occurred. Please try again.";
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          description = "Invalid credentials. Please check your email and password and try again.";
+        }
+      }
        toast({
-        title: "Error",
-        description: "Invalid email or password. Please try again.",
+        title: "Login Failed",
+        description: description,
         variant: "destructive",
       });
     }
