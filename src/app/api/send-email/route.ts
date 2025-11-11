@@ -7,7 +7,21 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Check if the API key is defined
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not defined in environment variables');
+      return NextResponse.json({ error: 'Email service configuration error' }, { status: 500 });
+    }
+    
+    // Parse the request body with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+    
     const { to, subject, html, from = 'dev@kyozo.com' } = body;
 
     if (!to || !subject || !html) {
@@ -43,6 +57,19 @@ export async function POST(request: Request) {
     }, { status: 200 });
   } catch (error) {
     console.error('Error processing email request:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+    
+    // Provide more detailed error information
+    let errorMessage = 'An unexpected error occurred.';
+    let errorDetails = {};
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = { name: error.name, stack: error.stack };
+    }
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: errorDetails
+    }, { status: 500 });
   }
 }

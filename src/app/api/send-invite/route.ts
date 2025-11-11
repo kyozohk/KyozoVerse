@@ -7,7 +7,15 @@ let accessRequests: any[] = [];
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Parse the request body with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+    
     const { email, firstName, lastName, phone, newsletter, whatsapp } = body;
 
     if (!email || !firstName || !lastName || !phone) {
@@ -37,13 +45,23 @@ export async function POST(request: Request) {
     console.log('New access request:', newRequest);
 
     // Generate invite link for testing
-    const testInviteLink = `${request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL}/invite/${Buffer.from(email).toString('base64')}`;
+    // Use btoa for base64 encoding (no need for Buffer in browser context)
+    const base64Email = btoa(email);
+    const testInviteLink = `${request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL}/invite/${base64Email}`;
     console.log('\n==== INVITE LINK GENERATED ====');
-    console.log(`Invite Link for ${email}: ${testInviteLink}`);
+    console.log(`Email: ${email}`);
+    console.log(`Base64 encoded: ${base64Email}`);
+    console.log(`Invite Link: ${testInviteLink}`);
     console.log('==============================\n');
     
     // Send email notifications
     try {
+      // Check if Resend API key is available
+      if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY is not defined in environment variables. Skipping email sending.');
+        throw new Error('Email service not configured');
+      }
+      
       // 1. Prepare admin notification email
       const adminEmailHtml = `
         <h1>New Access Request</h1>
@@ -57,7 +75,7 @@ export async function POST(request: Request) {
         <p><a href="${testInviteLink}">${testInviteLink}</a></p>
       `;
       
-      // Send email to admin
+      // Send email to admin with error handling
       const adminEmailResponse = await fetch(`${request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL}/api/send-email`, {
         method: 'POST',
         headers: {
@@ -69,6 +87,12 @@ export async function POST(request: Request) {
           html: adminEmailHtml,
         }),
       });
+      
+      if (!adminEmailResponse.ok) {
+        const errorText = await adminEmailResponse.text();
+        console.error('Admin email API error:', adminEmailResponse.status, errorText);
+        throw new Error(`Failed to send admin email: ${adminEmailResponse.status}`);
+      }
       
       const adminEmailResult = await adminEmailResponse.json();
       console.log('\n==== ADMIN EMAIL SENT ====');
@@ -86,7 +110,7 @@ export async function POST(request: Request) {
         <p>Best regards,<br>The KyozoVerse Team</p>
       `;
       
-      // Send confirmation email to user
+      // Send confirmation email to user with error handling
       const userEmailResponse = await fetch(`${request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL}/api/send-email`, {
         method: 'POST',
         headers: {
@@ -98,6 +122,12 @@ export async function POST(request: Request) {
           html: userEmailHtml,
         }),
       });
+      
+      if (!userEmailResponse.ok) {
+        const errorText = await userEmailResponse.text();
+        console.error('User email API error:', userEmailResponse.status, errorText);
+        throw new Error(`Failed to send user email: ${userEmailResponse.status}`);
+      }
       
       const userEmailResult = await userEmailResponse.json();
       console.log('\n==== USER EMAIL SENT ====');
@@ -124,6 +154,19 @@ export async function POST(request: Request) {
     }, { status: 200 });
   } catch (error) {
     console.error('Error processing access request:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+    
+    // Provide more detailed error information
+    let errorMessage = 'An unexpected error occurred.';
+    let errorDetails = {};
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = { name: error.name, stack: error.stack };
+    }
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: errorDetails
+    }, { status: 500 });
   }
 }
