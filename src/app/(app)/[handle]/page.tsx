@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { storage } from '@/firebase/storage';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -79,7 +79,7 @@ function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) =>
     );
 }
 
-export default function DashboardPage() {
+export default function CommunityFeedPage({ params }: { params: { handle: string } }) {
   const { user } = useAuth();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
@@ -89,9 +89,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { handle } = params;
 
   useEffect(() => {
-    const q = query(collection(db, "blogs"), orderBy("createdAt", "desc"));
+    let queries = [
+        where("communityHandle", "==", handle),
+        orderBy("createdAt", "desc")
+    ];
+
+    if (!user) {
+        queries.push(where("visibility", "==", "public"));
+    }
+
+    const q = query(collection(db, "blogs"), ...queries);
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
       for (const postDoc of querySnapshot.docs) {
@@ -115,10 +125,18 @@ export default function DashboardPage() {
       }
       setPosts(postsData);
       setLoading(false);
+    }, (error) => {
+        console.error("Error fetching posts:", error);
+        setLoading(false);
+        toast({
+            title: "Error",
+            description: "Could not fetch community feed.",
+            variant: "destructive",
+        });
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [handle, user, toast]);
 
   const handleCreatePost = async () => {
     if (!user || (!newPostContent.trim() && !postImage)) return;
@@ -139,6 +157,7 @@ export default function DashboardPage() {
             mediaUrls: mediaUrl ? [mediaUrl] : []
         },
         authorId: user.uid,
+        communityHandle: handle,
         likes: 0,
         comments: 0,
         createdAt: serverTimestamp(),
@@ -170,46 +189,48 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Your Feed</h1>
-        <p className="text-muted-foreground">Catch up on what's happening in your communities.</p>
+        <h1 className="text-3xl font-bold tracking-tight">@{handle}</h1>
+        <p className="text-muted-foreground">Catch up on what's happening in the community.</p>
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="p-4 pb-0">
-          <div className="flex gap-4">
-            <Avatar>
-              <AvatarImage src={user?.photoURL || undefined} />
-              <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-2">
-                 <Input
-                    placeholder="Title"
-                    value={newPostTitle}
-                    onChange={(e) => setNewPostTitle(e.target.value)}
-                    className="flex-1 font-bold"
-                 />
-                <Textarea
-                  placeholder="What's on your mind?"
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  className="flex-1"
-                />
+      {user && (
+        <Card className="mb-6">
+          <CardContent className="p-4 pb-0">
+            <div className="flex gap-4">
+              <Avatar>
+                <AvatarImage src={user?.photoURL || undefined} />
+                <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                  <Input
+                      placeholder="Title"
+                      value={newPostTitle}
+                      onChange={(e) => setNewPostTitle(e.target.value)}
+                      className="flex-1 font-bold"
+                  />
+                  <Textarea
+                    placeholder="What's on your mind?"
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    className="flex-1"
+                  />
+              </div>
             </div>
-          </div>
-          <Dropzone onFileChange={setPostImage} file={postImage} />
-        </CardContent>
-        <CardFooter className="flex justify-between items-center p-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox id="is-public" checked={isPublic} onCheckedChange={(checked) => setIsPublic(Boolean(checked))} />
-            <Label htmlFor="is-public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Public
-            </Label>
-          </div>
-          <Button onClick={handleCreatePost} disabled={isSubmitting || (!newPostContent.trim() && !postImage)}>
-            {isSubmitting ? 'Posting...' : 'Post'}
-          </Button>
-        </CardFooter>
-      </Card>
+            <Dropzone onFileChange={setPostImage} file={postImage} />
+          </CardContent>
+          <CardFooter className="flex justify-between items-center p-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox id="is-public" checked={isPublic} onCheckedChange={(checked) => setIsPublic(Boolean(checked))} />
+              <Label htmlFor="is-public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Public
+              </Label>
+            </div>
+            <Button onClick={handleCreatePost} disabled={isSubmitting || (!newPostContent.trim() && !postImage)}>
+              {isSubmitting ? 'Posting...' : 'Post'}
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
 
       <div className="space-y-6">
         {loading ? (
@@ -218,6 +239,11 @@ export default function DashboardPage() {
             <PostCardSkeleton />
             <PostCardSkeleton />
           </>
+        ) : posts.length === 0 ? (
+            <div className="text-center py-12">
+                <h2 className="text-xl font-semibold">Nothing to see here yet</h2>
+                <p className="text-muted-foreground">Be the first to post in this community!</p>
+            </div>
         ) : (
           posts.map((post) => (
             <Card key={post.id}>
@@ -261,5 +287,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

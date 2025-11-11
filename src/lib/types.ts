@@ -13,10 +13,11 @@ export type User = {
 export type Community = {
   communityId: string;
   name: string;
-  slug: string;
+  handle: string;
   tagline?: string;
   communityProfileImage?: string;
   memberCount: number;
+  ownerId: string;
 };
 
 export type Post = {
@@ -30,6 +31,7 @@ export type Post = {
   };
   authorId: string;
   author: User; // Denormalized author data
+  communityHandle: string;
   likes: number;
   comments: number;
   createdAt: any; // Firestore Timestamp

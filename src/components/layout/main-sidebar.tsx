@@ -16,7 +16,7 @@ import { UserNav } from './user-nav';
 import { Logo } from '../icons/logo';
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Feed' },
+  { href: '/kyozo-demo', icon: Home, label: 'Feed' },
   { href: '#', icon: Users, label: 'Communities' },
   { href: '#', icon: Crown, label: 'Subscriptions' },
 ];
@@ -27,7 +27,7 @@ export default function MainSidebar() {
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4 px-2 py-4">
           <Link
-            href="/dashboard"
+            href="/kyozo-demo"
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
             <Logo className="h-5 w-5 transition-all group-hover:scale-110" />

@@ -26,10 +26,23 @@
         "content": { "type": "string" },
         "authorId": { "type": "string" },
         "author": { "$ref": "#/backend/entities/user" },
+        "communityHandle": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["public", "private"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "content", "authorId", "createdAt", "updatedAt"]
+      "required": ["title", "content", "authorId", "communityHandle", "visibility", "createdAt", "updatedAt"]
+    },
+    "community": {
+      "title": "Community",
+      "description": "A community group.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "handle": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "handle", "ownerId"]
     }
   },
   "auth": {
@@ -43,6 +56,10 @@
     "/blogs/{blogId}": {
       "schema": { "$ref": "#/backend/entities/blog" },
       "description": "Blog post documents"
+    },
+    "/communities/{communityId}": {
+        "schema": { "$ref": "#/backend/entities/community"},
+        "description": "Community documents"
     }
   }
 }

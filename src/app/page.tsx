@@ -15,7 +15,7 @@ export default function Home() {
             <Link href="/login">Log In</Link>
           </Button>
           <Button asChild>
-            <Link href="/dashboard">Get Started</Link>
+            <Link href="/kyozo-demo">Get Started</Link>
           </Button>
         </nav>
       </header>
@@ -29,7 +29,7 @@ export default function Home() {
           </p>
           <div>
             <Button size="lg" asChild>
-              <Link href="/dashboard">Explore Communities</Link>
+              <Link href="/kyozo-demo">Explore Communities</Link>
             </Button>
           </div>
         </div>

@@ -2,12 +2,14 @@ import React from 'react';
 import MainSidebar from '@/components/layout/main-sidebar';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import Header from '@/components/layout/header';
-import { AuthProvider } from '@/hooks/use-auth.tsx';
+import { AuthProvider } from '@/hooks/use-auth';
 
 export default function AppLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: { handle: string };
 }) {
   return (
     <AuthProvider>
