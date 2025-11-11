@@ -35,26 +35,27 @@ export function RequestAccessForm({ onCancel }: { onCancel: () => void }) {
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <Input placeholder="Firstname *" {...form.register("firstName")} />
-        <Input placeholder="Lastname *" {...form.register("lastName")} />
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
+      <div className="flex-grow">
+        <div className="grid grid-cols-2 gap-4">
+          <Input placeholder="Firstname *" {...form.register("firstName")} />
+          <Input placeholder="Lastname *" {...form.register("lastName")} />
+        </div>
+        <Input placeholder="Phone *" {...form.register("phone")} />
+        <Input placeholder="Email *" {...form.register("email")} />
+
+        <Checkbox
+          id="newsletter"
+          label="Sign me up to the CreativeLab newsletter"
+          {...form.register("newsletter")}
+        />
+        <Checkbox
+          id="whatsapp"
+          label="By submitting this form I agree to be contacted via WhatsApp"
+          {...form.register("whatsapp")}
+        />
       </div>
-      <Input placeholder="Phone *" {...form.register("phone")} />
-      <Input placeholder="Email *" {...form.register("email")} />
-
-      <Checkbox
-        id="newsletter"
-        label="Sign me up to the CreativeLab newsletter"
-        {...form.register("newsletter")}
-      />
-      <Checkbox
-        id="whatsapp"
-        label="By submitting this form I agree to be contacted via WhatsApp"
-        {...form.register("whatsapp")}
-      />
-
-      <div className="flex gap-4">
+      <div className="flex gap-4 mt-auto">
         <Button variant="outline" onClick={onCancel} className="w-full">Cancel</Button>
         <Button type="submit" className="w-full">Submit</Button>
       </div>
