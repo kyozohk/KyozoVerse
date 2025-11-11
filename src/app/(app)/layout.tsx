@@ -2,7 +2,7 @@ import React from 'react';
 import MainSidebar from '@/components/layout/main-sidebar';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import Header from '@/components/layout/header';
-import { AuthProvider } from '@/components/auth/auth-provider';
+import { AuthProvider } from '@/hooks/use-auth.tsx';
 
 export default function AppLayout({
   children,
