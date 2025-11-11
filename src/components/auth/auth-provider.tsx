@@ -5,17 +5,35 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 import { PostCardSkeleton } from "@/components/feed/post-card-skeleton";
 
+// Add console logs for debugging
 const publicPaths = ['/login', '/signup', '/'];
+
+// Function to check if the current path is a handle/slug page
+const isHandlePath = (path: string) => {
+  // Check if the path matches the pattern /username (e.g., /kyozo, /john, etc.)
+  // This regex matches paths that start with / followed by characters but not containing additional /
+  return /^\/[^\/]+$/.test(path);
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicPath = publicPaths.includes(pathname);
+  const isPublicPath = publicPaths.includes(pathname) || isHandlePath(pathname);
+  
+  console.log('AuthProvider - Path check', { 
+    pathname, 
+    isPublicPath, 
+    isHandlePath: isHandlePath(pathname),
+    user: !!user,
+    loading 
+  });
 
   useEffect(() => {
+    console.log('AuthProvider - Auth check effect', { user: !!user, loading, isPublicPath });
     if (!loading && !user && !isPublicPath) {
+      console.log('AuthProvider - Redirecting to login');
       router.push('/login');
     }
   }, [user, loading, router, pathname, isPublicPath]);

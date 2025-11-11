@@ -83,7 +83,7 @@ function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) =>
 }
 
 export default function CommunityFeedPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [postImage, setPostImage] = useState<File | null>(null);
@@ -94,9 +94,20 @@ export default function CommunityFeedPage() {
   const { toast } = useToast();
   const params = useParams();
   const handle = params.handle as string;
+  
+  console.log('[handle]/page.tsx - Component rendered', { 
+    handle, 
+    isAuthenticated: !!user, 
+    authLoading,
+    pathname: window.location.pathname
+  });
 
   useEffect(() => {
-    if (!handle) return;
+    console.log('[handle]/page.tsx - useEffect triggered', { handle, user: !!user });
+    if (!handle) {
+      console.log('[handle]/page.tsx - No handle found, returning');
+      return;
+    }
 
     const postsCollection = collection(db, "blogs");
     
@@ -111,7 +122,9 @@ export default function CommunityFeedPage() {
     
     const q = query(postsCollection, ...constraints);
 
+    console.log('[handle]/page.tsx - Setting up Firestore query', { handle, constraints });
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      console.log('[handle]/page.tsx - Received Firestore snapshot', { docsCount: querySnapshot.docs.length });
       const postsData: (Post & { id: string })[] = [];
       for (const postDoc of querySnapshot.docs) {
         const postData = postDoc.data() as Post;
@@ -140,6 +153,7 @@ export default function CommunityFeedPage() {
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
+        console.error('[handle]/page.tsx - Firestore error', error);
         const permissionError = new FirestorePermissionError({
             path: `blogs where communityHandle == ${handle}`,
             operation: 'list',
