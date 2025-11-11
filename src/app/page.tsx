@@ -11,6 +11,7 @@ import { RequestAccessForm } from '@/components/auth/request-access-form';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
+import { Hero } from '@/components/landing/hero';
 
 export default function Home() {
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
@@ -19,11 +20,13 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const [formType, setFormType] = useState('waitlist');
+  const { user, signIn, signOut } = useAuth();
 
   const openWaitlist = () => {
     setIsSignInOpen(false);
     setIsResetPasswordOpen(false);
+    setFormType('waitlist');
     setIsWaitlistOpen(true);
   };
 
@@ -59,31 +62,15 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-transparent">
       <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center">
         <Image src="/logo.png" alt="Kyozo Logo" width={100} height={28} />
-        <button className="text-foreground">
-          <svg
-            className="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
+        {user ? (
+          <CustomButton onClick={signOut}>Sign Out</CustomButton>
+        ) : (
+          <CustomButton onClick={openSignIn}>Sign In</CustomButton>
+        )}
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center text-center p-4">
-        <h1 className="text-6xl md:text-8xl font-bold tracking-tight font-serif" style={{lineHeight: 1.2}}>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-blue-400 to-green-500">
-            Discover your
-            <br />
-            creative universe
-          </span>
-        </h1>
+        <Hero />
 
         <div className="mt-12">
           <CustomButton
@@ -97,12 +84,14 @@ export default function Home() {
       <Dialog 
         open={isWaitlistOpen} 
         onClose={() => setIsWaitlistOpen(false)}
-        title="Welcome to Kyozo"
-        description="Create an account or sign in to access your community dashboard and settings."
+        title={formType === 'signup' ? 'Welcome to Kyozo' : 'Join the Waitlist'}
+        description={formType === 'signup' ? 'Create an account to access your community dashboard and settings.' : 'Join the exclusive club of creators, fill up the form and we will get back to you.'}
       >
         <RequestAccessForm 
           onCancel={() => setIsWaitlistOpen(false)} 
           onSignInClick={openSignIn} 
+          formType={formType}
+          setFormType={setFormType}
         />
       </Dialog>
       

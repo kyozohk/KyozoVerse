@@ -23,7 +23,7 @@ export const signInWithGoogle = () => {
   return signInWithPopup(auth, googleProvider);
 };
 
-export const signUpWithEmail = (email: string, password: string):Promise<any> => {
+export const signUpWithEmail = (email: string, password: string, details: { [key: string]: any }):Promise<any> => {
     return createUserWithEmailAndPassword(auth, email, password);
 }
 
@@ -55,7 +55,7 @@ export const sendSignInLink = async (email: string, redirectUrl: string): Promis
 };
 
 export const isEmailLink = (link: string): boolean => {
-  return isSignInWithEmailLink(auth, link);
+  return isEmailLink(auth, link);
 };
 
 export const signInWithEmailLink = async (email: string, link: string): Promise<any> => {
