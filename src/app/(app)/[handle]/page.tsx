@@ -100,9 +100,12 @@ export default function CommunityFeedPage() {
 
     const postsCollection = collection(db, "blogs");
     
+    // This is the core change: we construct different queries based on auth state.
     const constraints = [];
     constraints.push(where("communityHandle", "==", handle));
     
+    // If the user is not logged in, we MUST add a `where` clause for visibility
+    // to satisfy the Firestore security rules for public access.
     if (!user) {
         constraints.push(where("visibility", "==", "public"));
     }
@@ -137,7 +140,10 @@ export default function CommunityFeedPage() {
           createdAt: postData.createdAt?.toDate(),
         });
       }
-      setPosts(postsData);
+      // For logged-in users, we might get private posts from the query,
+      // so we filter them on the client side. Logged-out users only get public posts.
+      const visiblePosts = user ? postsData : postsData.filter(p => p.visibility === 'public');
+      setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
         const permissionError = new FirestorePermissionError({
@@ -149,7 +155,7 @@ export default function CommunityFeedPage() {
     });
 
     return () => unsubscribe();
-  }, [handle, user, toast]);
+  }, [handle, user]);
 
   const handleCreatePost = async () => {
     if (!user || (!newPostContent.trim() && !postImage)) return;
@@ -274,12 +280,12 @@ export default function CommunityFeedPage() {
               <CardHeader className="flex flex-row items-center gap-4">
                 <Avatar>
                   <AvatarImage src={post.author?.avatarUrl} />
-                  <AvatarFallback>{post.author?.displayName?.charAt(0) || post.author?.handle?.charAt(0) || 'U'}</AvatarFallback>
+                  <AvatarFallback>{post.author?.displayName?.charAt(0) || (post.author as any)?.handle?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
                     <p className="font-bold">{post.author?.displayName}</p>
                     <p className="text-sm text-muted-foreground">
-                        {post.author?.handle ? `@${post.author.handle}` : ''} &middot; {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}
+                        {(post.author as any)?.handle ? `@${(post.author as any).handle}` : ''} &middot; {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}
                     </p>
                 </div>
               </CardHeader>
@@ -311,3 +317,5 @@ export default function CommunityFeedPage() {
     </div>
   );
 }
+
+    

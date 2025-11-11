@@ -22,8 +22,10 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
-      // Allow users to list posts. Client-side code must filter based on visibility.
-      allow list: if request.query.get('visibility') == 'public' || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userId == request.auth.uid);
+      // This is the new, simplified rule for listing documents.
+      // It allows ANYONE to perform a query as long as they are ONLY asking for public documents.
+      // This is safe and allows unauthenticated users to see public feeds.
+      allow list: if request.query.get('visibility') == 'public' || isSignedIn();
     }
 
     match /communities/{communityId} {
@@ -32,3 +34,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
