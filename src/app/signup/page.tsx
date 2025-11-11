@@ -45,7 +45,7 @@ export default function SignupPage() {
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
-      router.push('/dashboard');
+      router.push('/kyozo-demo');
     } catch (error) {
       console.error("Google Sign-In Error:", error);
       toast({
@@ -83,7 +83,7 @@ export default function SignupPage() {
         updatedAt: serverTimestamp(),
       });
 
-      router.push('/dashboard');
+      router.push('/kyozo-demo');
     } catch (error: any) {
       console.error("Email Sign-Up Error:", error);
        toast({

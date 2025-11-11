@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link"
@@ -28,7 +29,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-      router.push('/dashboard');
+      router.push('/kyozo-demo');
     } catch (error) {
       console.error("Google Sign-In Error:", error);
       toast({
@@ -43,7 +44,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await signInWithEmail(email, password);
-      router.push('/dashboard');
+      router.push('/kyozo-demo');
     } catch (error) {
       console.error("Email Sign-In Error:", error);
       let description = "An unexpected error occurred. Please try again.";
