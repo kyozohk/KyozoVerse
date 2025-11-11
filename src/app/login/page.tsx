@@ -49,8 +49,22 @@ export default function LoginPage() {
       console.error("Email Sign-In Error:", error);
       let description = "An unexpected error occurred. Please try again.";
       if (error instanceof FirebaseError) {
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          description = "Invalid credentials. Please check your email and password and try again.";
+        // More specific error messages based on the error code
+        switch (error.code) {
+          case 'auth/invalid-credential':
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            description = "Invalid credentials. Please check your email and password and try again.";
+            break;
+          case 'auth/invalid-email':
+            description = "The email address is not valid.";
+            break;
+          case 'auth/user-disabled':
+            description = "This user account has been disabled.";
+            break;
+          default:
+            description = "An unexpected error occurred during login. Please try again."
+            break;
         }
       }
        toast({
