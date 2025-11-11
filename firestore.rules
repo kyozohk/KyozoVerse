@@ -21,15 +21,16 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
-      
-      // This rule allows unauthenticated users to list public blogs
-      // and allows authenticated users to list any blogs for a community they have access to.
       allow list: if request.query.get('visibility') == 'public' || isSignedIn();
     }
 
     match /communities/{communityId} {
         allow read: if isSignedIn();
         allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    match /accessRequests/{requestId} {
+      allow read, write: if false; // Can only be written from the server
     }
   }
 }

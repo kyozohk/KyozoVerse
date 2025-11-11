@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { db } from '@/firebase/firestore';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/firebase/admin';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase-admin/firestore';
 
 export async function POST(request: Request) {
   try {
@@ -12,17 +12,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if a request with this email already exists
-    const requestsRef = collection(db, 'accessRequests');
-    const q = query(requestsRef, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
+    const requestsRef = adminDb.collection('accessRequests');
+    const q = requestsRef.where('email', '==', email);
+    const querySnapshot = await q.get();
 
     if (!querySnapshot.empty) {
         return NextResponse.json({ message: 'You have already requested access.' }, { status: 200 });
     }
 
-    // Add a new document with a generated id.
-    await addDoc(requestsRef, {
+    await requestsRef.add({
         email,
         firstName,
         lastName,
