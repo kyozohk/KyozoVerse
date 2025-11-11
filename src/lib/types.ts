@@ -2,12 +2,13 @@
 export type User = {
   userId: string;
   email?: string;
-  handle?: string;
   displayName?: string;
   avatarUrl?: string;
   coverUrl?: string;
   bio?: string;
   tags?: string[];
+  firstName?: string;
+  lastName?: string;
 };
 
 export type Community = {
@@ -37,5 +38,3 @@ export type Post = {
   createdAt: any; // Firestore Timestamp
   visibility: 'public' | 'private' | 'members-only';
 };
-
-    

@@ -66,20 +66,11 @@ function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, setIsOp
             return;
         }
 
-        if (!handle.startsWith('@')) {
-            toast({
-                title: "Invalid Handle",
-                description: "Handle must start with @.",
-                variant: "destructive",
-            });
-            return;
-        }
-
         setIsSubmitting(true);
         try {
             const communityData = {
                 name,
-                handle: handle.substring(1), // remove @
+                handle,
                 ownerId: user.uid,
                 memberCount: 1,
                 createdAt: serverTimestamp(),
@@ -121,7 +112,7 @@ function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, setIsOp
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="handle">Community Handle</Label>
-                        <Input id="handle" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="@ai-innovators" />
+                        <Input id="handle" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="ai-innovators" />
                     </div>
                 </div>
                 <DialogFooter>
@@ -250,5 +241,3 @@ export default function CommunitySidebar() {
     </div>
   );
 }
-
-    

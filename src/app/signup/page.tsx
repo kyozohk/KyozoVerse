@@ -28,7 +28,6 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [handle, setHandle] = useState('');
 
   const handleGoogleSignIn = async () => {
     try {
@@ -58,14 +57,6 @@ export default function SignupPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (handle && !handle.startsWith('@')) {
-        toast({
-            title: "Invalid Handle",
-            description: "Handle must start with @",
-            variant: "destructive",
-        });
-        return;
-    }
     try {
       const userCredential = await signUpWithEmail(email, password);
       const user = userCredential.user;
@@ -78,7 +69,6 @@ export default function SignupPage() {
         firstName: firstName,
         lastName: lastName,
         displayName: displayName,
-        handle: handle,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -132,16 +122,6 @@ export default function SignupPage() {
                     onChange={(e) => setLastName(e.target.value)}
                   />
                 </div>
-              </div>
-               <div className="grid gap-2">
-                <Label htmlFor="handle">Handle</Label>
-                <Input
-                  id="handle"
-                  type="text"
-                  placeholder="@johndoe"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>

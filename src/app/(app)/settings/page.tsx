@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -23,7 +24,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }).max(50),
-  handle: z.string().max(30).refine(val => val.startsWith('@'), { message: "Handle must start with @" }),
   bio: z.string().max(160).optional(),
 });
 
@@ -90,7 +90,6 @@ export default function SettingsPage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: '',
-      handle: '',
       bio: '',
     },
   });
@@ -107,7 +106,6 @@ export default function SettingsPage() {
           setUserData(fetchedData);
           form.reset({
             displayName: fetchedData.displayName || '',
-            handle: fetchedData.handle || '',
             bio: fetchedData.bio || '',
           });
         }
@@ -182,7 +180,6 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-8">
                        <Skeleton className="h-10 w-full" />
-                       <Skeleton className="h-10 w-full" />
                        <Skeleton className="h-24 w-full" />
                        <Skeleton className="h-24 w-full" />
                        <Skeleton className="h-24 w-full" />
@@ -217,22 +214,6 @@ export default function SettingsPage() {
                     <FormControl>
                       <Input placeholder="Your display name" {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="handle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Handle</FormLabel>
-                    <FormControl>
-                      <Input placeholder="@yourhandle" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      This is your unique handle on the platform.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
