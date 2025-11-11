@@ -13,10 +13,13 @@ import { ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { type Post, type User } from '@/lib/types';
 import Image from 'next/image';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [newPostContent, setNewPostContent] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -63,8 +66,10 @@ export default function DashboardPage() {
         comments: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        visibility: isPublic ? 'public' : 'private',
       });
       setNewPostContent('');
+      setIsPublic(true);
       toast({
         title: "Success",
         description: "Your post has been published.",
@@ -87,7 +92,7 @@ export default function DashboardPage() {
       </div>
 
       <Card className="mb-6">
-        <CardContent className="p-4">
+        <CardContent className="p-4 pb-0">
           <div className="flex gap-4">
             <Avatar>
               <AvatarImage src={user?.photoURL || undefined} />
@@ -101,7 +106,13 @@ export default function DashboardPage() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end p-4 pt-0">
+        <CardFooter className="flex justify-between items-center p-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox id="is-public" checked={isPublic} onCheckedChange={(checked) => setIsPublic(Boolean(checked))} />
+            <Label htmlFor="is-public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Public
+            </Label>
+          </div>
           <Button onClick={handleCreatePost} disabled={!newPostContent.trim()}>Post</Button>
         </CardFooter>
       </Card>

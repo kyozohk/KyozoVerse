@@ -30,4 +30,5 @@ export type Post = {
   likes: number;
   comments: number;
   createdAt: any; // Firestore Timestamp
+  visibility: 'public' | 'private' | 'members-only';
 };
