@@ -85,6 +85,7 @@ export async function POST(request: Request) {
           to: process.env.ADMIN_EMAIL || 'admin@example.com', // In production, use a real admin email
           subject: 'New KyozoVerse Access Request',
           html: adminEmailHtml,
+          from: 'notifications@onboard.kyozo.space',
         }),
       });
       
@@ -120,6 +121,7 @@ export async function POST(request: Request) {
           to: email,
           subject: 'Your KyozoVerse Access Request',
           html: userEmailHtml,
+          from: 'notifications@onboard.kyozo.space',
         }),
       });
       

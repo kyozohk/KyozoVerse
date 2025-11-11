@@ -4,17 +4,23 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { CustomButton } from '@/components/ui/CustomButton';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { RequestAccessForm } from '@/components/auth/request-access-form';
 
 export default function Home() {
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  
+  const openWaitlist = () => {
+    setIsSignInOpen(false);
+    setIsWaitlistOpen(true);
+  };
+  
+  const openSignIn = () => {
+    setIsWaitlistOpen(false);
+    setIsSignInOpen(true);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
@@ -48,23 +54,56 @@ export default function Home() {
 
         <div className="mt-12">
           <CustomButton
-            onClick={() => setIsWaitlistOpen(true)}
+            onClick={openWaitlist}
           >
             Join the waitlist
           </CustomButton>
         </div>
       </main>
 
-      <Dialog open={isWaitlistOpen} onOpenChange={setIsWaitlistOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Request to Join</DialogTitle>
-            <DialogDescription>
-              Enter your email to request access to our platform.
-            </DialogDescription>
-          </DialogHeader>
-          <RequestAccessForm onCancel={() => setIsWaitlistOpen(false)} />
-        </DialogContent>
+      <Dialog 
+        open={isWaitlistOpen} 
+        onClose={() => setIsWaitlistOpen(false)}
+        title="Welcome to Kyozo"
+        description="Create an account or sign in to access your community dashboard and settings."
+      >
+        <RequestAccessForm 
+          onCancel={() => setIsWaitlistOpen(false)} 
+          onSignInClick={openSignIn} 
+        />
+      </Dialog>
+      
+      <Dialog 
+        open={isSignInOpen} 
+        onClose={() => setIsSignInOpen(false)}
+        title="Welcome Back"
+        description="Sign in to access your Kyozo dashboard and community."
+        backgroundImage="/bg/light_app_bg.png"
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-grow">
+            <div className="space-y-4">
+              <Input 
+                label="Email" 
+                type="email" 
+              />
+              <Input 
+                label="Password" 
+                type="password" 
+              />
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div className="mb-4">
+              <button className="w-full button">Sign In</button>
+            </div>
+            
+            <div className="text-center text-sm text-secondary">
+              Don't have an account? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+            </div>
+          </div>
+        </div>
       </Dialog>
     </div>
   );

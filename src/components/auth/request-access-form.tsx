@@ -17,7 +17,7 @@ const requestAccessFormSchema = z.object({
   whatsapp: z.boolean(),
 });
 
-export function RequestAccessForm({ onCancel }: { onCancel: () => void }) {
+export function RequestAccessForm({ onCancel, onSignInClick }: { onCancel: () => void; onSignInClick?: () => void }) {
   const form = useForm<z.infer<typeof requestAccessFormSchema>>({
     resolver: zodResolver(requestAccessFormSchema),
     defaultValues: {
@@ -38,26 +38,41 @@ export function RequestAccessForm({ onCancel }: { onCancel: () => void }) {
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
       <div className="flex-grow">
         <div className="grid grid-cols-2 gap-4">
-          <Input placeholder="Firstname *" {...form.register("firstName")} />
-          <Input placeholder="Lastname *" {...form.register("lastName")} />
+          <Input label="First Name" {...form.register("firstName")} />
+          <Input label="Last Name" {...form.register("lastName")} />
         </div>
-        <Input placeholder="Phone *" {...form.register("phone")} />
-        <Input placeholder="Email *" {...form.register("email")} />
+        <Input label="Phone" {...form.register("phone")} />
+        <Input label="Email" {...form.register("email")} />
 
-        <Checkbox
-          id="newsletter"
-          label="Sign me up to the CreativeLab newsletter"
-          {...form.register("newsletter")}
-        />
-        <Checkbox
-          id="whatsapp"
-          label="By submitting this form I agree to be contacted via WhatsApp"
-          {...form.register("whatsapp")}
-        />
+        <div className="mt-6 mb-auto">
+          <Checkbox
+            id="newsletter"
+            label="Sign me up to the CreativeLab newsletter"
+            {...form.register("newsletter")}
+          />
+          <Checkbox
+            id="whatsapp"
+            label="By submitting this form I agree to be contacted via WhatsApp"
+            {...form.register("whatsapp")}
+          />
+        </div>
       </div>
-      <div className="flex gap-4 mt-auto">
-        <Button variant="outline" onClick={onCancel} className="w-full">Cancel</Button>
-        <Button type="submit" className="w-full">Submit</Button>
+      
+      <div className="mt-6">
+        <div className="flex gap-4 mb-4">
+          <Button variant="default" onClick={onCancel} className="w-full">Cancel</Button>
+          <Button type="submit" className="w-full">Submit</Button>
+        </div>
+        
+        <div className="text-center text-sm text-secondary">
+          Already have an account? <button 
+            type="button" 
+            className="text-primary hover:underline" 
+            onClick={onSignInClick}
+          >
+            Sign In here
+          </button>
+        </div>
       </div>
     </form>
   );
