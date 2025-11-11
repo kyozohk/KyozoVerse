@@ -1,27 +1,93 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
+import { storage } from '@/firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from '@/hooks/use-auth';
 import { PostCardSkeleton } from "@/components/feed/post-card-skeleton";
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Share2, UploadCloud, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { type Post, type User } from '@/lib/types';
 import Image from 'next/image';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useDropzone } from 'react-dropzone';
+
+function Dropzone({ onFileChange, file }: { onFileChange: (file: File | null) => void, file: File | null }) {
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        if (acceptedFiles?.length) {
+            onFileChange(acceptedFiles[0]);
+        }
+    }, [onFileChange]);
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: { 'image/*': [] },
+        maxFiles: 1,
+    });
+
+    return (
+        <div>
+            {!file ? (
+                <div
+                    {...getRootProps()}
+                    className={`mt-2 flex justify-center rounded-lg border border-dashed border-input px-6 py-10 ${isDragActive ? 'bg-accent' : ''}`}
+                >
+                    <div className="text-center">
+                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                            <label
+                                htmlFor="file-upload"
+                                className="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
+                            >
+                                <span>Upload a file</span>
+                                <input {...getInputProps()} id="file-upload" className="sr-only" />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                        </div>
+                        <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-2 relative">
+                    <Image
+                        src={URL.createObjectURL(file)}
+                        alt="Preview"
+                        width={600}
+                        height={400}
+                        className="w-full h-auto rounded-md"
+                    />
+                    <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6"
+                        onClick={() => onFileChange(null)}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  const [postImage, setPostImage] = useState<File | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,20 +121,35 @@ export default function DashboardPage() {
   }, []);
 
   const handleCreatePost = async () => {
-    if (!user || !newPostContent.trim()) return;
+    if (!user || (!newPostContent.trim() && !postImage)) return;
+    setIsSubmitting(true);
 
     try {
+        let mediaUrl = '';
+        if (postImage) {
+            const storageRef = ref(storage, `posts/${user.uid}/${Date.now()}_${postImage.name}`);
+            const uploadResult = await uploadBytes(storageRef, postImage);
+            mediaUrl = await getDownloadURL(uploadResult.ref);
+        }
+
       await addDoc(collection(db, "blogs"), {
-        type: 'text',
-        content: { text: newPostContent },
+        title: newPostTitle,
+        content: { 
+            text: newPostContent,
+            mediaUrls: mediaUrl ? [mediaUrl] : []
+        },
         authorId: user.uid,
         likes: 0,
         comments: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         visibility: isPublic ? 'public' : 'private',
+        type: postImage ? 'image' : 'text',
       });
+
+      setNewPostTitle('');
       setNewPostContent('');
+      setPostImage(null);
       setIsPublic(true);
       toast({
         title: "Success",
@@ -81,6 +162,8 @@ export default function DashboardPage() {
         description: "Could not create post. Please try again.",
         variant: "destructive",
       });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -98,13 +181,22 @@ export default function DashboardPage() {
               <AvatarImage src={user?.photoURL || undefined} />
               <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
-            <Textarea
-              placeholder="What's on your mind?"
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              className="flex-1"
-            />
+            <div className="flex-1 space-y-2">
+                 <Input
+                    placeholder="Title"
+                    value={newPostTitle}
+                    onChange={(e) => setNewPostTitle(e.target.value)}
+                    className="flex-1 font-bold"
+                 />
+                <Textarea
+                  placeholder="What's on your mind?"
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="flex-1"
+                />
+            </div>
           </div>
+          <Dropzone onFileChange={setPostImage} file={postImage} />
         </CardContent>
         <CardFooter className="flex justify-between items-center p-4">
           <div className="flex items-center space-x-2">
@@ -113,7 +205,9 @@ export default function DashboardPage() {
               Public
             </Label>
           </div>
-          <Button onClick={handleCreatePost} disabled={!newPostContent.trim()}>Post</Button>
+          <Button onClick={handleCreatePost} disabled={isSubmitting || (!newPostContent.trim() && !postImage)}>
+            {isSubmitting ? 'Posting...' : 'Post'}
+          </Button>
         </CardFooter>
       </Card>
 
@@ -140,9 +234,10 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="mb-4">{post.content.text}</p>
+                {post.title && <h2 className="text-xl font-semibold mb-2">{post.title}</h2>}
+                {post.content.text && <p className="mb-4">{post.content.text}</p>}
                 {post.content.mediaUrls?.[0] && (
-                    <Image src={post.content.mediaUrls[0]} alt="Post image" width={600} height={400} className="rounded-md" />
+                    <Image src={post.content.mediaUrls[0]} alt={post.title || "Post image"} width={600} height={400} className="rounded-md" />
                 )}
               </CardContent>
                <CardFooter className="flex items-center gap-4 text-muted-foreground">
@@ -166,3 +261,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
