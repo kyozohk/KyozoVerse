@@ -32,6 +32,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
+import { SidebarText } from '@/components/ui/sidebar-text';
 
 const communityNavItems = [
     { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
@@ -56,7 +57,7 @@ export default function CommunitySidebar() {
   const router = useRouter();
   
   // Check if we're in a community page
-  const isInCommunityPage = pathname.split('/').length > 1 && pathname.split('/')[1] !== '' && 
+  const isInCommunityPage = pathname.split('/').length > 2 && pathname.split('/')[1] !== '' && 
     !['communities', 'analytics', 'subscription', 'account', 'dashboard'].includes(pathname.split('/')[1]);
 
 
@@ -111,9 +112,9 @@ export default function CommunitySidebar() {
   }
 
   return (
-    <div className={`hidden border-r lg:block w-60 sidebar sidebar-bg-${currentSection} ml-[3rem]`}>
+    <div className={`hidden border-r lg:block w-64 sidebar sidebar-bg-${currentSection}`}>
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-[69px] items-center border-b px-4 lg:px-6">
             {loading ? (
                 <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
@@ -126,7 +127,7 @@ export default function CommunitySidebar() {
                                     <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
                                 </Avatar>
                             </div>
-                            <SelectValue className="font-medium" />
+                            <SidebarText><SelectValue /></SidebarText>
                         </div>
                     </SelectTrigger>
                     <SelectContent className="max-h-[400px] overflow-y-auto">
@@ -137,7 +138,7 @@ export default function CommunitySidebar() {
                                 <AvatarImage src={community.communityProfileImage} />
                                 <AvatarFallback>{community.name.substring(0,2)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{community.name}</span>
+                            <SidebarText>{community.name}</SidebarText>
                         </div>
                         </SelectItem>
                     ))}
@@ -151,21 +152,39 @@ export default function CommunitySidebar() {
             )}
         </div>
         <div className="flex-1">
-          <nav className="grid items-start px-2 text-xs font-medium lg:px-4 gap-1 py-4">
-            {selectedCommunityHandle && communityNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href(selectedCommunityHandle)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-accent/50 ${
-                    pathname === item.href(selectedCommunityHandle) 
-                      ? 'bg-accent text-white font-medium' 
-                      : 'text-white/80'
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
+          <nav className="grid items-start px-4 text-sm font-medium lg:px-6 gap-1 py-4">
+            {selectedCommunityHandle && communityNavItems.map((item) => {
+              const isActive = pathname === item.href(selectedCommunityHandle);
+              const sectionClasses = {
+                communities: {
+                  active: 'border-primary text-primary',
+                  hover: 'hover:text-primary'
+                },
+                analytics: {
+                  active: 'border-analytics text-analytics',
+                  hover: 'hover:text-analytics'
+                },
+                subscription: {
+                  active: 'border-subscription text-subscription',
+                  hover: 'hover:text-subscription'
+                },
+                settings: {
+                  active: 'border-settings text-settings',
+                  hover: 'hover:text-settings'
+                },
+              };
+              // @ts-ignore
+              const classes = sectionClasses[item.section] || sectionClasses.communities;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href(selectedCommunityHandle)}
+                  className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-accent/50 ${isActive ? `bg-accent ${classes.active}` : ''}`}>
+                  <item.icon className={`h-5 w-5 text-white group-hover:${classes.hover} ${isActive ? classes.active : ''}`} style={{ filter: 'drop-shadow(0px 0px 1px rgba(0,0,0,0.5))' }} />
+                  <SidebarText>{item.label}</SidebarText>
+                </Link>
+              )
+            })}
           </nav>
         </div>
 

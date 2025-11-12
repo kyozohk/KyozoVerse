@@ -16,7 +16,6 @@ import {
   SidebarContent, 
   SidebarHeader, 
   SidebarMenu, 
-  SidebarMenuItem, 
   SidebarMenuButton, 
   SidebarFooter, 
   SidebarInset, 
@@ -28,6 +27,8 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
+import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
+import { SidebarText } from '@/components/ui/sidebar-text';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -69,7 +70,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   // Check if we're in a community page
-  const isInCommunityPage = pathname.split('/').length > 1 && pathname.split('/')[1] !== '' && 
+  const isInCommunityPage = pathname.split('/').length > 2 && pathname.split('/')[1] !== '' && 
     !['communities', 'analytics', 'subscription', 'account', 'dashboard'].includes(pathname.split('/')[1]);
 
   const currentSection = getSectionFromPath(pathname);
@@ -77,84 +78,78 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar 
-          className={`sidebar-bg-${currentSection} ${isInCommunityPage ? 'narrow-sidebar' : ''}`} 
-          defaultCollapsed={isInCommunityPage} 
-          collapsible={!isInCommunityPage ? 'full' : 'icon'} 
-          defaultState={isInCommunityPage ? "collapsed" : "expanded"}
-          state={isInCommunityPage ? "collapsed" : undefined}
-        >
-          <SidebarHeader>
-            <div className="flex items-center justify-center p-2">
-              <Link href="/communities" className="flex items-center justify-center">
-                {/* Expanded Logo */}
-                <Image 
-                  src="/logo.png" 
-                  alt="Kyozo Logo" 
-                  width={144} 
-                  height={41} 
-                  className={`${isInCommunityPage ? 'hidden' : ''} group-data-[collapsible=icon]:hidden group-data-[state=collapsed]:hidden`} 
-                  style={{ height: 'auto' }} 
-                />
-                {/* Collapsed Icon */}
-                <Image 
-                  src="/favicon.png" 
-                  alt="Kyozo Icon" 
-                  width={41} 
-                  height={41} 
-                  className={`${isInCommunityPage ? 'block' : 'hidden'} group-data-[collapsible=icon]:block group-data-[state=collapsed]:block`} 
-                />
-              </Link>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton 
-                      isActive={pathname.startsWith(item.href)} 
-                      tooltip={item.label}
-                      className="text-white/80 hover:text-white"
-                    >
-                      <item.icon className="text-white/80 group-hover:text-white" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter>
-            <div className="flex flex-col gap-2 p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
-              <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:p-0">
-                <Avatar className="h-8 w-8 border-2 border-primary/10">
-                  <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-                  <AvatarFallback>{fallback}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium leading-none text-white">{user.displayName || user.email}</span>
-                  <span className="text-xs text-white/70">{user.email}</span>
-                </div>
+        <div className="flex flex-shrink-0">
+          <Sidebar 
+            className={`sidebar-bg-${currentSection} ${isInCommunityPage ? 'w-20' : 'w-64'}`}
+          >
+            <SidebarHeader>
+              <div className="flex h-[69px] items-center justify-center p-2">
+                <Link href="/communities" className="flex items-center justify-center">
+                  {/* Expanded Logo */}
+                  <Image 
+                    src="/logo.png" 
+                    alt="Kyozo Logo" 
+                    width={144} 
+                    height={41} 
+                    className={`${isInCommunityPage ? 'hidden' : 'block'}`} 
+                    style={{ height: 'auto' }} 
+                  />
+                  {/* Collapsed Icon */}
+                  <Image 
+                    src="/favicon.png" 
+                    alt="Kyozo Icon" 
+                    width={41} 
+                    height={41} 
+                    className={`${isInCommunityPage ? 'block' : 'hidden'}`} 
+                  />
+                </Link>
               </div>
-              <SidebarMenu className="group-data-[collapsible=icon]:p-0">
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={handleLogout} 
-                    tooltip="Log Out"
-                    className="text-white/80 hover:text-white"
-                  >
-                    <LogOut className="text-white/80 group-hover:text-white" />
-                    <span>Log Out</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarNavItem
+                    key={item.href}
+                    href={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    isActive={pathname.startsWith(item.href)}
+                    isCollapsed={isInCommunityPage}
+                    section={item.section}
+                  />
+                ))}
               </SidebarMenu>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-        
-        <CommunitySidebar />
-        
+            </SidebarContent>
+            <SidebarFooter>
+              <div className={`flex flex-col gap-2 p-2 ${isInCommunityPage ? 'items-center' : ''}`}>
+                <div className={`flex items-center gap-2 p-2 ${isInCommunityPage ? 'p-0' : ''}`}>
+                  <Avatar className="h-8 w-8 border-2 border-primary/10">
+                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                    <AvatarFallback>{fallback}</AvatarFallback>
+                  </Avatar>
+                  <div className={`flex flex-col ${isInCommunityPage ? 'hidden' : 'block'}`}>
+                    <SidebarText className="text-sm font-medium leading-none">{user.displayName || user.email}</SidebarText>
+                    <SidebarText className="text-xs text-white/70">{user.email}</SidebarText>
+                  </div>
+                </div>
+                <SidebarMenu className={`${isInCommunityPage ? 'p-0' : ''}`}>
+                  <SidebarMenuButton 
+                      onClick={handleLogout} 
+                      tooltip="Log Out"
+                      className={`text-white hover:text-white ${
+                        isInCommunityPage ? 'justify-center' : ''
+                      }`}
+                      style={{ textShadow: '0px 0px 1px rgba(0,0,0,0.5)' }}
+                    >
+                      <LogOut className="h-5 w-5 text-white group-hover:text-white" style={{ filter: 'drop-shadow(0px 0px 1px rgba(0,0,0,0.5))' }}/>
+                      <SidebarText className={`text-base ${isInCommunityPage ? 'hidden' : 'block'}`}>Log Out</SidebarText>
+                    </SidebarMenuButton>
+                </SidebarMenu>
+              </div>
+            </SidebarFooter>
+          </Sidebar>
+          <CommunitySidebar />
+        </div>
         <SidebarInset 
           style={{ 
             backgroundImage: `url('/bg/light_app_bg.png')`,
