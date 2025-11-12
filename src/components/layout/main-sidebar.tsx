@@ -28,10 +28,10 @@ import { Separator } from '@/components/ui/separator';
 
 const navItems = [
   { href: '/dashboard', icon: Users, label: 'Communities' },
-  { href: '#', icon: BarChart, label: 'Analytics' },
-  { href: '#', icon: Inbox, label: 'Inbox' },
-  { href: '#', icon: Replace, label: 'Migrate' },
-  { href: '#', icon: FileText, label: 'Firebase Data' },
+  { href: '/analytics', icon: BarChart, label: 'Analytics' },
+  { href: '/inbox', icon: Inbox, label: 'Inbox' },
+  { href: '/migrate', icon: Replace, label: 'Migrate' },
+  { href: '/firebase', icon: FileText, label: 'Firebase Data' },
 ];
 
 export default function MainSidebar() {
