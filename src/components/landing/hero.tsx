@@ -1,14 +1,15 @@
 "use client";
 
 import React from 'react';
-import { GradientText, CustomButton } from '@/components/ui';
+import { GradientText } from '@/components/ui/gradient-text';
+import { CustomButton } from '@/components/ui/custom-button';
 import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative w-full py-24 px-4 md:py-32 overflow-hidden">
+    <section className="relative w-full overflow-hidden">
        <h1
-          className="text-6xl md:text-8xl font-serif font-medium tracking-tight"
+          className="text-6xl md:text-8xl font-serif font-medium tracking-tight text-center"
           style={{
             lineHeight: 1.1,
             fontFamily: '"Playfair Display", "Gloock", serif',

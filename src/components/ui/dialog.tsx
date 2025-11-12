@@ -32,7 +32,12 @@ export function Dialog({
         </button>
         
         {/* Left side - Content */}
-        <div className="w-1/2 p-10 flex flex-col">
+        <div className="w-1/2 p-10 flex flex-col" style={{
+            backgroundImage: `url('/bg/light_app_bg.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+        }}>
           <h2 className="text-5xl font-bold mb-2 text-gray-800 dark:text-white">{title}</h2>
           <p className="text-gray-500 mb-8 text-base">{description}</p>
           <div className="flex-grow flex flex-col justify-between">
