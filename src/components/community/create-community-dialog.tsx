@@ -3,19 +3,18 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { CustomButton } from '../ui/CustomButton';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const STEPS = [
     { id: 1, title: 'Basic Info' },
@@ -48,7 +47,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
     const handlePrev = () => {
         if (currentStep > 0) {
-            setCurrentStep(currentStep + 1);
+            setCurrentStep(currentStep - 1);
         }
     };
     
@@ -67,28 +66,29 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         }
 
         setIsSubmitting(true);
-        try {
-            const communityData = {
-                name: formData.name,
-                handle: formData.handle,
-                slug: formData.handle,
-                tagline: formData.tagline,
-                lore: formData.lore,
-                mantras: formData.mantras,
-                communityPrivacy: formData.communityPrivacy,
-                communityType: formData.communityType,
-                ownerId: user.uid,
-                createdBy: user.uid,
-                updatedBy: user.uid,
-                memberCount: 1,
-                status: 'draft',
-                visibility: true,
-                isDeleted: false,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            };
-            await addDoc(collection(db, 'communities'), communityData);
+        
+        const communityData = {
+            name: formData.name,
+            handle: formData.handle,
+            slug: formData.handle,
+            tagline: formData.tagline,
+            lore: formData.lore,
+            mantras: formData.mantras,
+            communityPrivacy: formData.communityPrivacy,
+            communityType: formData.communityType,
+            ownerId: user.uid,
+            createdBy: user.uid,
+            updatedBy: user.uid,
+            memberCount: 1,
+            status: 'draft',
+            visibility: true,
+            isDeleted: false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
 
+        addDoc(collection(db, 'communities'), communityData)
+        .then(() => {
             toast({
                 title: "Success",
                 description: "Community created successfully.",
@@ -104,16 +104,22 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                 communityPrivacy: 'public',
                 communityType: 'community',
             });
-        } catch (error) {
-            console.error("Error creating community: ", error);
-             errorEmitter.emit('permission-error', new FirestorePermissionError({
+        })
+        .catch(async (serverError) => {
+            console.error("Error creating community: ", serverError);
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
                 path: '/communities',
                 operation: 'create',
                 requestResourceData: { name: formData.name, handle: formData.handle, ownerId: user.uid },
             }));
-        } finally {
+            toast({
+              title: "Error",
+              description: "Could not create community. You might not have the correct permissions.",
+              variant: "destructive",
+            });
+        }).finally(() => {
             setIsSubmitting(false);
-        }
+        });
     };
     
     const progress = ((currentStep + 1) / STEPS.length) * 100;
@@ -124,6 +130,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             onClose={() => setIsOpen(false)}
             title="Create a New Community"
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
+            showVideo={false}
         >
             <div className="flex flex-col h-full">
                 <div className="flex-grow space-y-4">
