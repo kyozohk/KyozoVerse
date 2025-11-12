@@ -7,7 +7,6 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { LayoutGrid, List, PlusCircle, Search } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
-import { CommunityCardSkeleton } from './community-card-skeleton';
 import Link from 'next/link';
 import { Header } from '@/components/ui/header';
 import { CreateCommunityDialog } from './create-community-dialog';
