@@ -26,8 +26,7 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Rounded rect button variant */
-.button-rounded-rect {
+.button.button-rounded-rect {
   border-radius: 8px;
   background-color: var(--primary-purple);
   color: white;
@@ -37,7 +36,7 @@
   transition: all 0.2s ease;
 }
 
-.button-rounded-rect:hover {
+.button.button-rounded-rect:hover {
   background-color: rgba(132, 52, 132, 0.9);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
@@ -49,17 +48,16 @@
   border: none;
   padding: 0.5rem;
   border-radius: 6px;
-  color: var(--button-text-color);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .icon-button:hover {
   color: var(--primary-purple);
-  transform: scale(1.1);
 }
 
-.icon-button-active {
+.icon-button.icon-button-active {
   color: var(--primary-purple);
   background-color: rgba(132, 52, 132, 0.2);
 }
@@ -215,7 +213,16 @@
     background-color: rgba(132, 52, 132, 0.2);
 }
 
+.sidebar-nav-item.active svg {
+    color: var(--button-border);
+}
+
 .sidebar-nav-item:hover {
+    color: var(--button-border);
+    background-color: rgba(132, 52, 132, 0.3);
+}
+
+.sidebar-nav-item:hover svg {
     color: var(--button-border);
 }
 
@@ -242,3 +249,4 @@
 .sidebar-bg-settings {
     background-color: rgba(6, 196, 181, 0.3);
 }
+
