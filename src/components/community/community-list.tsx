@@ -10,6 +10,7 @@ import { CommunityCard } from './community-card';
 import Link from 'next/link';
 import { Header } from '@/components/ui/header';
 import { CreateCommunityDialog } from './create-community-dialog';
+import { CommunityBanner } from './community-banner';
 
 type ViewMode = 'grid' | 'list';
 
@@ -29,20 +30,13 @@ export function CommunityList({ communities }: CommunityListProps) {
   );
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <Header 
-          title="Communities" 
-        />
-        <CustomButton 
-          variant="rounded-rect"
-          className="flex items-center gap-2"
-          onClick={() => setIsCreateDialogOpen(true)}
-        >
-          <PlusCircle className="h-5 w-5" />
-          New Community
-        </CustomButton>
-      </div>
+    <div className="container mx-auto px-4 py-6">
+      <CommunityBanner 
+        totalCommunities={communities.length} 
+        onCreateClick={() => setIsCreateDialogOpen(true)} 
+      />
+      
+    
 
       <div className="flex items-center justify-between mb-6 gap-4">
         <div className="relative flex-grow">
@@ -80,14 +74,11 @@ export function CommunityList({ communities }: CommunityListProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-card rounded-lg border">
+        <div className="text-center py-16 bg-card rounded-lg border" onClick={() => setIsCreateDialogOpen(true)}>
           <h3 className="text-lg font-medium mb-2">No communities found</h3>
           <p className="text-muted-foreground mb-6">
             {searchTerm ? 'Try a different search term or create a new community.' : 'Create your first community to get started.'}
           </p>
-          <CustomButton variant="rounded-rect" onClick={() => setIsCreateDialogOpen(true)}>
-            Create Community
-          </CustomButton>
         </div>
       )}
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />

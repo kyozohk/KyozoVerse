@@ -6,13 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { 
   BarChart3, 
-  DatabaseZap, 
-  Users, 
   CreditCard, 
   Settings, 
   LogOut, 
   LayoutGrid, 
-  Inbox,
   Loader2
 } from 'lucide-react';
 import { 
@@ -40,8 +37,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
+    } else if (pathname === '/dashboard') {
+      // Redirect from old path to new path
+      router.replace('/communities');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
     await signOut();
@@ -59,18 +59,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email!.charAt(0).toUpperCase();
 
   const navItems = [
-    { href: '/dashboard', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
     { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
-    { href: '/inbox', icon: Inbox, label: 'Inbox', section: 'communities' },
-    { href: '/migrate', icon: DatabaseZap, label: 'Migrate', section: 'settings' },
-    { href: '/firebase', icon: Users, label: 'Firebase Data', section: 'settings' },
     { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
+    { href: '/account', icon: Settings, label: 'Settings', section: 'settings' },
   ];
 
   const getSectionFromPath = (path: string) => {
-    if (path === '/dashboard' || path.startsWith('/communities')) return 'communities';
-    const currentItem = navItems.find(item => item.href !== '/dashboard' && path.startsWith(item.href));
+    if (path === '/communities' || path.startsWith('/communities')) return 'communities';
+    const currentItem = navItems.find(item => path.startsWith(item.href));
     return currentItem?.section || 'communities';
   };
 

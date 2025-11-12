@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -9,7 +8,7 @@ import { LucideIcon } from "lucide-react";
 import "@/styles/components.css";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "primary" | "outline" | "waitlist" | "rounded-rect";
+  variant?: "default" | "primary" | "outline" | "waitlist" | "rounded-rect" | "semi-rounded" | "white";
   size?: "default" | "small" | "large";
   icon?: LucideIcon;
   isLoading?: boolean;
@@ -35,6 +34,8 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
             "button-outline": variant === "outline",
             "button-waitlist": variant === "waitlist",
             "button-rounded-rect": variant === "rounded-rect",
+            "button-semi-rounded": variant === "semi-rounded",
+            "button-white": variant === "white",
             "button-small": size === "small",
             "button-large": size === "large",
           },

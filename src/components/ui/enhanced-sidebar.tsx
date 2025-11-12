@@ -256,7 +256,8 @@ const Sidebar = React.forwardRef<
            side === "right" && "border-r-0 border-l",
            variant === 'floating' && 'rounded-lg border shadow',
            variant === 'inset' && 'bg-transparent',
-           variant !== 'inset' && 'bg-card'
+           variant !== 'inset' && 'bg-card',
+           className
            )}
         >
           {children}
@@ -365,7 +366,7 @@ const SidebarMenu = React.forwardRef<
   <ul
     ref={ref}
     data-sidebar="menu"
-    className={cn("flex w-full min-w-0 flex-col gap-1 p-2", className)}
+    className={cn("flex w-full min-w-0 flex-col gap-3 p-2", className)} /* Increased gap from 1 to 3 (2px increase) */
     {...props}
   />
 ))
@@ -385,11 +386,11 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:text-primary group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:text-[#843484] group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
-        default: "hover:bg-primary/10 hover:text-primary",
+        default: "hover:text-[#843484]", /* Changed hover color to match button border */
         outline:
           "bg-background shadow-[0_0_0_1px_hsl(var(--border))] hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--accent))]",
       },
@@ -446,7 +447,7 @@ const SidebarMenuButton = React.forwardRef<
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       >
-        <div data-sidebar="menu-icon-wrapper" className="flex items-center justify-center h-7 w-7 rounded-md group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8">
+        <div data-sidebar="menu-icon-wrapper" className={`flex items-center justify-center h-7 w-7 rounded-md group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 ${isActive ? 'text-[#843484]' : ''}`}>
             {icon}
         </div>
         {label}

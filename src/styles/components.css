@@ -1,4 +1,3 @@
-
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -26,7 +25,25 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* Rounded rect button variant - now uses same background as regular button */
 .button.button-rounded-rect {
+  border-radius: 8px;
+  background-color: rgba(132, 52, 132, 0.2);
+  color: var(--button-text-color);
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  border: 1px solid var(--button-border);
+  transition: all 0.2s ease;
+}
+
+.button.button-rounded-rect:hover {
+  background-color: rgba(132, 52, 132, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Semi-rounded button variant */
+.button.button-semi-rounded {
   border-radius: 8px;
   background-color: var(--primary-purple);
   color: white;
@@ -36,8 +53,25 @@
   transition: all 0.2s ease;
 }
 
-.button.button-rounded-rect:hover {
+.button.button-semi-rounded:hover {
   background-color: rgba(132, 52, 132, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* White button variant for banners */
+.button.button-white {
+  border-radius: var(--button-radius);
+  background-color: white;
+  color: var(--primary-purple);
+  font-weight: 500;
+  padding: 0.75rem 2rem;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.button.button-white:hover {
+  background-color: rgba(255, 255, 255, 0.9);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
@@ -54,11 +88,11 @@
 }
 
 .icon-button:hover {
-  color: var(--primary-purple);
+  color: var(--button-border);
 }
 
 .icon-button.icon-button-active {
-  color: var(--primary-purple);
+  color: var(--button-border);
   background-color: rgba(132, 52, 132, 0.2);
 }
 
@@ -199,54 +233,50 @@
 
 /* Sidebar styles */
 .sidebar {
-    background-color: rgba(132, 52, 132, 0.2);
+  background-color: rgba(201, 167, 217, 0.3); /* Same as waitlist button background */
 }
 
 .sidebar-nav-item {
-    margin-bottom: 4px;
-    padding-top: 0.6rem;
-    padding-bottom: 0.6rem;
+  margin-bottom: 6px; /* Increased gap by 2px */
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
 }
 
 .sidebar-nav-item.active {
-    color: var(--button-border);
-    background-color: rgba(132, 52, 132, 0.2);
+  color: var(--button-border);
 }
 
 .sidebar-nav-item.active svg {
-    color: var(--button-border);
+  color: var(--button-border);
 }
 
 .sidebar-nav-item:hover {
-    color: var(--button-border);
-    background-color: rgba(132, 52, 132, 0.3);
+  color: var(--button-border);
 }
 
 .sidebar-nav-item:hover svg {
-    color: var(--button-border);
+  color: var(--button-border);
 }
 
-
 .selected-community-icon-bg {
-    background-color: rgba(132, 52, 132, 0.2);
-    border-radius: 0.5rem;
-    padding: 0.25rem;
+  background-color: rgba(132, 52, 132, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
 }
 
 /* Sidebar section background colors */
 .sidebar-bg-communities {
-    background-color: rgba(132, 52, 132, 0.3);
+  background-color: rgba(132, 52, 132, 0.3); /* #843484 with 30% transparency */
 }
 
 .sidebar-bg-analytics {
-    background-color: rgba(105, 159, 229, 0.3);
+  background-color: rgba(105, 159, 229, 0.3); /* #699FE5 with 30% transparency */
 }
 
 .sidebar-bg-subscription {
-    background-color: rgba(225, 179, 39, 0.3);
+  background-color: rgba(225, 179, 39, 0.3); /* #E1B327 with 30% transparency */
 }
 
 .sidebar-bg-settings {
-    background-color: rgba(6, 196, 181, 0.3);
+  background-color: rgba(6, 196, 181, 0.3); /* #06C4B5 with 30% transparency */
 }
-
