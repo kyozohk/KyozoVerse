@@ -15,6 +15,7 @@ import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { CustomButton } from '../ui/CustomButton';
 
 const STEPS = [
     { id: 1, title: 'Basic Info' },
@@ -47,7 +48,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
     const handlePrev = () => {
         if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
+            setCurrentStep(currentStep + 1);
         }
     };
     
@@ -168,27 +169,28 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                     )}
                 </div>
 
-                <div className="flex justify-between w-full mt-8">
-                    <div>
-                        {currentStep > 0 && (
-                            <Button variant="outline" onClick={handlePrev}>
+                <div className="mt-auto pt-6 space-y-2">
+                    <div className="grid grid-cols-2 gap-4">
+                        {currentStep > 0 ? (
+                           <CustomButton variant="outline" onClick={handlePrev}>
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Previous
-                            </Button>
+                            </CustomButton>
+                        ) : (
+                           <CustomButton variant="outline" onClick={() => setIsOpen(false)}>Cancel</CustomButton>
                         )}
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        
                         {currentStep < STEPS.length - 1 && (
-                            <Button onClick={handleNext}>
+                            <CustomButton onClick={handleNext}>
                                 Next
                                 <ArrowRight className="h-4 w-4 ml-2" />
-                            </Button>
+                            </CustomButton>
                         )}
+
                         {currentStep === STEPS.length - 1 && (
-                            <Button onClick={handleCreateCommunity} disabled={isSubmitting}>
+                            <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting}>
                                 {isSubmitting ? 'Creating...' : 'Create Community'}
-                            </Button>
+                            </CustomButton>
                         )}
                     </div>
                 </div>
