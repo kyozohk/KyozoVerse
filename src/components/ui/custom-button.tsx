@@ -8,7 +8,7 @@ import { LucideIcon } from "lucide-react";
 import "@/styles/components.css";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "primary" | "outline";
+  variant?: "default" | "primary" | "outline" | "rounded-rect";
   size?: "default" | "small" | "large";
   icon?: LucideIcon;
   isLoading?: boolean;
@@ -32,6 +32,7 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
           {
             "button-primary": variant === "primary",
             "button-outline": variant === "outline",
+            "button-rounded-rect": variant === "rounded-rect",
             "button-small": size === "small",
             "button-large": size === "large",
           },

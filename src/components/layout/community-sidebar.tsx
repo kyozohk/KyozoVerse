@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -27,19 +28,18 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
-import { Button } from '../ui/button';
+import { CustomButton } from '../ui/custom-button';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 
-
 const communityNavItems = [
-    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview' },
-    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox' },
-    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'Ticketing' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'Integrations' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics' },
+    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
+    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
+    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'analytics' },
 ];
 
 
@@ -96,6 +96,8 @@ export default function CommunitySidebar() {
   };
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
+  const currentNavItem = communityNavItems.find(item => pathname === item.href(selectedCommunityHandle || ''));
+  const currentSection = currentNavItem ? currentNavItem.section : 'communities';
 
   if (!isOwnerOfCurrentCommunity && pathname !== '/dashboard') {
       return null;
@@ -107,7 +109,7 @@ export default function CommunitySidebar() {
 
 
   return (
-    <div className="hidden border-r bg-card lg:block w-72">
+    <div className={`hidden border-r lg:block w-72 sidebar sidebar-bg-${currentSection}`}>
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             {loading ? (
@@ -116,10 +118,12 @@ export default function CommunitySidebar() {
                 <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
                     <SelectTrigger className="w-full">
                         <div className="flex items-center gap-3 truncate">
-                            <Avatar className="h-6 w-6">
-                                <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                                <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
-                            </Avatar>
+                             <div className="selected-community-icon-bg">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                                    <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
+                                </Avatar>
+                            </div>
                             <SelectValue />
                         </div>
                     </SelectTrigger>
@@ -138,10 +142,10 @@ export default function CommunitySidebar() {
                     </SelectContent>
               </Select>
             ) : (
-                <Button variant="outline" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+                <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Community
-                </Button>
+                </CustomButton>
             )}
         </div>
         <div className="flex-1">
@@ -150,7 +154,9 @@ export default function CommunitySidebar() {
               <Link
                 key={item.label}
                 href={item.href(selectedCommunityHandle)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
+                className={`flex items-center gap-3 rounded-lg px-3 transition-all sidebar-nav-item ${
+                    pathname === item.href(selectedCommunityHandle) ? 'active' : 'text-muted-foreground'
+                }`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -160,10 +166,10 @@ export default function CommunitySidebar() {
         </div>
 
         <div className="mt-auto p-4">
-             <Button variant="secondary" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+             <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Community
-            </Button>
+            </CustomButton>
         </div>
       </div>
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />

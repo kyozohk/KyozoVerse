@@ -1,3 +1,4 @@
+
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -46,7 +47,8 @@
 .icon-button {
   background: none;
   border: none;
-  padding: 0;
+  padding: 0.5rem;
+  border-radius: 6px;
   color: var(--button-text-color);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -59,6 +61,7 @@
 
 .icon-button-active {
   color: var(--primary-purple);
+  background-color: rgba(132, 52, 132, 0.2);
 }
 
 /* Input styles */
@@ -123,7 +126,7 @@
   left: 0.75rem;
   font-size: 0.75rem;
   color: #843484;
-  background-color: transparent;
+  background-color: white;
   padding: 0 0.25rem;
 }
 
@@ -194,4 +197,48 @@
 
 .border-primary {
   border-color: var(--primary-purple);
+}
+
+/* Sidebar styles */
+.sidebar {
+    background-color: rgba(132, 52, 132, 0.2);
+}
+
+.sidebar-nav-item {
+    margin-bottom: 2px;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+.sidebar-nav-item.active {
+    color: var(--button-border);
+    background-color: rgba(132, 52, 132, 0.2);
+}
+
+.sidebar-nav-item:hover {
+    color: var(--button-border);
+}
+
+
+.selected-community-icon-bg {
+    background-color: rgba(132, 52, 132, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+/* Sidebar section background colors */
+.sidebar-bg-communities {
+    background-color: rgba(132, 52, 132, 0.3);
+}
+
+.sidebar-bg-analytics {
+    background-color: rgba(105, 159, 229, 0.3);
+}
+
+.sidebar-bg-subscription {
+    background-color: rgba(225, 179, 39, 0.3);
+}
+
+.sidebar-bg-settings {
+    background-color: rgba(6, 196, 181, 0.3);
 }

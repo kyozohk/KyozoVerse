@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -46,7 +47,7 @@ export default function MainSidebar() {
   };
   
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r bg-card sm:flex">
+    <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r bg-card sm:flex sidebar">
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4 px-2 py-4">
           <Link
@@ -61,10 +62,10 @@ export default function MainSidebar() {
               <TooltipTrigger asChild>
                 <Link
                   href={item.href}
-                  className={`flex h-9 w-9 items-center justify-center transition-all md:h-8 md:w-8 ${
+                  className={`flex h-9 w-9 items-center justify-center transition-all md:h-8 md:w-8 sidebar-nav-item ${
                     pathname.startsWith(item.href) 
-                      ? 'text-[#843484]' 
-                      : 'text-muted-foreground hover:text-[#843484]'
+                      ? 'active' 
+                      : 'text-muted-foreground'
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
@@ -80,10 +81,10 @@ export default function MainSidebar() {
             <TooltipTrigger asChild>
               <Link
                 href="/settings"
-                className={`flex h-9 w-9 items-center justify-center transition-all md:h-8 md:w-8 ${
+                className={`flex h-9 w-9 items-center justify-center transition-all md:h-8 md:w-8 sidebar-nav-item ${
                   pathname.startsWith('/settings') 
-                    ? 'text-[#843484]' 
-                    : 'text-muted-foreground hover:text-[#843484]'
+                    ? 'active' 
+                    : 'text-muted-foreground'
                 }`}
               >
                 <Settings className="h-5 w-5" />

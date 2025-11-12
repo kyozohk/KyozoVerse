@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { CommunityCard } from './community-card';
 import { CommunityCardSkeleton } from './community-card-skeleton';
 import Link from 'next/link';
 import { Header } from '@/components/ui/header';
+import { CreateCommunityDialog } from './create-community-dialog';
 
 type ViewMode = 'grid' | 'list';
 
@@ -19,11 +21,12 @@ interface CommunityListProps {
 export function CommunityList({ communities }: CommunityListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   // Filter communities based on search term
   const filteredCommunities = communities.filter(community => 
     community.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (community.description && community.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    (community.tagline && community.tagline.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -31,11 +34,11 @@ export function CommunityList({ communities }: CommunityListProps) {
       <div className="flex items-center justify-between mb-8">
         <Header 
           title="Communities" 
-          subtitle="Manage and explore your communities"
         />
         <CustomButton 
           variant="rounded-rect"
           className="flex items-center gap-2"
+          onClick={() => setIsCreateDialogOpen(true)}
         >
           <PlusCircle className="h-5 w-5" />
           New Community
@@ -46,7 +49,6 @@ export function CommunityList({ communities }: CommunityListProps) {
         <div className="relative flex-grow">
           <Input
             label="Search communities..."
-            placeholder="Search communities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={<Search className="h-4 w-4" />}
@@ -58,14 +60,14 @@ export function CommunityList({ communities }: CommunityListProps) {
             className={`icon-button ${viewMode === 'list' ? 'icon-button-active' : ''}`}
             aria-label="List View"
           >
-            <List className="h-5 w-5" />
+            <List className="h-6 w-6" />
           </button>
           <button 
             onClick={() => setViewMode('grid')}
             className={`icon-button ${viewMode === 'grid' ? 'icon-button-active' : ''}`}
             aria-label="Grid View"
           >
-            <LayoutGrid className="h-5 w-5" />
+            <LayoutGrid className="h-6 w-6" />
           </button>
         </div>
       </div>
@@ -84,11 +86,12 @@ export function CommunityList({ communities }: CommunityListProps) {
           <p className="text-muted-foreground mb-6">
             {searchTerm ? 'Try a different search term or create a new community.' : 'Create your first community to get started.'}
           </p>
-          <CustomButton variant="rounded-rect">
+          <CustomButton variant="rounded-rect" onClick={() => setIsCreateDialogOpen(true)}>
             Create Community
           </CustomButton>
         </div>
       )}
+      <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
   );
 }

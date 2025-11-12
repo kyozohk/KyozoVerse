@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -24,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={cn("input", icon ? "input-with-icon" : "", error ? "hasError" : "", className)}
             ref={ref}
-            placeholder={label} // Use label as placeholder
+            placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
             {...props}
           />
           <label htmlFor={inputId} className="floatingLabel">
