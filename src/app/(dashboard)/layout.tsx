@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -68,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   const getSectionFromPath = (path: string) => {
-    if (path === '/dashboard') return 'communities';
+    if (path === '/dashboard' || path.startsWith('/communities')) return 'communities';
     const currentItem = navItems.find(item => item.href !== '/dashboard' && path.startsWith(item.href));
     return currentItem?.section || 'communities';
   };
@@ -83,7 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center justify-center p-2">
               <Link href="/dashboard" className="flex items-center justify-center">
                 {/* Expanded Logo */}
-                <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" />
+                <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}
                 <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
@@ -94,7 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href} passHref>
-                    <SidebarMenuButton isActive={pathname === item.href || (item.href === '/dashboard' && pathname.startsWith('/dashboard'))} tooltip={item.label}>
+                    <SidebarMenuButton isActive={pathname.startsWith(item.href)} tooltip={item.label}>
                       <item.icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
