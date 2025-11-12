@@ -1,9 +1,7 @@
 "use client";
 
 import React from 'react';
-import { CustomButton } from '@/components/ui/custom-button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { CustomButton, Input, Checkbox } from '@/components/ui';
 import { Mail, Send, Check } from 'lucide-react';
 
 export default function UiDemoPage() {

@@ -7,7 +7,8 @@ export function Dialog({
   title, 
   description, 
   backgroundImage,
-  showVideo = true
+  showVideo = true,
+  color
 }: { 
   open: boolean, 
   onClose: () => void, 
@@ -15,12 +16,13 @@ export function Dialog({
   title: string, 
   description: string,
   backgroundImage?: string,
-  showVideo?: boolean
+  showVideo?: boolean,
+  color?: string
 }) {
   if (!open) return null;
 
   // Debug logging
-  console.log('Dialog props:', { title, backgroundImage, showVideo });
+  console.log('Dialog props:', { title, backgroundImage, showVideo, color });
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-16">

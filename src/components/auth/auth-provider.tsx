@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 import { PostCardSkeleton } from "@/components/feed/post-card-skeleton";
 
-const staticPublicPaths = ['/login', '/signup', '/'];
+const staticPublicPaths = ['/', '/', '/'];
 // These are paths that are part of the app's internal structure and should be protected.
 const protectedBasePaths = ['/settings'];
 
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('AuthProvider - Auth check effect', { user: !!user, loading, isPublicPath });
     if (!loading && !user && !isPublicPath) {
       console.log('AuthProvider - Redirecting to login');
-      router.push('/login');
+      router.push('/');
     }
   }, [user, loading, router, pathname, isPublicPath]);
 

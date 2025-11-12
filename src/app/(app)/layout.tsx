@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -28,8 +27,9 @@ import { signOut } from '@/firebase/auth';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import CommunitySidebar from '@/components/layout/community-sidebar';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -37,15 +37,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/');
-    } else if (pathname === '/dashboard') {
-      // Redirect from old path to new path
-      router.replace('/communities');
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router]);
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/');
+    router.push('/landing');
   };
 
   if (loading || !user) {
@@ -66,7 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   const getSectionFromPath = (path: string) => {
-    if (path === '/communities' || path.startsWith('/communities')) return 'communities';
+    if (path.startsWith('/communities')) return 'communities';
     const currentItem = navItems.find(item => path.startsWith(item.href));
     return currentItem?.section || 'communities';
   };
@@ -79,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar className={`sidebar-bg-${currentSection}`}>
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
-              <Link href="/dashboard" className="flex items-center justify-center">
+              <Link href="/communities" className="flex items-center justify-center">
                 {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}
@@ -124,6 +121,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </SidebarFooter>
         </Sidebar>
+        
+        <CommunitySidebar />
+        
         <SidebarInset 
           style={{ 
             backgroundImage: `url('/bg/light_app_bg.png')`,

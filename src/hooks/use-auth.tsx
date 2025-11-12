@@ -54,8 +54,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return firebaseResetPassword(email);
   };
 
-  const signOut = () => {
-    return firebaseSignOut();
+  const signOut = async () => {
+    await firebaseSignOut();
+    router.push('/');
   }
 
   return (

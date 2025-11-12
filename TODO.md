@@ -1,0 +1,8 @@
+    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
+    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
+    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'analytics' },

@@ -124,7 +124,7 @@ export function AcceptInviteForm({ inviteData, token }: AcceptInviteFormProps) {
       });
       
       // Redirect to login page or dashboard
-      router.push('/login');
+      router.push('/');
     } catch (err: any) {
       console.error('Error accepting invite:', err);
       toast({

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CustomButton } from '@/components/ui/CustomButton';
+import { CustomButton } from '@/components/ui';
 import { PlusCircle, Users, Sparkles } from 'lucide-react';
 import '@/styles/banner-animation.css';
 

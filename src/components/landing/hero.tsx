@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import { GradientText } from '@/components/ui/gradient-text';
-import { CustomButton } from '@/components/ui/custom-button';
+import { GradientText, CustomButton } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
 
 export function Hero() {

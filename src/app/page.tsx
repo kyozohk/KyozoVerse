@@ -3,10 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { CustomButton } from '@/components/ui/CustomButton';
-import { Dialog } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { PasswordInput } from '@/components/ui/PasswordInput';
+import { CustomButton, Dialog, Input, PasswordInput } from '@/components/ui';
 import { RequestAccessForm } from '@/components/auth/request-access-form';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useAuth } from '@/hooks/use-auth';
@@ -65,7 +62,10 @@ export default function Home() {
       <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center">
         <Image src="/logo.png" alt="Kyozo Logo" width={100} height={28} />
         {user ? (
-          <CustomButton onClick={signOut}>Sign Out</CustomButton>
+          <CustomButton onClick={() => {
+            signOut();
+            router.push('/landing');
+          }}>Sign Out</CustomButton>
         ) : (
           <CustomButton onClick={openSignIn}>Sign In</CustomButton>
         )}
@@ -88,6 +88,8 @@ export default function Home() {
         onClose={() => setIsWaitlistOpen(false)}
         title={formType === 'signup' ? 'Welcome to Kyozo' : 'Join the Waitlist'}
         description={formType === 'signup' ? 'Create an account to access your community dashboard and settings.' : 'Join the exclusive club of creators, fill up the form and we will get back to you.'}
+        backgroundImage="/bg/light_app_bg.png"
+        color="#C170CF"
       >
         <RequestAccessForm 
           onCancel={() => setIsWaitlistOpen(false)} 
@@ -103,6 +105,7 @@ export default function Home() {
         title="Welcome Back"
         description="Sign in to access your Kyozo dashboard and community."
         backgroundImage="/bg/light_app_bg.png"
+        color="#C170CF"
       >
         <div className="flex flex-col h-full">
           <div className="flex-grow">

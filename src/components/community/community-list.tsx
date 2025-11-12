@@ -2,13 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { CustomButton } from '@/components/ui/CustomButton';
+import { Input, CustomButton } from '@/components/ui';
 import { LayoutGrid, List, PlusCircle, Search } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
 import Link from 'next/link';
-import { Header } from '@/components/ui/header';
 import { CreateCommunityDialog } from './create-community-dialog';
 import { CommunityBanner } from './community-banner';
 

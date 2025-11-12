@@ -21,14 +21,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage, 
+  Skeleton, 
+  CustomButton
+} from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
-import { Skeleton } from '../ui/skeleton';
-import { CustomButton } from '../ui/custom-button';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 
 const communityNavItems = [

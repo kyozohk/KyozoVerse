@@ -3,11 +3,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { CustomButton } from '@/components/ui/CustomButton';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Input, CustomButton, Checkbox, PasswordInput } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
-import { PasswordInput } from '@/components/ui/PasswordInput';
 import { FirebaseError } from 'firebase/app';
 
 interface RequestAccessFormProps {
@@ -115,7 +112,8 @@ export function RequestAccessForm({ onCancel, onSignInClick, formType, setFormTy
         
         <div className="text-center text-sm text-secondary mt-2">
             {formType === 'waitlist' ? (
-                <p>Don't have an account? <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>Sign Up here</button></p>
+              <p></p>
+                // <p>Don't have an account? <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>Sign Up here</button></p>
             ) : (
                 <p>Back to <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>waitlist</button></p>
             )}
