@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { LayoutGrid, List, Search } from 'lucide-react';
+import { LayoutGrid, List, PlusCircle, Search } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
 import { CommunityCardSkeleton } from './community-card-skeleton';
 import Link from 'next/link';
+import { Header } from '@/components/ui/header';
 
 type ViewMode = 'grid' | 'list';
 
@@ -27,34 +28,45 @@ export function CommunityList({ communities }: CommunityListProps) {
 
   return (
     <div>
+      <div className="flex items-center justify-between mb-8">
+        <Header 
+          title="Communities" 
+          subtitle="Manage and explore your communities"
+        />
+        <CustomButton 
+          variant="rounded-rect"
+          className="flex items-center gap-2"
+        >
+          <PlusCircle className="h-5 w-5" />
+          New Community
+        </CustomButton>
+      </div>
+
       <div className="flex items-center justify-between mb-6 gap-4">
         <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            label="Search"
+            label="Search communities..."
             placeholder="Search communities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            icon={<Search className="h-4 w-4" />}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <CustomButton 
-            variant={viewMode === 'list' ? 'primary' : 'default'} 
+        <div className="flex items-center gap-4">
+          <button 
             onClick={() => setViewMode('list')}
-            className="h-9 w-9 p-0"
+            className={`icon-button ${viewMode === 'list' ? 'icon-button-active' : ''}`}
+            aria-label="List View"
           >
-            <List className="h-4 w-4" />
-            <span className="sr-only">List View</span>
-          </CustomButton>
-          <CustomButton 
-            variant={viewMode === 'grid' ? 'primary' : 'default'} 
+            <List className="h-5 w-5" />
+          </button>
+          <button 
             onClick={() => setViewMode('grid')}
-            className="h-9 w-9 p-0"
+            className={`icon-button ${viewMode === 'grid' ? 'icon-button-active' : ''}`}
+            aria-label="Grid View"
           >
-            <LayoutGrid className="h-4 w-4" />
-            <span className="sr-only">Grid View</span>
-          </CustomButton>
+            <LayoutGrid className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
@@ -72,7 +84,7 @@ export function CommunityList({ communities }: CommunityListProps) {
           <p className="text-muted-foreground mb-6">
             {searchTerm ? 'Try a different search term or create a new community.' : 'Create your first community to get started.'}
           </p>
-          <CustomButton onClick={() => {}}>
+          <CustomButton variant="rounded-rect">
             Create Community
           </CustomButton>
         </div>

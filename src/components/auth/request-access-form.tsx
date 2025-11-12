@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +18,7 @@ interface RequestAccessFormProps {
 }
 
 export function RequestAccessForm({ onCancel, onSignInClick, formType, setFormType }: RequestAccessFormProps) {
+  const router = useRouter();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -42,7 +44,8 @@ export function RequestAccessForm({ onCancel, onSignInClick, formType, setFormTy
       }
       try {
         await signUp(email, password, { firstName, lastName, phone });
-        // Handle successful signup (e.g., close dialog, show message)
+        // Redirect to dashboard after successful sign-up
+        router.push('/dashboard');
       } catch (error: any) {
         if (error instanceof FirebaseError) {
             if (error.code === 'auth/email-already-in-use') {
@@ -98,8 +101,8 @@ export function RequestAccessForm({ onCancel, onSignInClick, formType, setFormTy
         {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
 
         <div className="grid grid-cols-2 gap-4 mt-8">
-            <CustomButton variant="secondary" onClick={onCancel}>Cancel</CustomButton>
-            <CustomButton onClick={handleSubmit}>{formType === 'waitlist' ? 'Submit' : 'Sign Up'}</CustomButton>
+            <CustomButton variant="default" onClick={onCancel}>Cancel</CustomButton>
+            <CustomButton variant="primary" onClick={handleSubmit}>{formType === 'waitlist' ? 'Submit' : 'Sign Up'}</CustomButton>
         </div>
 
         <div className="text-center text-sm text-secondary mt-6">

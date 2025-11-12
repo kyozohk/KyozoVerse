@@ -1,7 +1,7 @@
-
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Dialog } from '@/components/ui/dialog';
@@ -14,6 +14,7 @@ import { FirebaseError } from 'firebase/app';
 import { Hero } from '@/components/landing/hero';
 
 export default function Home() {
+  const router = useRouter();
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
@@ -47,6 +48,7 @@ export default function Home() {
     try {
       await signIn(email, password);
       setIsSignInOpen(false);
+      router.push('/dashboard');
     } catch (error: any) {
         let description = "An unexpected error occurred. Please try again.";
         if (error instanceof FirebaseError) {
@@ -61,7 +63,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
       <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center">
-        <Image src="/logo.png" alt="Kyozo Logo" width={100} height={28} />
+        <Image src="/favionc.png" alt="Kyozo Logo" width={100} height={28} />
         {user ? (
           <CustomButton onClick={signOut}>Sign Out</CustomButton>
         ) : (

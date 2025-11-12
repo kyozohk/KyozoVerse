@@ -8,21 +8,23 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   label: string; // Made label mandatory for floating label
   error?: string;
   wrapperClassName?: string;
+  icon?: React.ReactNode;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, error, wrapperClassName, ...props }, ref) => {
+  ({ className, type, label, error, wrapperClassName, icon, ...props }, ref) => {
     const inputId = React.useId();
 
     return (
       <div className={cn("inputWrapper", wrapperClassName)}>
         <div className={cn("inputContainer", error ? "hasError" : "")}>
+          {icon && <div className="input-icon">{icon}</div>}
           <input
             id={inputId}
             type={type}
-            className={cn("input", error ? "hasError" : "", className)}
+            className={cn("input", icon ? "input-with-icon" : "", error ? "hasError" : "", className)}
             ref={ref}
-            placeholder=" " // Required for the floating label to work
+            placeholder={label} // Use label as placeholder
             {...props}
           />
           <label htmlFor={inputId} className="floatingLabel">

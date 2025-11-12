@@ -4,7 +4,7 @@ import '@/styles/components.css';
 
 interface CustomButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  variant?: 'default' | 'primary' | 'outline' | 'waitlist';
+  variant?: 'default' | 'primary' | 'outline' | 'waitlist' | 'rounded-rect';
   size?: 'default' | 'small' | 'large';
 }
 
@@ -23,6 +23,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
           'button-primary': variant === 'primary',
           'button-outline': variant === 'outline',
           'button-waitlist': variant === 'waitlist',
+          'button-rounded-rect': variant === 'rounded-rect',
           'button-small': size === 'small',
           'button-large': size === 'large',
         },

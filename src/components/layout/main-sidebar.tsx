@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Home,
   Users,
@@ -37,11 +38,13 @@ const navItems = [
 export default function MainSidebar() {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
   };
+  
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r bg-card sm:flex">
       <TooltipProvider>
@@ -58,7 +61,11 @@ export default function MainSidebar() {
               <TooltipTrigger asChild>
                 <Link
                   href={item.href}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={`flex h-9 w-9 items-center justify-center transition-all md:h-8 md:w-8 ${
+                    pathname.startsWith(item.href) 
+                      ? 'text-[#843484]' 
+                      : 'text-muted-foreground hover:text-[#843484]'
+                  }`}
                 >
                   <item.icon className="h-5 w-5" />
                   <span className="sr-only">{item.label}</span>
@@ -73,7 +80,11 @@ export default function MainSidebar() {
             <TooltipTrigger asChild>
               <Link
                 href="/settings"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                className={`flex h-9 w-9 items-center justify-center transition-all md:h-8 md:w-8 ${
+                  pathname.startsWith('/settings') 
+                    ? 'text-[#843484]' 
+                    : 'text-muted-foreground hover:text-[#843484]'
+                }`}
               >
                 <Settings className="h-5 w-5" />
                 <span className="sr-only">Settings</span>
@@ -106,7 +117,7 @@ export default function MainSidebar() {
                   <TooltipTrigger asChild>
                     <button 
                       onClick={handleSignOut}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
+                      className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-all hover:text-[#843484]"
                     >
                       <LogOut className="h-4 w-4" />
                       <span className="sr-only">Log out</span>

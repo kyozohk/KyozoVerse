@@ -25,6 +25,42 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* Rounded rect button variant */
+.button-rounded-rect {
+  border-radius: 8px;
+  background-color: var(--primary-purple);
+  color: white;
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.button-rounded-rect:hover {
+  background-color: rgba(132, 52, 132, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Icon button styles */
+.icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--button-text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+  color: var(--primary-purple);
+  transform: scale(1.1);
+}
+
+.icon-button-active {
+  color: var(--primary-purple);
+}
+
 /* Input styles */
 .inputWrapper {
   margin-bottom: 0.75rem;
@@ -38,7 +74,6 @@
 
 .input {
   background-color: transparent;
-  /* border: 1px solid var(--input-border-color); */
   border: 1px solid var(--button-border);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
@@ -54,6 +89,20 @@
   border-color: #843484;
 }
 
+.input-with-icon {
+  padding-left: 2.5rem;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--button-border);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .floatingLabel {
   position: absolute;
   top: 0.7rem;
@@ -64,13 +113,17 @@
   transition: all 0.2s ease;
 }
 
+.input-with-icon ~ .floatingLabel {
+  left: 2.5rem;
+}
+
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
   top: -0.75rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: #843484;
-  background-color: #ffffff;
+  background-color: transparent;
   padding: 0 0.25rem;
 }
 
