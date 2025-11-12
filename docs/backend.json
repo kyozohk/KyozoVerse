@@ -42,7 +42,18 @@
       "properties": {
         "name": { "type": "string" },
         "handle": { "type": "string" },
-        "ownerId": { "type": "string" }
+        "ownerId": { "type": "string" },
+        "tagline": { "type": "string" },
+        "lore": { "type": "string" },
+        "mantras": { "type": "string" },
+        "slug": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "publish", "archived"] },
+        "communityPrivacy": { "type": "string", "enum": ["public", "private", "invite-only"] },
+        "communityType": { "type": "string", "enum": ["community", "group", "event", "course"] },
+        "communityProfileImage": { "type": "string", "format": "uri" },
+        "communityBackgroundImage": { "type": "string", "format": "uri" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" }
       },
       "required": ["name", "handle", "ownerId"]
     }
