@@ -30,7 +30,6 @@ import { signOut } from '@/firebase/auth';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { CustomButton } from '@/components/ui/CustomButton';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -59,19 +58,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email!.charAt(0).toUpperCase();
 
   const navItems = [
-    { href: '/dashboard', icon: LayoutGrid, label: 'Communities' },
-    { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { href: '/inbox', icon: Inbox, label: 'Inbox' },
-    { href: '/migrate', icon: DatabaseZap, label: 'Migrate' },
-    { href: '/firebase', icon: Users, label: 'Firebase Data' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription' },
-    { href: '/settings', icon: Settings, label: 'Settings' },
+    { href: '/dashboard', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
+    { href: '/inbox', icon: Inbox, label: 'Inbox', section: 'communities' },
+    { href: '/migrate', icon: DatabaseZap, label: 'Migrate', section: 'settings' },
+    { href: '/firebase', icon: Users, label: 'Firebase Data', section: 'settings' },
+    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
+    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
   ];
+
+  const getSectionFromPath = (path: string) => {
+    if (path === '/dashboard') return 'communities';
+    const currentItem = navItems.find(item => item.href !== '/dashboard' && path.startsWith(item.href));
+    return currentItem?.section || 'communities';
+  };
+
+  const currentSection = getSectionFromPath(pathname);
 
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar>
+        <Sidebar className={`sidebar-bg-${currentSection}`}>
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
               <Link href="/dashboard" className="flex items-center justify-center">
