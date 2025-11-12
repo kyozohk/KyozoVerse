@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link"
@@ -15,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/icons/logo"
-import { signInWithGoogle, signInWithEmail } from "@/firebase/auth";
+import { signInWithGoogle, signInWithEmailPassword } from "@/firebase/auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
@@ -29,7 +28,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-      router.push('/kyozo-demo');
+      router.push('/dashboard');
     } catch (error) {
       console.error("Google Sign-In Error:", error);
       toast({
@@ -43,8 +42,8 @@ export default function LoginPage() {
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmail(email, password);
-      router.push('/kyozo-demo');
+      await signInWithEmailPassword(email, password);
+      router.push('/dashboard');
     } catch (error) {
       console.error("Email Sign-In Error:", error);
       let description = "An unexpected error occurred. Please try again.";

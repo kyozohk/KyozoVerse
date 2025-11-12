@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -24,18 +23,12 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { addDoc, serverTimestamp } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { CreateCommunityDialog } from '../community/create-community-dialog';
 
 
 const communityNavItems = [
@@ -48,83 +41,6 @@ const communityNavItems = [
     { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'Integrations' },
     { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics' },
 ];
-
-function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (open: boolean) => void }) {
-    const { user } = useAuth();
-    const { toast } = useToast();
-    const [name, setName] = useState('');
-    const [handle, setHandle] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleCreateCommunity = async () => {
-        if (!user || !name.trim() || !handle.trim()) {
-            toast({
-                title: "Error",
-                description: "Please fill in all fields.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const communityData = {
-                name,
-                handle,
-                ownerId: user.uid,
-                memberCount: 1,
-                createdAt: serverTimestamp(),
-            };
-            const docRef = await addDoc(collection(db, 'communities'), communityData);
-
-            toast({
-                title: "Success",
-                description: "Community created successfully.",
-            });
-            setIsOpen(false);
-            setName('');
-            setHandle('');
-        } catch (error) {
-            console.error("Error creating community: ", error);
-             errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: '/communities',
-                operation: 'create',
-                requestResourceData: { name, handle, ownerId: user.uid },
-            }));
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create New Community</DialogTitle>
-                    <DialogDescription>
-                        Fill in the details below to create your new community.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Community Name</Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. AI Innovators" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="handle">Community Handle</Label>
-                        <Input id="handle" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="ai-innovators" />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                    <Button onClick={handleCreateCommunity} disabled={isSubmitting}>
-                        {isSubmitting ? 'Creating...' : 'Create Community'}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
 
 
 export default function CommunitySidebar() {
@@ -158,8 +74,8 @@ export default function CommunitySidebar() {
         
         if (currentCommunity) {
             setSelectedCommunityHandle(currentCommunity.handle);
-        } else if (userCommunities.length > 0) {
-             // If not viewing an owned community, default to the first one in the list for the dropdown
+        } else if (userCommunities.length > 0 && handleFromPath === 'dashboard') {
+             // If on dashboard, default to the first one in the list for the dropdown
             setSelectedCommunityHandle(userCommunities[0].handle);
         } else {
             setSelectedCommunityHandle(null);
@@ -168,10 +84,6 @@ export default function CommunitySidebar() {
         setLoading(false);
     }, (error) => {
         console.error("Error fetching communities:", error);
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: '/communities',
-            operation: 'list',
-        }));
         setLoading(false);
     });
 
@@ -185,9 +97,14 @@ export default function CommunitySidebar() {
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
 
-  if (!isOwnerOfCurrentCommunity) {
+  if (!isOwnerOfCurrentCommunity && pathname !== '/dashboard') {
       return null;
   }
+
+  if (pathname === '/dashboard') {
+      return null;
+  }
+
 
   return (
     <div className="hidden border-r bg-card lg:block w-72">

@@ -4,9 +4,12 @@ import Link from 'next/link';
 import {
   Home,
   Users,
-  Crown,
+  Inbox,
   Settings,
   LogOut,
+  BarChart,
+  FileText,
+  Replace
 } from 'lucide-react';
 
 import {
@@ -24,9 +27,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 
 const navItems = [
-  { href: '/kyozo-demo', icon: Home, label: 'Feed' },
-  { href: '#', icon: Users, label: 'Communities' },
-  { href: '#', icon: Crown, label: 'Subscriptions' },
+  { href: '/dashboard', icon: Users, label: 'Communities' },
+  { href: '#', icon: BarChart, label: 'Analytics' },
+  { href: '#', icon: Inbox, label: 'Inbox' },
+  { href: '#', icon: Replace, label: 'Migrate' },
+  { href: '#', icon: FileText, label: 'Firebase Data' },
 ];
 
 export default function MainSidebar() {
@@ -42,7 +47,7 @@ export default function MainSidebar() {
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4 px-2 py-4">
           <Link
-            href="/kyozo-demo"
+            href="/dashboard"
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
             <Logo className="h-5 w-5 transition-all group-hover:scale-110" />

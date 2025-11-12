@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link"
@@ -44,7 +43,7 @@ export default function SignupPage() {
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
-      router.push('/kyozo-demo');
+      router.push('/dashboard');
     } catch (error) {
       console.error("Google Sign-In Error:", error);
       toast({
@@ -73,7 +72,7 @@ export default function SignupPage() {
         updatedAt: serverTimestamp(),
       });
 
-      router.push('/kyozo-demo');
+      router.push('/dashboard');
     } catch (error: any) {
       console.error("Email Sign-Up Error:", error);
        toast({
