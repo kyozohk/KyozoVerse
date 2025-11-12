@@ -31,7 +31,7 @@ service cloud.firestore {
     match /communities/{communityId} {
         allow get: if isSignedIn();
         allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-        allow list: if isSignedIn() && request.query.get('ownerId') == request.auth.uid;
+        allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
     }
 
     match /accessRequests/{requestId} {
