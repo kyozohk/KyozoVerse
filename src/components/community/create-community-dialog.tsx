@@ -33,6 +33,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         tagline: '',
         lore: '',
         mantras: '',
+        tags: '',
+        location: '',
         communityPrivacy: 'public',
         communityType: 'community',
     });
@@ -74,6 +76,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             tagline: formData.tagline,
             lore: formData.lore,
             mantras: formData.mantras,
+            tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+            location: formData.location,
             communityPrivacy: formData.communityPrivacy,
             communityType: formData.communityType,
             ownerId: user.uid,
@@ -81,36 +85,17 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             updatedBy: user.uid,
             memberCount: 1,
             status: 'draft',
-            visibility: true,
-            isDeleted: false,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
 
         addDoc(collection(db, 'communities'), communityData)
-        .then(() => {
-            toast({
-                title: "Success",
-                description: "Community created successfully.",
-            });
-            setIsOpen(false);
-            setCurrentStep(0);
-            setFormData({
-                name: '',
-                handle: '',
-                tagline: '',
-                lore: '',
-                mantras: '',
-                communityPrivacy: 'public',
-                communityType: 'community',
-            });
-        })
         .catch(async (serverError) => {
             console.error("Error creating community: ", serverError);
             errorEmitter.emit('permission-error', new FirestorePermissionError({
                 path: '/communities',
                 operation: 'create',
-                requestResourceData: { name: formData.name, handle: formData.handle, ownerId: user.uid },
+                requestResourceData: communityData,
             }));
             toast({
               title: "Error",
@@ -119,6 +104,25 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             });
         }).finally(() => {
             setIsSubmitting(false);
+            if(!isSubmitting){
+                toast({
+                    title: "Success",
+                    description: "Community created successfully.",
+                });
+                setIsOpen(false);
+                setCurrentStep(0);
+                setFormData({
+                    name: '',
+                    handle: '',
+                    tagline: '',
+                    lore: '',
+                    mantras: '',
+                    tags: '',
+                    location: '',
+                    communityPrivacy: 'public',
+                    communityType: 'community',
+                });
+            }
         });
     };
     
@@ -130,7 +134,6 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             onClose={() => setIsOpen(false)}
             title="Create a New Community"
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
-            showVideo={false}
         >
             <div className="flex flex-col h-full">
                 <div className="flex-grow space-y-4">
@@ -145,8 +148,10 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                     )}
                     {currentStep === 1 && (
                          <div className="space-y-4">
-                            <Textarea value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="The story and background of your community." className="min-h-[100px]" />
-                            <Textarea value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Core beliefs or slogans of your community." className="min-h-[100px]" />
+                            <Textarea label="Community Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="The story and background of your community." />
+                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Core beliefs or slogans of your community." />
+                            <Input label="Tags (comma-separated)" value={formData.tags} onChange={(e) => handleValueChange('tags', e.target.value)} placeholder="e.g. AI, Art, Music" />
+                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} placeholder="e.g. Hong Kong" />
                         </div>
                     )}
                     {currentStep === 2 && (
@@ -176,30 +181,26 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                     )}
                 </div>
 
-                <div className="mt-auto pt-6 space-y-2">
-                    <div className="grid grid-cols-2 gap-4">
-                        {currentStep > 0 ? (
-                           <CustomButton variant="outline" onClick={handlePrev}>
-                                <ArrowLeft className="h-4 w-4 mr-2" />
-                                Previous
-                            </CustomButton>
-                        ) : (
-                           <CustomButton variant="outline" onClick={() => setIsOpen(false)}>Cancel</CustomButton>
-                        )}
-                        
-                        {currentStep < STEPS.length - 1 && (
-                            <CustomButton onClick={handleNext}>
-                                Next
-                                <ArrowRight className="h-4 w-4 ml-2" />
-                            </CustomButton>
-                        )}
-
-                        {currentStep === STEPS.length - 1 && (
-                            <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting}>
-                                {isSubmitting ? 'Creating...' : 'Create Community'}
-                            </CustomButton>
-                        )}
-                    </div>
+                 <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
+                    {currentStep > 0 ? (
+                        <CustomButton variant="outline" onClick={handlePrev} className="w-full">
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Previous
+                        </CustomButton>
+                    ) : (
+                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full">Cancel</CustomButton>
+                    )}
+                    
+                    {currentStep < STEPS.length - 1 ? (
+                        <CustomButton onClick={handleNext} className="w-full">
+                            Next
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                        </CustomButton>
+                    ) : (
+                        <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting} className="w-full">
+                            {isSubmitting ? 'Creating...' : 'Create Community'}
+                        </CustomButton>
+                    )}
                 </div>
             </div>
         </Dialog>
