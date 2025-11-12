@@ -68,19 +68,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return currentItem?.section || 'communities';
   };
 
+  // Check if we're in a community page
+  const isInCommunityPage = pathname.split('/').length > 1 && pathname.split('/')[1] !== '' && 
+    !['communities', 'analytics', 'subscription', 'account', 'dashboard'].includes(pathname.split('/')[1]);
+
   const currentSection = getSectionFromPath(pathname);
 
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className={`sidebar-bg-${currentSection}`}>
+        <Sidebar 
+          className={`sidebar-bg-${currentSection} ${isInCommunityPage ? 'narrow-sidebar' : ''}`} 
+          defaultCollapsed={isInCommunityPage} 
+          collapsible={!isInCommunityPage ? 'full' : 'icon'} 
+          defaultState={isInCommunityPage ? "collapsed" : "expanded"}
+          state={isInCommunityPage ? "collapsed" : undefined}
+        >
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center">
                 {/* Expanded Logo */}
-                <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
+                <Image 
+                  src="/logo.png" 
+                  alt="Kyozo Logo" 
+                  width={144} 
+                  height={41} 
+                  className={`${isInCommunityPage ? 'hidden' : ''} group-data-[collapsible=icon]:hidden group-data-[state=collapsed]:hidden`} 
+                  style={{ height: 'auto' }} 
+                />
                 {/* Collapsed Icon */}
-                <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
+                <Image 
+                  src="/favicon.png" 
+                  alt="Kyozo Icon" 
+                  width={41} 
+                  height={41} 
+                  className={`${isInCommunityPage ? 'block' : 'hidden'} group-data-[collapsible=icon]:block group-data-[state=collapsed]:block`} 
+                />
               </Link>
             </div>
           </SidebarHeader>
@@ -89,8 +112,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href} passHref>
-                    <SidebarMenuButton isActive={pathname.startsWith(item.href)} tooltip={item.label}>
-                      <item.icon />
+                    <SidebarMenuButton 
+                      isActive={pathname.startsWith(item.href)} 
+                      tooltip={item.label}
+                      className="text-white/80 hover:text-white"
+                    >
+                      <item.icon className="text-white/80 group-hover:text-white" />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </Link>
@@ -106,14 +133,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <AvatarFallback>{fallback}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium leading-none">{user.displayName || user.email}</span>
-                  <span className="text-xs text-muted-foreground">{user.email}</span>
+                  <span className="text-sm font-medium leading-none text-white">{user.displayName || user.email}</span>
+                  <span className="text-xs text-white/70">{user.email}</span>
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">
                 <SidebarMenuItem>
-                  <SidebarMenuButton onClick={handleLogout} tooltip="Log Out">
-                    <LogOut />
+                  <SidebarMenuButton 
+                    onClick={handleLogout} 
+                    tooltip="Log Out"
+                    className="text-white/80 hover:text-white"
+                  >
+                    <LogOut className="text-white/80 group-hover:text-white" />
                     <span>Log Out</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

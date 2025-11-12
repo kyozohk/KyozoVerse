@@ -6,6 +6,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles for narrow sidebar in community pages */
+@layer components {
+  .narrow-sidebar {
+    --sidebar-width-icon: 3rem !important;
+  }
+  
+  .narrow-sidebar [data-sidebar="sidebar"] {
+    border-right-width: 1px;
+  }
+  
+  .narrow-sidebar [data-sidebar="sidebar"] [data-collapsible="icon"] svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .narrow-sidebar [data-sidebar="sidebar"] [data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:p-0 {
+    padding: 0;
+  }
+  
+  .narrow-sidebar [data-sidebar="sidebar"] [data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:block {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  /* White text for sidebar items */
+  [data-sidebar="sidebar"] [data-state="active"] {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  [data-sidebar="sidebar"] [data-state="active"] svg {
+    color: white !important;
+  }
+}
+
 body {
   background-color: var(--background-color);
   color: var(--text-color);
