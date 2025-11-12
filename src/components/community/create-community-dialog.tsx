@@ -4,17 +4,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from '@/components/ui/alert-dialog';
+import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -127,79 +118,57 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
     const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
-        <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-            <AlertDialogContent className="sm:max-w-lg">
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Create a New Community</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].title}
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-
-                <Progress value={progress} className="w-full" />
-
-                <div className="space-y-4 py-4 min-h-[250px]">
+        <Dialog 
+            open={isOpen} 
+            onClose={() => setIsOpen(false)}
+            title="Create a New Community"
+            description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
+        >
+            <div className="flex flex-col h-full">
+                <div className="flex-grow space-y-4">
+                    <Progress value={progress} className="w-full mb-8" />
+                    
                     {currentStep === 0 && (
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Community Name *</Label>
-                                <Input id="name" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} placeholder="e.g. AI Innovators" label="Community Name *" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="handle">Community Handle *</Label>
-                                <Input id="handle" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} placeholder="ai-innovators" label="Community Handle *"/>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tagline">Tagline</Label>
-                                <Input id="tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} placeholder="A short, catchy phrase for your community" label="Tagline" />
-                            </div>
+                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} placeholder="e.g. AI Innovators" />
+                            <Input label="Community Handle *" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} placeholder="ai-innovators" />
+                            <Input label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} placeholder="A short, catchy phrase for your community" />
                         </div>
                     )}
                     {currentStep === 1 && (
                          <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="lore">Lore</Label>
-                                <Textarea id="lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="The story and background of your community." />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="mantras">Mantras</Label>
-                                <Textarea id="mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Core beliefs or slogans of your community." />
-                            </div>
+                            <Textarea value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="The story and background of your community." className="min-h-[100px]" />
+                            <Textarea value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Core beliefs or slogans of your community." className="min-h-[100px]" />
                         </div>
                     )}
                     {currentStep === 2 && (
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="communityPrivacy">Privacy</Label>
-                                <Select value={formData.communityPrivacy} onValueChange={(value) => handleValueChange('communityPrivacy', value)}>
-                                    <SelectTrigger id="communityPrivacy">
-                                        <SelectValue placeholder="Select privacy level" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="public">Public</SelectItem>
-                                        <SelectItem value="private">Private</SelectItem>
-                                        <SelectItem value="invite-only">Invite Only</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="communityType">Type</Label>
-                                <Select value={formData.communityType} onValueChange={(value) => handleValueChange('communityType', value)}>
-                                    <SelectTrigger id="communityType">
-                                        <SelectValue placeholder="Select community type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="community">Community</SelectItem>
-                                        <SelectItem value="group">Group</SelectItem>
-                                        <SelectItem value="event">Event</SelectItem>
-                                        <SelectItem value="course">Course</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                             <Select value={formData.communityPrivacy} onValueChange={(value) => handleValueChange('communityPrivacy', value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select privacy level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="public">Public</SelectItem>
+                                    <SelectItem value="private">Private</SelectItem>
+                                    <SelectItem value="invite-only">Invite Only</SelectItem>
+                                </SelectContent>
+                            </Select>
+                             <Select value={formData.communityType} onValueChange={(value) => handleValueChange('communityType', value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select community type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="community">Community</SelectItem>
+                                    <SelectItem value="group">Group</SelectItem>
+                                    <SelectItem value="event">Event</SelectItem>
+                                    <SelectItem value="course">Course</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     )}
                 </div>
-                <AlertDialogFooter className="flex justify-between w-full">
+
+                <div className="flex justify-between w-full mt-8">
                     <div>
                         {currentStep > 0 && (
                             <Button variant="outline" onClick={handlePrev}>
@@ -209,9 +178,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                         )}
                     </div>
                     <div className="flex gap-2">
-                        <AlertDialogCancel asChild>
-                          <Button variant="ghost">Cancel</Button>
-                        </AlertDialogCancel>
+                        <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
                         {currentStep < STEPS.length - 1 && (
                             <Button onClick={handleNext}>
                                 Next
@@ -224,8 +191,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                             </Button>
                         )}
                     </div>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+                </div>
+            </div>
+        </Dialog>
     );
 }
