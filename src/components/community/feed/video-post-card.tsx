@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
-import { FirebaseImage } from "@/components/ui/firebase-image";
+import Image from "next/image";
 
 interface VideoPostCardProps {
   post: Post & { id: string };
@@ -30,10 +31,11 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
         </div>
       )}
         {post.content.mediaUrls && post.content.mediaUrls.length > 0 && (
-            <div className="w-full h-64 overflow-hidden">
-                <FirebaseImage 
+            <div className="w-full h-64 overflow-hidden relative">
+                <Image 
                     src={post.content.mediaUrls![0]} 
                     alt={post.title || "Post video"} 
+                    fill
                     className="object-cover w-full h-full"
                 />
             </div>

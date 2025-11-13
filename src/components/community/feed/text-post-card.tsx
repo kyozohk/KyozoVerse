@@ -11,7 +11,7 @@ import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { type Post } from "@/lib/types";
-import { FirebaseImage } from "@/components/ui/firebase-image";
+import Image from "next/image";
 
 interface TextPostCardProps {
   post: Post & { id: string };
@@ -48,7 +48,6 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
     };
     const hasImage = post.content.mediaUrls && post.content.mediaUrls.length > 0;
     
-    // Always use the text-specific background, even for posts with images
     const backgroundStyle = { 
         backgroundImage: `url('/bg/text_bg.png')`, 
         backgroundSize: 'cover', 
@@ -79,10 +78,11 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
         <div className="flex flex-col md:flex-row">
             {hasImage && (
                 <div className="w-full md:w-1/3 h-48 md:h-auto overflow-hidden relative">
-                    <FirebaseImage 
+                    <Image 
                         src={post.content.mediaUrls![0]} 
                         alt={post.title || "Post image"} 
-                        className="object-cover w-full h-full"
+                        fill
+                        className="object-cover"
                     />
                 </div>
             )}
