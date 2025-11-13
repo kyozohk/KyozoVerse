@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Mic, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CustomButton } from '@/components/ui';
 
 export type PostType = 'text' | 'image' | 'audio' | 'video';
 
@@ -59,8 +60,8 @@ export const CreatePostButtons: React.FC<CreatePostButtonsProps> = ({ onSelectPo
             ))}
           </div>
         )}
-        <Button
-            isIconOnly
+        <CustomButton
+            icon={Plus}
             className="rounded-full w-16 h-16 shadow-lg"
             onClick={() => setIsOpen(!isOpen)}
             style={{
@@ -69,7 +70,7 @@ export const CreatePostButtons: React.FC<CreatePostButtonsProps> = ({ onSelectPo
             }}
         >
           <Plus className={`w-8 h-8 transition-transform ${isOpen ? 'rotate-45' : ''}`} />
-        </Button>
+        </CustomButton>
       </div>
     </div>
   );

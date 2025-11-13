@@ -28,7 +28,7 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
                 <div className="bg-blue-500 h-2 rounded-full w-1/4"></div>
             </div>
             <span className="text-sm text-gray-600">01:00/4:57</span>
-            <Button isIconOnly variant="ghost" className="rounded-full">
+            <Button variant="ghost" className="rounded-full">
                 <PlayCircle className="h-8 w-8 text-gray-700" />
             </Button>
         </div>
