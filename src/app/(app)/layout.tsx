@@ -10,32 +10,88 @@ import {
   Settings, 
   LogOut, 
   LayoutGrid, 
-  Loader2
+  Loader2,
+  LayoutDashboard,
+  Users,
+  Bell,
+  Inbox,
+  Rss,
+  Ticket,
+  Plug,
+  BarChart,
+  Home,
+  Compass
 } from 'lucide-react';
 import { 
   Sidebar, 
   SidebarContent, 
   SidebarHeader, 
   SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton, 
   SidebarFooter, 
   SidebarInset, 
   SidebarProvider 
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { signOut } from '@/firebase/auth';
+import { signOut } from 'firebase/auth';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
+import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
+
+const mainNavItems = [
+    { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics', section: 'analytics' },
+    { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
+    { href: '/settings', icon: <Settings />, label: 'Settings', section: 'settings' },
+];
+
+const communityNavItems = [
+    { href: (handle: string) => `/${handle}`, icon: <LayoutDashboard />, label: 'Overview', section: 'communities' },
+    { href: (handle: string) => `/${handle}/members`, icon: <Users />, label: 'Members', section: 'communities' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: <Bell />, label: 'Broadcast', section: 'communities' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: <Inbox />, label: 'Inbox', section: 'communities' },
+    { href: (handle: string) => `/${handle}/feed`, icon: <Rss />, label: 'Feed', section: 'communities' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: <Ticket />, label: 'Ticketing', section: 'subscription' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: <Plug />, label: 'Integrations', section: 'settings' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: <BarChart />, label: 'Analytics', section: 'analytics' },
+];
+
+const getSectionFromPath = (path: string) => {
+    const handle = path.split('/')[1];
+    const subRoute = path.split('/')[2];
+    
+    // Check if it is a main navigation item first
+    const mainNavItem = mainNavItems.find(item => path.startsWith(item.href));
+    if (mainNavItem) {
+        return mainNavItem.section;
+    }
+
+    if (handle) {
+        const communityNavItem = communityNavItems.find(item => {
+            const itemPath = item.href(handle);
+            return path === itemPath || (itemPath.endsWith(handle) && !subRoute) || (subRoute && itemPath.endsWith(subRoute));
+        });
+        if (communityNavItem) {
+            return communityNavItem.section;
+        }
+    }
+    
+    if (handle) {
+        return 'communities';
+    }
+
+    return 'communities';
+};
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, auth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
+<<<<<<< HEAD
   const isCommunityPage = /^\/[^/]+(?!\/dashboard)/.test(pathname);
 
   useEffect(() => {
@@ -56,11 +112,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     await signOut();
     router.push('/landing');
   };
+=======
+  const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
+>>>>>>> studio-feed
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setSidebarOpen(prev => !prev);
   }, []);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/landing');
+    }
+  }, [user, loading, router]);
+  
 
   if (loading || !user) {
     return (
@@ -70,20 +136,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email!.charAt(0).toUpperCase();
-
-  const navItems = [
-    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/account', icon: Settings, label: 'Settings', section: 'settings' },
-  ];
-
-  const getSectionFromPath = (path: string) => {
-    if (path.startsWith('/communities')) return 'communities';
-    const currentItem = navItems.find(item => path.startsWith(item.href));
-    return currentItem?.section || 'communities';
-  };
+  const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const currentSection = getSectionFromPath(pathname);
 
@@ -94,24 +147,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
-                {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
-                {/* Collapsed Icon */}
                 <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
             </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton isActive={pathname.startsWith(item.href)} tooltip={item.label}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
+              {mainNavItems.map((item) => (
+                 <SidebarNavItem 
+                    key={item.label} 
+                    href={item.href} 
+                    icon={item.icon}
+                    activeColor={`var(--${item.section}-color-active)`}
+                    activeBgColor={`var(--${item.section}-color-border)`}
+                  >
+                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                </SidebarNavItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
@@ -128,18 +180,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={handleLogout} tooltip="Log Out">
-                    <LogOut />
-                    <span>Log Out</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                 <SidebarNavItem 
+                    href="#"
+                    icon={<LogOut />}
+                    onClick={() => signOut(auth!).then(() => router.push('/landing'))}
+                    activeColor={`var(--${currentSection}-color-active)`}
+                    activeBgColor={`var(--${currentSection}-color-border)`}
+                  >
+                   <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
+                </SidebarNavItem>
               </SidebarMenu>
             </div>
           </SidebarFooter>
         </Sidebar>
         
-        <CommunitySidebar />
+        {isCommunityPage && <CommunitySidebar />}
         
         <SidebarInset 
           style={{ 
@@ -147,7 +202,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            paddingLeft: isCommunityPage ? '0' : undefined
           }}
         >
           {children}

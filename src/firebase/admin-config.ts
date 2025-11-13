@@ -5,40 +5,35 @@ import { getAuth, Auth } from 'firebase-admin/auth';
 import { randomUUID } from 'crypto';
 
 // Check if we should use mock mode for development
-const useMockAdmin = process.env.USE_MOCK_ADMIN === 'true';
+const useMockAdmin = process.env.USE_MOCK_ADMIN === 'true' || !process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 // Mock implementations for development without Firebase Admin credentials
 class MockStorage {
-  bucket() {
+  bucket(name?: string) {
+    const bucketName = name || process.env.FIREBASE_STORAGE_BUCKET || 'kyozoverse.appspot.com';
+    console.log(`[MockStorage] Using bucket: ${bucketName}`);
     return {
-      file: (path: string) => ({
-        getSignedUrl: async () => [`https://storage.googleapis.com/kyozoverse.appspot.com/${encodeURIComponent(path)}?alt=media&token=${randomUUID()}`],
-        createWriteStream: () => {
-          const events: Record<string, Function[]> = {};
-          const stream = {
-            on: (event: string, callback: Function) => {
-              if (!events[event]) events[event] = [];
-              events[event].push(callback);
-              return stream;
-            },
-            end: (buffer: Buffer) => {
-              console.log(`Mock file upload: ${path} (${buffer.length} bytes)`);
-              setTimeout(() => {
-                if (events['finish']) events['finish'].forEach(cb => cb());
-              }, 500);
-              return stream;
-            }
-          };
-          return stream;
-        }
-      })
+      file: (path: string) => {
+        console.log(`[MockStorage] Creating file reference for: ${path}`);
+        return {
+          getSignedUrl: async (options: { action: 'write' | 'read', expires: number, contentType: string }) => {
+            console.log(`[MockStorage] Generating mock signed URL for ${options.action}`);
+            // In mock mode, we generate a fake URL that won't work but allows the flow to continue.
+            // For a real upload test, you'd need actual credentials.
+            const fakeSignedUrl = `https://storage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${randomUUID()}&mock=true`;
+            console.log(`[MockStorage] Generated URL: ${fakeSignedUrl.substring(0, 100)}...`);
+            return [fakeSignedUrl];
+          },
+        };
+      },
+      name: bucketName,
     };
   }
 }
 
 class MockAuth {
   async verifyIdToken(token: string) {
-    console.log('Mock verifyIdToken:', token.substring(0, 10) + '...');
+    console.log('[MockAuth] Mock verifyIdToken:', token.substring(0, 10) + '...');
     return { uid: 'mock-user-id' };
   }
 }
@@ -47,7 +42,7 @@ class MockFirestore {
   collection() {
     return {
       doc: () => ({
-        set: async () => console.log('Mock document set'),
+        set: async () => console.log('[MockFirestore] Mock document set'),
         get: async () => ({
           exists: true,
           data: () => ({
@@ -62,44 +57,39 @@ class MockFirestore {
 // Initialize Firebase Admin SDK
 function initAdmin(): App {
   if (useMockAdmin) {
-    console.log('Using mock Firebase Admin SDK');
-    return {} as App;
+    console.log('Using mock Firebase Admin SDK because USE_MOCK_ADMIN is true or FIREBASE_SERVICE_ACCOUNT_KEY is not set.');
+    // Return a dummy App object for type compatibility
+    return { name: 'mock-app' } as App;
   }
 
   const apps = getApps();
   if (apps.length > 0) {
-    // Return existing initialized app
     return apps[0];
   }
+  
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY!;
 
-  // Check if we're running in a Firebase environment (like Cloud Functions)
-  // where the admin SDK is automatically initialized
   try {
-    return initializeApp();
-  } catch (e) {
-    // Not in a Firebase environment, initialize with credentials
-    
-    // For local development, use service account credentials
-    // For production, use default credentials
-    const serviceAccount = {
-      projectId: process.env.FIREBASE_PROJECT_ID || '',
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\n/g, '\n'),
-    };
-
+    const serviceAccount = JSON.parse(serviceAccountKey);
     return initializeApp({
       credential: cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
+  } catch (error) {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:", error);
+      console.warn("Falling back to mock admin SDK due to credential parsing error.");
+      return { name: 'mock-app' } as App;
   }
 }
 
-// Initialize the app
+// Determine if we are actually using mock based on initialization success
 const adminApp = initAdmin();
+// Check if the app is a real initialized app or a mock fallback
+const actuallyUsingMock = adminApp.name === 'mock-app' || useMockAdmin;
 
 // Export the services (real or mock)
-export const adminAuth: Auth = useMockAdmin ? new MockAuth() as unknown as Auth : getAuth(adminApp);
-export const adminFirestore: Firestore = useMockAdmin ? new MockFirestore() as unknown as Firestore : getFirestore(adminApp);
-export const adminStorage: Storage = useMockAdmin ? new MockStorage() as unknown as Storage : getStorage(adminApp);
+export const adminAuth: Auth = actuallyUsingMock ? new MockAuth() as unknown as Auth : getAuth(adminApp);
+export const adminFirestore: Firestore = actuallyUsingMock ? new MockFirestore() as unknown as Firestore : getFirestore(adminApp);
+export const adminStorage: Storage = actuallyUsingMock ? new MockStorage() as unknown as Storage : getStorage(adminApp);
 
 export default adminApp;

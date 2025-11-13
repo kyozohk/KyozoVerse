@@ -1,4 +1,5 @@
 
+
 :root {
   --background-color: #fff;
   --text-color: #333;
@@ -32,6 +33,19 @@
   --text-tertiary: #999;
   --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --font-family-light: var(--font-family);
+
+  /* Section colors */
+  --communities-color-active: #843484;
+  --communities-color-border: rgba(132, 52, 132, 0.3);
+
+  --analytics-color-active: #699FE5;
+  --analytics-color-border: rgba(105, 159, 229, 0.3);
+
+  --subscription-color-active: #E1B327;
+  --subscription-color-border: rgba(225, 179, 39, 0.3);
+
+  --settings-color-active: #06C4B5;
+  --settings-color-border: rgba(6, 196, 181, 0.3);
 }
 
 /* Dark mode theme variables can be added here */

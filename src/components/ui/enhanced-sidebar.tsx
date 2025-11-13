@@ -372,112 +372,6 @@ const SidebarMenu = React.forwardRef<
 ))
 SidebarMenu.displayName = "SidebarMenu"
 
-const SidebarMenuItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, ...props }, ref) => (
-  <li
-    ref={ref}
-    data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
-    {...props}
-  />
-))
-SidebarMenuItem.displayName = "SidebarMenuItem"
-
-const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:text-[#843484] group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate",
-  {
-    variants: {
-      variant: {
-        default: "hover:text-[#843484]", /* Changed hover color to match button border */
-        outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--border))] hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--accent))]",
-      },
-      size: {
-        default: "h-9 text-sm",
-        sm: "h-7 text-xs",
-        lg: "h-12 text-sm",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
-
-const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
-  } & VariantProps<typeof sidebarMenuButtonVariants>
->(
-  (
-    {
-      asChild = false,
-      isActive = false,
-      variant = "default",
-      size = "default",
-      tooltip,
-      className,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const { isMobile, state } = useSidebar()
-    const Comp = asChild ? Slot : 'button';
-    
-    const icon = React.Children.toArray(children).find(
-      (child) => React.isValidElement(child) && child.type !== 'span'
-    )
-    const label = React.Children.toArray(children).find(
-      (child) => React.isValidElement(child) && child.type === 'span'
-    )
-
-    const button = (
-       <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-size={size}
-        data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        {...props}
-      >
-        <div data-sidebar="menu-icon-wrapper" className={`flex items-center justify-center h-7 w-7 rounded-md group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 ${isActive ? 'text-[#843484]' : ''}`}>
-            {icon}
-        </div>
-        {label}
-      </Comp>
-    )
-
-    if (!tooltip) {
-      return button
-    }
-
-    if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
-    }
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent
-          side="right"
-          align="center"
-          hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
-        />
-      </Tooltip>
-    )
-  }
-)
-SidebarMenuButton.displayName = "SidebarMenuButton"
 
 export {
   Sidebar,
@@ -486,8 +380,6 @@ export {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
   useSidebar,

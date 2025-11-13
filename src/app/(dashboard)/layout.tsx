@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { 
   BarChart3, 
   CreditCard, 
@@ -16,23 +16,23 @@ import {
   Sidebar, 
   SidebarContent, 
   SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton, 
+  SidebarMenu,
   SidebarFooter, 
   SidebarInset, 
   SidebarProvider 
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { signOut } from '@/firebase/auth';
+import { signOut as firebaseSignOut } from '@/firebase/auth';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, auth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,9 +44,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
-    await signOut();
+    if (auth) {
+      await firebaseSignOut(auth);
+    }
     router.push('/');
   };
+
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   if (loading || !user) {
     return (
@@ -56,17 +63,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
   
-  const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email!.charAt(0).toUpperCase();
+  const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const navItems = [
-    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/account', icon: Settings, label: 'Settings', section: 'settings' },
+    { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics', section: 'analytics' },
+    { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
+    { href: '/account', icon: <Settings />, label: 'Settings', section: 'settings' },
   ];
 
   const getSectionFromPath = (path: string) => {
-    if (path === '/communities' || path.startsWith('/communities')) return 'communities';
+    if (path.startsWith('/communities')) return 'communities';
     const currentItem = navItems.find(item => path.startsWith(item.href));
     return currentItem?.section || 'communities';
   };
@@ -74,12 +81,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const currentSection = getSectionFromPath(pathname);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar className={`sidebar-bg-${currentSection}`}>
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
-              <Link href="/dashboard" className="flex items-center justify-center">
+              <Link href="/dashboard" className="flex items-center justify-center" onClick={handleLogoClick}>
                 {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}
@@ -90,14 +97,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton isActive={pathname.startsWith(item.href)} tooltip={item.label}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
+                <SidebarNavItem
+                    key={item.href}
+                    href={item.href}
+                    icon={item.icon}
+                    activeColor={`var(--${item.section}-color-active)`}
+                    activeBgColor={`var(--${item.section}-color-border)`}
+                >
+                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                </SidebarNavItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
@@ -114,12 +122,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={handleLogout} tooltip="Log Out">
-                    <LogOut />
-                    <span>Log Out</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <SidebarNavItem
+                    href="#"
+                    icon={<LogOut />}
+                    onClick={handleLogout}
+                    activeColor={`var(--${currentSection}-color-active)`}
+                    activeBgColor={`var(--${currentSection}-color-border)`}
+                >
+                    <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
+                </SidebarNavItem>
               </SidebarMenu>
             </div>
           </SidebarFooter>

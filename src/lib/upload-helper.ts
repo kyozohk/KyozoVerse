@@ -1,4 +1,5 @@
 import { getAuth } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 /**
  * Upload file response type
