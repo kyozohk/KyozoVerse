@@ -12,15 +12,19 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { type Post } from "@/lib/types";
 import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface TextPostCardProps {
-  post: Post & { id: string };
+  post: Post & { id: string; _isPublicView?: boolean };
 }
 
 export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const isPostCreator = user && post.authorId === user.uid;
+    // Show edit/delete options only if user is logged in and is the post creator
+    // In public view (_isPublicView flag), never show edit/delete options
+    const isPostCreator = user && post.authorId === user.uid && !post._isPublicView;
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     
@@ -53,74 +57,91 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
         console.log('Post has image URL:', post.content.mediaUrls![0]);
     }
     
-    // Always use the text-specific background, even for posts with images
-    const backgroundStyle = { 
-        backgroundImage: `url('/bg/text_bg.png')`, 
-        backgroundSize: 'cover', 
-        backgroundPosition: 'center' 
-    };
-
+    // Format date if available
+    const formattedDate = post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '00/00/00';
+    // Estimate read time based on content length
+    const readTime = `${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`;
+    
     return (
-        <Card 
-            className="overflow-hidden shadow-lg transition-all hover:border-primary/50 relative"
-            style={backgroundStyle}
-        >
+        <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl">
+            {/* Background Image */}
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-50 to-pink-50 z-0" />
+            
+            {/* Edit/Delete buttons for post creator */}
             {isPostCreator && (
-                <div className="absolute top-2 right-2 flex gap-1 z-10">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+                <div className="absolute top-2 right-2 flex gap-1 z-20">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => console.log('Edit post')}>
                         <Edit className="h-4 w-4 text-gray-700" />
                     </Button>
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 bg-white/80 hover:bg-white rounded-full"
-                        onClick={() => setShowDeleteDialog(true)}
-                        disabled={isDeleting}
-                    >
+                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => setShowDeleteDialog(true)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                 </div>
             )}
-        <div className="flex flex-col md:flex-row">
-            {hasImage && (
-                <div className="w-full md:w-1/3 h-48 md:h-auto overflow-hidden relative">
-                    <Image 
-                        src={post.content.mediaUrls![0]} 
-                        alt={post.title || "Post image"} 
-                        fill
-                        className="object-cover"
-                        onLoad={() => console.log('Image loaded successfully:', post.content.mediaUrls![0])}
-                        onError={() => {
-                            console.error('Image failed to load:', post.content.mediaUrls![0]);
-                        }}
-                    />
-                </div>
-            )}
-            <div className={`p-6 flex flex-col justify-between w-full ${hasImage ? 'md:w-2/3' : ''} text-black`}>
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-semibold rounded-full px-3 py-1 bg-primary text-white inline-flex items-center justify-center h-6 w-auto">Read</span>
-                        <span className="text-xs text-muted-foreground">Long form article</span>
+            
+            <div className={cn(
+                "relative z-10 flex flex-col",
+                hasImage ? "md:flex-row" : "flex-col"
+            )}>
+                {/* Image section */}
+                {hasImage && (
+                    <div className="w-full md:w-1/3 p-4">
+                        <div className="relative aspect-square rounded-lg overflow-hidden">
+                            <Image 
+                                src={post.content.mediaUrls![0]} 
+                                alt={post.title} 
+                                fill 
+                                className="object-cover"
+                                onLoad={() => console.log('Image loaded successfully:', post.content.mediaUrls![0])}
+                                onError={() => {
+                                    console.error('Image failed to load:', post.content.mediaUrls![0]);
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+                
+                {/* Content section */}
+                <div className={cn(
+                    "p-6 flex flex-col h-full",
+                    hasImage ? "md:w-2/3" : "w-full"
+                )}>
+                    {/* Top badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                        <span className="bg-[#C170CF] text-white px-4 py-1 rounded-full text-sm font-medium">Read</span>
+                        <span className="bg-transparent border border-[#C170CF] text-[#C170CF] px-4 py-1 rounded-full text-sm">
+                            {post.content.text?.length > 1000 ? 'Long form article' : 'Short form'}
+                        </span>
                         {post.visibility === 'private' && (
-                            <span className="text-xs font-semibold rounded-full px-2 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
+                            <span className="text-xs font-semibold rounded-full px-3 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
                                 <Lock className="h-3 w-3" /> Private
                             </span>
                         )}
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
-                    <p className="text-base mb-4">{post.content.text}</p>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>00/00/00 - 8 min read</span>
-                    <div className="flex items-center gap-2">
-                        <span className="uppercase font-medium">READ</span>
-                        <div className="rounded-full bg-gray-200 p-1">
-                            <ArrowRight className="h-4 w-4" />
+                    
+                    {/* Title */}
+                    <h2 className="text-slate-800 text-2xl font-medium mb-3">{post.title}</h2>
+                    
+                    {/* Content */}
+                    <div className="flex-grow">
+                        <p className="text-slate-700">{post.content.text}</p>
+                    </div>
+                    
+                    {/* Footer */}
+                    <div className="mt-auto pt-4 border-t border-slate-200">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-600 text-sm">{formattedDate} • {readTime}</span>
+                            
+                            <div className="flex items-center gap-2">
+                                <span className="text-gray-500 font-medium">READ</span>
+                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-500">
+                                    <ArrowRight className="h-4 w-4 text-white" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <AlertDialogContent>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
@@ -29,6 +30,7 @@ export default function CommunityFeedPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>('guest');
   const [communityId, setCommunityId] = useState<string>('');
+  const [communityData, setCommunityData] = useState<any>(null);
   const [filter, setFilter] = useState<string>('all');
   const [visibilityFilter, setVisibilityFilter] = useState<string>('all');
   const [isCreatePostOpen, setCreatePostOpen] = useState(false);
@@ -43,6 +45,7 @@ export default function CommunityFeedPage() {
 
         if (communityData) {
           setCommunityId(communityData.communityId);
+          setCommunityData(communityData);
 
           if (user) {
             const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
@@ -153,10 +156,32 @@ export default function CommunityFeedPage() {
     return typeMatch && visibilityMatch;
   });
 
+  // Only admins and owners can create/edit content
+  const canEditContent = userRole === 'admin' || userRole === 'owner';
+  
   return (
-    <div className="container mx-auto max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Community Feed</h1>
+        <div className="flex items-center gap-3">
+          {communityData?.communityProfileImage && (
+            <Image 
+              src={communityData.communityProfileImage} 
+              alt={communityData.name || handle} 
+              width={40} 
+              height={40} 
+              className="rounded-full"
+            />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold">{communityData?.name || handle}</h1>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">Author Dashboard</p>
+              <Link href={`/${handle}/feedview`} className="text-xs text-primary hover:underline">
+                View Public Feed
+              </Link>
+            </div>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
@@ -220,7 +245,7 @@ export default function CommunityFeedPage() {
           })
         )}
       </div>
-      {userRole === 'admin' || userRole === 'owner' && (
+      {canEditContent && (
         <CreatePostButtons onSelectPostType={handleSelectPostType} />
       )}
        <CreatePostDialog 

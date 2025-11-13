@@ -3,21 +3,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, PauseCircle, Edit, Trash2, Lock } from "lucide-react";
+import { PlayCircle, PauseCircle, Edit, Trash2, Lock, Play, Pause } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
 import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface AudioPostCardProps {
-  post: Post & { id: string };
+  post: Post & { id: string; _isPublicView?: boolean };
 }
 
 export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const isPostCreator = user && post.authorId === user.uid;
+  // Show edit/delete options only if user is logged in and is the post creator
+  // In public view (_isPublicView flag), never show edit/delete options
+  const isPostCreator = user && post.authorId === user.uid && !post._isPublicView;
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -89,13 +93,22 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
     }
   };
 
+  // Format duration for display
+  const formatDuration = () => {
+    if (!duration) return '0:00';
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+  
   return (
-    <Card 
-        className="overflow-hidden shadow-lg transition-all hover:border-blue-500/50 relative"
-        style={{ backgroundImage: `url('/bg/audio_bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-    >
+    <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl">
+      {/* Background gradient */}
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
+      
+      {/* Edit/Delete buttons for post creator */}
       {isPostCreator && (
-        <div className="absolute top-2 right-2 flex gap-1 z-10">
+        <div className="absolute top-2 right-2 flex gap-1 z-20">
           <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
             <Edit className="h-4 w-4 text-gray-700" />
           </Button>
@@ -110,18 +123,27 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
           </Button>
         </div>
       )}
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold rounded-full px-3 py-1 bg-blue-500 text-white inline-flex items-center justify-center h-6 w-auto">Listen</span>
-            <span className="text-xs text-gray-500">Music</span>
-            {post.visibility === 'private' && (
-                <span className="text-xs font-semibold rounded-full px-2 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
-                    <Lock className="h-3 w-3" /> Private
-                </span>
-            )}
+      
+      {/* Content */}
+      <div className="relative z-10 p-6 flex flex-col">
+        {/* Top badges */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="bg-[#5B91D7] text-white px-4 py-1 rounded-full text-sm font-medium">Listen</span>
+          <span className="bg-transparent border border-[#5B91D7] text-[#5B91D7] px-4 py-1 rounded-full text-sm">
+            Music
+          </span>
+          {post.visibility === 'private' && (
+            <span className="text-xs font-semibold rounded-full px-3 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
+              <Lock className="h-3 w-3" /> Private
+            </span>
+          )}
         </div>
-        <h2 className="text-2xl font-bold mb-2 text-black">{post.title}</h2>
-        <p className="text-base mb-4 text-gray-700">{post.content.text}</p>
+        
+        {/* Title */}
+        <h3 className="text-slate-800 text-xl font-medium mb-2">{post.title}</h3>
+        
+        {/* Description */}
+        <p className="text-slate-700 mb-6">{post.content.text}</p>
         
         {post.content.mediaUrls && post.content.mediaUrls.length > 0 ? (
           <>
@@ -134,27 +156,29 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
               onEnded={handleAudioEnded}
               onError={(e) => console.error('Audio error:', e)}
             />
-            <div className="flex items-center justify-between">
-              <div className="flex-grow flex items-center gap-2">
-                <div className="flex-grow bg-gray-300 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full" 
-                    style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  {formatTime(currentTime)}/{formatTime(duration || 0)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 ml-4">
-                <div className="rounded-full bg-blue-500 p-1.5" onClick={togglePlayPause}>
-                  {isPlaying ? (
-                    <PauseCircle className="h-4 w-4 text-white" />
-                  ) : (
-                    <PlayCircle className="h-4 w-4 text-white" />
-                  )}
-                </div>
-              </div>
+            
+            {/* Audio progress bar */}
+            <div className="w-full bg-[#5B91D7]/20 h-2 rounded-full mb-2 overflow-hidden">
+              <div 
+                className="bg-[#5B91D7] h-full rounded-full" 
+                style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+              ></div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-slate-600 text-sm">{formatTime(currentTime)} / {formatTime(duration)}</span>
+              
+              <button 
+                onClick={togglePlayPause}
+                className="bg-[#5B91D7] rounded-full p-2"
+              >
+                {isPlaying ? (
+                  <Pause className="h-4 w-4 text-white" />
+                ) : (
+                  <Play className="h-4 w-4 text-white ml-0.5" />
+                )}
+              </button>
             </div>
           </>
         ) : (

@@ -39,10 +39,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isCommunityPage = /^\/[^/]+(?!\/dashboard)/.test(pathname);
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Check if the current path is a feedview page (public view)
+    const isFeedViewPage = /^\/[^\/]+\/feedview$/.test(pathname);
+    
+    // Redirect to landing page if user is not logged in and not on feedview page
+    if (!loading && !user && !isFeedViewPage) {
       router.replace('/');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
   
   useEffect(() => {
     setSidebarOpen(!isCommunityPage);
