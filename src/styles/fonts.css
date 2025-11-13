@@ -1,4 +1,6 @@
 /* Font declarations */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+
 @font-face {
   font-family: 'Canicule Display';
   src: url('/fonts/canicule-display-trial.woff2') format('woff2');
@@ -10,4 +12,8 @@
 /* Fallback fonts similar to Canicule Display */
 :root {
   --display-font: 'Canicule Display', 'Playfair Display', 'Times New Roman', serif;
+}
+
+.font-dm-sans {
+  font-family: 'DM Sans', sans-serif;
 }

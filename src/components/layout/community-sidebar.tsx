@@ -1,9 +1,7 @@
-
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useSidebar } from '@/components/ui/enhanced-sidebar';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Bell,
@@ -33,18 +31,18 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
+import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 
 const communityNavItems = [
-    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
-    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
-    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'analytics' },
+    { href: (handle: string) => `/${handle}`, icon: <LayoutDashboard />, label: 'Overview', color: '#C170CF' },
+    { href: (handle: string) => `/${handle}/members`, icon: <Users />, label: 'Members', color: '#699FE5' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: <Bell />, label: 'Broadcast', color: '#E1B327' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: <Inbox />, label: 'Inbox', color: '#CF7770' },
+    { href: (handle: string) => `/${handle}/feed`, icon: <Rss />, label: 'Feed', color: '#06C4B5' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: <Ticket />, label: 'Ticketing', color: '#C170CF' }, // Default color
+    { href: (handle: string) => `/${handle}/integrations`, icon: <Plug />, label: 'Integrations', color: '#C170CF' }, // Default color
+    { href: (handle: string) => `/${handle}/analytics`, icon: <BarChart />, label: 'Analytics', color: '#C170CF' }, // Default color
 ];
-
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
@@ -56,7 +54,6 @@ export default function CommunitySidebar() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-
 
   useEffect(() => {
     const handleFromPath = pathname.split('/')[1];
@@ -79,7 +76,6 @@ export default function CommunitySidebar() {
         if (currentCommunity) {
             setSelectedCommunityHandle(currentCommunity.handle);
         } else if (userCommunities.length > 0 && handleFromPath === 'dashboard') {
-             // If on dashboard, default to the first one in the list for the dropdown
             setSelectedCommunityHandle(userCommunities[0].handle);
         } else {
             setSelectedCommunityHandle(null);
@@ -96,12 +92,13 @@ export default function CommunitySidebar() {
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
-    router.push(`/${handle}`);
+    const currentPathEnd = pathname.split('/').slice(2).join('/');
+    router.push(`/${handle}/${currentPathEnd}`);
   };
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
-  const currentNavItem = communityNavItems.find(item => pathname === item.href(selectedCommunityHandle || ''));
-  const currentSection = currentNavItem ? currentNavItem.section : 'communities';
+  const activeItem = communityNavItems.find(item => pathname === item.href(selectedCommunityHandle || ''));
+  const activeColor = activeItem?.color || '#C170CF';
 
   if (!isOwnerOfCurrentCommunity && pathname !== '/dashboard') {
       return null;
@@ -111,23 +108,26 @@ export default function CommunitySidebar() {
       return null;
   }
 
-
   return (
-    <div className={`hidden border-r lg:block w-72 sidebar sidebar-bg-${currentSection} transition-all duration-200`} style={{ marginLeft: mainSidebarOpen ? '0' : '0' }}>
+    <div 
+        className={`hidden border-r lg:block w-64 sidebar transition-all duration-200`}
+        style={{ 
+            marginLeft: mainSidebarOpen ? '0' : '0',
+            backgroundColor: `${activeColor}1A` // Add alpha for background
+        }}
+    >
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-14 items-center border-b lg:h-[60px]" style={{borderColor: `${activeColor}4D`}}>
             {loading ? (
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full mx-4" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
                 <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
-                    <SelectTrigger className="w-full">
-                        <div className="flex items-center gap-3 truncate">
-                             <div className="selected-community-icon-bg">
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                                    <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
-                                </Avatar>
-                            </div>
+                    <SelectTrigger className="w-full border-0 shadow-none focus:ring-0">
+                        <div className="flex items-center gap-3 truncate px-4">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                                <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
+                            </Avatar>
                             <SelectValue />
                         </div>
                     </SelectTrigger>
@@ -146,25 +146,25 @@ export default function CommunitySidebar() {
                     </SelectContent>
               </Select>
             ) : (
-                <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Community
-                </CustomButton>
+                <div className="px-4 w-full">
+                    <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Community
+                    </CustomButton>
+                </div>
             )}
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {selectedCommunityHandle && communityNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href(selectedCommunityHandle)}
-                className={`flex items-center gap-3 rounded-lg px-3 transition-all sidebar-nav-item ${
-                    pathname === item.href(selectedCommunityHandle) ? 'active' : 'text-muted-foreground'
-                }`}
+              <SidebarNavItem 
+                key={item.label} 
+                href={item.href(selectedCommunityHandle)} 
+                icon={item.icon}
+                activeColor={activeColor}
               >
-                <item.icon className="h-4 w-4" />
                 {item.label}
-              </Link>
+              </SidebarNavItem>
             ))}
           </nav>
         </div>
