@@ -35,52 +35,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-
-const mainNavItems = [
-    { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: <BarChart />, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
-    { href: '/settings', icon: <Settings />, label: 'Settings', section: 'settings' },
-];
-
-const communityNavItems = [
-    { href: (handle: string) => `/${handle}`, icon: <LayoutDashboard />, label: 'Overview', section: 'communities' },
-    { href: (handle: string) => `/${handle}/members`, icon: <Users />, label: 'Members', section: 'communities' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: <Bell />, label: 'Broadcast', section: 'communities' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: <Inbox />, label: 'Inbox', section: 'communities' },
-    { href: (handle: string) => `/${handle}/feed`, icon: <Rss />, label: 'Feed', section: 'communities' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: <Ticket />, label: 'Ticketing', section: 'subscription' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: <Plug />, label: 'Integrations', section: 'settings' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: <BarChart />, label: 'Analytics', section: 'analytics' },
-];
-
-const getSectionFromPath = (path: string) => {
-    const handle = path.split('/')[1];
-    const subRoute = path.split('/')[2];
-    
-    // Check if it is a main navigation item first
-    const mainNavItem = mainNavItems.find(item => path.startsWith(item.href));
-    if (mainNavItem) {
-        return mainNavItem.section;
-    }
-
-    if (handle) {
-        const communityNavItem = communityNavItems.find(item => {
-            const itemPath = item.href(handle);
-            return path === itemPath || (itemPath.endsWith(handle) && !subRoute) || (subRoute && itemPath.endsWith(subRoute));
-        });
-        if (communityNavItem) {
-            return communityNavItem.section;
-        }
-    }
-    
-    // Fallback for community root pages
-    if (handle && !mainNavItems.some(item => path.startsWith(item.href))) {
-        return 'communities';
-    }
-
-    return 'communities';
-};
+import { getThemeForPath, mainNavItems, communityNavItems } from '@/lib/theme-utils';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, auth } = useAuth();
@@ -89,21 +44,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
   
-  // Collapse the main sidebar when a community page is active
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setSidebarOpen(prev => !prev);
-  }, []);
+    if (isCommunityPage) {
+        // If on a community page, clicking the logo should take you back to the communities list
+        router.push('/communities');
+    } else {
+        // On main pages, toggle the sidebar
+        setSidebarOpen(prev => !prev);
+    }
+  }, [isCommunityPage, router]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/landing');
     }
   }, [user, loading, router]);
-
+  
   useEffect(() => {
+    // Automatically collapse the main sidebar when navigating to a community page
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
   
@@ -117,7 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
-  const currentSection = getSectionFromPath(pathname);
+  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -139,8 +100,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     href={item.href} 
                     icon={item.icon}
                     isActive={item.section === currentSection}
-                    activeColor={`var(--${item.section}-color-active)`}
-                    activeBgColor={`var(--${item.section}-color-border)`}
+                    activeColor={activeColor}
+                    activeBgColor={activeBgColor}
                   >
                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                 </SidebarNavItem>
@@ -164,8 +125,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     href="#"
                     icon={<LogOut />}
                     onClick={() => signOut(auth!).then(() => router.push('/landing'))}
-                    activeColor={`var(--${currentSection}-color-active)`}
-                    activeBgColor={`var(--${currentSection}-color-border)`}
+                    activeColor={activeColor}
+                    activeBgColor={activeBgColor}
                   >
                    <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
                 </SidebarNavItem>
@@ -190,3 +151,4 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+

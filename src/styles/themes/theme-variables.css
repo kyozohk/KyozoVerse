@@ -35,17 +35,41 @@
   --font-family-light: var(--font-family);
 
   /* Section colors */
+  --overview-color-active: #C170CF;
+  --overview-color-border: rgba(193, 112, 207, 0.3);
+
+  --members-color-active: #06C4B5;
+  --members-color-border: rgba(6, 196, 181, 0.3);
+
+  --broadcast-color-active: #E1B327;
+  --broadcast-color-border: rgba(225, 179, 39, 0.3);
+
+  --inbox-color-active: #CF7770;
+  --inbox-color-border: rgba(207, 119, 112, 0.3);
+
+  --feed-color-active: #699FE5;
+  --feed-color-border: rgba(105, 159, 229, 0.3);
+
+  --ticketing-color-active: #8EBE9B;
+  --ticketing-color-border: rgba(142, 190, 155, 0.3);
+  
+  --integrations-color-active: #8EA1BE;
+  --integrations-color-border: rgba(142, 161, 190, 0.3);
+  
   --communities-color-active: #843484;
   --communities-color-border: rgba(132, 52, 132, 0.3);
 
-  --analytics-color-active: #699FE5;
-  --analytics-color-border: rgba(105, 159, 229, 0.3);
+  --analytics-color-active: #675263;
+  --analytics-color-border: rgba(103, 82, 99, 0.3);
 
   --subscription-color-active: #E1B327;
   --subscription-color-border: rgba(225, 179, 39, 0.3);
 
   --settings-color-active: #06C4B5;
   --settings-color-border: rgba(6, 196, 181, 0.3);
+
+  --default-color-active: #843484;
+  --default-color-border: rgba(132, 52, 132, 0.3);
 }
 
 /* Dark mode theme variables can be added here */

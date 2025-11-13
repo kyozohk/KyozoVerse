@@ -5,14 +5,6 @@ import React, { useState, useEffect } from 'react';
 import { useSidebar } from '@/components/ui/enhanced-sidebar';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Bell,
-  BarChart,
-  Users,
-  Inbox,
-  Rss,
-  Ticket,
-  Plug,
-  LayoutDashboard,
   PlusCircle,
 } from 'lucide-react';
 import {
@@ -33,35 +25,7 @@ import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-
-const communityNavItems = [
-    { href: (handle: string) => `/${handle}`, icon: <LayoutDashboard />, label: 'Overview', section: 'communities' },
-    { href: (handle: string) => `/${handle}/members`, icon: <Users />, label: 'Members', section: 'communities' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: <Bell />, label: 'Broadcast', section: 'communities' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: <Inbox />, label: 'Inbox', section: 'communities' },
-    { href: (handle: string) => `/${handle}/feed`, icon: <Rss />, label: 'Feed', section: 'communities' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: <Ticket />, label: 'Ticketing', section: 'subscription' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: <Plug />, label: 'Integrations', section: 'settings' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: <BarChart />, label: 'Analytics', section: 'analytics' },
-];
-
-const getSectionFromPath = (path: string) => {
-    const handle = path.split('/')[1];
-    const subRoute = path.split('/')[2];
-
-    if (handle) {
-        const communityNavItem = communityNavItems.find(item => {
-            const itemPath = item.href(handle);
-            return path === itemPath || (itemPath.endsWith(handle) && !subRoute) || (subRoute && itemPath.endsWith(subRoute));
-        });
-        if (communityNavItem) {
-            return communityNavItem.section;
-        }
-    }
-    
-    // Fallback to a default section if no match
-    return 'communities';
-};
+import { getThemeForPath, communityNavItems } from '@/lib/theme-utils';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
@@ -118,7 +82,7 @@ export default function CommunitySidebar() {
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
   
-  const currentSection = getSectionFromPath(pathname);
+  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
 
   return (
     <div 
@@ -175,8 +139,8 @@ export default function CommunitySidebar() {
                 href={item.href(selectedCommunityHandle)} 
                 icon={item.icon}
                 isActive={pathname === item.href(selectedCommunityHandle)}
-                activeColor={`var(--${item.section}-color-active)`}
-                activeBgColor={`var(--${item.section}-color-border)`}
+                activeColor={activeColor}
+                activeBgColor={activeBgColor}
               >
                 {item.label}
               </SidebarNavItem>
