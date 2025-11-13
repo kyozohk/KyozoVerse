@@ -18,7 +18,9 @@ import {
   Rss,
   Ticket,
   Plug,
-  BarChart
+  BarChart,
+  Home,
+  Compass
 } from 'lucide-react';
 import { 
   Sidebar, 
@@ -26,7 +28,6 @@ import {
   SidebarHeader, 
   SidebarMenu, 
   SidebarMenuItem, 
-  SidebarMenuButton, 
   SidebarFooter, 
   SidebarInset, 
   SidebarProvider 
@@ -37,23 +38,24 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
+import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 
 const mainNavItems = [
-    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
+    { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics', section: 'analytics' },
+    { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
+    { href: '/settings', icon: <Settings />, label: 'Settings', section: 'settings' },
 ];
 
 const communityNavItems = [
-    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
-    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
-    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'analytics' },
+    { href: (handle: string) => `/${handle}`, icon: <LayoutDashboard />, label: 'Overview', section: 'communities' },
+    { href: (handle: string) => `/${handle}/members`, icon: <Users />, label: 'Members', section: 'communities' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: <Bell />, label: 'Broadcast', section: 'communities' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: <Inbox />, label: 'Inbox', section: 'communities' },
+    { href: (handle: string) => `/${handle}/feed`, icon: <Rss />, label: 'Feed', section: 'communities' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: <Ticket />, label: 'Ticketing', section: 'subscription' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: <Plug />, label: 'Integrations', section: 'settings' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: <BarChart />, label: 'Analytics', section: 'analytics' },
 ];
 
 const getSectionFromPath = (path: string) => {
@@ -69,7 +71,6 @@ const getSectionFromPath = (path: string) => {
     if (handle) {
         const communityNavItem = communityNavItems.find(item => {
             const itemPath = item.href(handle);
-            // Check for exact match, base handle route, or sub-route match
             return path === itemPath || (itemPath.endsWith(handle) && !subRoute) || (subRoute && itemPath.endsWith(subRoute));
         });
         if (communityNavItem) {
@@ -77,12 +78,11 @@ const getSectionFromPath = (path: string) => {
         }
     }
     
-    // Default for any other /handle path
     if (handle) {
         return 'communities';
     }
 
-    return 'communities'; // Default section
+    return 'communities';
 };
 
 
@@ -124,9 +124,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
-                {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
-                {/* Collapsed Icon */}
                 <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
             </div>
@@ -134,14 +132,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton isActive={pathname.startsWith(item.href)} tooltip={item.label}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
+                 <SidebarNavItem 
+                    key={item.label} 
+                    href={item.href} 
+                    icon={item.icon}
+                    activeColor={`var(--${item.section}-color-active)`}
+                    activeBgColor={`var(--${item.section}-color-border)`}
+                  >
+                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                </SidebarNavItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
@@ -158,12 +157,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => signOut(auth).then(() => router.push('/landing'))} tooltip="Log Out">
-                    <LogOut />
-                    <span>Log Out</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                 <SidebarNavItem 
+                    href="#"
+                    icon={<LogOut />}
+                    onClick={() => signOut(auth).then(() => router.push('/landing'))}
+                    activeColor={`var(--${currentSection}-color-active)`}
+                    activeBgColor={`var(--${currentSection}-color-border)`}
+                  >
+                   <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
+                </SidebarNavItem>
               </SidebarMenu>
             </div>
           </SidebarFooter>

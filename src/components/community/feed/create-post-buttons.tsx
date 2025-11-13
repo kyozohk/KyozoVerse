@@ -42,12 +42,11 @@ export const CreatePostButtons: React.FC<CreatePostButtonsProps> = ({ onSelectPo
           {buttonConfig.map((config) => (
             <Button
               key={config.type}
-              isIconOnly
-              className="rounded-full w-14 h-14 relative"
+              className="rounded-full w-14 h-14 relative border"
               style={{
-                backgroundColor: `${config.color}4D`, // 30% opacity
+                backgroundColor: `${config.color}80`, // 50% opacity
                 borderColor: config.color,
-                color: 'white', // Set icon color to white
+                color: 'white',
               }}
               onClick={() => {
                 onSelectPostType(config.type);
@@ -63,24 +62,6 @@ export const CreatePostButtons: React.FC<CreatePostButtonsProps> = ({ onSelectPo
               />
             </Button>
           ))}
-        </div>
-
-        {/* Main Add Button */}
-        <div className="relative w-16 h-16">
-          <CustomButton
-            className="rounded-full w-full h-full shadow-lg"
-            style={{
-              backgroundColor: '#C170CF',
-              color: 'white',
-            }}
-          >
-            {/* This button is now purely decorative or could have a default action */}
-          </CustomButton>
-          <div
-            className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none"
-          >
-            <Plus className="w-8 h-8 text-white" />
-          </div>
         </div>
       </div>
     </div>
