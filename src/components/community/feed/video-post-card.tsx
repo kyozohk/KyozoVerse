@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
-import Image from "next/image";
+import { FirebaseImage } from "@/components/ui/firebase-image";
 
 interface VideoPostCardProps {
   post: Post & { id: string };
@@ -31,14 +31,10 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
       )}
         {post.content.mediaUrls && post.content.mediaUrls.length > 0 && (
             <div className="w-full h-64 overflow-hidden">
-                <img 
+                <FirebaseImage 
                     src={post.content.mediaUrls![0]} 
                     alt={post.title || "Post video"} 
                     className="object-cover w-full h-full"
-                    onError={(e) => {
-                        console.error('Image failed to load:', post.content.mediaUrls![0]);
-                        e.currentTarget.src = '/bg/image_placeholder.png';
-                    }}
                 />
             </div>
         )}
