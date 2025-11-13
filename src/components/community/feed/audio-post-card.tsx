@@ -102,90 +102,92 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
   };
   
   return (
-    <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl">
-      {/* Background gradient */}
-      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
-      
-      {/* Edit/Delete buttons for post creator */}
-      {isPostCreator && (
-        <div className="absolute top-2 right-2 flex gap-1 z-20">
-          <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
-            <Edit className="h-4 w-4 text-gray-700" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 bg-white/80 hover:bg-white rounded-full"
-            onClick={() => setShowDeleteDialog(true)}
-            disabled={isDeleting}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-        </div>
-      )}
-      
-      {/* Content */}
-      <div className="relative z-10 p-6 flex flex-col">
-        {/* Top badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="bg-[#5B91D7] text-white px-4 py-1 rounded-full text-sm font-medium">Listen</span>
-          <span className="bg-transparent border border-[#5B91D7] text-[#5B91D7] px-4 py-1 rounded-full text-sm">
-            Music
-          </span>
-          {post.visibility === 'private' && (
-            <span className="text-xs font-semibold rounded-full px-3 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
-              <Lock className="h-3 w-3" /> Private
-            </span>
-          )}
-        </div>
+    <>
+      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl">
+        {/* Background gradient */}
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
         
-        {/* Title */}
-        <h3 className="text-slate-800 text-xl font-medium mb-2">{post.title}</h3>
-        
-        {/* Description */}
-        <p className="text-slate-700 mb-6">{post.content.text}</p>
-        
-        {post.content.mediaUrls && post.content.mediaUrls.length > 0 ? (
-          <>
-            <audio 
-              ref={audioRef} 
-              src={post.content.mediaUrls[0]} 
-              className="hidden"
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onEnded={handleAudioEnded}
-              onError={(e) => console.error('Audio error:', e)}
-            />
-            
-            {/* Audio progress bar */}
-            <div className="w-full bg-[#5B91D7]/20 h-2 rounded-full mb-2 overflow-hidden">
-              <div 
-                className="bg-[#5B91D7] h-full rounded-full" 
-                style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
-              ></div>
-            </div>
-            
-            {/* Footer */}
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-slate-600 text-sm">{formatTime(currentTime)} / {formatTime(duration)}</span>
-              
-              <button 
-                onClick={togglePlayPause}
-                className="bg-[#5B91D7] rounded-full p-2"
-              >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4 text-white" />
-                ) : (
-                  <Play className="h-4 w-4 text-white ml-0.5" />
-                )}
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-4 text-gray-500">
-            No audio file available
+        {/* Edit/Delete buttons for post creator */}
+        {isPostCreator && (
+          <div className="absolute top-2 right-2 flex gap-1 z-20">
+            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+              <Edit className="h-4 w-4 text-gray-700" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 bg-white/80 hover:bg-white rounded-full"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
           </div>
         )}
+        
+        {/* Content */}
+        <div className="relative z-10 p-6 flex flex-col">
+          {/* Top badges */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="bg-[#5B91D7] text-white px-4 py-1 rounded-full text-sm font-medium">Listen</span>
+            <span className="bg-transparent border border-[#5B91D7] text-[#5B91D7] px-4 py-1 rounded-full text-sm">
+              Music
+            </span>
+            {post.visibility === 'private' && (
+              <span className="text-xs font-semibold rounded-full px-3 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Private
+              </span>
+            )}
+          </div>
+          
+          {/* Title */}
+          <h3 className="text-slate-800 text-xl font-medium mb-2">{post.title}</h3>
+          
+          {/* Description */}
+          <p className="text-slate-700 mb-6">{post.content.text}</p>
+          
+          {post.content.mediaUrls && post.content.mediaUrls.length > 0 ? (
+            <>
+              <audio 
+                ref={audioRef} 
+                src={post.content.mediaUrls[0]} 
+                className="hidden"
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={handleAudioEnded}
+                onError={(e) => console.error('Audio error:', e)}
+              />
+              
+              {/* Audio progress bar */}
+              <div className="w-full bg-[#5B91D7]/20 h-2 rounded-full mb-2 overflow-hidden">
+                <div 
+                  className="bg-[#5B91D7] h-full rounded-full" 
+                  style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+                ></div>
+              </div>
+              
+              {/* Footer */}
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-slate-600 text-sm">{formatTime(currentTime)} / {formatTime(duration)}</span>
+                
+                <button 
+                  onClick={togglePlayPause}
+                  className="bg-[#5B91D7] rounded-full p-2"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-4 w-4 text-white" />
+                  ) : (
+                    <Play className="h-4 w-4 text-white ml-0.5" />
+                  )}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              No audio file available
+            </div>
+          )}
+        </div>
       </div>
       
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -209,6 +211,6 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </>
   );
 };
