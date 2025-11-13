@@ -1,11 +1,13 @@
 import { getAuth } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 /**
  * Upload a file using a server-generated signed URL to bypass CORS issues.
+ * This is the secure way to allow clients to upload files directly to GCS.
  */
 export async function uploadFile(file: File, communityId: string): Promise<string> {
   try {
-    console.log('Starting server-signed upload for file:', file.name);
+    console.log('Starting upload for file:', file.name);
     
     // Get the current user's ID token
     const auth = getAuth();
@@ -34,6 +36,7 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
 
     if (!signedUrlResponse.ok) {
       const errorData = await signedUrlResponse.json();
+      console.error("Failed to get signed URL:", errorData);
       throw new Error(errorData.error || 'Could not get signed URL');
     }
 
@@ -51,15 +54,15 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
-      console.error('GCS Upload Error:', errorText);
-      throw new Error('File upload to Google Cloud Storage failed.');
+      console.error('GCS Upload Error:', { status: uploadResponse.status, text: errorText });
+      throw new Error(`File upload to Google Cloud Storage failed with status ${uploadResponse.status}`);
     }
     
     console.log('Upload successful, public URL:', publicUrl);
     return publicUrl;
 
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('Error in uploadFile helper:', error);
     throw error;
   }
 }
