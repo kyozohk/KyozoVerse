@@ -1,11 +1,12 @@
 import { getAuth } from 'firebase/auth';
 
 /**
- * Upload a file using the server-side API to bypass CORS issues
+ * Upload a file using a server-generated signed URL to bypass CORS issues.
  */
 export async function uploadFile(file: File, communityId: string): Promise<string> {
   try {
-    console.log('Starting server-side upload for file:', file.name);
+    console.log('Starting server-signed upload for file:', file.name);
+    
     // Get the current user's ID token
     const auth = getAuth();
     const user = auth.currentUser;
@@ -15,65 +16,50 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
     }
     
     const token = await user.getIdToken();
-    console.log('Got user token, preparing form data');
-    
-    // Create form data
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('communityId', communityId);
-    formData.append('userId', user.uid);
-    formData.append('token', token);
-    
-    console.log('Sending upload request to server API');
-    // Upload using the simple server API
-    const response = await fetch('/api/upload-simple', {
+    console.log('Got user token, requesting signed URL');
+
+    // 1. Get a signed URL from our new API route
+    const signedUrlResponse = await fetch('/api/upload', {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType: file.type,
+        communityId: communityId,
+      }),
     });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-            errorData = JSON.parse(errorText);
-        } catch (e) {
-            console.error('Failed to parse error response:', errorText);
-            errorData = { error: 'Unknown server error' };
-        }
-        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+    if (!signedUrlResponse.ok) {
+      const errorData = await signedUrlResponse.json();
+      throw new Error(errorData.error || 'Could not get signed URL');
     }
 
-    const data = await response.json();
-    console.log('Upload successful, URL:', data.url);
-    return data.url;
+    const { signedUrl, publicUrl } = await signedUrlResponse.json();
+    console.log('Received signed URL, starting upload to GCS');
+
+    // 2. Upload the file directly to Google Cloud Storage using the signed URL
+    const uploadResponse = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error('GCS Upload Error:', errorText);
+      throw new Error('File upload to Google Cloud Storage failed.');
+    }
+    
+    console.log('Upload successful, public URL:', publicUrl);
+    return publicUrl;
+
   } catch (error) {
     console.error('Error uploading file:', error);
-    throw error;
-  }
-}
-
-/**
- * Try direct upload first, fall back to server upload if CORS error occurs
- */
-export async function smartUpload(
-  file: File, 
-  communityId: string, 
-  directUploadFn: (file: File) => Promise<string>
-): Promise<string> {
-  try {
-    // Try direct upload first
-    return await directUploadFn(file);
-  } catch (error: any) {
-    // Check if it's a CORS error
-    if (
-      error.message?.includes('CORS') || 
-      error.name === 'AbortError' ||
-      error.code === 'storage/unauthorized'
-    ) {
-      console.warn('Direct upload failed due to CORS, falling back to server upload');
-      return await uploadFile(file, communityId);
-    }
-    // Re-throw other errors
     throw error;
   }
 }

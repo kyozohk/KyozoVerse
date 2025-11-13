@@ -13,29 +13,14 @@ class MockStorage {
     const bucketName = name || process.env.FIREBASE_STORAGE_BUCKET || 'kyozoverse.appspot.com';
     return {
       file: (path: string) => ({
-        getSignedUrl: async () => [`https://storage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${randomUUID()}`],
-        createWriteStream: (options: any) => {
-          const events: Record<string, Function[]> = {};
-          const stream = {
-            on: (event: string, callback: Function) => {
-              if (!events[event]) events[event] = [];
-              events[event].push(callback);
-              return stream;
-            },
-            end: (buffer: Buffer) => {
-              console.log(`Mock file upload to gs://${bucketName}/${path} (${buffer.length} bytes)`);
-              setTimeout(() => {
-                if (events['finish']) events['finish'].forEach(cb => cb());
-              }, 100);
-              return stream;
-            },
-            write: (chunk: any) => {
-              // no-op
-            }
-          };
-          return stream as any;
-        }
-      })
+        getSignedUrl: async (options: { action: 'write' | 'read', expires: number, contentType: string }) => {
+          // In mock mode, we generate a fake URL that won't work but allows the flow to continue.
+          // For a real upload test, you'd need actual credentials.
+          const fakeSignedUrl = `https://storage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${randomUUID()}&mock=true`;
+          return [fakeSignedUrl];
+        },
+      }),
+      name: bucketName,
     };
   }
 }
@@ -73,38 +58,35 @@ function initAdmin(): App {
 
   const apps = getApps();
   if (apps.length > 0) {
-    // Return existing initialized app
     return apps[0];
   }
+  
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountKey) {
+      console.warn("FIREBASE_SERVICE_ACCOUNT_KEY not found. Using mock admin SDK. Set USE_MOCK_ADMIN=false and provide credentials for real implementation.");
+      return {} as App; // Fallback to mock if no credentials
+  }
 
-  // Check if we're running in a Firebase environment (like Cloud Functions)
-  // where the admin SDK is automatically initialized
   try {
-    return initializeApp();
-  } catch (e) {
-    // Not in a Firebase environment, initialize with credentials
-    
-    // For local development, use service account credentials
-    // For production, use default credentials
-    const serviceAccount = {
-      projectId: process.env.FIREBASE_PROJECT_ID || '',
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-    };
-
+    const serviceAccount = JSON.parse(serviceAccountKey);
     return initializeApp({
       credential: cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
+  } catch (error) {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:", error);
+      console.warn("Falling back to mock admin SDK due to credential parsing error.");
+      return {} as App;
   }
 }
 
-// Initialize the app
+// Determine if we are actually using mock based on initialization success
 const adminApp = initAdmin();
+const actuallyUsingMock = !adminApp.name;
 
 // Export the services (real or mock)
-export const adminAuth: Auth = useMockAdmin ? new MockAuth() as unknown as Auth : getAuth(adminApp);
-export const adminFirestore: Firestore = useMockAdmin ? new MockFirestore() as unknown as Firestore : getFirestore(adminApp);
-export const adminStorage: Storage = useMockAdmin ? new MockStorage() as unknown as Storage : getStorage(adminApp);
+export const adminAuth: Auth = actuallyUsingMock ? new MockAuth() as unknown as Auth : getAuth(adminApp);
+export const adminFirestore: Firestore = actuallyUsingMock ? new MockFirestore() as unknown as Firestore : getFirestore(adminApp);
+export const adminStorage: Storage = actuallyUsingMock ? new MockStorage() as unknown as Storage : getStorage(adminApp);
 
 export default adminApp;
