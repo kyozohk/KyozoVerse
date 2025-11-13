@@ -27,8 +27,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-import KyozoLogo from '../../../public/logo.png';
-import KyozoIcon from '../../../public/favicon.png';
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -91,9 +89,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center justify-center p-2">
               <Link href="/dashboard" className="flex items-center justify-center" onClick={handleLogoClick}>
                 {/* Expanded Logo */}
-                <Image src={KyozoLogo} alt="Kyozo Logo" height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
+                <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}
-                <Image src={KyozoIcon} alt="Kyozo Icon" height={41} className="hidden group-data-[collapsible=icon]:block" />
+                <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
             </div>
           </SidebarHeader>
