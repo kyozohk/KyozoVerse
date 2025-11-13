@@ -7,6 +7,7 @@ export { CustomButton } from './CustomButton';
 export { PasswordInput } from './PasswordInput';
 export { Header } from './header';
 export { GradientText } from './gradient-text';
+export { Dialog as CustomFormDialog } from './dialog';
 
 // Shadcn components
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
@@ -20,7 +21,6 @@ export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './carousel';
 export { Checkbox } from './checkbox';
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';
-export { Dialog } from './dialog';
 export { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from './dropdown-menu';
 export { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './form';
 export { Input } from './input';

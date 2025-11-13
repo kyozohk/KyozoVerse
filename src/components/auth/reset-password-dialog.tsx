@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Dialog, Input, CustomButton } from '@/components/ui';
+import { CustomFormDialog, Input, CustomButton } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
 
 export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean, onClose: () => void, onGoBack: () => void }) {
@@ -38,7 +38,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
 
 
   return (
-    <Dialog
+    <CustomFormDialog
       open={open}
       onClose={onClose}
       title={isSubmitted ? "Check your inbox" : "Reset your password"}
@@ -84,6 +84,6 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
           </div>
         )}
       </div>
-    </Dialog>
+    </CustomFormDialog>
   );
 }

@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { CustomButton, Dialog, Input, PasswordInput } from '@/components/ui';
+import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
 import { RequestAccessForm } from '@/components/auth/request-access-form';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useAuth } from '@/hooks/use-auth';
@@ -83,7 +84,7 @@ export default function Home() {
         </div>
       </main>
 
-      <Dialog 
+      <CustomFormDialog 
         open={isWaitlistOpen} 
         onClose={() => setIsWaitlistOpen(false)}
         title={formType === 'signup' ? 'Welcome to Kyozo' : 'Join the Waitlist'}
@@ -97,9 +98,9 @@ export default function Home() {
           formType={formType}
           setFormType={setFormType}
         />
-      </Dialog>
+      </CustomFormDialog>
       
-      <Dialog 
+      <CustomFormDialog 
         open={isSignInOpen} 
         onClose={() => setIsSignInOpen(false)}
         title="Welcome Back"
@@ -141,7 +142,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </Dialog>
+      </CustomFormDialog>
 
       <ResetPasswordDialog
         open={isResetPasswordOpen}
