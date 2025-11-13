@@ -27,13 +27,12 @@ import {
   SidebarContent, 
   SidebarHeader, 
   SidebarMenu, 
-  SidebarMenuItem, 
   SidebarFooter, 
   SidebarInset, 
   SidebarProvider 
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { signOut } from '@/firebase/auth';
+import { signOut } from 'firebase/auth';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -87,12 +86,17 @@ const getSectionFromPath = (path: string) => {
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, auth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
   const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
+
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -100,10 +104,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router]);
   
-  const handleLogoClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setSidebarOpen(prev => !prev);
-  }, []);
 
   if (loading || !user) {
     return (
@@ -113,7 +113,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email!.charAt(0).toUpperCase();
+  const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const currentSection = getSectionFromPath(pathname);
 
@@ -160,7 +160,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                  <SidebarNavItem 
                     href="#"
                     icon={<LogOut />}
-                    onClick={() => signOut(auth).then(() => router.push('/landing'))}
+                    onClick={() => signOut(auth!).then(() => router.push('/landing'))}
                     activeColor={`var(--${currentSection}-color-active)`}
                     activeBgColor={`var(--${currentSection}-color-border)`}
                   >
