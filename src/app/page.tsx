@@ -10,6 +10,7 @@ import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
 import { Hero } from '@/components/landing/hero';
+import KyozoLogo from '../../../public/logo.png';
 
 export default function Home() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
       <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center">
-        <Image src="/logo.png" alt="Kyozo Logo" width={100} height={28} />
+        <Image src={KyozoLogo} alt="Kyozo Logo" height={28} />
         {user ? (
           <CustomButton onClick={() => {
             signOut();

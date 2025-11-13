@@ -18,9 +18,7 @@ import {
   Rss,
   Ticket,
   Plug,
-  BarChart,
-  Home,
-  Compass
+  BarChart
 } from 'lucide-react';
 import { 
   Sidebar, 
@@ -38,6 +36,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
+import KyozoLogo from '../../../public/logo.png';
+import KyozoIcon from '../../../public/favicon.png';
 
 const mainNavItems = [
     { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
@@ -124,8 +124,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
-                <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
-                <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
+                <Image src={KyozoLogo} alt="Kyozo Logo" height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
+                <Image src={KyozoIcon} alt="Kyozo Icon" height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
             </div>
           </SidebarHeader>
