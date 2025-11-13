@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -35,7 +36,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Check if we're on a community page (starts with a handle)
   const isCommunityPage = /^\/[^/]+(?!\/dashboard)/.test(pathname);
 
   useEffect(() => {
@@ -43,11 +43,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace('/');
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    setSidebarOpen(!isCommunityPage);
+  }, [isCommunityPage]);
 
   const handleLogout = async () => {
     await signOut();
     router.push('/landing');
   };
+
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   if (loading || !user) {
     return (
@@ -73,17 +82,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const currentSection = getSectionFromPath(pathname);
-
-  // Toggle sidebar when logo is clicked
-  const handleLogoClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setSidebarOpen(prev => !prev);
-  }, []);
-
-  // Set sidebar to collapsed by default on community pages
-  useEffect(() => {
-    setSidebarOpen(!isCommunityPage);
-  }, [isCommunityPage]);
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
