@@ -52,6 +52,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       mediaUrl = await getDownloadURL(storageRef);
     }
 
+    let finalPostType = postType;
+    if (postType === 'text' && file) {
+      finalPostType = 'image';
+    }
+
     const postData = {
         title,
         content: {
@@ -61,7 +66,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         authorId: user.uid,
         communityId: communityId,
         communityHandle: communityHandle,
-        type: file ? postType : (postType === 'image' ? 'image' : 'text'),
+        type: finalPostType,
         createdAt: serverTimestamp(),
         likes: 0,
         comments: 0,
@@ -86,7 +91,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
   const getDialogDescription = () => {
       switch(postType) {
-          case 'text': return 'Share your thoughts with the community.';
+          case 'text': return 'Share your thoughts with the community. You can optionally add an image.';
           case 'image': return 'Upload an image to share with the community.';
           case 'audio': return 'Upload an audio file to start a conversation.';
           case 'video': return 'Upload a video to engage your audience.';
@@ -96,7 +101,9 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
   const getFileInputAccept = () => {
     switch (postType) {
-        case 'image': return { 'image/*': ['.png', '.jpg', '.jpeg', '.gif']};
+        case 'text': // Allow image for text posts
+        case 'image': 
+            return { 'image/*': ['.png', '.jpg', '.jpeg', '.gif']};
         case 'audio': return { 'audio/*': ['.mp3', '.wav', '.m4a']};
         case 'video': return { 'video/*': ['.mp4', '.mov', '.webm']};
         default: return {};
@@ -125,12 +132,12 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                     onChange={(e) => setDescription(e.target.value)} 
                     rows={6}
                 />
-                 {(postType === 'image' || postType === 'audio' || postType === 'video') && (
+                 {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
                     <Dropzone
                         onFileChange={setFile}
                         file={file}
                         accept={getFileInputAccept()}
-                        fileType={postType || 'image'}
+                        fileType={postType === 'text' ? 'image' : postType || 'image'}
                     />
                 )}
             </div>
