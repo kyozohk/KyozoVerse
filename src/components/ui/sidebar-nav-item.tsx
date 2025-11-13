@@ -55,7 +55,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
       <li className="list-none">
         <Link
           href={href}
-          className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
+          className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), 'py-3', className)}
           style={{ 
               '--active-color': activeColor,
               '--active-color-bg': activeBgColor
