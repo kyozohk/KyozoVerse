@@ -9,11 +9,12 @@ const useMockAdmin = process.env.USE_MOCK_ADMIN === 'true';
 
 // Mock implementations for development without Firebase Admin credentials
 class MockStorage {
-  bucket() {
+  bucket(name?: string) {
+    const bucketName = name || process.env.FIREBASE_STORAGE_BUCKET || 'kyozoverse.appspot.com';
     return {
       file: (path: string) => ({
-        getSignedUrl: async () => [`https://storage.googleapis.com/kyozoverse.appspot.com/${encodeURIComponent(path)}?alt=media&token=${randomUUID()}`],
-        createWriteStream: () => {
+        getSignedUrl: async () => [`https://storage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${randomUUID()}`],
+        createWriteStream: (options: any) => {
           const events: Record<string, Function[]> = {};
           const stream = {
             on: (event: string, callback: Function) => {
@@ -22,19 +23,23 @@ class MockStorage {
               return stream;
             },
             end: (buffer: Buffer) => {
-              console.log(`Mock file upload: ${path} (${buffer.length} bytes)`);
+              console.log(`Mock file upload to gs://${bucketName}/${path} (${buffer.length} bytes)`);
               setTimeout(() => {
                 if (events['finish']) events['finish'].forEach(cb => cb());
-              }, 500);
+              }, 100);
               return stream;
+            },
+            write: (chunk: any) => {
+              // no-op
             }
           };
-          return stream;
+          return stream as any;
         }
       })
     };
   }
 }
+
 
 class MockAuth {
   async verifyIdToken(token: string) {
@@ -84,7 +89,7 @@ function initAdmin(): App {
     const serviceAccount = {
       projectId: process.env.FIREBASE_PROJECT_ID || '',
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\n/g, '\n'),
+      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
     };
 
     return initializeApp({

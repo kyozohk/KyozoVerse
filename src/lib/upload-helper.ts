@@ -25,47 +25,27 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
     formData.append('token', token);
     
     console.log('Sending upload request to server API');
-    // Upload using the server API with progress tracking
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      
-      xhr.open('POST', '/api/upload', true);
-      
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100);
-          console.log(`Upload progress: ${percentComplete}%`);
-        }
-      };
-      
-      xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            console.log('Upload successful, URL:', response.url);
-            resolve(response.url);
-          } catch (e) {
-            console.error('Failed to parse response:', xhr.responseText);
-            reject(new Error('Invalid response from server'));
-          }
-        } else {
-          let errorMessage = 'Upload failed';
-          try {
-            const errorData = JSON.parse(xhr.responseText);
-            errorMessage = errorData.error || `Upload failed with status ${xhr.status}`;
-          } catch (e) {
-            console.error('Failed to parse error response:', xhr.responseText);
-          }
-          reject(new Error(errorMessage));
-        }
-      };
-      
-      xhr.onerror = function() {
-        reject(new Error('Network error during upload'));
-      };
-      
-      xhr.send(formData);
+    // Upload using the simple server API
+    const response = await fetch('/api/upload-simple', {
+      method: 'POST',
+      body: formData,
     });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+            errorData = JSON.parse(errorText);
+        } catch (e) {
+            console.error('Failed to parse error response:', errorText);
+            errorData = { error: 'Unknown server error' };
+        }
+        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Upload successful, URL:', data.url);
+    return data.url;
   } catch (error) {
     console.error('Error uploading file:', error);
     throw error;
