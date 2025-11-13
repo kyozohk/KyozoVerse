@@ -99,18 +99,20 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
             <div className={`p-6 flex flex-col justify-between w-full ${hasImage ? 'md:w-2/3' : ''} text-black`}>
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-semibold rounded-full px-2 py-1 bg-primary text-white">Read</span>
-                        <span className="text-xs text-muted-foreground">Short form</span>
+                        <span className="text-xs font-semibold rounded-full px-3 py-1 bg-primary text-white inline-flex items-center justify-center h-6 w-auto">Read</span>
+                        <span className="text-xs text-muted-foreground">Long form article</span>
                     </div>
                     <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
                     <p className="text-base mb-4">{post.content.text}</p>
                 </div>
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>00/00/00 - 8 min read</span>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                        <span>READ</span>
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <span className="uppercase font-medium">READ</span>
+                        <div className="rounded-full bg-gray-200 p-1">
+                            <ArrowRight className="h-4 w-4" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

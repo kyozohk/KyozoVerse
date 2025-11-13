@@ -77,8 +77,8 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
       )}
       <div className="p-6">
         <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold rounded-full px-2 py-1 bg-blue-500 text-white">Listen</span>
-            <span className="text-xs text-gray-500">Audio</span>
+            <span className="text-xs font-semibold rounded-full px-3 py-1 bg-blue-500 text-white inline-flex items-center justify-center h-6 w-auto">Listen</span>
+            <span className="text-xs text-gray-500">Music</span>
         </div>
         <h2 className="text-2xl font-bold mb-2 text-black">{post.title}</h2>
         <p className="text-base mb-4 text-gray-700">{post.content.text}</p>
@@ -94,23 +94,27 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
               onEnded={handleAudioEnded}
               onError={(e) => console.error('Audio error:', e)}
             />
-            <div className="flex items-center gap-4">
-              <div className="flex-grow bg-gray-300 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full" 
-                  style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
-                ></div>
+            <div className="flex items-center justify-between">
+              <div className="flex-grow flex items-center gap-2">
+                <div className="flex-grow bg-gray-300 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full" 
+                    style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-gray-600 whitespace-nowrap">
+                  {formatTime(currentTime)}/{formatTime(duration || 0)}
+                </span>
               </div>
-              <span className="text-sm text-gray-600">
-                {formatTime(currentTime)}/{formatTime(duration || 0)}
-              </span>
-              <Button variant="ghost" className="rounded-full" onClick={togglePlayPause}>
-                {isPlaying ? (
-                  <PauseCircle className="h-8 w-8 text-gray-700" />
-                ) : (
-                  <PlayCircle className="h-8 w-8 text-gray-700" />
-                )}
-              </Button>
+              <div className="flex items-center gap-2 ml-4">
+                <div className="rounded-full bg-blue-500 p-1.5" onClick={togglePlayPause}>
+                  {isPlaying ? (
+                    <PauseCircle className="h-4 w-4 text-white" />
+                  ) : (
+                    <PlayCircle className="h-4 w-4 text-white" />
+                  )}
+                </div>
+              </div>
             </div>
           </>
         ) : (

@@ -102,8 +102,8 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
       
       <div className="p-6">
         <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold rounded-full px-2 py-1 bg-orange-500 text-white">Watch</span>
-            <span className="text-xs text-gray-500">Video</span>
+            <span className="text-xs font-semibold rounded-full px-3 py-1 bg-orange-500 text-white inline-flex items-center justify-center h-6 w-auto">Watch</span>
+            <span className="text-xs text-gray-500">Short form video</span>
         </div>
         <h2 className="text-2xl font-bold mb-2 text-black">{post.title}</h2>
         <p className="text-base mb-4 text-gray-700">{post.content.text}</p>
@@ -111,17 +111,17 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>
             {new Date(post.createdAt || Date.now()).toLocaleDateString()} - 
-            {videoRef.current?.duration ? formatDuration(videoRef.current.duration) : 'Video'}
+            {videoRef.current?.duration ? formatDuration(videoRef.current.duration) : '4 min video'}
           </span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="flex items-center gap-2"
-            onClick={togglePlayPause}
-          >
-            <span>{isPlaying ? 'PAUSE' : 'WATCH'}</span>
-            {isPlaying ? <PauseCircle className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className="uppercase font-medium">{isPlaying ? 'PAUSE' : 'WATCH'}</span>
+            <div className="rounded-full bg-orange-500 p-1.5" onClick={togglePlayPause}>
+              {isPlaying ? 
+                <PauseCircle className="h-4 w-4 text-white" /> : 
+                <PlayCircle className="h-4 w-4 text-white" />
+              }
+            </div>
+          </div>
         </div>
       </div>
     </Card>
