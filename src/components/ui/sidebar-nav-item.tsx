@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,8 +12,8 @@ const sidebarNavItemVariants = cva(
   {
     variants: {
       state: {
-        default: 'text-[#3B3B3B] hover:text-[var(--active-color)] hover:bg-transparent',
-        active: 'text-[var(--active-color)] bg-transparent',
+        default: 'text-[#3B3B3B] hover:text-[var(--active-color)] hover:bg-[var(--active-color-bg)]',
+        active: 'text-[var(--active-color)] bg-[var(--active-color-bg)]',
       },
     },
     defaultVariants: {
@@ -41,10 +42,11 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
     icon: React.ReactElement;
     children: React.ReactNode;
     activeColor?: string;
+    activeBgColor?: string;
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, activeColor = '#763182', ...props }, ref) => {
+  ({ className, href, icon, children, activeColor = '#763182', activeBgColor = 'rgba(132, 52, 132, 0.1)', ...props }, ref) => {
     const pathname = usePathname();
     const isActive = pathname === href;
 
@@ -52,7 +54,10 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
       <Link
         href={href}
         className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
-        style={{ '--active-color': activeColor } as React.CSSProperties}
+        style={{ 
+            '--active-color': activeColor,
+            '--active-color-bg': activeBgColor
+        } as React.CSSProperties}
         ref={ref}
         {...props}
       >

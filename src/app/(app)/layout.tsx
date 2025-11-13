@@ -30,13 +30,50 @@ import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 
+const mainNavItems = [
+    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
+    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
+    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
+];
+
+const communityNavItems = [
+    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
+    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
+    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'analytics' },
+];
+
+const getSectionFromPath = (path: string) => {
+    const handle = path.split('/')[1];
+    const subRoute = path.split('/')[2];
+
+    if (handle) {
+        const communityNavItem = communityNavItems.find(item => {
+            const itemPath = item.href(handle);
+            return path === itemPath || (itemPath.endsWith(handle) && !subRoute) || (subRoute && itemPath.endsWith(subRoute));
+        });
+        if (communityNavItem) {
+            return communityNavItem.section;
+        }
+    }
+    
+    const mainNavItem = mainNavItems.find(item => path.startsWith(item.href));
+    return mainNavItem?.section || 'communities';
+};
+
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  const isCommunityPage = /^\/[^/]+(?!\/dashboard)/.test(pathname);
+  const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
 
   useEffect(() => {
     if (!loading && !user) {
@@ -68,19 +105,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email!.charAt(0).toUpperCase();
 
-  const navItems = [
-    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: BarChart3, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/account', icon: Settings, label: 'Settings', section: 'settings' },
-  ];
-
-  const getSectionFromPath = (path: string) => {
-    if (path.startsWith('/communities')) return 'communities';
-    const currentItem = navItems.find(item => path.startsWith(item.href));
-    return currentItem?.section || 'communities';
-  };
-
   const currentSection = getSectionFromPath(pathname);
 
   return (
@@ -99,7 +123,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href} passHref>
                     <SidebarMenuButton isActive={pathname.startsWith(item.href)} tooltip={item.label}>

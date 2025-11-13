@@ -1,3 +1,4 @@
+
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -266,17 +267,23 @@
 
 /* Sidebar section background colors */
 .sidebar-bg-communities {
-  background-color: rgba(132, 52, 132, 0.3); /* #843484 with 30% transparency */
+  background-color: rgba(132, 52, 132, 0.1); /* #843484 */
 }
 
 .sidebar-bg-analytics {
-  background-color: rgba(105, 159, 229, 0.3); /* #699FE5 with 30% transparency */
+  background-color: rgba(105, 159, 229, 0.1); /* #699FE5 */
 }
 
 .sidebar-bg-subscription {
-  background-color: rgba(225, 179, 39, 0.3); /* #E1B327 with 30% transparency */
+  background-color: rgba(225, 179, 39, 0.1); /* #E1B327 */
 }
 
 .sidebar-bg-settings {
-  background-color: rgba(6, 196, 181, 0.3); /* #06C4B5 with 30% transparency */
+  background-color: rgba(6, 196, 181, 0.1); /* #06C4B5 */
+}
+
+/* Community Select Trigger Fix */
+.community-select-trigger {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
