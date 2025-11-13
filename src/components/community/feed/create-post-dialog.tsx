@@ -43,32 +43,65 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const handleSubmit = async () => {
     if (!user || !postType || !communityId) return;
 
+    // Validate required fields
+    if (!title.trim()) {
+      alert('Please enter a title for your post');
+      return;
+    }
+
+    // Validate file for media posts
+    if ((postType === 'audio' || postType === 'video') && !file) {
+      alert(`Please upload a ${postType} file`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     let mediaUrl = '';
+    let fileCategory = '';
+    let fileType = '';
+    
     if (file) {
       try {
-        console.log('Uploading file using server-side API');
-        mediaUrl = await uploadFile(file, communityId);
-        console.log('Upload successful, URL:', mediaUrl);
+        console.log(`Uploading ${postType} file using server-side API:`, file.name, file.type);
+        const uploadResult = await uploadFile(file, communityId);
+        
+        if (typeof uploadResult === 'string') {
+          mediaUrl = uploadResult;
+          console.log('Upload successful, URL:', mediaUrl);
+        } else {
+          // Handle case where uploadFile returns an object with url
+          mediaUrl = uploadResult.url || '';
+          fileCategory = uploadResult.fileCategory || '';
+          fileType = uploadResult.fileType || '';
+          console.log('Upload successful:', { mediaUrl, fileCategory, fileType });
+        }
       } catch (error) {
         console.error('Upload failed:', error);
-        alert('Failed to upload file. Please try again.');
+        alert(`Failed to upload ${postType} file. Please try again.`);
         setIsSubmitting(false);
         return;
       }
     }
 
+    // Determine final post type
     let finalPostType = postType;
     if (postType === 'text' && file) {
-      finalPostType = 'image';
+      if (file.type.startsWith('image/')) {
+        finalPostType = 'image';
+      } else if (file.type.startsWith('video/')) {
+        finalPostType = 'video';
+      } else if (file.type.startsWith('audio/')) {
+        finalPostType = 'audio';
+      }
     }
 
     const postData = {
         title,
         content: {
             text: description,
-            mediaUrls: file ? [mediaUrl] : []
+            mediaUrls: file ? [mediaUrl] : [],
+            fileType: file ? file.type : ''
         },
         authorId: user.uid,
         communityId: communityId,
@@ -80,10 +113,16 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         visibility: 'public'
     };
 
-    await addDoc(collection(db, 'blogs'), postData);
-
-    setIsSubmitting(false);
-    setIsOpen(false);
+    try {
+      await addDoc(collection(db, 'blogs'), postData);
+      console.log('Post created successfully:', finalPostType);
+      setIsSubmitting(false);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      alert('Failed to create post. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const getDialogTitle = () => {

@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Edit, Trash2 } from "lucide-react";
+import { PlayCircle, PauseCircle, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
 
@@ -13,6 +14,52 @@ interface AudioPostCardProps {
 export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
   const { user } = useAuth();
   const isPostCreator = user && post.authorId === user.uid;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
+  // Format time in MM:SS format
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(err => {
+          console.error('Error playing audio:', err);
+          alert('Failed to play audio. Please try again.');
+        });
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+  };
+
   return (
     <Card 
         className="overflow-hidden shadow-lg transition-all hover:border-blue-500/50 relative"
@@ -31,20 +78,46 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
       <div className="p-6">
         <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-semibold rounded-full px-2 py-1 bg-blue-500 text-white">Listen</span>
-            <span className="text-xs text-gray-500">Podcast</span>
+            <span className="text-xs text-gray-500">Audio</span>
         </div>
         <h2 className="text-2xl font-bold mb-2 text-black">{post.title}</h2>
         <p className="text-base mb-4 text-gray-700">{post.content.text}</p>
         
-        <div className="flex items-center gap-4">
-            <div className="flex-grow bg-gray-300 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full w-1/4"></div>
+        {post.content.mediaUrls && post.content.mediaUrls.length > 0 ? (
+          <>
+            <audio 
+              ref={audioRef} 
+              src={post.content.mediaUrls[0]} 
+              className="hidden"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={handleAudioEnded}
+              onError={(e) => console.error('Audio error:', e)}
+            />
+            <div className="flex items-center gap-4">
+              <div className="flex-grow bg-gray-300 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full" 
+                  style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+                ></div>
+              </div>
+              <span className="text-sm text-gray-600">
+                {formatTime(currentTime)}/{formatTime(duration || 0)}
+              </span>
+              <Button variant="ghost" className="rounded-full" onClick={togglePlayPause}>
+                {isPlaying ? (
+                  <PauseCircle className="h-8 w-8 text-gray-700" />
+                ) : (
+                  <PlayCircle className="h-8 w-8 text-gray-700" />
+                )}
+              </Button>
             </div>
-            <span className="text-sm text-gray-600">01:00/4:57</span>
-            <Button variant="ghost" className="rounded-full">
-                <PlayCircle className="h-8 w-8 text-gray-700" />
-            </Button>
-        </div>
+          </>
+        ) : (
+          <div className="text-center py-4 text-gray-500">
+            No audio file available
+          </div>
+        )}
       </div>
     </Card>
   );

@@ -31,6 +31,20 @@ try {
   console.error('Error initializing Firebase Admin SDK:', error);
 }
 
+// Helper function to validate file types
+function isValidFileType(type: string): boolean {
+  const validTypes = [
+    // Images
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    // Audio
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac',
+    // Video
+    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo'
+  ];
+  
+  return validTypes.includes(type);
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Set CORS headers
@@ -56,13 +70,42 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('File received:', file.name, 'Size:', file.size, 'Type:', file.type);
+    
+    // Validate file type
+    if (!isValidFileType(file.type)) {
+      console.error('Invalid file type:', file.type);
+      return NextResponse.json({ 
+        error: 'Invalid file type', 
+        message: `File type ${file.type} is not supported` 
+      }, { status: 400, headers });
+    }
+    
+    // Validate file size based on type
+    const maxSizeInBytes = file.type.startsWith('video/') 
+      ? 100 * 1024 * 1024  // 100MB for videos
+      : file.type.startsWith('audio/') 
+        ? 20 * 1024 * 1024  // 20MB for audio
+        : 10 * 1024 * 1024; // 10MB for images
+    
+    if (file.size > maxSizeInBytes) {
+      const maxSizeMB = maxSizeInBytes / (1024 * 1024);
+      console.error(`File too large: ${file.size} bytes (max: ${maxSizeInBytes} bytes)`);
+      return NextResponse.json({ 
+        error: 'File too large', 
+        message: `Maximum file size for ${file.type.split('/')[0]} files is ${maxSizeMB}MB` 
+      }, { status: 400, headers });
+    }
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
     console.log('File converted to buffer, size:', buffer.length);
     
-    // Generate a unique filename
-    const filename = `community-posts/${communityId}/${Date.now()}-${file.name}`;
+    // Generate a unique filename with proper folder structure based on file type
+    let fileCategory = 'images';
+    if (file.type.startsWith('audio/')) fileCategory = 'audio';
+    if (file.type.startsWith('video/')) fileCategory = 'videos';
+    
+    const filename = `community-posts/${communityId}/${fileCategory}/${Date.now()}-${file.name}`;
     console.log('Target filename:', filename);
     
     try {
@@ -83,7 +126,8 @@ export async function POST(request: NextRequest) {
           contentType: file.type,
           metadata: {
             uploadedBy: userId,
-            communityId: communityId
+            communityId: communityId,
+            fileCategory: fileCategory
           }
         },
       });
@@ -97,7 +141,12 @@ export async function POST(request: NextRequest) {
       });
       console.log('Signed URL generated:', url.substring(0, 50) + '...');
       
-      return NextResponse.json({ success: true, url }, { headers });
+      return NextResponse.json({ 
+        success: true, 
+        url, 
+        fileType: file.type,
+        fileCategory: fileCategory
+      }, { headers });
     } catch (storageError: any) {
       console.error('Storage operation failed:', storageError);
       return NextResponse.json({ 
