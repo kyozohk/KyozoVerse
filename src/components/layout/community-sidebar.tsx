@@ -63,7 +63,6 @@ const getSectionFromPath = (path: string) => {
     return 'communities';
 };
 
-
 export default function CommunitySidebar() {
   const { user } = useAuth();
   const { open: mainSidebarOpen } = useSidebar();
@@ -112,8 +111,9 @@ export default function CommunitySidebar() {
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
-    const currentPathEnd = pathname.split('/').slice(2).join('/');
-    router.push(`/${handle}/${currentPathEnd}`);
+    const currentSubPath = pathname.split('/').slice(2).join('/');
+    const targetItem = communityNavItems.find(item => item.href(handle).endsWith(currentSubPath)) || communityNavItems[0];
+    router.push(targetItem.href(handle));
   };
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
@@ -128,18 +128,20 @@ export default function CommunitySidebar() {
         }}
     >
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-[60px] items-center border-b px-0 community-select-trigger" style={{borderColor: `var(--${currentSection}-color-border)`}}>
+        <div className="flex h-[60px] items-center border-b px-2" style={{borderColor: `var(--${currentSection}-color-border)`}}>
             {loading ? (
-                <Skeleton className="h-10 w-full mx-2" />
+                <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
                 <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
-                    <SelectTrigger className="w-full h-full border-0 shadow-none focus:ring-0 bg-transparent text-card-foreground">
+                    <SelectTrigger className="w-full h-full border-0 shadow-none focus:ring-0 bg-transparent text-foreground p-0">
                         <div className="flex items-center gap-3 truncate">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-8 w-8">
                                 <AvatarImage src={selectedCommunity?.communityProfileImage} />
                                 <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
                             </Avatar>
-                            <SelectValue />
+                            <SelectValue asChild>
+                                <span className="font-semibold text-lg text-foreground">{selectedCommunity?.name}</span>
+                            </SelectValue>
                         </div>
                     </SelectTrigger>
                     <SelectContent>
@@ -157,7 +159,7 @@ export default function CommunitySidebar() {
                     </SelectContent>
               </Select>
             ) : (
-                <div className="px-2 w-full">
+                <div className="w-full">
                     <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Create Community
@@ -172,7 +174,9 @@ export default function CommunitySidebar() {
                 key={item.label} 
                 href={item.href(selectedCommunityHandle)} 
                 icon={item.icon}
-                activeColor={`var(--${currentSection}-color-active)`}
+                isActive={pathname === item.href(selectedCommunityHandle)}
+                activeColor={`var(--${item.section}-color-active)`}
+                activeBgColor={`var(--${item.section}-color-border)`}
               >
                 {item.label}
               </SidebarNavItem>

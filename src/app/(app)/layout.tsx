@@ -5,20 +5,19 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { 
-  BarChart3, 
+  BarChart, 
   CreditCard, 
   Settings, 
   LogOut, 
   LayoutGrid, 
   Loader2,
-  LayoutDashboard,
   Users,
   Bell,
   Inbox,
   Rss,
   Ticket,
   Plug,
-  BarChart
+  LayoutDashboard
 } from 'lucide-react';
 import { 
   Sidebar, 
@@ -39,7 +38,7 @@ import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 
 const mainNavItems = [
     { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics', section: 'analytics' },
+    { href: '/analytics', icon: <BarChart />, label: 'Analytics', section: 'analytics' },
     { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
     { href: '/settings', icon: <Settings />, label: 'Settings', section: 'settings' },
 ];
@@ -75,21 +74,23 @@ const getSectionFromPath = (path: string) => {
         }
     }
     
-    if (handle) {
+    // Fallback for community root pages
+    if (handle && !mainNavItems.some(item => path.startsWith(item.href))) {
         return 'communities';
     }
 
     return 'communities';
 };
 
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, auth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
+  
+  // Collapse the main sidebar when a community page is active
+  const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -101,8 +102,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace('/landing');
     }
   }, [user, loading, router]);
-  
 
+  useEffect(() => {
+    setSidebarOpen(!isCommunityPage);
+  }, [isCommunityPage]);
+  
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -120,7 +124,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar className={`sidebar-bg-${currentSection}`}>
           <SidebarHeader>
-            <div className="flex items-center justify-center p-2">
+            <div className="flex h-[60px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
                 <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
@@ -134,6 +138,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     key={item.label} 
                     href={item.href} 
                     icon={item.icon}
+                    isActive={item.section === currentSection}
                     activeColor={`var(--${item.section}-color-active)`}
                     activeBgColor={`var(--${item.section}-color-border)`}
                   >

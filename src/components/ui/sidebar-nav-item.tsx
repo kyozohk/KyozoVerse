@@ -41,31 +41,34 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
     href: string;
     icon: React.ReactElement;
     children: React.ReactNode;
+    isActive?: boolean;
     activeColor?: string;
     activeBgColor?: string;
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, activeColor = '#763182', activeBgColor = 'rgba(132, 52, 132, 0.1)', ...props }, ref) => {
+  ({ className, href, icon, children, isActive: isActiveProp, activeColor = '#763182', activeBgColor = 'rgba(132, 52, 132, 0.1)', ...props }, ref) => {
     const pathname = usePathname();
-    const isActive = pathname === href;
+    const isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
 
     return (
-      <Link
-        href={href}
-        className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
-        style={{ 
-            '--active-color': activeColor,
-            '--active-color-bg': activeBgColor
-        } as React.CSSProperties}
-        ref={ref}
-        {...props}
-      >
-        {React.cloneElement(icon, {
-            className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'font-light')
-        })}
-        {children}
-      </Link>
+      <li className="list-none">
+        <Link
+          href={href}
+          className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
+          style={{ 
+              '--active-color': activeColor,
+              '--active-color-bg': activeBgColor
+          } as React.CSSProperties}
+          ref={ref}
+          {...props}
+        >
+          {React.cloneElement(icon, {
+              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'font-light')
+          })}
+          {children}
+        </Link>
+      </li>
     );
   }
 );
