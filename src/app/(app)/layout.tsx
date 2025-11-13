@@ -91,30 +91,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-<<<<<<< HEAD
-  const isCommunityPage = /^\/[^/]+(?!\/dashboard)/.test(pathname);
-
-  useEffect(() => {
-    // Check if the current path is a feedview page (public view)
-    const isFeedViewPage = /^\/[^\/]+\/feedview$/.test(pathname);
-    
-    // Redirect to landing page if user is not logged in and not on feedview page
-    if (!loading && !user && !isFeedViewPage) {
-      router.replace('/');
-    }
-  }, [user, loading, router, pathname]);
-  
-  useEffect(() => {
-    setSidebarOpen(!isCommunityPage);
-  }, [isCommunityPage]);
-
-  const handleLogout = async () => {
-    await signOut();
-    router.push('/landing');
-  };
-=======
   const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
->>>>>>> studio-feed
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

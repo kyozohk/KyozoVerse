@@ -121,11 +121,6 @@ export default function CommunitySidebar() {
   const currentSection = getSectionFromPath(pathname);
 
   return (
-<<<<<<< HEAD
-    <div className={`hidden border-r lg:block w-40 sidebar sidebar-bg-${currentSection} transition-all duration-200`} style={{ marginLeft: mainSidebarOpen ? '0' : '0' }}>
-      <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-0 lg:h-[60px] lg:px-6">
-=======
     <div 
         className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection}`}
         style={{ 
@@ -134,7 +129,6 @@ export default function CommunitySidebar() {
     >
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-[60px] items-center border-b px-0 community-select-trigger" style={{borderColor: `var(--${currentSection}-color-border)`}}>
->>>>>>> studio-feed
             {loading ? (
                 <Skeleton className="h-10 w-full mx-2" />
             ) : communities.length > 0 && selectedCommunityHandle ? (

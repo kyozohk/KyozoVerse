@@ -72,10 +72,6 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400, headers });
     }
-    
-    const uid = decodedToken.uid;
-    const body = await request.json();
-    const { fileName, contentType, communityId } = body;
 
     console.log('File received:', file.name, 'Size:', file.size, 'Type:', file.type);
     
@@ -174,4 +170,15 @@ export async function POST(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }});
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
