@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useSidebar } from '@/components/ui/enhanced-sidebar';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -47,6 +48,7 @@ const communityNavItems = [
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
+  const { open: mainSidebarOpen } = useSidebar();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOwnerOfCurrentCommunity, setIsOwnerOfCurrentCommunity] = useState(false);
@@ -111,7 +113,7 @@ export default function CommunitySidebar() {
 
 
   return (
-    <div className={`hidden border-r lg:block w-72 sidebar sidebar-bg-${currentSection}`}>
+    <div className={`hidden border-r lg:block w-72 sidebar sidebar-bg-${currentSection} transition-all duration-200`} style={{ marginLeft: mainSidebarOpen ? '0' : '0' }}>
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             {loading ? (

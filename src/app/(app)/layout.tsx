@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { 
   BarChart3, 
   CreditCard, 
@@ -33,6 +33,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Check if we're on a community page (starts with a handle)
+  const isCommunityPage = /^\/[^/]+(?!\/dashboard)/.test(pathname);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -70,13 +74,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const currentSection = getSectionFromPath(pathname);
 
+  // Toggle sidebar when logo is clicked
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  // Set sidebar to collapsed by default on community pages
+  useEffect(() => {
+    setSidebarOpen(!isCommunityPage);
+  }, [isCommunityPage]);
+
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar className={`sidebar-bg-${currentSection}`}>
           <SidebarHeader>
             <div className="flex items-center justify-center p-2">
-              <Link href="/communities" className="flex items-center justify-center">
+              <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
                 {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={144} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}
@@ -129,7 +144,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             backgroundImage: `url('/bg/light_app_bg.png')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
+            backgroundRepeat: 'no-repeat',
+            paddingLeft: isCommunityPage ? '0' : undefined
           }}
         >
           {children}
