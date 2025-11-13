@@ -92,7 +92,7 @@ export default function CommunitySidebar() {
         }}
     >
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-[60px] items-center border-b px-2" style={{borderColor: `var(--${currentSection}-color-border)`}}>
+        <div className="flex h-[80px] items-center border-b px-2" style={{borderColor: `var(--${currentSection}-color-border)`}}>
             {loading ? (
                 <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (

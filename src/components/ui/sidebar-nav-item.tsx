@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors font-dm-sans',
+  'group flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors font-dm-sans',
   {
     variants: {
       state: {
