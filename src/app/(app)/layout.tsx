@@ -79,8 +79,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
         <div className="flex flex-shrink-0">
+          {/* Main Sidebar - always visible, collapses to icon-only in community pages */}
           <Sidebar 
-            className={`sidebar-bg-${currentSection} ${isInCommunityPage ? 'w-20' : 'w-64'}`}
+            className={`sidebar-bg-${currentSection}`}
+            collapsible={isInCommunityPage ? "icon" : "none"}
+            variant={isInCommunityPage ? "sidebar" : "sidebar"}
           >
             <SidebarHeader>
               <div className="flex h-[69px] items-center justify-center p-2">
@@ -91,7 +94,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     alt="Kyozo Logo" 
                     width={144} 
                     height={41} 
-                    className={`${isInCommunityPage ? 'hidden' : 'block'}`} 
+                    className="group-data-[collapsible=icon]:hidden" 
                     style={{ height: 'auto' }} 
                   />
                   {/* Collapsed Icon */}
@@ -100,7 +103,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     alt="Kyozo Icon" 
                     width={41} 
                     height={41} 
-                    className={`${isInCommunityPage ? 'block' : 'hidden'}`} 
+                    className="hidden group-data-[collapsible=icon]:block" 
                   />
                 </Link>
               </div>
@@ -121,33 +124,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
-              <div className={`flex flex-col gap-2 p-2 ${isInCommunityPage ? 'items-center' : ''}`}>
-                <div className={`flex items-center gap-2 p-2 ${isInCommunityPage ? 'p-0' : ''}`}>
+              <div className="flex flex-col gap-2 p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
+                <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:p-0">
                   <Avatar className="h-8 w-8 border-2 border-primary/10">
                     <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
                     <AvatarFallback>{fallback}</AvatarFallback>
                   </Avatar>
-                  <div className={`flex flex-col ${isInCommunityPage ? 'hidden' : 'block'}`}>
+                  <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                     <SidebarText className="text-sm font-medium leading-none">{user.displayName || user.email}</SidebarText>
                     <SidebarText className="text-xs text-white/70">{user.email}</SidebarText>
                   </div>
                 </div>
-                <SidebarMenu className={`${isInCommunityPage ? 'p-0' : ''}`}>
+                <SidebarMenu className="group-data-[collapsible=icon]:p-0">
                   <SidebarMenuButton 
                       onClick={handleLogout} 
                       tooltip="Log Out"
-                      className={`text-white hover:text-white ${
-                        isInCommunityPage ? 'justify-center' : ''
-                      }`}
+                      className="text-white hover:text-white group-data-[collapsible=icon]:justify-center"
                       style={{ textShadow: '0px 0px 1px rgba(0,0,0,0.5)' }}
                     >
                       <LogOut className="h-5 w-5 text-white group-hover:text-white" style={{ filter: 'drop-shadow(0px 0px 1px rgba(0,0,0,0.5))' }}/>
-                      <SidebarText className={`text-base ${isInCommunityPage ? 'hidden' : 'block'}`}>Log Out</SidebarText>
+                      <SidebarText className="text-base group-data-[collapsible=icon]:hidden">Log Out</SidebarText>
                     </SidebarMenuButton>
                 </SidebarMenu>
               </div>
             </SidebarFooter>
           </Sidebar>
+          
+          {/* Community Sidebar - only visible in community pages */}
           <CommunitySidebar />
         </div>
         <SidebarInset 

@@ -112,7 +112,7 @@ export default function CommunitySidebar() {
   }
 
   return (
-    <div className={`hidden border-r lg:block w-64 sidebar sidebar-bg-${currentSection}`}>
+    <div className={`hidden border-r lg:flex w-64 sidebar sidebar-bg-${currentSection}`}>
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-[69px] items-center border-b px-4 lg:px-6">
             {loading ? (
