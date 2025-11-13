@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, MessageSquare, Share2, ArrowRight, Edit, Trash2 } from "lucide-react";
+import { ThumbsUp, MessageSquare, Share2, ArrowRight, Edit, Trash2, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -101,6 +101,11 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
                     <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-semibold rounded-full px-3 py-1 bg-primary text-white inline-flex items-center justify-center h-6 w-auto">Read</span>
                         <span className="text-xs text-muted-foreground">Long form article</span>
+                        {post.visibility === 'private' && (
+                            <span className="text-xs font-semibold rounded-full px-2 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
+                                <Lock className="h-3 w-3" /> Private
+                            </span>
+                        )}
                     </div>
                     <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
                     <p className="text-base mb-4">{post.content.text}</p>

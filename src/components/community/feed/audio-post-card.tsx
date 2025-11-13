@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, PauseCircle, Edit, Trash2 } from "lucide-react";
+import { PlayCircle, PauseCircle, Edit, Trash2, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
 
@@ -79,6 +79,11 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
         <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-semibold rounded-full px-3 py-1 bg-blue-500 text-white inline-flex items-center justify-center h-6 w-auto">Listen</span>
             <span className="text-xs text-gray-500">Music</span>
+            {post.visibility === 'private' && (
+                <span className="text-xs font-semibold rounded-full px-2 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Private
+                </span>
+            )}
         </div>
         <h2 className="text-2xl font-bold mb-2 text-black">{post.title}</h2>
         <p className="text-base mb-4 text-gray-700">{post.content.text}</p>

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CustomFormDialog, Input, Textarea, Button, Dropzone } from '@/components/ui';
+import { CustomFormDialog, Input, Textarea, Button, Dropzone, Checkbox } from '@/components/ui';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
@@ -30,12 +30,14 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     if (!isOpen) {
         setTitle('');
         setDescription('');
         setFile(null);
+        setIsPublic(true); // Reset to default (public) when dialog closes
     }
   }, [isOpen]);
 
@@ -110,7 +112,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         createdAt: serverTimestamp(),
         likes: 0,
         comments: 0,
-        visibility: 'public'
+        visibility: isPublic ? 'public' : 'private'
     };
 
     try {
@@ -189,6 +191,19 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                           fileType={postType === 'text' ? 'image' : postType || 'image'}
                       />
                   )}
+                  
+                  <div className="mt-4">
+                    <Checkbox
+                      label="Make this post public"
+                      checked={isPublic}
+                      onCheckedChange={setIsPublic}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1 ml-6">
+                      {isPublic ? 
+                        'Public posts are visible to everyone in the community' : 
+                        'Private posts are only visible to you and community admins'}
+                    </p>
+                  </div>
               </div>
               <div className="mt-auto pt-6 flex justify-end gap-4">
                   <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>

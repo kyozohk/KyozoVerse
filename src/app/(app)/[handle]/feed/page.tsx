@@ -30,6 +30,7 @@ export default function CommunityFeedPage() {
   const [userRole, setUserRole] = useState<string>('guest');
   const [communityId, setCommunityId] = useState<string>('');
   const [filter, setFilter] = useState<string>('all');
+  const [visibilityFilter, setVisibilityFilter] = useState<string>('all');
   const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const [postType, setPostType] = useState<PostType | null>(null);
 
@@ -66,9 +67,12 @@ export default function CommunityFeedPage() {
     const constraints = [];
     constraints.push(where('communityHandle', '==', handle));
 
+    // Only show public posts to non-logged in users
     if (!user) {
       constraints.push(where('visibility', '==', 'public'));
     }
+    // For logged in users, we'll filter by visibility later in the code
+    // This allows us to fetch all posts and then filter them client-side
 
     constraints.push(orderBy('createdAt', 'desc'));
 
@@ -102,7 +106,20 @@ export default function CommunityFeedPage() {
       }
 
       // Filter posts based on visibility and user role
-      const visiblePosts = user ? postsData : postsData.filter((p) => p.visibility === 'public');
+      let visiblePosts = postsData;
+      
+      // If user is not logged in, only show public posts
+      if (!user) {
+        visiblePosts = postsData.filter((p) => p.visibility === 'public');
+      } 
+      // If user is logged in but not an admin/owner, show public posts and their own private posts
+      else if (userRole !== 'admin' && userRole !== 'owner') {
+        visiblePosts = postsData.filter((p) => 
+          p.visibility === 'public' || (p.visibility === 'private' && p.authorId === user.uid)
+        );
+      }
+      // Admins and owners can see all posts
+      
       setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
@@ -119,12 +136,21 @@ export default function CommunityFeedPage() {
   };
 
   const filteredPosts = posts.filter((post) => {
-    if (filter === 'all') return true;
-    if (filter === 'images') return post.type === 'image';
-    if (filter === 'text') return post.type === 'text';
-    if (filter === 'audio') return post.type === 'audio';
-    if (filter === 'video') return post.type === 'video';
-    return true;
+    // Filter by content type
+    const typeMatch = 
+      filter === 'all' ? true :
+      filter === 'images' ? post.type === 'image' :
+      filter === 'text' ? post.type === 'text' :
+      filter === 'audio' ? post.type === 'audio' :
+      filter === 'video' ? post.type === 'video' : true;
+    
+    // Filter by visibility
+    const visibilityMatch = 
+      visibilityFilter === 'all' ? true :
+      visibilityFilter === 'public' ? post.visibility === 'public' :
+      visibilityFilter === 'private' ? post.visibility === 'private' : true;
+    
+    return typeMatch && visibilityMatch;
   });
 
   return (
@@ -134,18 +160,33 @@ export default function CommunityFeedPage() {
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Posts</SelectItem>
-              <SelectItem value="images">Images</SelectItem>
-              <SelectItem value="text">Text Only</SelectItem>
-              <SelectItem value="audio">Audio</SelectItem>
-              <SelectItem value="video">Video</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Content Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="images">Images</SelectItem>
+                <SelectItem value="text">Text Only</SelectItem>
+                <SelectItem value="audio">Audio</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {user && (
+              <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Posts</SelectItem>
+                  <SelectItem value="public">Public Only</SelectItem>
+                  <SelectItem value="private">Private Only</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
       </div>
 
