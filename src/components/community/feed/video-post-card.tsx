@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, PauseCircle, Edit, Trash2, Maximize2, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
+import { deletePost } from "@/lib/post-utils";
+import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface VideoPostCardProps {
   post: Post & { id: string };
@@ -13,10 +16,36 @@ interface VideoPostCardProps {
 
 export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const isPostCreator = user && post.authorId === user.uid;
   const [isPlaying, setIsPlaying] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  
+  const handleDelete = async () => {
+    if (!post.id) return;
+    
+    setIsDeleting(true);
+    try {
+      await deletePost(post.id, post.content.mediaUrls);
+      toast({
+        title: "Post deleted",
+        description: "Your video post has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete video post. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
   
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -52,7 +81,13 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
           <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
             <Edit className="h-4 w-4 text-gray-700" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 bg-white/80 hover:bg-white rounded-full"
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={isDeleting}
+          >
             <Trash2 className="h-4 w-4 text-red-500" />
           </Button>
         </div>
@@ -129,6 +164,28 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
           </div>
         </div>
       </div>
+      
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your video post
+              and remove the data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
