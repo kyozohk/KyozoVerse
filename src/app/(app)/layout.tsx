@@ -2,22 +2,11 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
-  BarChart, 
-  CreditCard, 
-  Settings, 
   LogOut, 
-  LayoutGrid, 
   Loader2,
-  Users,
-  Bell,
-  Inbox,
-  Rss,
-  Ticket,
-  Plug,
-  LayoutDashboard
 } from 'lucide-react';
 import { 
   Sidebar, 
@@ -26,33 +15,34 @@ import {
   SidebarMenu, 
   SidebarFooter, 
   SidebarInset, 
-  SidebarProvider 
+  SidebarProvider,
+  useSidebar
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { signOut } from 'firebase/auth';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-import { getThemeForPath, mainNavItems, communityNavItems } from '@/lib/theme-utils';
+import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, auth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   
-  const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
+  const isCommunityPage = useMemo(() => 
+    /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href)),
+    [pathname]
+  );
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (isCommunityPage) {
-        // If on a community page, clicking the logo should take you back to the communities list
         router.push('/communities');
     } else {
-        // On main pages, toggle the sidebar
         setSidebarOpen(prev => !prev);
     }
   }, [isCommunityPage, router]);
@@ -64,7 +54,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router]);
   
   useEffect(() => {
-    // Automatically collapse the main sidebar when navigating to a community page
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
   
@@ -79,6 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
+  const isCommunitiesActive = /^\/communities$|^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href) && item.href !== '/communities');
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -94,18 +84,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                 <SidebarNavItem 
-                    key={item.label} 
-                    href={item.href} 
-                    icon={item.icon}
-                    isActive={item.section === currentSection}
-                    activeColor={activeColor}
-                    activeBgColor={activeBgColor}
-                  >
-                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </SidebarNavItem>
-              ))}
+              {mainNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = item.href === '/communities' ? isCommunitiesActive : pathname.startsWith(item.href);
+                  return (
+                      <SidebarNavItem 
+                          key={item.label} 
+                          href={item.href} 
+                          icon={<Icon />}
+                          isActive={isActive}
+                          activeColor={activeColor}
+                          activeBgColor={activeBgColor}
+                      >
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                      </SidebarNavItem>
+                  )
+              })}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
@@ -151,4 +145,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-

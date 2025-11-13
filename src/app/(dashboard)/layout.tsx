@@ -5,11 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useCallback, useState } from 'react';
 import { 
-  BarChart3, 
-  CreditCard, 
-  Settings, 
   LogOut, 
-  LayoutGrid, 
   Loader2
 } from 'lucide-react';
 import { 
@@ -27,6 +23,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
+import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -66,20 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
-  const navItems = [
-    { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
-    { href: '/account', icon: <Settings />, label: 'Settings', section: 'settings' },
-  ];
-
-  const getSectionFromPath = (path: string) => {
-    if (path.startsWith('/communities')) return 'communities';
-    const currentItem = navItems.find(item => path.startsWith(item.href));
-    return currentItem?.section || 'communities';
-  };
-
-  const currentSection = getSectionFromPath(pathname);
+  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -97,17 +81,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarNavItem
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    activeColor={`var(--${item.section}-color-active)`}
-                    activeBgColor={`var(--${item.section}-color-border)`}
-                >
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </SidebarNavItem>
-              ))}
+              {mainNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarNavItem
+                        key={item.href}
+                        href={item.href}
+                        icon={<Icon />}
+                        activeColor={`var(--${item.section}-color-active)`}
+                        activeBgColor={`var(--${item.section}-color-border)`}
+                    >
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    </SidebarNavItem>
+                  );
+              })}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>

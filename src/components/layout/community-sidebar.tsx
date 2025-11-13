@@ -133,18 +133,21 @@ export default function CommunitySidebar() {
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {selectedCommunityHandle && communityNavItems.map((item) => (
-              <SidebarNavItem 
-                key={item.label} 
-                href={item.href(selectedCommunityHandle)} 
-                icon={item.icon}
-                isActive={pathname === item.href(selectedCommunityHandle)}
-                activeColor={activeColor}
-                activeBgColor={activeBgColor}
-              >
-                {item.label}
-              </SidebarNavItem>
-            ))}
+            {selectedCommunityHandle && communityNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <SidebarNavItem 
+                  key={item.label} 
+                  href={item.href(selectedCommunityHandle)} 
+                  icon={<Icon />}
+                  isActive={pathname === item.href(selectedCommunityHandle)}
+                  activeColor={activeColor}
+                  activeBgColor={activeBgColor}
+                >
+                  {item.label}
+                </SidebarNavItem>
+              )
+            })}
           </nav>
         </div>
 

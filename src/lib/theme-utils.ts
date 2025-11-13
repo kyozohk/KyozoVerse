@@ -12,23 +12,38 @@ import {
   Ticket, 
   Plug 
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-export const mainNavItems = [
-    { href: '/communities', icon: <LayoutGrid />, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: <BarChart />, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: <CreditCard />, label: 'Subscription', section: 'subscription' },
-    { href: '/settings', icon: <Settings />, label: 'Settings', section: 'settings' },
+interface NavItem {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  section: string;
+}
+
+interface CommunityNavItem {
+    href: (handle: string) => string;
+    icon: LucideIcon;
+    label: string;
+    section: string;
+}
+
+export const mainNavItems: NavItem[] = [
+    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
+    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
 ];
 
-export const communityNavItems = [
-    { href: (handle: string) => `/${handle}`, icon: <LayoutDashboard />, label: 'Overview', section: 'overview' },
-    { href: (handle: string) => `/${handle}/members`, icon: <Users />, label: 'Members', section: 'members' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: <Bell />, label: 'Broadcast', section: 'broadcast' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: <Inbox />, label: 'Inbox', section: 'inbox' },
-    { href: (handle: string) => `/${handle}/feed`, icon: <Rss />, label: 'Feed', section: 'feed' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: <Ticket />, label: 'Ticketing', section: 'ticketing' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: <Plug />, label: 'Integrations', section: 'integrations' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: <BarChart />, label: 'Analytics', section: 'analytics' },
+export const communityNavItems: CommunityNavItem[] = [
+    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
+    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'broadcast' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
+    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
 ];
 
 const themeColors: Record<string, { active: string; bg: string }> = {
