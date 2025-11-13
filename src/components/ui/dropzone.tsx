@@ -5,7 +5,6 @@ import React, { useCallback } from 'react';
 import { useDropzone, Accept } from 'react-dropzone';
 import { UploadCloud, X, File, Music, Video } from 'lucide-react';
 import { Button } from './button';
-import Image from 'next/image';
 
 interface DropzoneProps {
   onFileChange: (file: File | null) => void;
@@ -34,7 +33,7 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image' }: Dro
       
       switch(fileType) {
           case 'image':
-            return <Image src={fileUrl} alt="Preview" width={400} height={300} className="w-full h-full object-contain rounded-md" />;
+            return <img src={fileUrl} alt="Preview" className="w-full h-full object-contain rounded-md" />;
           case 'video':
             return <video src={fileUrl} controls className="w-full h-full object-contain rounded-md" />;
           case 'audio':

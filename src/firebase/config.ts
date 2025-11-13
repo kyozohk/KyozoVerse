@@ -13,4 +13,13 @@ const firebaseConfig: FirebaseOptions = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+// Enable emulators if in development mode and explicitly enabled
+if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true' && process.env.NODE_ENV === 'development') {
+  // We'll import and call connectToEmulators in a separate file
+  // to avoid circular dependencies
+  import('./emulators').then(({ connectToEmulators }) => {
+    connectToEmulators();
+  });
+}
+
 export { app };

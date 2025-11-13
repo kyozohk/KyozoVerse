@@ -104,6 +104,9 @@ importers:
       firebase-admin:
         specifier: ^13.6.0
         version: 13.6.0
+      form-data:
+        specifier: ^4.0.4
+        version: 4.0.4
       genkit:
         specifier: ^1.20.0
         version: 1.22.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.6.0)(firebase@11.10.0)
@@ -113,6 +116,9 @@ importers:
       next:
         specifier: 15.3.3
         version: 15.3.3(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      node-fetch:
+        specifier: '2'
+        version: 2.7.0
       patch-package:
         specifier: ^8.0.0
         version: 8.0.1

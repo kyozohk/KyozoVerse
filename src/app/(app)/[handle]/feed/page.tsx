@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, MessageSquare, Share2, Filter } from 'lucide-react';
-import { PostCardSkeleton } from '@/components/feed/post-card-skeleton';
+import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-utils';
 import { type Post, type User } from '@/lib/types';
 import Image from 'next/image';
@@ -151,11 +151,7 @@ export default function CommunityFeedPage() {
 
       <div className="space-y-6">
         {loading ? (
-          <>
-            <PostCardSkeleton />
-            <PostCardSkeleton />
-            <PostCardSkeleton />
-          </>
+          <FeedSkeletons />
         ) : filteredPosts.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">

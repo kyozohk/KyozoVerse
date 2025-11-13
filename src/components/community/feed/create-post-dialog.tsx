@@ -6,8 +6,9 @@ import { CustomFormDialog, Input, Textarea, Button, Dropzone } from '@/component
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadFile } from '@/lib/upload-helper';
 import { PostType } from './create-post-buttons';
+import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -46,10 +47,17 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
     let mediaUrl = '';
     if (file) {
-      const storage = getStorage();
-      const storageRef = ref(storage, `community-posts/${communityId}/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      mediaUrl = await getDownloadURL(storageRef);
+      try {
+        // Use server-side upload directly
+        console.log('Uploading file using server-side API');
+        mediaUrl = await uploadFile(file, communityId);
+        console.log('Upload successful, URL:', mediaUrl);
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Failed to upload file. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     let finalPostType = postType;
@@ -118,36 +126,40 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       description={getDialogDescription()}
       showVideo={false}
     >
-        <div className="flex flex-col h-full">
-            <div className="flex-grow space-y-4">
-                <Input 
-                    label="Title"
-                    placeholder="Title" 
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)} 
-                />
-                <Textarea 
-                    placeholder="Description" 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)} 
-                    rows={6}
-                />
-                 {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
-                    <Dropzone
-                        onFileChange={setFile}
-                        file={file}
-                        accept={getFileInputAccept()}
-                        fileType={postType === 'text' ? 'image' : postType || 'image'}
-                    />
-                )}
-            </div>
-            <div className="mt-auto pt-6 flex justify-end gap-4">
-                <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
-                    {isSubmitting ? 'Posting...' : 'Post'}
-                </Button>
-            </div>
-        </div>
+        {isSubmitting ? (
+          <CreatePostDialogSkeleton />
+        ) : (
+          <div className="flex flex-col h-full">
+              <div className="flex-grow space-y-4">
+                  <Input 
+                      label="Title"
+                      placeholder="Title" 
+                      value={title} 
+                      onChange={(e) => setTitle(e.target.value)} 
+                  />
+                  <Textarea 
+                      placeholder="Description" 
+                      value={description} 
+                      onChange={(e) => setDescription(e.target.value)} 
+                      rows={6}
+                  />
+                   {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
+                      <Dropzone
+                          onFileChange={setFile}
+                          file={file}
+                          accept={getFileInputAccept()}
+                          fileType={postType === 'text' ? 'image' : postType || 'image'}
+                      />
+                  )}
+              </div>
+              <div className="mt-auto pt-6 flex justify-end gap-4">
+                  <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                      Post
+                  </Button>
+              </div>
+          </div>
+        )}
     </CustomFormDialog>
   );
 };

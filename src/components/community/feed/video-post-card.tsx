@@ -2,7 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayCircle } from "lucide-react";
+import { PlayCircle, Edit, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
 import Image from "next/image";
 
@@ -11,20 +12,34 @@ interface VideoPostCardProps {
 }
 
 export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
+  const { user } = useAuth();
+  const isPostCreator = user && post.authorId === user.uid;
   return (
     <Card 
-        className="overflow-hidden shadow-lg transition-transform hover:scale-105"
+        className="overflow-hidden shadow-lg transition-all hover:border-orange-500/50 relative"
         style={{ backgroundImage: `url('/bg/video_bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
+      {isPostCreator && (
+        <div className="absolute top-2 right-2 flex gap-1 z-10">
+          <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+            <Edit className="h-4 w-4 text-gray-700" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
+      )}
         {post.content.mediaUrls && post.content.mediaUrls.length > 0 && (
             <div className="w-full h-64 overflow-hidden">
-                 <Image 
+                <img 
                     src={post.content.mediaUrls![0]} 
                     alt={post.title || "Post video"} 
-                    width={800}
-                    height={450}
                     className="object-cover w-full h-full"
-                  />
+                    onError={(e) => {
+                        console.error('Image failed to load:', post.content.mediaUrls![0]);
+                        e.currentTarget.src = '/bg/image_placeholder.png';
+                    }}
+                />
             </div>
         )}
       <div className="p-6">
