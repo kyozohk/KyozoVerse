@@ -54,6 +54,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router]);
   
   useEffect(() => {
+    // When on a community page, the main sidebar should be collapsed
+    // to make room for the community sidebar.
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
   
@@ -68,12 +70,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
-  const isCommunitiesActive = /^\/communities$|^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href) && item.href !== '/communities');
+  
+  const isCommunitiesActive = /^\/communities(\/.*)?$|^\/[^/]+/.test(pathname) && !mainNavItems.some(item => item.href !== '/communities' && pathname.startsWith(item.href));
+
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className={`sidebar-bg-${currentSection}`}>
+        <Sidebar className={`sidebar-bg-${currentSection} sidebar-shadow`}>
           <SidebarHeader>
             <div className="flex h-[60px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>

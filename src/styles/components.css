@@ -234,7 +234,10 @@
 
 /* Sidebar styles */
 .sidebar {
-  background-color: rgba(201, 167, 217, 0.3); /* Same as waitlist button background */
+  transition: background-color 0.3s ease;
+}
+.sidebar-shadow {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-nav-item {
@@ -266,21 +269,18 @@
 }
 
 /* Sidebar section background colors */
-.sidebar-bg-communities {
-  background-color: rgba(132, 52, 132, 0.1); /* #843484 */
-}
-
-.sidebar-bg-analytics {
-  background-color: rgba(105, 159, 229, 0.1); /* #699FE5 */
-}
-
-.sidebar-bg-subscription {
-  background-color: rgba(225, 179, 39, 0.1); /* #E1B327 */
-}
-
-.sidebar-bg-settings {
-  background-color: rgba(6, 196, 181, 0.1); /* #06C4B5 */
-}
+.sidebar-bg-communities { background-color: var(--communities-color-border); }
+.sidebar-bg-analytics { background-color: var(--analytics-color-border); }
+.sidebar-bg-subscription { background-color: var(--subscription-color-border); }
+.sidebar-bg-settings { background-color: var(--settings-color-border); }
+.sidebar-bg-overview { background-color: var(--overview-color-border); }
+.sidebar-bg-members { background-color: var(--members-color-border); }
+.sidebar-bg-broadcast { background-color: var(--broadcast-color-border); }
+.sidebar-bg-inbox { background-color: var(--inbox-color-border); }
+.sidebar-bg-feed { background-color: var(--feed-color-border); }
+.sidebar-bg-ticketing { background-color: var(--ticketing-color-border); }
+.sidebar-bg-integrations { background-color: var(--integrations-color-border); }
+.sidebar-bg-default { background-color: var(--default-color-border); }
 
 /* Community Select Trigger Fix */
 .community-select-trigger {

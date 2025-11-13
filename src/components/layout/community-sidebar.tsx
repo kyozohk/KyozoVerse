@@ -86,7 +86,7 @@ export default function CommunitySidebar() {
 
   return (
     <div 
-        className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection}`}
+        className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection} sidebar-shadow`}
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
         }}
@@ -97,14 +97,14 @@ export default function CommunitySidebar() {
                 <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
                 <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
-                    <SelectTrigger className="w-full h-full border-0 shadow-none focus:ring-0 bg-transparent text-foreground p-0">
+                    <SelectTrigger className="w-full h-full border-0 shadow-none focus:ring-0 bg-transparent text-foreground p-0 community-select-trigger">
                         <div className="flex items-center gap-3 truncate">
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={selectedCommunity?.communityProfileImage} />
                                 <AvatarFallback>{selectedCommunity?.name?.substring(0,2) || 'C'}</AvatarFallback>
                             </Avatar>
                             <SelectValue asChild>
-                                <span className="font-semibold text-lg text-foreground">{selectedCommunity?.name}</span>
+                                <span className="font-semibold text-lg text-foreground truncate">{selectedCommunity?.name}</span>
                             </SelectValue>
                         </div>
                     </SelectTrigger>
@@ -131,7 +131,7 @@ export default function CommunitySidebar() {
                 </div>
             )}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 py-2">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {selectedCommunityHandle && communityNavItems.map((item) => {
               const Icon = item.icon;
