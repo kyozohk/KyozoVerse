@@ -10,7 +10,15 @@ import {
   Settings, 
   LogOut, 
   LayoutGrid, 
-  Loader2
+  Loader2,
+  LayoutDashboard,
+  Users,
+  Bell,
+  Inbox,
+  Rss,
+  Ticket,
+  Plug,
+  BarChart
 } from 'lucide-react';
 import { 
   Sidebar, 
@@ -51,10 +59,17 @@ const communityNavItems = [
 const getSectionFromPath = (path: string) => {
     const handle = path.split('/')[1];
     const subRoute = path.split('/')[2];
+    
+    // Check if it is a main navigation item first
+    const mainNavItem = mainNavItems.find(item => path.startsWith(item.href));
+    if (mainNavItem) {
+        return mainNavItem.section;
+    }
 
     if (handle) {
         const communityNavItem = communityNavItems.find(item => {
             const itemPath = item.href(handle);
+            // Check for exact match, base handle route, or sub-route match
             return path === itemPath || (itemPath.endsWith(handle) && !subRoute) || (subRoute && itemPath.endsWith(subRoute));
         });
         if (communityNavItem) {
@@ -62,8 +77,12 @@ const getSectionFromPath = (path: string) => {
         }
     }
     
-    const mainNavItem = mainNavItems.find(item => path.startsWith(item.href));
-    return mainNavItem?.section || 'communities';
+    // Default for any other /handle path
+    if (handle) {
+        return 'communities';
+    }
+
+    return 'communities'; // Default section
 };
 
 
@@ -71,25 +90,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   const isCommunityPage = /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href));
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/');
+      router.replace('/landing');
     }
   }, [user, loading, router]);
   
-  useEffect(() => {
-    setSidebarOpen(!isCommunityPage);
-  }, [isCommunityPage]);
-
-  const handleLogout = async () => {
-    await signOut();
-    router.push('/landing');
-  };
-
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setSidebarOpen(prev => !prev);
@@ -149,7 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">
                 <SidebarMenuItem>
-                  <SidebarMenuButton onClick={handleLogout} tooltip="Log Out">
+                  <SidebarMenuButton onClick={() => signOut(auth).then(() => router.push('/landing'))} tooltip="Log Out">
                     <LogOut />
                     <span>Log Out</span>
                   </SidebarMenuButton>
@@ -159,7 +169,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         
-        <CommunitySidebar />
+        {isCommunityPage && <CommunitySidebar />}
         
         <SidebarInset 
           style={{ 
@@ -167,7 +177,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            paddingLeft: isCommunityPage ? '0' : undefined
           }}
         >
           {children}

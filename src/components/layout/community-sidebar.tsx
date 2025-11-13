@@ -69,7 +69,6 @@ export default function CommunitySidebar() {
   const { open: mainSidebarOpen } = useSidebar();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isOwnerOfCurrentCommunity, setIsOwnerOfCurrentCommunity] = useState(false);
   const [selectedCommunityHandle, setSelectedCommunityHandle] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const pathname = usePathname();
@@ -80,7 +79,6 @@ export default function CommunitySidebar() {
     
     if (!user) {
       setLoading(false);
-      setIsOwnerOfCurrentCommunity(false);
       return;
     };
 
@@ -91,12 +89,14 @@ export default function CommunitySidebar() {
         setCommunities(userCommunities);
 
         const currentCommunity = userCommunities.find(c => c.handle === handleFromPath);
-        setIsOwnerOfCurrentCommunity(!!currentCommunity);
         
         if (currentCommunity) {
             setSelectedCommunityHandle(currentCommunity.handle);
-        } else if (userCommunities.length > 0 && handleFromPath === 'dashboard') {
-            setSelectedCommunityHandle(userCommunities[0].handle);
+        } else if (userCommunities.length > 0 && handleFromPath) {
+            const communityExists = communities.some(c => c.handle === handleFromPath);
+            if(communityExists) {
+                setSelectedCommunityHandle(handleFromPath);
+            }
         } else {
             setSelectedCommunityHandle(null);
         }
@@ -120,14 +120,6 @@ export default function CommunitySidebar() {
   
   const currentSection = getSectionFromPath(pathname);
 
-  if (!isOwnerOfCurrentCommunity && pathname !== '/dashboard') {
-      return null;
-  }
-
-  if (pathname === '/dashboard') {
-      return null;
-  }
-
   return (
     <div 
         className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection}`}
@@ -136,12 +128,12 @@ export default function CommunitySidebar() {
         }}
     >
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-[60px] items-center border-b px-2 community-select-trigger" style={{borderColor: `var(--${currentSection}-color-border)`}}>
+        <div className="flex h-[60px] items-center border-b px-0 community-select-trigger" style={{borderColor: `var(--${currentSection}-color-border)`}}>
             {loading ? (
                 <Skeleton className="h-10 w-full mx-2" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
                 <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
-                    <SelectTrigger className="w-full h-full border-0 shadow-none focus:ring-0 bg-transparent text-foreground">
+                    <SelectTrigger className="w-full h-full border-0 shadow-none focus:ring-0 bg-transparent text-card-foreground">
                         <div className="flex items-center gap-3 truncate">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src={selectedCommunity?.communityProfileImage} />
