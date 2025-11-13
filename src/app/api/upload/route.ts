@@ -1,9 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminStorage, adminAuth } from '@/firebase/admin-config';
-import { randomUUID } from 'crypto';
+import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
+import { getStorage } from 'firebase-admin/storage';
+
+// Initialize Firebase Admin if it hasn't been initialized
+let app: App;
+
+try {
+  if (!getApps().length) {
+    // Log environment variables for debugging (without exposing the full private key)
+    console.log('Firebase Admin SDK initialization:');
+    console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+    console.log('Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
+    console.log('Private Key exists:', !!process.env.FIREBASE_PRIVATE_KEY);
+    
+    // Initialize with the correct bucket name
+    app = initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY,
+      }),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+    });
+    
+    console.log('Firebase Admin SDK initialized successfully');
+  } else {
+    console.log('Firebase Admin SDK already initialized');
+  }
+} catch (error) {
+  console.error('Error initializing Firebase Admin SDK:', error);
+}
 
 export async function POST(request: NextRequest) {
-  console.log('Server-side upload API called');
   try {
     // Set CORS headers
     const headers = {
@@ -12,131 +40,82 @@ export async function POST(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
-    // Handle preflight requests
-    if (request.method === 'OPTIONS') {
-      return new NextResponse(null, { status: 204, headers });
+    // Check if user is authenticated
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
     }
 
-    // Get form data
+    // Get the form data with the file
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const communityId = formData.get('communityId') as string;
-    const userId = formData.get('userId') as string;
-    const idToken = formData.get('token') as string;
     
-    console.log('Upload request received:', {
-      fileName: file?.name,
-      fileType: file?.type,
-      fileSize: file?.size,
-      communityId,
-      userId
-    });
-
-    if (!file || !communityId) {
-      return NextResponse.json(
-        { error: 'File and communityId are required' },
-        { status: 400, headers }
-      );
-    }
-    
-    // Check if we're using mock mode
-    const useMockAdmin = process.env.USE_MOCK_ADMIN === 'true';
-    
-    if (useMockAdmin) {
-      console.log('Using mock mode for upload');
-      // Generate a unique filename
-      const uniqueId = randomUUID();
-      const safeFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-      const fileName = `community-posts/${communityId}/${Date.now()}_${uniqueId}_${safeFileName}`;
-      
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Generate a fake download URL that matches the format of real Firebase Storage URLs
-      const mockUrl = `https://storage.googleapis.com/kyozoverse.appspot.com/${encodeURIComponent(fileName)}?alt=media&token=${randomUUID()}`;
-      
-      console.log('Mock upload successful, returning URL:', mockUrl);
-      
-      return NextResponse.json({ url: mockUrl }, { headers });
-    }
-    
-    // Real Firebase Admin SDK upload
-    try {
-      // Verify the token
-      await adminAuth.verifyIdToken(idToken);
-    } catch (error) {
-      console.error('Invalid token:', error);
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401, headers }
-      );
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400, headers });
     }
 
-    // Generate a unique filename
-    const uniqueId = randomUUID();
-    const safeFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-    const fileName = `community-posts/${communityId}/${Date.now()}_${uniqueId}_${safeFileName}`;
-    
-    // Get a reference to the storage bucket
-    const bucket = adminStorage.bucket();
-    const fileRef = bucket.file(fileName);
-    
+    console.log('File received:', file.name, 'Size:', file.size, 'Type:', file.type);
+
     // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    console.log('File converted to buffer, size:', buffer.length);
     
-    // Create a write stream
-    console.log('Uploading file to Firebase Storage using Admin SDK');
-    const writeStream = fileRef.createWriteStream({
-      metadata: {
-        contentType: file.type,
+    // Generate a unique filename
+    const filename = `community-posts/${communityId}/${Date.now()}-${file.name}`;
+    console.log('Target filename:', filename);
+    
+    try {
+      // Get a reference to the storage bucket
+      const storage = getStorage();
+      console.log('Storage instance obtained');
+      
+      const bucket = storage.bucket();
+      console.log('Bucket reference obtained');
+      
+      const fileRef = bucket.file(filename);
+      console.log('File reference created');
+      
+      // Upload the file
+      console.log('Starting file upload...');
+      await fileRef.save(buffer, {
         metadata: {
-          uploadedBy: userId,
-          communityId: communityId
-        }
-      }
-    });
-    
-    // Upload the file using a promise
-    await new Promise((resolve, reject) => {
-      writeStream.on('error', (error) => {
-        console.error('Error uploading file:', error);
-        reject(error);
+          contentType: file.type,
+          metadata: {
+            uploadedBy: userId,
+            communityId: communityId
+          }
+        },
       });
+      console.log('File uploaded successfully');
       
-      writeStream.on('finish', () => {
-        console.log('File uploaded successfully');
-        resolve(true);
+      // Get the public URL
+      console.log('Generating signed URL...');
+      const [url] = await fileRef.getSignedUrl({
+        action: 'read',
+        expires: '03-01-2500', // Set a far future expiration
       });
+      console.log('Signed URL generated:', url.substring(0, 50) + '...');
       
-      writeStream.end(buffer);
-    });
-    
-    console.log('Generating signed URL');
-    // Generate a signed URL that doesn't expire for a long time
-    const [signedUrl] = await fileRef.getSignedUrl({
-      action: 'read',
-      expires: '03-01-2500', // Far future expiration
-    });
-    
-    console.log('Signed URL generated:', signedUrl);
-    
-    return NextResponse.json({ url: signedUrl }, { headers });
-  } catch (error) {
+      return NextResponse.json({ success: true, url }, { headers });
+    } catch (storageError: any) {
+      console.error('Storage operation failed:', storageError);
+      return NextResponse.json({ 
+        error: 'Storage operation failed', 
+        message: storageError.message || 'Unknown storage error',
+        code: storageError.code || 'unknown'
+      }, { status: 500, headers });
+    }
+  } catch (error: any) {
     console.error('Upload error:', error);
-    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    console.error('Firebase config:', {
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    });
-    return NextResponse.json(
-      { error: 'Failed to upload file' },
-      { status: 500, headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }}
-    );
+    return NextResponse.json({ 
+      error: 'Upload failed', 
+      message: error.message || 'Unknown error' 
+    }, { status: 500, headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    }});
   }
 }
 

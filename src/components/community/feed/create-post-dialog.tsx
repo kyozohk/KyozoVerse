@@ -48,7 +48,6 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     let mediaUrl = '';
     if (file) {
       try {
-        // Use server-side upload directly
         console.log('Uploading file using server-side API');
         mediaUrl = await uploadFile(file, communityId);
         console.log('Upload successful, URL:', mediaUrl);

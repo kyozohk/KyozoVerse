@@ -102,14 +102,15 @@ export function PostCard({ post, author }: PostCardProps) {
       <CardContent className="p-0">
         {/* Image Post */}
         {isImagePost && post.content.mediaUrls?.[0] && (
-          <div className="relative">
-            <img 
+          <div className="relative w-full h-[400px]">
+            <Image 
               src={post.content.mediaUrls[0]} 
               alt={post.title || "Post image"} 
-              className="w-full object-cover max-h-[400px]"
-              onError={(e) => {
+              fill
+              className="object-cover"
+              onLoad={() => console.log('Image loaded successfully:', post.content.mediaUrls[0])}
+              onError={() => {
                 console.error('Image failed to load:', post.content.mediaUrls[0]);
-                e.currentTarget.src = '/bg/image_placeholder.png';
               }}
             />
           </div>

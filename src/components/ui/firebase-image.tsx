@@ -12,13 +12,33 @@ interface FirebaseImageProps {
 export function FirebaseImage({ src, alt, className = '' }: FirebaseImageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [imageSrc, setImageSrc] = useState(src);
+  const [imageSrc, setImageSrc] = useState('');
 
   useEffect(() => {
     // Reset states when src changes
     setLoading(true);
     setError(false);
-    setImageSrc(src);
+    
+    // Process the URL if needed
+    if (src) {
+      // Make sure the URL is properly encoded
+      try {
+        // For debugging
+        console.log('Processing image URL:', src);
+        
+        // Use the original URL as is
+        setImageSrc(src);
+      } catch (err) {
+        console.error('Error processing image URL:', err);
+        setError(true);
+        setLoading(false);
+        setImageSrc('/bg/image_placeholder.png');
+      }
+    } else {
+      setError(true);
+      setLoading(false);
+      setImageSrc('/bg/image_placeholder.png');
+    }
   }, [src]);
 
   // Function to handle image load

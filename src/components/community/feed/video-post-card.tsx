@@ -30,14 +30,15 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
         </div>
       )}
         {post.content.mediaUrls && post.content.mediaUrls.length > 0 && (
-            <div className="w-full h-64 overflow-hidden">
-                <img 
+            <div className="w-full h-64 overflow-hidden relative">
+                <Image 
                     src={post.content.mediaUrls![0]} 
                     alt={post.title || "Post video"} 
-                    className="object-cover w-full h-full"
-                    onError={(e) => {
+                    fill
+                    className="object-cover"
+                    onLoad={() => console.log('Image loaded successfully:', post.content.mediaUrls![0])}
+                    onError={() => {
                         console.error('Image failed to load:', post.content.mediaUrls![0]);
-                        e.currentTarget.src = '/bg/image_placeholder.png';
                     }}
                 />
             </div>

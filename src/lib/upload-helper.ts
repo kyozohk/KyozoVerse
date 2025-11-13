@@ -1,12 +1,12 @@
 import { getAuth } from 'firebase/auth';
 
 /**
- * Upload a file using the server-side API to bypass CORS issues
+ * Upload a file using the server-side API
  */
 export async function uploadFile(file: File, communityId: string): Promise<string> {
   try {
     console.log('Starting server-side upload for file:', file.name);
-    // Get the current user's ID token
+    // Get the current user
     const auth = getAuth();
     const user = auth.currentUser;
     
@@ -14,86 +14,62 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
       throw new Error('User not authenticated');
     }
     
-    const token = await user.getIdToken();
-    console.log('Got user token, preparing form data');
-    
     // Create form data
     const formData = new FormData();
     formData.append('file', file);
     formData.append('communityId', communityId);
-    formData.append('userId', user.uid);
-    formData.append('token', token);
     
     console.log('Sending upload request to server API');
-    // Upload using the server API with progress tracking
+    
+    // Create an XMLHttpRequest to track upload progress
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       
-      xhr.open('POST', '/api/upload', true);
-      
+      // Set up progress tracking
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100);
-          console.log(`Upload progress: ${percentComplete}%`);
+          const progress = Math.round((event.loaded / event.total) * 100);
+          console.log(`Upload progress: ${progress}%`);
         }
       };
       
-      xhr.onload = function() {
+      // Create a promise to handle the XHR request
+      xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const response = JSON.parse(xhr.responseText);
-            console.log('Upload successful, URL:', response.url);
-            resolve(response.url);
+            if (response.success && response.url) {
+              console.log('Upload successful, URL:', response.url);
+              resolve(response.url);
+            } else {
+              reject(new Error('Upload failed: No URL returned'));
+            }
           } catch (e) {
-            console.error('Failed to parse response:', xhr.responseText);
-            reject(new Error('Invalid response from server'));
+            reject(new Error('Invalid response format'));
           }
         } else {
-          let errorMessage = 'Upload failed';
+          let errorMessage = `Upload failed with status ${xhr.status}`;
           try {
-            const errorData = JSON.parse(xhr.responseText);
-            errorMessage = errorData.error || `Upload failed with status ${xhr.status}`;
+            const errorResponse = JSON.parse(xhr.responseText);
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+            }
           } catch (e) {
-            console.error('Failed to parse error response:', xhr.responseText);
+            // If we can't parse the error response, use the default message
           }
           reject(new Error(errorMessage));
         }
       };
       
-      xhr.onerror = function() {
-        reject(new Error('Network error during upload'));
-      };
+      xhr.onerror = () => reject(new Error('Network error during upload'));
       
+      // Open and send the request
+      xhr.open('POST', '/api/upload');
+      xhr.setRequestHeader('x-user-id', user.uid);
       xhr.send(formData);
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error;
-  }
-}
-
-/**
- * Try direct upload first, fall back to server upload if CORS error occurs
- */
-export async function smartUpload(
-  file: File, 
-  communityId: string, 
-  directUploadFn: (file: File) => Promise<string>
-): Promise<string> {
-  try {
-    // Try direct upload first
-    return await directUploadFn(file);
-  } catch (error: any) {
-    // Check if it's a CORS error
-    if (
-      error.message?.includes('CORS') || 
-      error.name === 'AbortError' ||
-      error.code === 'storage/unauthorized'
-    ) {
-      console.warn('Direct upload failed due to CORS, falling back to server upload');
-      return await uploadFile(file, communityId);
-    }
-    // Re-throw other errors
+    console.error('Upload error:', error);
     throw error;
   }
 }
