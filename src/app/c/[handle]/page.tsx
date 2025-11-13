@@ -64,12 +64,6 @@ export default function CommunityPublicPage() {
               <h1 className="text-3xl md:text-4xl font-bold mb-4">{communityData.name}</h1>
               <p className="text-gray-600 mb-6">{communityData.description || 'Welcome to our community!'}</p>
               <div className="flex gap-4">
-                <Button asChild>
-                  <Link href="/">Join Community</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/c/${handle}/feed`}>View Feed</Link>
-                </Button>
               </div>
             </div>
             <div className="w-full md:w-1/2 flex justify-center">
