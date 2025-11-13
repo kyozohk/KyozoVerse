@@ -2,10 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { CustomFormDialog, Input, Textarea, Button, Dropzone } from '@/components/ui';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
@@ -31,7 +28,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -41,16 +38,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   }, [isOpen]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
 
   const handleSubmit = async () => {
     if (!user || !postType || !communityId) return;
 
-    setIsUploading(true);
+    setIsSubmitting(true);
 
     let mediaUrl = '';
     if (file) {
@@ -78,7 +70,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
     await addDoc(collection(db, 'blogs'), postData);
 
-    setIsUploading(false);
+    setIsSubmitting(false);
     setIsOpen(false);
   };
 
@@ -92,23 +84,35 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   }
 
+  const getDialogDescription = () => {
+      switch(postType) {
+          case 'text': return 'Share your thoughts with the community.';
+          case 'image': return 'Upload an image to share with the community.';
+          case 'audio': return 'Upload an audio file to start a conversation.';
+          case 'video': return 'Upload a video to engage your audience.';
+          default: return 'Share something new with your community.'
+      }
+  }
+
   const getFileInputAccept = () => {
     switch (postType) {
-        case 'image': return 'image/*';
-        case 'audio': return 'audio/mp3,audio/mp4';
-        case 'video': return 'video/mp4';
-        default: return '*';
+        case 'image': return { 'image/*': ['.png', '.jpg', '.jpeg', '.gif']};
+        case 'audio': return { 'audio/*': ['.mp3', '.wav', '.m4a']};
+        case 'video': return { 'video/*': ['.mp4', '.mov', '.webm']};
+        default: return {};
     }
   }
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogContent className="sm:max-w-[800px]">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{getDialogTitle()}</AlertDialogTitle>
-        </AlertDialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-4">
+    <CustomFormDialog
+      open={isOpen}
+      onClose={() => setIsOpen(false)}
+      title={getDialogTitle()}
+      description={getDialogDescription()}
+      showVideo={false}
+    >
+        <div className="flex flex-col h-full">
+            <div className="flex-grow space-y-4">
                 <Input 
                     label="Title"
                     placeholder="Title" 
@@ -121,35 +125,22 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                     onChange={(e) => setDescription(e.target.value)} 
                     rows={6}
                 />
-                {(postType === 'image' || postType === 'audio' || postType === 'video') && (
-                    <Input 
-                        label="Media file"
-                        type="file" 
-                        onChange={handleFileChange} 
+                 {(postType === 'image' || postType === 'audio' || postType === 'video') && (
+                    <Dropzone
+                        onFileChange={setFile}
+                        file={file}
                         accept={getFileInputAccept()}
+                        fileType={postType || 'image'}
                     />
                 )}
             </div>
-            <div className="flex items-center justify-center bg-muted rounded-lg">
-                {file && postType === 'video' && (
-                    <video src={URL.createObjectURL(file)} controls className="w-full h-auto" />
-                )}
-                {file && postType === 'image' && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-auto" />
-                )}
-                 {file && postType === 'audio' && (
-                    <audio src={URL.createObjectURL(file)} controls className="w-full" />
-                )}
+            <div className="mt-auto pt-6 flex justify-end gap-4">
+                <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? 'Posting...' : 'Post'}
+                </Button>
             </div>
         </div>
-        <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={isUploading}>
-                {isUploading ? 'Uploading...' : 'Post'}
-            </Button>
-        </div>
-      </AlertDialogContent>
-    </AlertDialog>
+    </CustomFormDialog>
   );
 };

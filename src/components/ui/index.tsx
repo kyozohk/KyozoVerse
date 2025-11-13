@@ -8,6 +8,7 @@ export { PasswordInput } from './PasswordInput';
 export { Header } from './header';
 export { GradientText } from './gradient-text';
 export { Dialog as CustomFormDialog } from './dialog';
+export { Dropzone } from './dropzone';
 
 // Shadcn components
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
