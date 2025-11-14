@@ -34,7 +34,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
-      if (firebaseUser) {
+      
+      // Don't redirect if we're on a public community page
+      const pathname = window.location.pathname;
+      const isPublicCommunityPage = pathname.startsWith('/c/');
+      
+      if (firebaseUser && !isPublicCommunityPage) {
         router.push('/dashboard');
       }
     });

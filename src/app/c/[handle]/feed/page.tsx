@@ -233,15 +233,15 @@ export default function PublicFeedPage() {
               © {new Date().getFullYear()} KyozoVerse
             </p>
             <div className="flex gap-6">
-              <Link href="/" className="text-sm text-white/60 hover:text-white">
+              <span className="text-sm text-white/60 hover:text-white cursor-pointer">
                 Terms
-              </Link>
-              <Link href="/" className="text-sm text-white/60 hover:text-white">
+              </span>
+              <span className="text-sm text-white/60 hover:text-white cursor-pointer">
                 Privacy
-              </Link>
-              <Link href="/" className="text-sm text-white/60 hover:text-white">
+              </span>
+              <span className="text-sm text-white/60 hover:text-white cursor-pointer">
                 Contact
-              </Link>
+              </span>
             </div>
           </div>
         </div>

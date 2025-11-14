@@ -49,7 +49,7 @@ export default function CommunityPublicPage() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <h1 className="text-2xl font-bold mb-4">Community Not Found</h1>
         <p className="text-gray-600 mb-6">The community you're looking for doesn't exist or is private.</p>
-        <Button onClick={() => router.push('/')}>Return Home</Button>
+        <Button onClick={() => router.push('/landing')}>Return Home</Button>
       </div>
     );
   }
