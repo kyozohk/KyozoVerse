@@ -2,8 +2,8 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
-import { useEffect, useCallback, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import { 
   LogOut, 
   Loader2
@@ -15,13 +15,14 @@ import {
   SidebarMenu,
   SidebarFooter, 
   SidebarInset, 
-  SidebarProvider 
+  SidebarProvider,
+  useSidebar
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 // Use signOut from useAuth hook instead of importing directly
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import CommunitySidebar from '@/components/layout/community-sidebar';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 
@@ -30,26 +31,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  const isCommunityPage = useMemo(() => 
+    /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href)),
+    [pathname]
+  );
+  
+  const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/');
-    } else if (pathname === '/dashboard') {
-      // Redirect from old path to new path
-      router.replace('/communities');
+      router.replace('/landing');
     }
   }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
     await signOut();
-    // Keep the redirect to '/' as it is in this layout
+    router.push('/landing');
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setSidebarOpen(prev => !prev);
-  }, []);
+    if (isCommunityPage) {
+        router.push('/communities');
+    } else {
+        setSidebarOpen(prev => !prev);
+    }
+  }, [isCommunityPage, router]);
 
   if (loading || !user) {
     return (
@@ -62,14 +70,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
+  const isCommunitiesActive = /^\/communities(\/.*)?$|^\/[^/]+/.test(pathname) && !mainNavItems.some(item => item.href !== '/communities' && pathname.startsWith(item.href));
+
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className={`sidebar-bg-${currentSection}`}>
+        <Sidebar className={`sidebar-bg-${currentSection} sidebar-shadow`}>
           <SidebarHeader>
-            <div className="flex items-center justify-center p-2">
-              <Link href="/dashboard" className="flex items-center justify-center" onClick={handleLogoClick}>
+            <div className="flex h-[80px] items-center justify-center p-2">
+              <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
                 {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}
@@ -81,13 +91,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <SidebarMenu>
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
+                  const isActive = item.href === '/communities' ? isCommunitiesActive : pathname.startsWith(item.href);
                   return (
                     <SidebarNavItem
                         key={item.href}
                         href={item.href}
                         icon={<Icon />}
-                        activeColor={`var(--${item.section}-color-active)`}
-                        activeBgColor={`var(--${item.section}-color-border)`}
+                        isActive={isActive}
+                        activeColor={activeColor}
+                        activeBgColor={activeBgColor}
                     >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </SidebarNavItem>
@@ -112,8 +124,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     href="#"
                     icon={<LogOut />}
                     onClick={handleLogout}
-                    activeColor={`var(--${currentSection}-color-active)`}
-                    activeBgColor={`var(--${currentSection}-color-border)`}
+                    activeColor={activeColor}
+                    activeBgColor={activeBgColor}
                 >
                     <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
                 </SidebarNavItem>
@@ -121,6 +133,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </SidebarFooter>
         </Sidebar>
+
+        {isCommunityPage && <CommunitySidebar />}
+
         <SidebarInset 
           style={{ 
             backgroundImage: `url('/bg/light_app_bg.png')`,

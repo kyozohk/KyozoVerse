@@ -52,10 +52,10 @@ export default function PublicFeedPage() {
 
     const postsCollection = collection(db, 'blogs');
 
-    // First query for community handle
     const q = query(
       postsCollection,
       where('communityHandle', '==', handle),
+      where('visibility', '==', 'public'), // Only show public posts
       orderBy('createdAt', 'desc')
     );
 
@@ -65,28 +65,25 @@ export default function PublicFeedPage() {
       for (const postDoc of querySnapshot.docs) {
         const postData = postDoc.data() as Post;
         
-        // Only include public posts in the public view
-        if (postData.visibility === 'public') {
-          let authorData: User | null = null;
-          if (postData.authorId) {
-            try {
-              const userRef = doc(db, 'users', postData.authorId);
-              const userSnap = await getDoc(userRef);
-              if (userSnap.exists()) {
-                authorData = userSnap.data() as User;
-              }
-            } catch (error) {
-              // If we can't fetch author, proceed without it
+        let authorData: User | null = null;
+        if (postData.authorId) {
+          try {
+            const userRef = doc(db, 'users', postData.authorId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              authorData = userSnap.data() as User;
             }
+          } catch (error) {
+            // If we can't fetch author, proceed without it
           }
-
-          postsData.push({
-            id: postDoc.id,
-            ...postData,
-            author: authorData || { userId: 'unknown', displayName: 'Unknown User' },
-            createdAt: postData.createdAt?.toDate(),
-          });
         }
+
+        postsData.push({
+          id: postDoc.id,
+          ...postData,
+          author: authorData || { userId: 'unknown', displayName: 'Unknown User' },
+          createdAt: postData.createdAt?.toDate(),
+        });
       }
       
       setPosts(postsData);

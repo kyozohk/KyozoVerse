@@ -31,7 +31,7 @@ export default function PublicLayout({
               <Image src="/logo.png" alt="KyozoVerse" width={120} height={35} className="brightness-150" />
             </Link>
             <Link 
-              href="/" 
+              href="/landing" 
               className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
             >
               Sign In

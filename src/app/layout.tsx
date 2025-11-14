@@ -24,12 +24,6 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body 
         className="font-body antialiased" 
-        style={{
-          backgroundImage: `url('/bg/light_app_bg.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
       >
         <FirebaseClientProvider firebase={getFirebase()}>
           {children}
