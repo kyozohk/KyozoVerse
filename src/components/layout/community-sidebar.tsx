@@ -135,12 +135,13 @@ export default function CommunitySidebar() {
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {selectedCommunityHandle && communityNavItems.map((item) => {
               const Icon = item.icon;
+              const communityPath = `/${selectedCommunityHandle}/${item.label.toLowerCase()}`
               return (
                 <SidebarNavItem 
                   key={item.label} 
-                  href={item.href(selectedCommunityHandle)} 
+                  href={communityPath} 
                   icon={<Icon />}
-                  isActive={pathname === item.href(selectedCommunityHandle)}
+                  isActive={pathname === communityPath}
                   activeColor={activeColor}
                   activeBgColor={activeBgColor}
                 >

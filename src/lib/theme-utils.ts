@@ -66,25 +66,29 @@ export const getThemeForPath = (path: string) => {
 
     let section = 'default';
 
-    if (segments.length === 0) { // Root path "/"
-        section = 'communities';
-    } else if (mainNavItems.some(item => segments[0] === item.href.slice(1))) {
-        // Main sections like /communities, /analytics
-        const mainNavItem = mainNavItems.find(item => segments[0] === item.href.slice(1));
-        section = mainNavItem?.section || 'default';
-    } else if (segments.length >= 1) {
-        // Community pages like /[handle] or /[handle]/members
-        const subRoute = segments[1];
-        const communityNavItem = communityNavItems.find(item => {
-            const itemPath = item.href('handle').split('/')[2];
-            return itemPath === subRoute;
-        });
-
-        if (communityNavItem) {
-            section = communityNavItem.section;
-        } else if (segments.length === 1) {
-            // This is the overview page for a community handle
-            section = 'overview';
+    if (segments.length > 0) {
+        if (mainNavItems.some(item => segments[0] === item.href.slice(1))) {
+            const mainNavItem = mainNavItems.find(item => segments[0] === item.href.slice(1));
+            section = mainNavItem?.section || 'default';
+        } else if (segments[0] === 'c' && segments.length >= 2) {
+            // This is a public community route, like /c/[handle]/feed
+             const subRoute = segments[2];
+             const communityNavItem = communityNavItems.find(item => item.label.toLowerCase() === subRoute);
+              if (communityNavItem) {
+                section = communityNavItem.section;
+              } else {
+                 section = 'feed'; // Default for public community pages
+              }
+        } else if (segments.length >= 2) {
+             const subRoute = segments[1];
+             const communityNavItem = communityNavItems.find(item => item.label.toLowerCase() === subRoute);
+             if (communityNavItem) {
+                section = communityNavItem.section;
+             } else {
+                section = 'overview'
+             }
+        } else if (segments.length === 1 && !mainNavItems.some(item => segments[0] === item.href.slice(1))) {
+             section = 'overview'
         }
     }
     
