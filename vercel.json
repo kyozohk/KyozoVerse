@@ -1,0 +1,17 @@
+{
+  "buildCommand": "pnpm build",
+  "cleanUrls": true,
+  "framework": "nextjs",
+  "installCommand": "pnpm install",
+  "outputDirectory": ".next",
+  "regions": ["sin1"],
+  "rewrites": [],
+  "redirects": [],
+  "headers": [],
+  "functions": {
+    "app/(dashboard)/page": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
