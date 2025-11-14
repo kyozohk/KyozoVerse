@@ -1,31 +1,25 @@
-
 "use client";
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { Dialog } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { CustomFormDialog, Input, Textarea, CustomButton } from '@/components/ui';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { Textarea } from '../ui/textarea';
-import { Progress } from '../ui/progress';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { CustomButton } from '../ui/CustomButton';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
-const STEPS = [
-    { id: 1, title: 'Basic Info' },
-    { id: 2, title: 'Details' },
-    { id: 3, title: 'Privacy' },
-]
+// New Components
+import { ImageUploader } from './image-uploader';
+import { LogoPicker } from './logo-picker';
+import { ColorPalettePicker } from './color-palette-picker';
+import { TagInput } from './tag-input';
+import { PhoneNumberInput } from './phone-number-input';
+
 
 export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (open: boolean) => void }) {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [currentStep, setCurrentStep] = useState(0);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -33,27 +27,17 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         tagline: '',
         lore: '',
         mantras: '',
-        tags: '',
-        location: '',
+        tags: [] as string[],
+        phone: '',
         communityPrivacy: 'public',
-        communityType: 'community',
+        colorPalette: ['#A4D4D1', '#A4B8D4', '#D4A4B8', '#D4C2A4', '#B8D4A4'],
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [bannerImage, setBannerImage] = useState<File | null>(null);
+    const [logoImage, setLogoImage] = useState<File | null>(null);
 
-    const handleNext = () => {
-        if (currentStep < STEPS.length - 1) {
-            setCurrentStep(currentStep + 1);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
-    };
-    
-    const handleValueChange = (name: keyof typeof formData, value: string) => {
+    const handleValueChange = (name: keyof typeof formData, value: any) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -69,140 +53,81 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
         setIsSubmitting(true);
         
+        // Mocking upload for now, in a real app these would upload to a service
+        const bannerUrl = bannerImage ? URL.createObjectURL(bannerImage) : '';
+        const logoUrl = logoImage ? URL.createObjectURL(logoImage) : '';
+
         const communityData = {
-            name: formData.name,
-            handle: formData.handle,
-            slug: formData.handle,
-            tagline: formData.tagline,
-            lore: formData.lore,
-            mantras: formData.mantras,
-            tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-            location: formData.location,
-            communityPrivacy: formData.communityPrivacy,
-            communityType: formData.communityType,
+            ...formData,
+            bannerUrl,
+            logoUrl,
             ownerId: user.uid,
-            createdBy: user.uid,
-            updatedBy: user.uid,
-            memberCount: 1,
-            status: 'draft',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
 
-        addDoc(collection(db, 'communities'), communityData)
-        .catch(async (serverError) => {
-            console.error("Error creating community: ", serverError);
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: '/communities',
-                operation: 'create',
-                requestResourceData: communityData,
-            }));
+        try {
+            await addDoc(collection(db, 'communities'), communityData);
             toast({
-              title: "Error",
-              description: "Could not create community. You might not have the correct permissions.",
-              variant: "destructive",
+                title: "Success",
+                description: "Community created successfully.",
             });
-        }).finally(() => {
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Error creating community: ", error);
+            toast({
+                title: "Error",
+                description: "Could not create community.",
+                variant: "destructive",
+            });
+        } finally {
             setIsSubmitting(false);
-            if(!isSubmitting){
-                toast({
-                    title: "Success",
-                    description: "Community created successfully.",
-                });
-                setIsOpen(false);
-                setCurrentStep(0);
-                setFormData({
-                    name: '',
-                    handle: '',
-                    tagline: '',
-                    lore: '',
-                    mantras: '',
-                    tags: '',
-                    location: '',
-                    communityPrivacy: 'public',
-                    communityType: 'community',
-                });
-            }
-        });
+        }
     };
-    
-    const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
-        <Dialog 
-            open={isOpen} 
+        <CustomFormDialog
+            open={isOpen}
             onClose={() => setIsOpen(false)}
             title="Create a New Community"
-            description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
+            description="Build a new space for your audience to connect."
+            showVideo={true}
         >
-            <div className="flex flex-col h-full">
-                <div className="flex-grow space-y-4">
-                    <Progress value={progress} className="w-full mb-8" />
-                    
-                    {currentStep === 0 && (
-                        <div className="space-y-4">
-                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} placeholder="e.g. AI Innovators" />
-                            <Input label="Community Handle *" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} placeholder="ai-innovators" />
-                            <Input label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} placeholder="A short, catchy phrase for your community" />
-                        </div>
-                    )}
-                    {currentStep === 1 && (
-                         <div className="space-y-4">
-                            <Textarea label="Community Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="The story and background of your community." />
-                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Core beliefs or slogans of your community." />
-                            <Input label="Tags (comma-separated)" value={formData.tags} onChange={(e) => handleValueChange('tags', e.target.value)} placeholder="e.g. AI, Art, Music" />
-                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} placeholder="e.g. Hong Kong" />
-                        </div>
-                    )}
-                    {currentStep === 2 && (
-                        <div className="space-y-4">
-                             <Select value={formData.communityPrivacy} onValueChange={(value) => handleValueChange('communityPrivacy', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select privacy level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="public">Public</SelectItem>
-                                    <SelectItem value="private">Private</SelectItem>
-                                    <SelectItem value="invite-only">Invite Only</SelectItem>
-                                </SelectContent>
-                            </Select>
-                             <Select value={formData.communityType} onValueChange={(value) => handleValueChange('communityType', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select community type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="community">Community</SelectItem>
-                                    <SelectItem value="group">Group</SelectItem>
-                                    <SelectItem value="event">Event</SelectItem>
-                                    <SelectItem value="course">Course</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-                </div>
+            <div className="space-y-4 overflow-y-auto pr-4 h-full">
+                <ImageUploader onFileChange={setBannerImage} />
 
-                 <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
-                    {currentStep > 0 ? (
-                        <CustomButton variant="outline" onClick={handlePrev} className="w-full">
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Previous
-                        </CustomButton>
-                    ) : (
-                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full">Cancel</CustomButton>
-                    )}
-                    
-                    {currentStep < STEPS.length - 1 ? (
-                        <CustomButton onClick={handleNext} className="w-full">
-                            Next
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                        </CustomButton>
-                    ) : (
-                        <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting} className="w-full">
-                            {isSubmitting ? 'Creating...' : 'Create Community'}
-                        </CustomButton>
-                    )}
+                <LogoPicker onFileChange={setLogoImage} />
+                
+                <Input label="Community Name" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
+                <Input label="Handle" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} />
+                <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} rows={2} />
+                <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
+                <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
+                
+                <PhoneNumberInput value={formData.phone} onChange={(value) => handleValueChange('phone', value)} />
+
+                <ColorPalettePicker palette={formData.colorPalette} onPaletteChange={(palette) => handleValueChange('colorPalette', palette)} />
+                
+                <TagInput tags={formData.tags} setTags={(tags) => handleValueChange('tags', tags)} />
+
+                <div className="flex items-center justify-between">
+                    <Label>Community Privacy</Label>
+                    <div className="flex items-center gap-2">
+                        <Label>Private</Label>
+                        <Switch
+                            checked={formData.communityPrivacy === 'public'}
+                            onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'public' : 'private')}
+                        />
+                        <Label>Public</Label>
+                    </div>
                 </div>
             </div>
-        </Dialog>
+            <div className="pt-6 flex justify-end gap-4 border-t mt-4">
+                <CustomButton variant="outline" onClick={() => setIsOpen(false)}>Cancel</CustomButton>
+                <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting}>
+                    {isSubmitting ? 'Creating...' : 'Create Community'}
+                </CustomButton>
+            </div>
+        </CustomFormDialog>
     );
 }

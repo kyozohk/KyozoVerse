@@ -11,6 +11,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
+import { Header } from '@/components/ui';
 
 export default function CommunitiesDashboardPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -82,6 +83,14 @@ export default function CommunitiesDashboardPage() {
 
   return (
     <div className="container mx-auto py-2 px-2">
+      <div className="flex justify-between items-center mb-6">
+        <Header title="Communities" />
+        <CustomButton onClick={() => setIsCreateDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Community
+        </CustomButton>
+      </div>
+
       <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
         {loading ? (
           <div className="flex justify-center py-12">
