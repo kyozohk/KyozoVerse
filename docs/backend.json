@@ -277,6 +277,90 @@
         "handle",
         "ownerId"
       ]
+    },
+    "communityMember": {
+      "title": "Community Member",
+      "description": "A user's membership within a specific community.",
+      "type": "object",
+      "properties": {
+        "memberId": {
+          "type": "string"
+        },
+        "joinDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "pending",
+            "left"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "member",
+            "moderator",
+            "admin",
+            "cl"
+          ]
+        }
+      },
+      "required": [
+        "memberId",
+        "joinDate",
+        "status",
+        "role"
+      ]
+    },
+    "communityFeedItem": {
+      "title": "Community Feed Item",
+      "description": "A single post within a community's time-sharded feed.",
+      "type": "object",
+      "properties": {
+        "postId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "image",
+            "audio",
+            "video"
+          ]
+        },
+        "content": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "mediaUrls": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "postId",
+        "type",
+        "authorId",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -296,13 +380,25 @@
       "schema": {
         "$ref": "#/entities/blog"
       },
-      "description": "Blog post documents"
+      "description": "Root-level blog post documents, for SEO and public visibility."
     },
     "/communities/{communityId}": {
       "schema": {
         "$ref": "#/entities/community"
       },
-      "description": "Community documents"
+      "description": "Top-level community documents."
+    },
+    "/communities/{communityId}/members_shard_{shardId}/{memberId}": {
+      "schema": {
+        "$ref": "#/entities/communityMember"
+      },
+      "description": "Sharded collection for community members to ensure scalability."
+    },
+    "/communities/{communityId}/feed_{date}/{postId}": {
+      "schema": {
+        "$ref": "#/entities/communityFeedItem"
+      },
+      "description": "Time-based sharded feed for community content."
     }
   }
 }
