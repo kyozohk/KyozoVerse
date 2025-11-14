@@ -19,7 +19,7 @@ import {
   useSidebar
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { signOut } from 'firebase/auth';
+// Import signOut from the auth hook instead of directly from firebase
 import Link from 'next/link';
 import Image from 'next/image';
 import CommunitySidebar from '@/components/layout/community-sidebar';
@@ -27,7 +27,7 @@ import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, auth } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   
@@ -37,6 +37,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   );
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/landing');
+  };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -122,7 +127,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                  <SidebarNavItem 
                     href="#"
                     icon={<LogOut />}
-                    onClick={() => signOut(auth!).then(() => router.push('/landing'))}
+                    onClick={handleLogout}
                     activeColor={activeColor}
                     activeBgColor={activeBgColor}
                   >

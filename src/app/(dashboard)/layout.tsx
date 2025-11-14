@@ -18,7 +18,7 @@ import {
   SidebarProvider 
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { signOut as firebaseSignOut } from '@/firebase/auth';
+// Use signOut from useAuth hook instead of importing directly
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,7 +27,7 @@ import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, auth } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -42,10 +42,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
-    if (auth) {
-      await firebaseSignOut(auth);
-    }
-    router.push('/');
+    await signOut();
+    // Keep the redirect to '/' as it is in this layout
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
