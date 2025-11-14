@@ -3,76 +3,306 @@
   "entities": {
     "user": {
       "title": "User",
-      "description": "User profile information",
+      "description": "Global user registry for all platform participants.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "displayName": { "type": "string" },
-        "firstName": { "type": "string" },
-        "lastName": { "type": "string" },
-        "avatarUrl": { "type": "string", "format": "uri" },
-        "coverUrl": { "type": "string", "format": "uri" },
-        "bio": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "userId": {
+          "type": "string",
+          "description": "Matches Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "handle": {
+          "type": "string",
+          "description": "Unique user handle, e.g., @username"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "coverUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "slogan": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "socialLinks": {
+          "type": "object",
+          "properties": {
+            "twitter": {
+              "type": "string"
+            },
+            "instagram": {
+              "type": "string"
+            },
+            "spotify": {
+              "type": "string"
+            },
+            "youtube": {
+              "type": "string"
+            }
+          }
+        },
+        "referralCode": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["userId", "email", "createdAt", "updatedAt"]
+      "required": [
+        "userId",
+        "email",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "blog": {
       "title": "Blog",
-      "description": "A blog post.",
+      "description": "A root-level blog post, optimized for SEO and public viewing.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "authorId": { "type": "string" },
-        "author": { "$ref": "#/backend/entities/user" },
-        "communityHandle": { "type": "string" },
-        "visibility": { "type": "string", "enum": ["public", "private"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "audio",
+            "video",
+            "image"
+          ]
+        },
+        "mediaUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "authorHandle": {
+          "type": "string"
+        },
+        "communityIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "private",
+            "members-only"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "views": {
+              "type": "number"
+            },
+            "likes": {
+              "type": "number"
+            },
+            "shares": {
+              "type": "number"
+            },
+            "comments": {
+              "type": "number"
+            }
+          }
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["title", "content", "authorId", "communityHandle", "visibility", "createdAt", "updatedAt"]
+      "required": [
+        "title",
+        "slug",
+        "authorId",
+        "authorHandle",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "community": {
       "title": "Community",
-      "description": "A community group.",
+      "description": "A community group, which is owned by a tenant.",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "handle": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "tagline": { "type": "string" },
-        "lore": { "type": "string" },
-        "mantras": { "type": "string" },
-        "slug": { "type": "string" },
-        "status": { "type": "string", "enum": ["draft", "publish", "archived"] },
-        "communityPrivacy": { "type": "string", "enum": ["public", "private", "invite-only"] },
-        "communityType": { "type": "string", "enum": ["community", "group", "event", "course"] },
-        "communityProfileImage": { "type": "string", "format": "uri" },
-        "communityBackgroundImage": { "type": "string", "format": "uri" },
-        "tags": { "type": "array", "items": { "type": "string" } },
-        "location": { "type": "string" }
+        "name": {
+          "type": "string"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this community."
+        },
+        "tagline": {
+          "type": "string"
+        },
+        "lore": {
+          "type": "string"
+        },
+        "mantras": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "publish",
+            "archived"
+          ]
+        },
+        "communityPrivacy": {
+          "type": "string",
+          "enum": [
+            "public",
+            "private",
+            "invite-only"
+          ]
+        },
+        "communityType": {
+          "type": "string",
+          "enum": [
+            "community",
+            "group",
+            "event",
+            "course"
+          ]
+        },
+        "communityProfileImage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "communityBackgroundImage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "string"
+        },
+        "memberCount": {
+          "type": "number"
+        }
       },
-      "required": ["name", "handle", "ownerId"]
+      "required": [
+        "name",
+        "handle",
+        "ownerId"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": [
+      "google.com",
+      "password"
+    ]
   },
   "firestore": {
     "/users/{userId}": {
-      "schema": { "$ref": "#/backend/entities/user" },
+      "schema": {
+        "$ref": "#/entities/user"
+      },
       "description": "User profile documents"
     },
     "/blogs/{blogId}": {
-      "schema": { "$ref": "#/backend/entities/blog" },
+      "schema": {
+        "$ref": "#/entities/blog"
+      },
       "description": "Blog post documents"
     },
     "/communities/{communityId}": {
-        "schema": { "$ref": "#/backend/entities/community"},
-        "description": "Community documents"
+      "schema": {
+        "$ref": "#/entities/community"
+      },
+      "description": "Community documents"
     }
   }
 }
