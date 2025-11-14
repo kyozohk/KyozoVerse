@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'KyozoVerse',
   description: 'The universe of communities.',
   icons: {
-    icon: '/logo.png',
+    icon: '/favicon.png',
   },
 };
 
