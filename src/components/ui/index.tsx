@@ -53,8 +53,6 @@ export {
   SidebarHeader, 
   SidebarInset, 
   SidebarMenu, 
-  SidebarMenuButton, 
-  SidebarMenuItem, 
   SidebarProvider, 
   SidebarTrigger, 
   useSidebar 

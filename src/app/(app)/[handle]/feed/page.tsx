@@ -176,7 +176,7 @@ export default function CommunityFeedPage() {
             <h1 className="text-2xl font-bold">{communityData?.name || handle}</h1>
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">Author Dashboard</p>
-              <Link href={`/${handle}/feedview`} className="text-xs text-primary hover:underline">
+              <Link href={`/c/${handle}`} className="text-xs text-primary hover:underline">
                 View Public Feed
               </Link>
             </div>
