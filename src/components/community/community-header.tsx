@@ -19,9 +19,10 @@ import { Community, UserRole } from '@/lib/types';
 interface CommunityHeaderProps {
   community: Community;
   userRole: UserRole;
+  onEdit: () => void;
 }
 
-export function CommunityHeader({ community, userRole }: CommunityHeaderProps) {
+export function CommunityHeader({ community, userRole, onEdit }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   return (
@@ -45,7 +46,7 @@ export function CommunityHeader({ community, userRole }: CommunityHeaderProps) {
         </div>
 
         <div className="flex-grow">
-          <h1 className="text-3xl md:text-4xl font-bold">{community.name}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white">{community.name}</h1>
           <p className="text-lg text-white/70 mt-1">{community.tagline}</p>
 
           <div className="flex flex-wrap gap-2 mt-4">
@@ -62,7 +63,7 @@ export function CommunityHeader({ community, userRole }: CommunityHeaderProps) {
 
         {canManage && (
             <div className="flex flex-wrap items-start gap-2 md:gap-4 self-start md:self-center">
-              <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
+              <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>

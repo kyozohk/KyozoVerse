@@ -84,13 +84,13 @@ export default function CommunityMembersPage() {
   const canManageMembers = userRole === "owner" || userRole === "admin";
   
   return (
-    <div className="container mx-auto max-w-4xl">
-      <Card>
+    <div className="container mx-auto max-w-4xl p-4 md:p-8">
+      <Card className="bg-transparent border-none text-white">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-2xl">Community Members</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl text-white">Community Members</CardTitle>
+              <CardDescription className="text-gray-400">
                 Manage and view all members of @{handle}
               </CardDescription>
             </div>
@@ -107,19 +107,19 @@ export default function CommunityMembersPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search members..."
-              className="pl-9"
+              className="pl-9 bg-gray-700/50 border-gray-600/80 text-white focus:ring-primary-purple"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
           {loading ? (
-            <div className="text-center py-8">Loading members...</div>
+            <div className="text-center py-8 text-gray-400">Loading members...</div>
           ) : (
             <div className="space-y-2">
               {filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <div key={member.userId} className="flex items-center justify-between p-3 border rounded-md">
+                  <div key={member.userId} className="flex items-center justify-between p-3 border border-gray-700/80 rounded-md hover:bg-gray-800/50">
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={member.userDetails?.avatarUrl} />
@@ -128,16 +128,16 @@ export default function CommunityMembersPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{member.userDetails?.displayName}</p>
-                        <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
+                        <p className="font-medium text-white">{member.userDetails?.displayName}</p>
+                        <p className="text-sm text-gray-400">{member.userDetails?.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm capitalize bg-secondary px-2 py-1 rounded">
+                      <span className="text-sm capitalize bg-gray-700/50 px-2 py-1 rounded">
                         {member.role}
                       </span>
                       {canManageMembers && (
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
                           Manage
                         </Button>
                       )}

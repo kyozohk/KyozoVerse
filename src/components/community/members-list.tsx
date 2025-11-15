@@ -12,13 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -87,124 +80,121 @@ export function MembersList({ community, userRole }: MembersListProps) {
   );
 
   return (
-    <Card className="bg-transparent border-gray-700/80 text-white">
-      <CardHeader>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <CardTitle>Members</CardTitle>
-            <CardDescription className="text-gray-400">Manage your community members.</CardDescription>
+    <div className="bg-transparent text-white p-6 md:p-8 rounded-xl">
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Members</h2>
+          <p className="text-gray-400">Manage your community members.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search members..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 bg-gray-700/50 border-gray-600/80 focus:ring-primary-purple text-white"
+            />
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search members..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 bg-gray-700/80 border-gray-600/80 focus:ring-primary-purple text-white"
-              />
-            </div>
-            <div className="flex items-center gap-1 rounded-md bg-gray-700/80 p-1">
-              <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className="h-8 w-8 hover:bg-gray-600/50"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                size="icon"
-                onClick={() => setViewMode('grid')}
-                className="h-8 w-8 hover:bg-gray-600/50"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="flex items-center gap-1 rounded-md bg-gray-700/80 p-1">
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="icon"
+              onClick={() => setViewMode('list')}
+              className="h-8 w-8 hover:bg-gray-600/50"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="icon"
+              onClick={() => setViewMode('grid')}
+              className="h-8 w-8 hover:bg-gray-600/50"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="text-center text-gray-400">Loading members...</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-gray-700">
-                <TableHead className="text-gray-400">User</TableHead>
-                <TableHead className="text-gray-400">Email</TableHead>
-                <TableHead className="text-gray-400">Phone</TableHead>
-                <TableHead className="text-gray-400">Status</TableHead>
-                <TableHead className="text-gray-400">Joined</TableHead>
-                {canManage && <TableHead className="text-right text-gray-400">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMembers.map((member) => (
-                <TableRow key={member.userId} className="hover:bg-transparent border-gray-700">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={member.userDetails?.avatarUrl} />
-                        <AvatarFallback>
-                          {member.userDetails?.displayName?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">
-                          {member.userDetails?.displayName}
-                        </div>
-                        <div className="text-xs text-gray-400 capitalize">
-                          {member.role}
-                        </div>
+      </div>
+      
+      {loading ? (
+        <div className="text-center text-gray-400 py-10">Loading members...</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-b border-gray-700">
+              <TableHead className="text-gray-400">User</TableHead>
+              <TableHead className="text-gray-400">Email</TableHead>
+              <TableHead className="text-gray-400">Phone</TableHead>
+              <TableHead className="text-gray-400">Status</TableHead>
+              <TableHead className="text-gray-400">Joined</TableHead>
+              {canManage && <TableHead className="text-right text-gray-400">Actions</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredMembers.map((member) => (
+              <TableRow key={member.userId} className="hover:bg-gray-800/50 border-gray-800">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={member.userDetails?.avatarUrl} />
+                      <AvatarFallback>
+                        {member.userDetails?.displayName?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium text-white">
+                        {member.userDetails?.displayName}
+                      </div>
+                      <div className="text-xs text-gray-400 capitalize">
+                        {member.role}
                       </div>
                     </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-300">{member.userDetails?.email}</TableCell>
+                <TableCell className="text-gray-300">{member.userDetails?.phoneNumber || '-'}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      member.status === 'active' ? 'default' : 'destructive'
+                    }
+                     className={
+                      member.status === 'active' ? 'bg-green-600/20 text-green-400 border-green-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'
+                    }
+                  >
+                    {member.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-gray-300">
+                  {member.joinedAt ? format(member.joinedAt.toDate(), 'PP') : '-'}
+                </TableCell>
+                {canManage && (
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                       <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                        <Phone className="h-4 w-4" />
+                      </Button>
+                       <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-300">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
-                  <TableCell>{member.userDetails?.email}</TableCell>
-                  <TableCell>{member.userDetails?.phoneNumber || '-'}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        member.status === 'active' ? 'default' : 'destructive'
-                      }
-                       className={
-                        member.status === 'active' ? 'bg-green-600/20 text-green-400 border-green-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'
-                      }
-                    >
-                      {member.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {member.joinedAt ? format(member.joinedAt.toDate(), 'PP') : '-'}
-                  </TableCell>
-                  {canManage && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
-                          <Mail className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-300">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
   );
 }

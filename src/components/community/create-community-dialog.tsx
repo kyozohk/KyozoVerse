@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
@@ -14,18 +14,25 @@ import { CustomFormDialog, CustomButton, Dropzone, Switch } from '@/components/u
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import Image from 'next/image';
+import { Community } from '@/lib/types';
 
 const STEPS = [
     { id: 1, title: 'Basic Info' },
     { id: 2, title: 'Customization' },
 ]
 
-export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (open: boolean) => void }) {
+interface CreateCommunityDialogProps {
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
+    existingCommunity?: Community | null;
+}
+
+
+export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity }: CreateCommunityDialogProps) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
     const profileImageInputRef = useRef<HTMLInputElement>(null);
-
 
     const [formData, setFormData] = useState({
         name: '',
@@ -35,6 +42,18 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         communityPrivacy: 'public',
     });
     
+    useEffect(() => {
+        if (existingCommunity) {
+            setFormData({
+                name: existingCommunity.name || '',
+                tagline: existingCommunity.tagline || '',
+                lore: (existingCommunity as any).lore || '',
+                mantras: (existingCommunity as any).mantras || '',
+                communityPrivacy: (existingCommunity as any).communityPrivacy || 'public',
+            })
+        }
+    }, [existingCommunity]);
+
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
     const [selectedColor, setSelectedColor] = useState('#843484');
@@ -59,6 +78,33 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
     const handleValueChange = (name: keyof typeof formData, value: string | boolean) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
+    const handleFormSubmit = async () => {
+        if (existingCommunity) {
+            handleUpdateCommunity();
+        } else {
+            handleCreateCommunity();
+        }
+    }
+
+    const handleUpdateCommunity = async () => {
+        if (!user || !existingCommunity) return;
+        setIsSubmitting(true);
+        try {
+            const communityRef = doc(db, 'communities', existingCommunity.communityId);
+            await updateDoc(communityRef, {
+                ...formData,
+                handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
+            });
+            toast({ title: 'Success', description: 'Community updated successfully.' });
+            setIsOpen(false);
+        } catch (error) {
+            console.error('Error updating community:', error);
+            toast({ title: 'Error', description: 'Failed to update community.', variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
     const handleCreateCommunity = async () => {
         if (!user || !formData.name.trim()) {
@@ -85,6 +131,14 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         };
 
         addDoc(collection(db, 'communities'), communityData)
+        .then(() => {
+            toast({
+                title: "Success",
+                description: "Community created successfully.",
+            });
+            setIsOpen(false);
+            setCurrentStep(0);
+        })
         .catch(async (serverError) => {
             console.error("Error creating community: ", serverError);
             errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -99,15 +153,6 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             });
         }).finally(() => {
             setIsSubmitting(false);
-            if(!isSubmitting){
-                toast({
-                    title: "Success",
-                    description: "Community created successfully.",
-                });
-                setIsOpen(false);
-                setCurrentStep(0);
-                // Reset form data if needed
-            }
         });
     };
 
@@ -128,7 +173,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         <CustomFormDialog
             open={isOpen} 
             onClose={() => setIsOpen(false)}
-            title="Create a New Community"
+            title={existingCommunity ? 'Edit Community' : 'Create a New Community'}
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
         >
             <div className="flex flex-col h-full">
@@ -201,8 +246,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                             <ArrowRight className="h-4 w-4 ml-2" />
                         </CustomButton>
                     ) : (
-                        <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting} className="w-full h-10">
-                            {isSubmitting ? 'Creating...' : 'Finish'}
+                        <CustomButton onClick={handleFormSubmit} disabled={isSubmitting} className="w-full h-10">
+                            {isSubmitting ? 'Saving...' : 'Finish'}
                         </CustomButton>
                     )}
                 </div>
