@@ -22,30 +22,35 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!handle) return;
-      setLoading(true);
+  const fetchCommunityData = async () => {
+    if (!handle) return;
+    setLoading(true);
 
-      try {
-        const communityData = await getCommunityByHandle(handle);
-        setCommunity(communityData);
+    try {
+      const communityData = await getCommunityByHandle(handle);
+      setCommunity(communityData);
 
-        if (communityData && user) {
-          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-          setUserRole(role);
-        }
-      } catch (error) {
-        console.error('Error fetching community data:', error);
-      } finally {
-        setLoading(false);
+      if (communityData && user) {
+        const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+        setUserRole(role);
       }
+    } catch (error) {
+      console.error('Error fetching community data:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     if (!authLoading) {
-      fetchData();
+      fetchCommunityData();
     }
   }, [handle, user, authLoading]);
+  
+  const handleCommunityUpdated = () => {
+    // Re-fetch community data when the dialog is closed after an update
+    fetchCommunityData();
+  };
 
   if (loading || authLoading) {
     return (
@@ -77,6 +82,7 @@ export default function CommunityPage() {
           isOpen={isEditDialogOpen}
           setIsOpen={setIsEditDialogOpen}
           existingCommunity={community}
+          onCommunityUpdated={handleCommunityUpdated}
         />
       )}
     </div>

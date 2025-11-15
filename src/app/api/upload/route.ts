@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     if (file.type.startsWith('audio/')) fileCategory = 'audio';
     if (file.type.startsWith('video/')) fileCategory = 'videos';
     
-    const filename = `community-posts/${communityId}/${fileCategory}/${Date.now()}-${file.name}`;
+    const filename = `community-media/${communityId}/${fileCategory}/${Date.now()}-${file.name}`;
     console.log('Target filename:', filename);
     
     try {
