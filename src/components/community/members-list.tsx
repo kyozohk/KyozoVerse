@@ -83,7 +83,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
     <div className="bg-transparent text-white p-6 md:p-8 rounded-xl">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Members</h2>
+          <h2 className="text-2xl font-bold text-white">Members</h2>
           <p className="text-gray-400">Manage your community members.</p>
         </div>
         <div className="flex items-center gap-4">
@@ -93,7 +93,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
               placeholder="Search members..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 bg-gray-700/50 border-gray-600/80 focus:ring-primary-purple text-white"
+              className="pl-8 bg-gray-800/60 border-primary-purple text-white focus:ring-primary-purple"
             />
           </div>
           <div className="flex items-center gap-1 rounded-md bg-gray-700/80 p-1">

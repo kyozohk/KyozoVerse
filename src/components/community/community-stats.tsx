@@ -23,7 +23,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-400">Total Members</CardTitle>
           <Users className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
@@ -33,7 +33,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
       </Card>
       <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Posts</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-400">Posts</CardTitle>
           <MessageSquare className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
@@ -43,7 +43,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
       </Card>
       <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Monthly Growth</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-400">Monthly Growth</CardTitle>
           <LineChart className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
@@ -53,7 +53,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
       </Card>
       <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Daily Messages</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-400">Daily Messages</CardTitle>
           <Mail className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
