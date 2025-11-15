@@ -9,7 +9,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
-import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon, PlusCircle } from 'lucide-react';
 import { CustomFormDialog, CustomButton, Dropzone, Switch } from '@/components/ui';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -49,7 +49,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
     const handlePrev = () => {
         if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
+            setCurrentStep(currentStep + 1);
         }
     };
     
@@ -123,10 +123,10 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                     
                     {currentStep === 0 && (
                         <div className="space-y-4">
-                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} placeholder="e.g. Kyozo Demo Community" />
-                            <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} placeholder="Perfecting the technology behind the Kyozo platform" rows={2} />
-                            <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="Join the Kyozo Announcements Community for updates..." rows={4} />
-                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Kyozo is on a mission to connect the Cultural Industries." rows={2} />
+                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
+                            <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} rows={2} />
+                            <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={4} />
+                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
                             <div className="flex items-center space-x-2">
                                 <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'private' : 'public')} />
                                 <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

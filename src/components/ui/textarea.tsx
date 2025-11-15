@@ -5,24 +5,33 @@ import {cn} from '@/lib/utils';
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    label?: string;
-  }
+  label: string; // Make label mandatory for floating label
+  error?: string;
+  wrapperClassName?: string;
+}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({className, label, ...props}, ref) => {
+  ({className, label, error, wrapperClassName, ...props}, ref) => {
     const id = React.useId();
     return (
-      <div className="relative">
-        {label && <label htmlFor={id} className="text-sm text-muted-foreground mb-1 block">{label}</label>}
-        <textarea
-          id={id}
-          className={cn(
-            'flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
-            className
-          )}
-          ref={ref}
-          {...props}
-        />
+      <div className={cn('inputWrapper', wrapperClassName)}>
+        <div className={cn('inputContainer', error ? 'hasError' : '')}>
+          <textarea
+            id={id}
+            className={cn(
+              'input !h-auto', // Use !h-auto to override fixed height
+              error ? 'hasError' : '',
+              className
+            )}
+            ref={ref}
+            placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
+            {...props}
+          />
+          <label htmlFor={id} className="floatingLabel">
+            {label}
+          </label>
+        </div>
+        {error && <div className="errorMessage">{error}</div>}
       </div>
     );
   }
