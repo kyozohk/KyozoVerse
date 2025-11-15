@@ -83,17 +83,16 @@
   border: none;
   padding: 0.5rem;
   border-radius: 6px;
-  color: var(--text-secondary);
+  color: var(--button-border);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .icon-button:hover {
-  color: var(--button-border);
+  opacity: 0.8;
 }
 
 .icon-button.icon-button-active {
-  color: var(--button-border);
   background-color: rgba(132, 52, 132, 0.2);
 }
 
