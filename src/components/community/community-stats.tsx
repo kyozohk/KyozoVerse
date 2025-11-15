@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -20,7 +21,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Members</CardTitle>
           <Users className="h-4 w-4 text-gray-400" />
@@ -30,7 +31,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
           <p className="text-xs text-gray-400">+0 this month</p>
         </CardContent>
       </Card>
-      <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Posts</CardTitle>
           <MessageSquare className="h-4 w-4 text-gray-400" />
@@ -40,7 +41,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
           <p className="text-xs text-gray-400">Total posts in community</p>
         </CardContent>
       </Card>
-      <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Monthly Growth</CardTitle>
           <LineChart className="h-4 w-4 text-gray-400" />
@@ -50,7 +51,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
           <p className="text-xs text-gray-400">New members this month</p>
         </CardContent>
       </Card>
-      <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/80 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Daily Messages</CardTitle>
           <Mail className="h-4 w-4 text-gray-400" />

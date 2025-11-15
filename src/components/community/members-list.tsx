@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -86,7 +87,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
   );
 
   return (
-    <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700/80 text-white">
+    <Card className="bg-transparent border-gray-700/80 text-white">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -130,7 +131,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-gray-700/30 border-gray-700">
+              <TableRow className="hover:bg-transparent border-gray-700">
                 <TableHead className="text-gray-400">User</TableHead>
                 <TableHead className="text-gray-400">Email</TableHead>
                 <TableHead className="text-gray-400">Phone</TableHead>
@@ -141,7 +142,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
             </TableHeader>
             <TableBody>
               {filteredMembers.map((member) => (
-                <TableRow key={member.userId} className="hover:bg-gray-700/30 border-gray-700">
+                <TableRow key={member.userId} className="hover:bg-transparent border-gray-700">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -24,7 +25,7 @@ export function CommunityHeader({ community, userRole }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   return (
-    <div className="relative rounded-xl overflow-hidden p-6 md:p-8 text-white bg-gray-800/80 backdrop-blur-sm border border-gray-700/80">
+    <div className="relative rounded-xl overflow-hidden p-6 md:p-8 text-white bg-transparent">
       {community.communityBackgroundImage && (
         <Image
           src={community.communityBackgroundImage}
