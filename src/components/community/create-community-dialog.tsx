@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +24,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
     const { user } = useAuth();
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
+    const profileImageInputRef = useRef<HTMLInputElement>(null);
+
 
     const [formData, setFormData] = useState({
         name: '',
@@ -40,6 +42,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const colors = ['#843484', '#06C4B5', '#E1B327', '#CF7770', '#699FE5'];
+    const profileImageOptions = ['/images/Parallax1.jpg', '/images/Parallax2.jpg', '/images/Parallax3.jpg', '/images/Parallax4.jpg'];
 
     const handleNext = () => {
         if (currentStep < STEPS.length - 1) {
@@ -49,7 +52,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
     const handlePrev = () => {
         if (currentStep > 0) {
-            setCurrentStep(currentStep + 1);
+            setCurrentStep(currentStep - 1);
         }
     };
     
@@ -107,6 +110,17 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
             }
         });
     };
+
+    const handleBrowseClick = () => {
+        profileImageInputRef.current?.click();
+    };
+
+    const handleProfileImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setProfileImageFile(file);
+        }
+    };
     
     const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -127,9 +141,9 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                             <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} rows={2} />
                             <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={4} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 pt-2">
                                 <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'private' : 'public')} />
-                                <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
                                     Private Community
                                 </label>
                             </div>
@@ -144,12 +158,19 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                             <div>
                                 <label className="text-sm text-muted-foreground mb-1 block">Profile Image</label>
                                 <div className="flex items-center gap-4">
-                                    {['/images/Parallax1.jpg', '/images/Parallax2.jpg', '/images/Parallax3.jpg', '/images/Parallax4.jpg', '/images/Parallax5.jpg'].map(src => (
+                                    {profileImageOptions.map(src => (
                                         <Image key={src} src={src} alt="profile option" width={48} height={48} className="rounded-full border-2 border-transparent hover:border-primary cursor-pointer" />
                                     ))}
-                                    <div className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
+                                    <div onClick={handleBrowseClick} className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
                                         <PlusCircle className="h-6 w-6 text-muted-foreground" />
                                     </div>
+                                    <input
+                                        type="file"
+                                        ref={profileImageInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleProfileImageFileChange}
+                                    />
                                 </div>
                             </div>
                             <div>
@@ -166,22 +187,22 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
                  <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
                     {currentStep > 0 ? (
-                        <CustomButton variant="outline" onClick={handlePrev} className="w-full">
+                        <CustomButton variant="outline" onClick={handlePrev} className="w-full h-10">
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Previous
                         </CustomButton>
                     ) : (
-                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full">Cancel</CustomButton>
+                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full h-10">Cancel</CustomButton>
                     )}
                     
                     {currentStep < STEPS.length - 1 ? (
-                        <CustomButton onClick={handleNext} className="w-full">
+                        <CustomButton onClick={handleNext} className="w-full h-10">
                             Next
                             <ArrowRight className="h-4 w-4 ml-2" />
                         </CustomButton>
                     ) : (
-                        <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting} className="w-full">
-                            {isSubmitting ? 'Creating...' : 'Create Community'}
+                        <CustomButton onClick={handleCreateCommunity} disabled={isSubmitting} className="w-full h-10">
+                            {isSubmitting ? 'Creating...' : 'Finish'}
                         </CustomButton>
                     )}
                 </div>
