@@ -86,29 +86,29 @@ export function MembersList({ community, userRole }: MembersListProps) {
   );
 
   return (
-    <Card className="bg-gray-800 border-gray-700 text-white">
+    <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700/80 text-white">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <div>
             <CardTitle>Members</CardTitle>
-            <CardDescription>Manage your community members.</CardDescription>
+            <CardDescription className="text-gray-400">Manage your community members.</CardDescription>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search members..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 bg-gray-700 border-gray-600 focus:ring-primary-purple"
+                className="pl-8 bg-gray-700/80 border-gray-600/80 focus:ring-primary-purple text-white"
               />
             </div>
-            <div className="flex items-center gap-1 rounded-md bg-gray-700 p-1">
+            <div className="flex items-center gap-1 rounded-md bg-gray-700/80 p-1">
               <Button
                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                 size="icon"
                 onClick={() => setViewMode('list')}
-                className="h-8 w-8"
+                className="h-8 w-8 hover:bg-gray-600/50"
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -116,7 +116,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
                 variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="icon"
                 onClick={() => setViewMode('grid')}
-                className="h-8 w-8"
+                className="h-8 w-8 hover:bg-gray-600/50"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -126,22 +126,22 @@ export function MembersList({ community, userRole }: MembersListProps) {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center">Loading members...</div>
+          <div className="text-center text-gray-400">Loading members...</div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-gray-700/50 border-gray-700">
-                <TableHead>User</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
-                {canManage && <TableHead className="text-right">Actions</TableHead>}
+              <TableRow className="hover:bg-gray-700/30 border-gray-700">
+                <TableHead className="text-gray-400">User</TableHead>
+                <TableHead className="text-gray-400">Email</TableHead>
+                <TableHead className="text-gray-400">Phone</TableHead>
+                <TableHead className="text-gray-400">Status</TableHead>
+                <TableHead className="text-gray-400">Joined</TableHead>
+                {canManage && <TableHead className="text-right text-gray-400">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredMembers.map((member) => (
-                <TableRow key={member.userId} className="hover:bg-gray-700/50 border-gray-700">
+                <TableRow key={member.userId} className="hover:bg-gray-700/30 border-gray-700">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -154,7 +154,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
                         <div className="font-medium">
                           {member.userDetails?.displayName}
                         </div>
-                        <div className="text-xs text-muted-foreground capitalize">
+                        <div className="text-xs text-gray-400 capitalize">
                           {member.role}
                         </div>
                       </div>
@@ -180,19 +180,19 @@ export function MembersList({ community, userRole }: MembersListProps) {
                   {canManage && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
                           <MessageCircle className="h-4 w-4" />
                         </Button>
-                         <Button variant="ghost" size="icon" className="h-8 w-8">
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
                           <Phone className="h-4 w-4" />
                         </Button>
-                         <Button variant="ghost" size="icon" className="h-8 w-8">
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
                           <Mail className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-300">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

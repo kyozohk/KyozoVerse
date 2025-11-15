@@ -46,15 +46,15 @@ export default function CommunityPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="p-8 space-y-8">
-        <Skeleton className="h-60 w-full rounded-xl" />
-        <div className="grid grid-cols-4 gap-6">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+      <div className="p-4 md:p-8 space-y-8">
+        <Skeleton className="h-40 w-full rounded-xl bg-gray-700/50" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Skeleton className="h-24 w-full bg-gray-700/50" />
+          <Skeleton className="h-24 w-full bg-gray-700/50" />
+          <Skeleton className="h-24 w-full bg-gray-700/50" />
+          <Skeleton className="h-24 w-full bg-gray-700/50" />
         </div>
-        <Skeleton className="h-96 w-full" />
+        <Skeleton className="h-96 w-full bg-gray-700/50" />
       </div>
     );
   }
