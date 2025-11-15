@@ -3,23 +3,21 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { CustomButton } from '../ui/CustomButton';
+import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon } from 'lucide-react';
+import { CustomFormDialog, CustomButton, Dropzone, Switch } from '@/components/ui';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import Image from 'next/image';
 
 const STEPS = [
     { id: 1, title: 'Basic Info' },
-    { id: 2, title: 'Details' },
-    { id: 3, title: 'Privacy' },
+    { id: 2, title: 'Customization' },
 ]
 
 export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (open: boolean) => void }) {
@@ -29,17 +27,19 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
 
     const [formData, setFormData] = useState({
         name: '',
-        handle: '',
         tagline: '',
         lore: '',
         mantras: '',
-        tags: '',
-        location: '',
         communityPrivacy: 'public',
-        communityType: 'community',
     });
+    
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+    const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
+    const [selectedColor, setSelectedColor] = useState('#843484');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const colors = ['#843484', '#06C4B5', '#E1B327', '#CF7770', '#699FE5'];
 
     const handleNext = () => {
         if (currentStep < STEPS.length - 1) {
@@ -53,15 +53,15 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         }
     };
     
-    const handleValueChange = (name: keyof typeof formData, value: string) => {
+    const handleValueChange = (name: keyof typeof formData, value: string | boolean) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleCreateCommunity = async () => {
-        if (!user || !formData.name.trim() || !formData.handle.trim()) {
+        if (!user || !formData.name.trim()) {
             toast({
                 title: "Error",
-                description: "Please fill in all required fields.",
+                description: "Please fill in the community name.",
                 variant: "destructive",
             });
             return;
@@ -71,22 +71,14 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
         
         const communityData = {
             name: formData.name,
-            handle: formData.handle,
-            slug: formData.handle,
+            handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
             tagline: formData.tagline,
             lore: formData.lore,
             mantras: formData.mantras,
-            tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-            location: formData.location,
             communityPrivacy: formData.communityPrivacy,
-            communityType: formData.communityType,
             ownerId: user.uid,
-            createdBy: user.uid,
-            updatedBy: user.uid,
-            memberCount: 1,
-            status: 'draft',
             createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
+            // The rest will be uploaded separately
         };
 
         addDoc(collection(db, 'communities'), communityData)
@@ -111,17 +103,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                 });
                 setIsOpen(false);
                 setCurrentStep(0);
-                setFormData({
-                    name: '',
-                    handle: '',
-                    tagline: '',
-                    lore: '',
-                    mantras: '',
-                    tags: '',
-                    location: '',
-                    communityPrivacy: 'public',
-                    communityType: 'community',
-                });
+                // Reset form data if needed
             }
         });
     };
@@ -129,7 +111,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
     const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
-        <Dialog 
+        <CustomFormDialog
             open={isOpen} 
             onClose={() => setIsOpen(false)}
             title="Create a New Community"
@@ -141,42 +123,43 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                     
                     {currentStep === 0 && (
                         <div className="space-y-4">
-                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} placeholder="e.g. AI Innovators" />
-                            <Input label="Community Handle *" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} placeholder="ai-innovators" />
-                            <Input label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} placeholder="A short, catchy phrase for your community" />
+                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} placeholder="e.g. Kyozo Demo Community" />
+                            <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} placeholder="Perfecting the technology behind the Kyozo platform" rows={2} />
+                            <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="Join the Kyozo Announcements Community for updates..." rows={4} />
+                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Kyozo is on a mission to connect the Cultural Industries." rows={2} />
+                            <div className="flex items-center space-x-2">
+                                <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'private' : 'public')} />
+                                <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Private Community
+                                </label>
+                            </div>
                         </div>
                     )}
                     {currentStep === 1 && (
-                         <div className="space-y-4">
-                            <Textarea label="Community Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} placeholder="The story and background of your community." />
-                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} placeholder="Core beliefs or slogans of your community." />
-                            <Input label="Tags (comma-separated)" value={formData.tags} onChange={(e) => handleValueChange('tags', e.target.value)} placeholder="e.g. AI, Art, Music" />
-                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} placeholder="e.g. Hong Kong" />
-                        </div>
-                    )}
-                    {currentStep === 2 && (
-                        <div className="space-y-4">
-                             <Select value={formData.communityPrivacy} onValueChange={(value) => handleValueChange('communityPrivacy', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select privacy level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="public">Public</SelectItem>
-                                    <SelectItem value="private">Private</SelectItem>
-                                    <SelectItem value="invite-only">Invite Only</SelectItem>
-                                </SelectContent>
-                            </Select>
-                             <Select value={formData.communityType} onValueChange={(value) => handleValueChange('communityType', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select community type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="community">Community</SelectItem>
-                                    <SelectItem value="group">Group</SelectItem>
-                                    <SelectItem value="event">Event</SelectItem>
-                                    <SelectItem value="course">Course</SelectItem>
-                                </SelectContent>
-                            </Select>
+                         <div className="space-y-6">
+                            <div>
+                                <label className="text-sm text-muted-foreground mb-1 block">Background Image</label>
+                                <Dropzone file={backgroundImageFile} onFileChange={setBackgroundImageFile} fileType="image" />
+                            </div>
+                            <div>
+                                <label className="text-sm text-muted-foreground mb-1 block">Profile Image</label>
+                                <div className="flex items-center gap-4">
+                                    {['/images/Parallax1.jpg', '/images/Parallax2.jpg', '/images/Parallax3.jpg', '/images/Parallax4.jpg', '/images/Parallax5.jpg'].map(src => (
+                                        <Image key={src} src={src} alt="profile option" width={48} height={48} className="rounded-full border-2 border-transparent hover:border-primary cursor-pointer" />
+                                    ))}
+                                    <div className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
+                                        <PlusCircle className="h-6 w-6 text-muted-foreground" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-muted-foreground mb-1 block">Color Palette</label>
+                                <div className="flex items-center gap-4">
+                                    {colors.map(color => (
+                                        <div key={color} style={{ backgroundColor: color }} className="w-10 h-10 rounded-lg border-2 border-transparent hover:border-white cursor-pointer" onClick={() => setSelectedColor(color)}></div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -203,6 +186,6 @@ export function CreateCommunityDialog({ isOpen, setIsOpen }: { isOpen: boolean, 
                     )}
                 </div>
             </div>
-        </Dialog>
+        </CustomFormDialog>
     );
 }

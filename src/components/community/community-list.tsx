@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +8,7 @@ import { CommunityCard } from './community-card';
 import Link from 'next/link';
 import { CreateCommunityDialog } from './create-community-dialog';
 import { CommunityBanner } from './community-banner';
+import { Card } from '../ui/card';
 
 type ViewMode = 'grid' | 'list';
 
@@ -63,22 +63,23 @@ export function CommunityList({ communities }: CommunityListProps) {
         </div>
       </div>
 
-      {filteredCommunities.length > 0 ? (
-        <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-          {filteredCommunities.map((community) => (
-            <Link key={community.communityId} href={`/${community.handle}`} className="block h-full">
-              <CommunityCard community={community} />
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 bg-card rounded-lg border" onClick={() => setIsCreateDialogOpen(true)}>
-          <h3 className="text-lg font-medium mb-2">No communities found</h3>
-          <p className="text-muted-foreground mb-6">
-            {searchTerm ? 'Try a different search term or create a new community.' : 'Create your first community to get started.'}
-          </p>
-        </div>
-      )}
+      <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+        <Card 
+            className="flex items-center justify-center border-dashed border-2 h-full min-h-[178px] cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+            onClick={() => setIsCreateDialogOpen(true)}
+        >
+            <div className="text-center text-muted-foreground">
+                <PlusCircle className="mx-auto h-10 w-10 mb-2" />
+                <span className="font-medium">Add New Community</span>
+            </div>
+        </Card>
+        {filteredCommunities.map((community) => (
+          <Link key={community.communityId} href={`/${community.handle}`} className="block h-full">
+            <CommunityCard community={community} />
+          </Link>
+        ))}
+      </div>
+      
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
   );

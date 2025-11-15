@@ -53,7 +53,17 @@
         "communityProfileImage": { "type": "string", "format": "uri" },
         "communityBackgroundImage": { "type": "string", "format": "uri" },
         "tags": { "type": "array", "items": { "type": "string" } },
-        "location": { "type": "string" }
+        "location": { "type": "string" },
+        "colorPalette": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "colorId": { "type": "number" },
+              "hexCode": { "type": "string" }
+            }
+          }
+        }
       },
       "required": ["name", "handle", "ownerId"]
     }
