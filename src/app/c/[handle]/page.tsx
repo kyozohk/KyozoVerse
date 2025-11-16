@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -213,7 +214,14 @@ export default function PublicFeedPage() {
         </div>
       </footer>
     </div>
-    <JoinCommunityDialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen} />
+    {communityData && (
+      <JoinCommunityDialog 
+        open={isJoinDialogOpen} 
+        onOpenChange={setIsJoinDialogOpen}
+        communityId={communityData.communityId}
+        communityName={communityData.name}
+      />
+    )}
     </>
   );
 }

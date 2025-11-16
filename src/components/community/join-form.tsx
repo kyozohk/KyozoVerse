@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -72,16 +73,10 @@ export function JoinForm({ communityId, communityName, onSuccess, onCancel }: Jo
         email: formData.email
       });
 
-      // Generate a test invite link
-      const testInviteLink = `${window.location.origin}/community/${communityId}/invite/${btoa(formData.email)}`;
-      
       toast({
         title: "Welcome!",
         description: `You've successfully joined ${communityName}!`,
       });
-      
-      // Show alert with invite link for testing
-      alert(`Test Invite Link: ${testInviteLink}\n\nThis is a test link for development purposes.`);
 
       onSuccess();
     } catch (error: any) {
@@ -97,80 +92,70 @@ export function JoinForm({ communityId, communityName, onSuccess, onCancel }: Jo
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Join {communityName}</CardTitle>
-        <CardDescription>
-          Create an account to join this community and see all content
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+      <Card className="w-full max-w-md mx-auto border-none shadow-none bg-transparent">
+        <CardHeader>
+          <CardTitle>Join {communityName}</CardTitle>
+          <CardDescription>
+            Create an account to join this community and see all content
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="password">Password *</Label>
               <Input
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
                 onChange={handleChange}
                 required
+                minLength={6}
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength={6}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
-            <Input
-              id="phoneNumber"
-              name="phoneNumber"
-              type="tel"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Joining..." : "Join Community"}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Joining..." : "Join Community"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
   );
 }
