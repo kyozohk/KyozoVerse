@@ -1,17 +1,59 @@
+
 'use client';
 
+import React, { useState } from 'react';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { getFirebase } from '@/firebase';
 import { Toaster } from "@/components/ui/toaster";
 import Image from 'next/image';
 import Link from 'next/link';
 import { CommunityAuthProviderWrapper } from '@/components/auth/community-auth-provider';
+import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
+import { useAuth } from '@/hooks/use-auth';
+import { FirebaseError } from 'firebase/app';
+import { useRouter } from 'next/navigation';
+import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 
 export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const { signIn } = useAuth();
+
+  const handleSignIn = async () => {
+    setError(null);
+    try {
+      await signIn(email, password);
+      setIsSignInOpen(false);
+      // Main auth provider will redirect to dashboard
+    } catch (error: any) {
+        let description = "An unexpected error occurred. Please try again.";
+        if (error instanceof FirebaseError) {
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                description = "Invalid credentials. Please check your email and password and try again.";
+            }
+        }
+        setError(description);
+    }
+  };
+
+  const openSignIn = () => {
+    setIsResetPasswordOpen(false);
+    setIsSignInOpen(true);
+  };
+
+  const openResetPassword = () => {
+    setIsSignInOpen(false);
+    setIsResetPasswordOpen(true);
+  };
+
   return (
     <FirebaseClientProvider firebase={getFirebase()}>
       <CommunityAuthProviderWrapper>
@@ -31,12 +73,12 @@ export default function PublicLayout({
               <Link href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2">
                 <Image src="/logo.png" alt="KyozoVerse" width={120} height={35} className="brightness-150" />
               </Link>
-              <Link 
-                href="/landing" 
+              <CustomButton
+                onClick={openSignIn} 
                 className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
               >
                 Sign In
-              </Link>
+              </CustomButton>
             </div>
           </header>
           
@@ -46,6 +88,52 @@ export default function PublicLayout({
           </main>       
         </div>
         <Toaster />
+
+        <CustomFormDialog 
+          open={isSignInOpen} 
+          onClose={() => setIsSignInOpen(false)}
+          title="Welcome Back"
+          description="Sign in to access your Kyozo dashboard and community."
+          backgroundImage="/bg/light_app_bg.png"
+          color="#C170CF"
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex-grow">
+              <div className="space-y-4">
+                <Input 
+                  label="Email" 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <div>
+                  <PasswordInput 
+                    label="Password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  {error && (
+                    <p className="text-red-500 text-sm mt-2">
+                      {error} <button type="button" className="text-primary hover:underline" onClick={openResetPassword}>Forgot password?</button>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <div className="mb-4">
+                <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
+              </div>
+            </div>
+          </div>
+        </CustomFormDialog>
+
+        <ResetPasswordDialog
+          open={isResetPasswordOpen}
+          onClose={() => setIsResetPasswordOpen(false)}
+          onGoBack={openSignIn}
+        />
       </CommunityAuthProviderWrapper>
     </FirebaseClientProvider>
   );
