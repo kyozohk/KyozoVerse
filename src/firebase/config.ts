@@ -12,6 +12,8 @@ const firebaseConfig: FirebaseOptions = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const communityApp = !getApps().some(app => app.name === 'community') ? initializeApp(firebaseConfig, 'community') : getApp('community');
+
 
 // Enable emulators if in development mode and explicitly enabled
 if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true' && process.env.NODE_ENV === 'development') {
@@ -22,4 +24,4 @@ if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true' && process.env.NOD
   });
 }
 
-export { app };
+export { app, communityApp };

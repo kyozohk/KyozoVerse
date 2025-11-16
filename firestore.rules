@@ -1,57 +1,41 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
-    function isAnonymous() {
-      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    // Helper function to check for community membership
+    function isCommunityMember(communityId) {
+      return request.auth != null && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid));
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    match /users/{userId} {
-      allow read: if isSignedIn() || isAnonymous();
-      allow write: if isOwner(userId);
-    }
-
-    match /blogs/{blogId} {
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
-      allow get: if resource.data.visibility == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid);
-      allow list: if request.query.get('visibility') == 'public' || isSignedIn();
-    }
-
+    // Communities can be read by anyone
     match /communities/{communityId} {
-        allow get: if isSignedIn();
-        allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-        allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
+      allow read: if true;
+      allow write: if false; // Or define admin rules
     }
 
-    match /accessRequests/{requestId} {
-      // Allow anyone to create access requests (no authentication required)
-      allow create: if true;
-      // Only allow admins to read all requests
-      allow read: if isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      // Allow users to read their own requests
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    // Community members can be read by other members of that same community
+    match /communities/{communityId}/members/{memberId} {
+        allow read, write: if request.auth != null && request.auth.uid == memberId;
     }
-    
-    match /notifications/{notificationId} {
-      // Allow creating notifications if signed in (including anonymous users)
-      allow create: if isSignedIn() || isAnonymous();
-      // Allow users to read their own notifications
-      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
-      // Allow admins to read all notifications
-      allow read: if isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+    // Blogs (posts) have more granular rules
+    match /blogs/{blogId} {
+      // Allow read access if...
+      allow read: if 
+        // 1. The post is public
+        resource.data.visibility == 'public' ||
+        // 2. The user is a logged-in member of the community the post belongs to
+        (request.auth != null && isCommunityMember(resource.data.communityHandle));
+
+      // Allow create/update/delete only for the author of the post
+      allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+    }
+
+    // Users collection can be read by anyone, but only the user can write to their own document
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
