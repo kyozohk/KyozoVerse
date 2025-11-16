@@ -2,7 +2,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { JoinForm } from './join-form';
 
 export const JoinCommunityDialog = ({ 
@@ -19,6 +25,12 @@ export const JoinCommunityDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Join {communityName}</DialogTitle>
+          <DialogDescription>
+            Create an account to join this community and see all content.
+          </DialogDescription>
+        </DialogHeader>
         <JoinForm 
           communityId={communityId} 
           communityName={communityName}

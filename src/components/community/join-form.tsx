@@ -92,15 +92,9 @@ export function JoinForm({ communityId, communityName, onSuccess, onCancel }: Jo
   };
 
   return (
-      <Card className="w-full max-w-md mx-auto border-none shadow-none bg-transparent">
-        <CardHeader>
-          <CardTitle>Join {communityName}</CardTitle>
-          <CardDescription>
-            Create an account to join this community and see all content
-          </CardDescription>
-        </CardHeader>
+      <Card className="w-full max-w-md mx-auto border-none shadow-none bg-transparent pt-0 mt-0">
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name *</Label>
