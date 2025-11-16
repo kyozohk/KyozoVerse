@@ -148,14 +148,14 @@ export function CustomFormDialog({
                 <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: color }}></div>
                 <Image src="/logo-icon.svg" alt="Kyozo Icon" width={40} height={40} />
                 </div>
-                <h2 
+                <div 
                     className="text-4xl font-normal text-left" 
                     style={{ fontFamily: 'Canicule Display, serif' }}
                 >
                     {title}
-                </h2>
+                </div>
              </DialogTitle>
-            <DialogDescription className="text-left">{description}</DialogDescription>
+            <DialogDescription className="text-left pt-2">{description}</DialogDescription>
           </DialogHeader>
           
           <div className="flex-grow">
@@ -187,9 +187,9 @@ export {
   DialogOverlay,
   DialogTrigger,
   DialogClose,
-  DialogContent,
-  DialogHeader,
+  // DialogContent,
+  // DialogHeader,
   DialogFooter,
-  DialogTitle,
-  DialogDescription,
+  // DialogTitle,
+  // DialogDescription,
 }
