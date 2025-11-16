@@ -8,7 +8,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogDescription 
-} from '@/components/ui';
+} from '@/components/ui/dialog';
 import { JoinForm } from './join-form';
 
 export const JoinCommunityDialog = ({ 
