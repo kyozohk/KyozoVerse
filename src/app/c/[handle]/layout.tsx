@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
 import { useRouter } from 'next/navigation';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
+import { useCommunityAuth } from '@/hooks/use-community-auth';
 
 export default function PublicLayout({
   children,
@@ -26,6 +27,7 @@ export default function PublicLayout({
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const { signIn } = useAuth();
+  const { user: communityUser, signOut: communitySignOut } = useCommunityAuth();
 
   const handleSignIn = async () => {
     setError(null);
@@ -42,6 +44,10 @@ export default function PublicLayout({
         }
         setError(description);
     }
+  };
+
+  const handleSignOut = async () => {
+    await communitySignOut();
   };
 
   const openSignIn = () => {
@@ -73,12 +79,21 @@ export default function PublicLayout({
               <Link href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2">
                 <Image src="/logo.png" alt="KyozoVerse" width={120} height={35} className="brightness-150" />
               </Link>
-              <CustomButton
-                onClick={openSignIn} 
-                className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
-              >
-                Sign In
-              </CustomButton>
+              {communityUser ? (
+                 <CustomButton
+                    onClick={handleSignOut}
+                    className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
+                >
+                    Sign Out
+                </CustomButton>
+              ) : (
+                <CustomButton
+                    onClick={openSignIn} 
+                    className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
+                >
+                    Sign In
+                </CustomButton>
+              )}
             </div>
           </header>
           
