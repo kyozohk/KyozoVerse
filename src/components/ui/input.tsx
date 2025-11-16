@@ -1,4 +1,5 @@
 
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -6,7 +7,7 @@ import { cn } from "@/lib/utils"
 import "@/styles/components.css"
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string; // Made label mandatory for floating label
+  label?: string; // Made label mandatory for floating label
   error?: string;
   wrapperClassName?: string;
   icon?: React.ReactNode;
@@ -28,9 +29,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
             {...props}
           />
-          <label htmlFor={inputId} className="floatingLabel">
-            {label}
-          </label>
+          {label && (
+            <label htmlFor={inputId} className="floatingLabel">
+                {label}
+            </label>
+           )}
         </div>
         {error && <div className="errorMessage">{error}</div>}
       </div>

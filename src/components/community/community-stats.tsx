@@ -21,43 +21,43 @@ export function CommunityStats({ community }: CommunityStatsProps) {
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-transparent border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/50 text-gray-400 hover:border-primary-purple">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-400">Total Members</CardTitle>
           <Users className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalMembers}</div>
+          <div className="text-2xl font-bold text-white">{stats.totalMembers}</div>
           <p className="text-xs text-gray-400">+0 this month</p>
         </CardContent>
       </Card>
-      <Card className="bg-transparent border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/50 text-gray-400 hover:border-primary-purple">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-400">Posts</CardTitle>
           <MessageSquare className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.communities}</div>
+          <div className="text-2xl font-bold text-white">{stats.communities}</div>
           <p className="text-xs text-gray-400">Total posts in community</p>
         </CardContent>
       </Card>
-      <Card className="bg-transparent border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/50 text-gray-400 hover:border-primary-purple">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-400">Monthly Growth</CardTitle>
           <LineChart className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">+{stats.monthlyGrowth}</div>
+          <div className="text-2xl font-bold text-white">+{stats.monthlyGrowth}</div>
           <p className="text-xs text-gray-400">New members this month</p>
         </CardContent>
       </Card>
-      <Card className="bg-transparent border-gray-700/80 text-white">
+      <Card className="bg-transparent border-gray-700/50 text-gray-400 hover:border-primary-purple">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-400">Daily Messages</CardTitle>
           <Mail className="h-4 w-4 text-gray-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.dailyMessages}</div>
+          <div className="text-2xl font-bold text-white">{stats.dailyMessages}</div>
           <p className="text-xs text-gray-400">Messages sent today</p>
         </CardContent>
       </Card>
