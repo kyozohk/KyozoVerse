@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { joinCommunity } from "@/lib/community-utils";
+import { communityAuth } from "@/firebase/community-auth"; // Use community-specific auth
 
 interface JoinFormProps {
   communityId: string;
@@ -41,9 +41,9 @@ export function JoinForm({ communityId, communityName, onSuccess, onCancel }: Jo
     setIsSubmitting(true);
 
     try {
-      // Create user account
+      // Create user account using the communityAuth instance
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
+        communityAuth,
         formData.email,
         formData.password
       );
@@ -55,7 +55,7 @@ export function JoinForm({ communityId, communityName, onSuccess, onCancel }: Jo
         displayName: `${formData.firstName} ${formData.lastName}`
       });
 
-      // Create user document
+      // Create user document in Firestore (can be shared)
       await setDoc(doc(db, "users", user.uid), {
         userId: user.uid,
         email: formData.email,
