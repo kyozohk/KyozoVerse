@@ -4,6 +4,7 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
+import Image from 'next/image';
 
 import { cn } from "@/lib/utils"
 
@@ -106,13 +107,86 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
+
+interface CustomFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  backgroundImage?: string;
+  showVideo?: boolean;
+  videoSrc?: string;
+  color?: string;
+}
+
+export function CustomFormDialog({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  backgroundImage,
+  showVideo = true,
+  videoSrc = "/bg/form_video.mp4",
+  color = "#843484",
+}: CustomFormDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent 
+        className="max-w-4xl grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0"
+        style={{
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+        }}
+      >
+        <div className="p-8 md:p-12 flex flex-col justify-between">
+          <DialogHeader>
+            <DialogTitle className="hidden">{title}</DialogTitle>
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: color }}></div>
+              <Image src="/logo-icon.svg" alt="Kyozo Icon" width={40} height={40} />
+            </div>
+            <h2 
+                className="text-4xl font-normal" 
+                style={{ fontFamily: 'Canicule Display, serif' }}
+            >
+                {title}
+            </h2>
+            <p className="text-secondary text-base">{description}</p>
+          </DialogHeader>
+          
+          <div className="flex-grow">
+            {children}
+          </div>
+        </div>
+
+        {showVideo && (
+          <div className="relative hidden md:block overflow-hidden rounded-r-lg">
+            <video
+              className="absolute top-0 left-0 w-full h-full object-cover"
+              src={videoSrc}
+              autoPlay
+              loop
+              muted
+              playsInline
+            ></video>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export {
   Dialog,
   DialogPortal,
   DialogOverlay,
   DialogTrigger,
   DialogClose,
-  DialogContent,
+  DialogContent as DialogPrimitiveContent,
   DialogHeader,
   DialogFooter,
   DialogTitle,

@@ -8,7 +8,7 @@ export { CustomButton } from './CustomButton';
 export { PasswordInput } from './PasswordInput';
 export { Header } from './header';
 export { GradientText } from './gradient-text';
-export { Dialog as CustomFormDialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog';
+export { CustomFormDialog, Dialog, DialogPortal, DialogOverlay, DialogTrigger, DialogClose, DialogPrimitiveContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './dialog';
 export { Dropzone } from './dropzone';
 
 // Shadcn components
