@@ -143,18 +143,19 @@ export function CustomFormDialog({
       >
         <div className="p-8 md:p-12 flex flex-col justify-between">
           <DialogHeader>
-            <DialogTitle className="hidden">{title}</DialogTitle>
-            <div className="flex items-center gap-2 mb-8">
-              <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: color }}></div>
-              <Image src="/logo-icon.svg" alt="Kyozo Icon" width={40} height={40} />
-            </div>
-            <h2 
-                className="text-4xl font-normal" 
-                style={{ fontFamily: 'Canicule Display, serif' }}
-            >
-                {title}
-            </h2>
-            <p className="text-secondary text-base">{description}</p>
+             <DialogTitle>
+                <div className="flex items-center gap-2 mb-8">
+                <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: color }}></div>
+                <Image src="/logo-icon.svg" alt="Kyozo Icon" width={40} height={40} />
+                </div>
+                <h2 
+                    className="text-4xl font-normal text-left" 
+                    style={{ fontFamily: 'Canicule Display, serif' }}
+                >
+                    {title}
+                </h2>
+             </DialogTitle>
+            <DialogDescription className="text-left">{description}</DialogDescription>
           </DialogHeader>
           
           <div className="flex-grow">
