@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { JoinForm } from './join-form';
 
 export const JoinCommunityDialog = ({ 

@@ -186,7 +186,7 @@ export {
   DialogOverlay,
   DialogTrigger,
   DialogClose,
-  DialogContent as DialogPrimitiveContent,
+  DialogContent,
   DialogHeader,
   DialogFooter,
   DialogTitle,
