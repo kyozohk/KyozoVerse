@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -27,7 +28,7 @@ export function CommunityHeader({ community, userRole, onEdit }: CommunityHeader
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   return (
-    <div className="relative rounded-xl overflow-hidden p-6 md:p-8 text-white">
+    <div className="relative p-6 md:p-8 text-white">
       {community.communityBackgroundImage && (
         <Image
           src={community.communityBackgroundImage}
@@ -37,7 +38,7 @@ export function CommunityHeader({ community, userRole, onEdit }: CommunityHeader
           className="absolute inset-0 z-0"
         />
       )}
-      <div className="absolute inset-0 bg-black/20 z-0"></div>
+      <div className="absolute inset-0 bg-black/50 z-0"></div>
 
       <div className="relative z-10">
         <div className="flex justify-between items-start">

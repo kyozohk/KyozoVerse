@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -80,20 +81,20 @@ export function MembersList({ community, userRole }: MembersListProps) {
   );
 
   return (
-    <div className="bg-transparent text-white p-6 md:p-8 rounded-xl">
+    <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border border-gray-200/80">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-400">Members</h2>
-          <p className="text-gray-500">Manage your community members.</p>
+          <h2 className="text-2xl font-bold text-foreground">Members</h2>
+          <p className="text-muted-foreground">Manage your community members.</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search members..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 bg-transparent border-primary-purple text-white focus:ring-primary-purple"
+              className="pl-8 bg-card border-primary-purple text-foreground focus:ring-primary-purple"
             />
           </div>
           <div className="flex items-center gap-1 rounded-md bg-gray-800 p-1">
@@ -101,7 +102,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
               variant={viewMode === 'list' ? 'secondary' : 'ghost'}
               size="icon"
               onClick={() => setViewMode('list')}
-              className="h-8 w-8 hover:bg-gray-700"
+              className="h-8 w-8 text-white hover:bg-gray-700"
             >
               <List className="h-4 w-4" />
             </Button>
@@ -109,7 +110,7 @@ export function MembersList({ community, userRole }: MembersListProps) {
               variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
               size="icon"
               onClick={() => setViewMode('grid')}
-              className="h-8 w-8 hover:bg-gray-700"
+              className="h-8 w-8 text-white hover:bg-gray-700"
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -118,22 +119,22 @@ export function MembersList({ community, userRole }: MembersListProps) {
       </div>
       
       {loading ? (
-        <div className="text-center text-gray-400 py-10">Loading members...</div>
+        <div className="text-center text-muted-foreground py-10">Loading members...</div>
       ) : (
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-b border-gray-700/80">
-              <TableHead className="text-gray-500">User</TableHead>
-              <TableHead className="text-gray-500">Email</TableHead>
-              <TableHead className="text-gray-500">Phone</TableHead>
-              <TableHead className="text-gray-500">Status</TableHead>
-              <TableHead className="text-gray-500">Joined</TableHead>
-              {canManage && <TableHead className="text-right text-gray-500">Actions</TableHead>}
+            <TableRow className="hover:bg-muted/50 border-b border-gray-200/80">
+              <TableHead className="text-muted-foreground">User</TableHead>
+              <TableHead className="text-muted-foreground">Email</TableHead>
+              <TableHead className="text-muted-foreground">Phone</TableHead>
+              <TableHead className="text-muted-foreground">Status</TableHead>
+              <TableHead className="text-muted-foreground">Joined</TableHead>
+              {canManage && <TableHead className="text-right text-muted-foreground">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredMembers.map((member) => (
-              <TableRow key={member.userId} className="hover:bg-gray-800/50 border-gray-800/80">
+              <TableRow key={member.userId} className="hover:bg-muted/50 border-gray-200/80">
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
@@ -143,45 +144,45 @@ export function MembersList({ community, userRole }: MembersListProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium text-gray-300">
+                      <div className="font-medium text-foreground">
                         {member.userDetails?.displayName}
                       </div>
-                      <div className="text-xs text-gray-500 capitalize">
+                      <div className="text-xs text-muted-foreground capitalize">
                         {member.role}
                       </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-400">{member.userDetails?.email}</TableCell>
-                <TableCell className="text-gray-400">{member.userDetails?.phoneNumber || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{member.userDetails?.email}</TableCell>
+                <TableCell className="text-muted-foreground">{member.userDetails?.phoneNumber || '-'}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
                       member.status === 'active' ? 'default' : 'destructive'
                     }
                      className={
-                      member.status === 'active' ? 'bg-green-600/20 text-green-400 border-green-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'
+                      member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }
                   >
                     {member.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-gray-400">
+                <TableCell className="text-muted-foreground">
                   {member.joinedAt ? format(member.joinedAt.toDate(), 'PP') : '-'}
                 </TableCell>
                 {canManage && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-300">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-300">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <MessageCircle className="h-4 w-4" />
                       </Button>
-                       <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-300">
+                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <Phone className="h-4 w-4" />
                       </Button>
-                       <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-300">
+                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <Mail className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">

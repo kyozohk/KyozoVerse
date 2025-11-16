@@ -55,28 +55,34 @@ export default function CommunityPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="p-4 md:p-8 space-y-8">
-        <Skeleton className="h-40 w-full rounded-xl bg-gray-700/50" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Skeleton className="h-24 w-full bg-gray-700/50" />
-          <Skeleton className="h-24 w-full bg-gray-700/50" />
-          <Skeleton className="h-24 w-full bg-gray-700/50" />
-          <Skeleton className="h-24 w-full bg-gray-700/50" />
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-none" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 md:px-8">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
         </div>
-        <Skeleton className="h-96 w-full bg-gray-700/50" />
+        <div className="px-4 md:px-8">
+            <Skeleton className="h-96 w-full" />
+        </div>
       </div>
     );
   }
 
   if (!community) {
-    return <div className="p-8 text-center text-white">Community not found.</div>;
+    return <div className="p-8 text-center text-foreground">Community not found.</div>;
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
+    <div className="space-y-8">
       <CommunityHeader community={community} userRole={userRole} onEdit={() => setIsEditDialogOpen(true)} />
-      <CommunityStats community={community} />
-      <MembersList community={community} userRole={userRole} />
+      <div className="px-4 md:px-8">
+        <CommunityStats community={community} />
+      </div>
+      <div className="px-4 md:px-8">
+        <MembersList community={community} userRole={userRole} />
+      </div>
 
       {isEditDialogOpen && (
         <CreateCommunityDialog
