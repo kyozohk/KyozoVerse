@@ -31,10 +31,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   
-  const isCommunityPage = useMemo(() => 
-    /^\/[^/]+/.test(pathname) && !mainNavItems.some(item => pathname.startsWith(item.href)),
-    [pathname]
-  );
+  const isCommunityPage = useMemo(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    // It's a community page if the first segment is not a main nav item, and it's not a main nav item itself
+    return segments.length > 0 && !mainNavItems.some(item => item.href === `/${segments[0]}`);
+  }, [pathname]);
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
@@ -76,13 +77,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
   
-  const isCommunitiesActive = /^\/communities(\/.*)?$|^\/[^/]+/.test(pathname) && !mainNavItems.some(item => item.href !== '/communities' && pathname.startsWith(item.href));
-
+  const isCommunitiesActive = isCommunityPage || pathname.startsWith('/communities');
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className={`sidebar-bg-${currentSection} sidebar-shadow`}>
+        <Sidebar className={`sidebar-bg-${isCommunitiesActive ? 'communities' : currentSection} sidebar-shadow`}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
@@ -96,14 +96,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = item.href === '/communities' ? isCommunitiesActive : pathname.startsWith(item.href);
+                  const theme = getThemeForPath(item.href);
                   return (
                       <SidebarNavItem 
                           key={item.label} 
                           href={item.href} 
                           icon={<Icon />}
                           isActive={isActive}
-                          activeColor={activeColor}
-                          activeBgColor={activeBgColor}
+                          activeColor={theme.activeColor}
+                          activeBgColor={theme.activeBgColor}
                       >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                       </SidebarNavItem>
