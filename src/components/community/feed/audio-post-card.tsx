@@ -4,23 +4,22 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlayCircle, PauseCircle, Edit, Trash2, Lock, Play, Pause } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useCommunityAuth } from "@/hooks/use-community-auth";
 import { type Post } from "@/lib/types";
 import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { recordInteraction } from '@/lib/interaction-utils';
 
 interface AudioPostCardProps {
   post: Post & { id: string; _isPublicView?: boolean };
 }
 
 export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
-  const { user } = useAuth();
+  const { user } = useCommunityAuth();
   const { toast } = useToast();
-  // Show edit/delete options only if user is logged in and is the post creator
-  // In public view (_isPublicView flag), never show edit/delete options
   const isPostCreator = user && post.authorId === user.uid && !post._isPublicView;
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -52,7 +51,6 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
     }
   };
   
-  // Format time in MM:SS format
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -68,6 +66,15 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
           console.error('Error playing audio:', err);
           alert('Failed to play audio. Please try again.');
         });
+        if (user && post.id && post.communityId) {
+          recordInteraction({
+            userId: user.uid,
+            postId: post.id,
+            communityId: post.communityId,
+            interactionType: 'play',
+            mediaType: 'audio',
+          });
+        }
       }
       setIsPlaying(!isPlaying);
     }
@@ -91,23 +98,23 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
     }
-  };
-
-  // Format duration for display
-  const formatDuration = () => {
-    if (!duration) return '0:00';
-    const minutes = Math.floor(duration / 60);
-    const seconds = Math.floor(duration % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    if (user && post.id && post.communityId) {
+      recordInteraction({
+        userId: user.uid,
+        postId: post.id,
+        communityId: post.communityId,
+        interactionType: 'finish',
+        mediaType: 'audio',
+        playDurationSeconds: duration,
+      });
+    }
   };
   
   return (
     <>
       <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl">
-        {/* Background gradient */}
         <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
         
-        {/* Edit/Delete buttons for post creator */}
         {isPostCreator && (
           <div className="absolute top-2 right-2 flex gap-1 z-20">
             <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
@@ -125,9 +132,7 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
           </div>
         )}
         
-        {/* Content */}
         <div className="relative z-10 p-6 flex flex-col">
-          {/* Top badges */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="bg-[#5B91D7] text-white px-4 py-1 rounded-full text-sm font-medium">Listen</span>
             <span className="bg-transparent border border-[#5B91D7] text-[#5B91D7] px-4 py-1 rounded-full text-sm">
@@ -140,10 +145,8 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
             )}
           </div>
           
-          {/* Title */}
           <h3 className="text-slate-800 text-xl font-medium mb-2">{post.title}</h3>
           
-          {/* Description */}
           <p className="text-slate-700 mb-6">{post.content.text}</p>
           
           {post.content.mediaUrls && post.content.mediaUrls.length > 0 ? (
@@ -158,7 +161,6 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
                 onError={(e) => console.error('Audio error:', e)}
               />
               
-              {/* Audio progress bar */}
               <div className="w-full bg-[#5B91D7]/20 h-2 rounded-full mb-2 overflow-hidden">
                 <div 
                   className="bg-[#5B91D7] h-full rounded-full" 
@@ -166,7 +168,6 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
                 ></div>
               </div>
               
-              {/* Footer */}
               <div className="flex justify-between items-center mt-2">
                 <span className="text-slate-600 text-sm">{formatTime(currentTime)} / {formatTime(duration)}</span>
                 

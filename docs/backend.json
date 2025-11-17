@@ -66,6 +66,21 @@
         }
       },
       "required": ["name", "handle", "ownerId"]
+    },
+    "userInteraction": {
+      "title": "User Interaction",
+      "description": "Records a user's interaction with a piece of content.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user (authenticated or anonymous)." },
+        "postId": { "type": "string", "description": "The ID of the post being interacted with." },
+        "communityId": { "type": "string", "description": "The ID of the community the post belongs to." },
+        "interactionType": { "type": "string", "enum": ["play", "like", "view", "finish"], "description": "The type of interaction." },
+        "mediaType": { "type": "string", "enum": ["audio", "video"], "description": "The type of media interacted with." },
+        "playDurationSeconds": { "type": "number", "description": "Duration of the playback in seconds." },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "postId", "interactionType", "timestamp"]
     }
   },
   "auth": {
@@ -83,6 +98,10 @@
     "/communities/{communityId}": {
         "schema": { "$ref": "#/backend/entities/community"},
         "description": "Community documents"
+    },
+    "/userInteractions/{interactionId}": {
+      "schema": { "$ref": "#/backend/entities/userInteraction" },
+      "description": "User interaction records"
     }
   }
 }
