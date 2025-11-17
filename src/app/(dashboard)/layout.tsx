@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/');
+      router.replace('/landing');
     } else if (pathname === '/dashboard') {
       // Redirect from old path to new path
       router.replace('/communities');
@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = async () => {
     await signOut();
-    // Keep the redirect to '/' as it is in this layout
+    router.push('/landing');
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
@@ -68,8 +68,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar className={`sidebar-bg-${currentSection}`}>
           <SidebarHeader>
-            <div className="flex items-center justify-center p-2">
-              <Link href="/dashboard" className="flex items-center justify-center" onClick={handleLogoClick}>
+            <div className="flex h-[80px] items-center justify-center p-2">
+              <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
                 {/* Expanded Logo */}
                 <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 {/* Collapsed Icon */}

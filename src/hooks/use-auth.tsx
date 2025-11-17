@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
@@ -36,16 +37,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(firebaseUser);
       setLoading(false);
       
-      const isPublicPath = pathname === '/' || pathname.startsWith('/c/') || pathname.startsWith('/invite');
+      const isPublicPath = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/c/') || pathname.startsWith('/invite');
       
-      if (firebaseUser && !isPublicPath) {
-        // User is logged in and not on a public page, ensure they are on a dashboard page
-        if (!pathname.startsWith('/(dashboard)')) {
-          router.replace('/dashboard');
-        }
+      if (firebaseUser && isPublicPath && pathname !== '/landing') {
+        router.replace('/communities');
       } else if (!firebaseUser && !isPublicPath) {
-        // User is not logged in and not on a public page, redirect to home
-        router.replace('/');
+        router.replace('/landing');
       }
     });
 
@@ -66,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await firebaseSignOut();
-    router.push('/');
+    router.push('/landing');
   }
 
   return (
