@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
@@ -20,6 +21,14 @@ export function LandingPage() {
   const [error, setError] = useState<string | null>(null);
   const [formType, setFormType] = useState('waitlist');
   const { user, signIn, signOut } = useAuth();
+
+  useEffect(() => {
+    // If the user is logged in, redirect them to the dashboard
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
+
 
   const openWaitlist = () => {
     setIsSignInOpen(false);
@@ -57,10 +66,9 @@ export function LandingPage() {
     }
   };
   
-    // If the user is logged in, redirect them to the dashboard
+    // If the user is logged in, we render null while the useEffect redirects
     if (user) {
-        router.replace('/dashboard');
-        return null; // Render nothing while redirecting
+        return null;
     }
 
   return (
