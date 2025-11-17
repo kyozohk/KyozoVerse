@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, signInWithEmailPassword, resetPassword as firebaseResetPassword, signUpWithEmail, signOut as firebaseSignOut } from '@/firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -29,23 +29,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
       
-      // Don't redirect if we're on a public community page
-      const pathname = window.location.pathname;
-      const isPublicCommunityPage = pathname.startsWith('/c/');
+      const isPublicPath = pathname === '/' || pathname.startsWith('/c/') || pathname.startsWith('/invite');
       
-      if (firebaseUser && !isPublicCommunityPage) {
-        router.push('/dashboard');
+      if (firebaseUser && !isPublicPath) {
+        // User is logged in and not on a public page, ensure they are on a dashboard page
+        if (!pathname.startsWith('/(dashboard)')) {
+          router.replace('/dashboard');
+        }
+      } else if (!firebaseUser && !isPublicPath) {
+        // User is not logged in and not on a public page, redirect to home
+        router.replace('/');
       }
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, pathname]);
 
   const signIn = (email: string, password: string) => {
     return signInWithEmailPassword(email, password);
