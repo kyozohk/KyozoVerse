@@ -20,7 +20,7 @@ import {
   CustomButton
 } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
@@ -41,33 +41,59 @@ export default function CommunitySidebar() {
     if (!user) {
       setLoading(false);
       return;
-    };
+    }
 
-    const q = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const userCommunities = querySnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
-        setCommunities(userCommunities);
+    const fetchCommunities = async () => {
+      try {
+        const ownedCommunitiesQuery = query(
+          collection(db, 'communities'),
+          where('ownerId', '==', user.uid)
+        );
+        
+        const memberCommunitiesQuery = query(
+          collection(db, 'communityMembers'),
+          where('userId', '==', user.uid)
+        );
+        
+        const [ownedSnapshot, memberSnapshot] = await Promise.all([
+          getDocs(ownedCommunitiesQuery),
+          getDocs(memberCommunitiesQuery)
+        ]);
+
+        const ownedCommunities = ownedSnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
+        
+        const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
+        let memberCommunities: Community[] = [];
+        
+        if(memberCommunityIds.length > 0) {
+            const communitiesQuery = query(collection(db, 'communities'), where('__name__', 'in', memberCommunityIds));
+            const communitiesSnapshot = await getDocs(communitiesQuery);
+            memberCommunities = communitiesSnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
+        }
+
+        const allCommunities = [...ownedCommunities, ...memberCommunities];
+        const uniqueCommunities = Array.from(new Map(allCommunities.map(item => [item.communityId, item])).values());
+        
+        setCommunities(uniqueCommunities);
 
         const handleFromPath = pathname.split('/')[1];
-        const currentCommunity = userCommunities.find(c => c.handle === handleFromPath);
+        const currentCommunity = uniqueCommunities.find(c => c.handle === handleFromPath);
         
         if (currentCommunity) {
             setSelectedCommunityHandle(currentCommunity.handle);
-        } else if (userCommunities.length > 0) {
-            // Fallback to first community if handle not found, but don't navigate
-            setSelectedCommunityHandle(userCommunities[0].handle);
+        } else if (uniqueCommunities.length > 0) {
+            setSelectedCommunityHandle(uniqueCommunities[0].handle);
         } else {
             setSelectedCommunityHandle(null);
         }
-        
+      } catch (error) {
+          console.error("Error fetching communities:", error);
+      } finally {
         setLoading(false);
-    }, (error) => {
-        console.error("Error fetching communities:", error);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
+      }
+    };
+    
+    fetchCommunities();
   }, [user, pathname]);
 
   const handleValueChange = (handle: string) => {
@@ -85,7 +111,7 @@ export default function CommunitySidebar() {
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
             backgroundColor: 'var(--sidebar-active-bg)',
-            borderColor: activeColor,
+            borderColor: 'transparent',
             '--sidebar-active-border': activeColor,
             '--sidebar-active-bg': activeBgColor,
         } as React.CSSProperties}
@@ -108,29 +134,31 @@ export default function CommunitySidebar() {
                         </div>
                     </SelectTrigger>
                     <SelectContent 
-                        className="w-64 h-screen"
+                        className="w-64"
                         useSidebarTheme={true}
                         style={{
                             '--sidebar-active-border': activeColor,
-                            '--sidebar-active-bg': activeBgColor
+                            '--sidebar-active-bg': activeBgColor,
                         } as React.CSSProperties}
                     >
-                    {communities.map((community) => (
-                        <SelectItem 
-                            key={community.communityId} 
-                            value={community.handle}
-                            className="h-[80px] border-b px-2"
-                            style={{'--sidebar-active-border': activeColor} as React.CSSProperties}
-                        >
-                            <div className="flex items-center gap-3 truncate">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={community.communityProfileImage} />
-                                    <AvatarFallback>{community.name.substring(0,2)}</AvatarFallback>
-                                </Avatar>
-                                <span className="font-semibold text-lg text-foreground truncate">{community.name}</span>
-                            </div>
-                        </SelectItem>
-                    ))}
+                      <div className="h-screen w-full">
+                        {communities.map((community) => (
+                            <SelectItem 
+                                key={community.communityId} 
+                                value={community.handle}
+                                className="h-[80px] border-b px-2"
+                                style={{'--sidebar-active-border': activeColor} as React.CSSProperties}
+                            >
+                                <div className="flex items-center gap-3 truncate">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={community.communityProfileImage} />
+                                        <AvatarFallback>{community.name.substring(0,2)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-semibold text-lg text-foreground truncate">{community.name}</span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                      </div>
                     </SelectContent>
               </Select>
             ) : null}

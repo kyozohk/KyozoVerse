@@ -6,12 +6,12 @@ import { usePathname, useParams } from 'next/navigation';
 import { CustomButton } from '@/components/ui';
 import { MessageSquare } from 'lucide-react';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
-import { MembersList } from '@/components/community/members-list';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { type Member, type User, type Community } from '@/lib/types';
+import { type CommunityMember, type User, type Community } from '@/lib/types';
 import { getCommunityByHandle } from '@/lib/community-utils';
 import { ListView } from '@/components/ui/list-view';
+import { MembersList } from '@/components/broadcast/members-list';
 
 export default function CommunityBroadcastPage() {
   const params = useParams();
@@ -20,8 +20,8 @@ export default function CommunityBroadcastPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
 
@@ -39,20 +39,19 @@ export default function CommunityBroadcastPage() {
         }
         setCommunity(communityData);
 
-        const membersQuery = query(collection(db, "communities", communityData.communityId, "members"));
+        const membersQuery = query(collection(db, "communityMembers"), where("communityId", "==", communityData.communityId));
         const membersSnapshot = await getDocs(membersQuery);
 
         const membersData = await Promise.all(membersSnapshot.docs.map(async (memberDoc) => {
           const data = memberDoc.data();
-          const userDocRef = doc(db, 'users', memberDoc.id);
+          const userDocRef = doc(db, 'users', data.userId);
           const userSnap = await getDoc(userDocRef);
           
           return {
             id: memberDoc.id,
-            userId: memberDoc.id,
             ...data,
             userDetails: userSnap.exists() ? userSnap.data() as User : undefined,
-          } as Member;
+          } as CommunityMember;
         }));
         
         setMembers(membersData);
@@ -77,7 +76,7 @@ export default function CommunityBroadcastPage() {
     setIsDialogOpen(true);
   };
   
-  const handleToggleMember = (member: Member) => {
+  const handleToggleMember = (member: CommunityMember) => {
     setSelectedMembers(prev => 
         prev.some(m => m.id === member.id)
             ? prev.filter(m => m.id !== member.id)
