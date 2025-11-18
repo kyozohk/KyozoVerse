@@ -16,25 +16,25 @@ import { Users } from 'lucide-react';
 
 interface MembersListProps {
   community: Community;
-  members?: CommunityMember[];
+  members: CommunityMember[];
   userRole: UserRole;
   onMemberClick?: (member: CommunityMember) => void;
   selectedMembers?: CommunityMember[];
   selectable?: boolean;
 }
 
-export function MembersList({ community, members: initialMembers = [], userRole, onMemberClick, selectedMembers, selectable }: MembersListProps) {
+export function MembersList({ community, members: initialMembers, userRole, onMemberClick, selectedMembers, selectable }: MembersListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [members, setMembers] = useState<CommunityMember[]>(initialMembers);
-  const [loading, setLoading] = useState(!initialMembers.length);
+  const [members, setMembers] = useState<CommunityMember[]>(initialMembers || []);
+  const [loading, setLoading] = useState(!initialMembers || initialMembers.length === 0);
   const pathname = usePathname();
   
   const { activeColor } = getThemeForPath(pathname);
 
   useEffect(() => {
     // If members are passed directly, use them
-    if (initialMembers.length) {
+    if (initialMembers && initialMembers.length > 0) {
       setMembers(initialMembers);
       setLoading(false);
       return;
