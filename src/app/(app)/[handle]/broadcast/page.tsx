@@ -25,7 +25,7 @@ export default function CommunityBroadcastPage() {
   const [loading, setLoading] = useState(true);
   const [communityId, setCommunityId] = useState<string>('');
   const [broadcasts, setBroadcasts] = useState<any[]>([]);
-  const [showMemberSelection, setShowMemberSelection] = useState(false);
+  const [showMemberSelection, setShowMemberSelection] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'name' | 'phone'>('all');
   const [showOnlyWithPhone, setShowOnlyWithPhone] = useState(true);
 
