@@ -47,41 +47,45 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   const ListComponent = (
-    <div className="space-y-2">
+    <div className="space-y-2 p-2">
         {filteredMembers.length === 0 ? (
             <div className={cn("flex flex-col items-center justify-center py-12 text-muted-foreground")}>
                 <Users className="h-12 w-12 mb-4 opacity-50" />
                 <p>No members found</p>
             </div>
         ) : filteredMembers.map((member) => {
-          const isSelected = selectedMembers?.some(m => m.id === member.id);
+          const isSelected = selectedMembers?.some(m => m.userId === member.userId);
           return (
             <div 
               key={member.userId} 
               className={cn(
-                "flex items-center p-3 border rounded-md transition-colors",
+                "flex items-center p-4 border rounded-lg transition-colors",
                 isSelected ? "bg-primary/5 border-primary" : "hover:bg-muted/30",
                 onMemberClick ? "cursor-pointer" : ""
               )}
+               style={{
+                borderColor: isSelected ? activeColor : 'hsl(var(--border))',
+                backgroundColor: isSelected ? activeColor + '1A' : 'transparent', // 10% opacity
+              }}
               onClick={() => onMemberClick && onMemberClick(member)}
             >
               {selectable && (
-                  <div className="mr-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="mr-4" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
-                      id={`member-${member.id}`}
+                      id={`member-${member.userId}`}
                       checked={isSelected}
                       onCheckedChange={() => onMemberClick && onMemberClick(member)}
                     />
                   </div>
               )}
-              <div className="mr-3">
-                <Avatar className="h-10 w-10">
+              <div className="mr-4">
+                <Avatar className="h-12 w-12">
                   <AvatarImage src={member.userDetails?.avatarUrl} />
                   <AvatarFallback>{member.userDetails?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               </div>
               <div className="flex-grow">
-                <div className="font-medium">{member.userDetails?.displayName}</div>
+                <div className="font-semibold text-base">{member.userDetails?.displayName}</div>
                 <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
               </div>
                <div className="text-sm text-muted-foreground">
@@ -101,12 +105,18 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
      </>
   );
 
+  // If used for selection on broadcast page
   if (selectable) {
       if(currentViewMode === 'list') return ListComponent;
       return GridComponent; // grid is default for selectable
   }
+  
+  // If used on the community overview page (no ListView wrapper)
+  if(!community) {
+      return ListComponent;
+  }
 
-  // Standalone Member List for Community Page
+  // Standalone Member List for dedicated /members page
   return (
     <Card>
       <CardHeader>
@@ -129,4 +139,3 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
     </Card>
   );
 }
-

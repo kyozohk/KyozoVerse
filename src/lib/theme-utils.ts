@@ -47,7 +47,7 @@ export const communityNavItems: CommunityNavItem[] = [
 ];
 
 const themeColors: Record<string, { active: string; bg: string }> = {
-    overview: { active: '#6D28D9', bg: 'rgba(109, 40, 217, 0.1)' },    // Violet
+    overview: { active: '#C170CF', bg: 'rgba(193, 112, 207, 0.3)' },   // New overview color
     members: { active: '#2563EB', bg: 'rgba(37, 99, 235, 0.1)' },      // Blue
     broadcast: { active: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },   // Amber
     inbox: { active: '#DC2626', bg: 'rgba(220, 38, 38, 0.1)' },        // Red

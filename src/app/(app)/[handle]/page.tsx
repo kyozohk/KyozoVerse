@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function CommunityPage() {
   const { user, loading: authLoading } = useAuth();
@@ -103,7 +104,11 @@ export default function CommunityPage() {
         <CommunityStats community={community} />
       </div>
       <div className="px-4 md:px-8">
-        <MembersList community={community} members={members} userRole={userRole} />
+         <Card>
+            <CardContent className="p-0">
+                <MembersList members={members} userRole={userRole} viewMode='list' />
+            </CardContent>
+         </Card>
       </div>
 
       {isEditDialogOpen && (
