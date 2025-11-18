@@ -126,6 +126,7 @@ export default function CommunityBroadcastPage() {
             selectedMembers={selectedMembers}
             selectable={true}
             viewMode={viewMode}
+            activeColor={activeColor}
         />
       </ListView>
       

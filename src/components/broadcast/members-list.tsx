@@ -19,6 +19,7 @@ export interface MembersListProps {
   selectedMembers?: Member[];
   selectable?: boolean;
   viewMode?: 'grid' | 'list';
+  activeColor?: string;
 }
 
 const formatDate = (timestamp: any): string => {
@@ -42,7 +43,8 @@ const MembersList: React.FC<MembersListProps> = ({
   className = "",
   selectedMembers = [],
   selectable = false,
-  viewMode = 'list' // Default to list for broadcast
+  viewMode = 'list', // Default to list for broadcast
+  activeColor,
 }) => {
   if (members.length === 0) {
     return (
@@ -53,19 +55,33 @@ const MembersList: React.FC<MembersListProps> = ({
     );
   }
 
+  const hexToRgba = (hex: string, alpha: number) => {
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)'; // Return transparent if invalid hex
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   return (
     <div className={cn("space-y-2", className)}>
       {members.map((member) => {
         const isSelected = selectedMembers.some(m => m.id === member.id);
         
+        const itemStyle = isSelected && activeColor ? {
+          backgroundColor: hexToRgba(activeColor, 0.1),
+          borderColor: activeColor,
+        } : {};
+
         return (
           <div 
             key={member.id} 
             className={cn(
-              "flex items-center p-3 border rounded-md",
-              isSelected ? "bg-primary/5 border-primary" : "hover:bg-muted/30",
+              "flex items-center p-3 border rounded-md transition-colors",
+              "hover:bg-muted/30",
               onMemberClick ? "cursor-pointer" : ""
             )}
+            style={itemStyle}
             onClick={() => onMemberClick && onMemberClick(member)}
           >
             {selectable && (
