@@ -86,6 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         key={item.href}
                         href={item.href}
                         icon={<Icon />}
+                        isActive={pathname.startsWith(item.href)}
                         activeColor={activeColor}
                         activeBgColor={activeBgColor}
                     >
