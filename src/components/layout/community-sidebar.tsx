@@ -150,13 +150,6 @@ export default function CommunitySidebar() {
             })}
           </nav>
         </div>
-
-        <div className="mt-auto p-4">
-             <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Community
-            </CustomButton>
-        </div>
       </div>
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
