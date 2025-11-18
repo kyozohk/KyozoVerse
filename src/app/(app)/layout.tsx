@@ -41,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/landing');
+    router.push('/');
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {

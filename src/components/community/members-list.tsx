@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { Community, CommunityMember, User, UserRole } from '@/lib/types';
 import { ListView } from '@/components/ui/list-view';
 import { MemberCard } from './member-card';
+import { MemberCardSkeleton } from './member-card-skeleton';
+import { MemberListSkeleton } from './member-list-skeleton';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';

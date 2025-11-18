@@ -95,8 +95,26 @@ export function ListView({
           </div>
         </div>
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: activeColor }}></div>
+          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {viewMode === 'grid' ? (
+              // Grid skeleton
+              Array(6).fill(0).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-muted rounded-lg h-[200px]"></div>
+                </div>
+              ))
+            ) : (
+              // List skeleton
+              Array(5).fill(0).map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center p-3 border rounded-md">
+                  <div className="mr-3 bg-muted rounded-full h-10 w-10"></div>
+                  <div className="flex-grow">
+                    <div className="bg-muted h-5 w-32 mb-2 rounded"></div>
+                    <div className="bg-muted h-4 w-40 rounded"></div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         ) : (
           <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
