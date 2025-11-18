@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
-import { type CommunityMember, type Community } from "@/lib/types";
+import { type CommunityMember, type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,11 +54,20 @@ export default function CommunityMembersPage() {
       orderBy("joinedAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const membersData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }) as unknown as CommunityMember);
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const membersDataPromises = querySnapshot.docs.map(async (docSnap) => {
+        const memberData = docSnap.data() as Omit<CommunityMember, 'userDetails'>;
+        const userDocRef = doc(db, 'users', memberData.userId);
+        const userSnap = await getDoc(userDocRef);
+        const userDetails = userSnap.exists() ? userSnap.data() as User : undefined;
+        return {
+          id: docSnap.id,
+          ...memberData,
+          userDetails
+        } as unknown as CommunityMember;
+      });
+
+      const membersData = await Promise.all(membersDataPromises);
       setMembers(membersData);
       setLoading(false);
     }, (error) => {

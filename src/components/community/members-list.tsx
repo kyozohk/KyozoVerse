@@ -13,6 +13,7 @@ import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Users } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
 
 interface MembersListProps {
   community?: Community;
@@ -56,7 +57,7 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
           const isSelected = selectedMembers?.some(m => m.id === member.id);
           return (
             <div 
-              key={member.id} 
+              key={member.userId} 
               className={cn(
                 "flex items-center p-3 border rounded-md transition-colors",
                 isSelected ? "bg-primary/5 border-primary" : "hover:bg-muted/30",
@@ -95,7 +96,7 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   const GridComponent = (
      <>
         {filteredMembers.map((member) => (
-            <MemberCard key={member.id} member={member} canManage={canManage} borderColor={activeColor} />
+            <MemberCard key={member.userId} member={member} canManage={canManage} borderColor={activeColor} />
         ))}
      </>
   );
@@ -105,15 +106,27 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
       return GridComponent; // grid is default for selectable
   }
 
+  // Standalone Member List for Community Page
   return (
-    <ListView
-      searchTerm={searchTerm}
-      onSearchChange={setSearchTerm}
-      viewMode={currentViewMode}
-      onViewModeChange={setInternalViewMode}
-      loading={!members}
-    >
-      {currentViewMode === 'grid' ? GridComponent : ListComponent}
-    </ListView>
+    <Card>
+      <CardHeader>
+        <CardTitle>Members</CardTitle>
+        <CardDescription>
+          Browse and manage community members.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ListView
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          viewMode={currentViewMode}
+          onViewModeChange={setInternalViewMode}
+          loading={!members}
+        >
+          {currentViewMode === 'grid' ? GridComponent : ListComponent}
+        </ListView>
+      </CardContent>
+    </Card>
   );
 }
+
