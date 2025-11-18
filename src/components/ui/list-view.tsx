@@ -20,6 +20,7 @@ interface ListViewProps {
   onViewModeChange: (mode: ViewMode) => void;
   children: React.ReactNode;
   loading?: boolean;
+  actions?: React.ReactNode;
 }
 
 export function ListView({
@@ -30,13 +31,14 @@ export function ListView({
   viewMode,
   onViewModeChange,
   children,
-  loading = false
+  loading = false,
+  actions
 }: ListViewProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
   
-  // Function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
+    if (!/^#[0-9A-F]{6}$/i.test(hex)) return hex; // Return original if not a valid hex
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -64,6 +66,7 @@ export function ListView({
               icon={<Search className="h-4 w-4 text-muted-foreground" style={{ color: activeColor }}/>}
               wrapperClassName="flex-grow"
             />
+            {actions}
           <div className="flex items-center gap-1 rounded-md p-1" style={{ backgroundColor: 'transparent' }}>
             <Button
               variant='ghost'

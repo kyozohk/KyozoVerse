@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { CustomButton } from '@/components/ui';
 import { MessageSquare, Search, Users } from 'lucide-react';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
-import MembersList from '@/components/broadcast/members-list';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { MembersList } from '@/components/community/members-list';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { Member } from '@/components/broadcast/broadcast-types';
+import { Member, User, Community } from '@/lib/types';
+import { getCommunityByHandle } from '@/lib/community-utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CommunityBroadcastPage() {
-  const pathname = usePathname();
   const params = useParams();
   const handle = params.handle as string;
   
@@ -23,8 +24,7 @@ export default function CommunityBroadcastPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [communityId, setCommunityId] = useState<string>('');
-  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [community, setCommunity] = useState<Community | null>(null);
   const [showMemberSelection, setShowMemberSelection] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'name' | 'phone'>('all');
   const [showOnlyWithPhone, setShowOnlyWithPhone] = useState(true);
@@ -35,42 +35,34 @@ export default function CommunityBroadcastPage() {
       if (!handle) return;
       try {
         setLoading(true);
-        
-        // Get community ID from handle
-        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
-        const communitySnapshot = await getDocs(communityQuery);
-        
-        if (communitySnapshot.empty) {
+        const communityData = await getCommunityByHandle(handle);
+        if (!communityData) {
           console.error('Community not found');
           setLoading(false);
           return;
         }
-        
-        const communityDoc = communitySnapshot.docs[0];
-        setCommunityId(communityDoc.id);
-        
-        // Get community members
-        const membersQuery = query(collection(db, 'communityMembers'), where('communityId', '==', communityDoc.id));
+        setCommunity(communityData);
+
+        const membersQuery = query(collection(db, 'communityMembers'), where('communityId', '==', communityData.communityId));
         const membersSnapshot = await getDocs(membersQuery);
-        
-        const membersData = membersSnapshot.docs.map(doc => {
-          const data = doc.data();
+
+        const membersData = await Promise.all(membersSnapshot.docs.map(async (memberDoc) => {
+          const data = memberDoc.data();
+          const userDocRef = doc(db, 'users', memberDoc.id);
+          const userSnap = await getDoc(userDocRef);
+          
           return {
-            id: doc.id,
-            displayName: data.userDetails?.displayName || 'Unknown Member',
-            email: data.userDetails?.email,
-            phone: data.userDetails?.phoneNumber,
-            photoURL: data.userDetails?.avatarUrl,
-            role: data.role || 'member',
-            status: data.status || 'active',
-            joinedAt: data.joinedAt
+            id: memberDoc.id,
+            userId: memberDoc.id,
+            ...data,
+            userDetails: userSnap.exists() ? userSnap.data() as User : undefined,
           } as Member;
-        });
+        }));
         
         setMembers(membersData);
         
         // Select members with phone numbers by default
-        const membersWithPhone = membersData.filter(m => m.phone);
+        const membersWithPhone = membersData.filter(m => m.userDetails?.phoneNumber);
         setSelectedMembers(membersWithPhone);
         
       } catch (error) {
@@ -110,28 +102,26 @@ export default function CommunityBroadcastPage() {
   
   const filterMembers = () => {
     return members.filter(member => {
-      // Apply phone filter
-      if (showOnlyWithPhone && !member.phone) {
+      if (showOnlyWithPhone && !member.userDetails?.phoneNumber) {
         return false;
       }
       
-      // If no search term, return after applying phone filter
       if (!searchTerm) return true;
       
       const searchLower = searchTerm.toLowerCase();
-      
-      // Apply search based on filter type
+      const userDetails = member.userDetails;
+
       switch (filterType) {
         case 'name':
-          return member.displayName?.toLowerCase().includes(searchLower) || false;
+          return userDetails?.displayName?.toLowerCase().includes(searchLower) || false;
         case 'phone':
-          return member.phone?.includes(searchTerm) || false;
+          return userDetails?.phoneNumber?.includes(searchTerm) || false;
         case 'all':
         default:
           return (
-            (member.displayName?.toLowerCase().includes(searchLower) || false) ||
-            (member.email?.toLowerCase().includes(searchLower) || false) ||
-            (member.phone?.includes(searchTerm) || false)
+            (userDetails?.displayName?.toLowerCase().includes(searchLower) || false) ||
+            (userDetails?.email?.toLowerCase().includes(searchLower) || false) ||
+            (userDetails?.phoneNumber?.includes(searchTerm) || false)
           );
       }
     });
@@ -153,7 +143,7 @@ export default function CommunityBroadcastPage() {
           </div>
         ) : showMemberSelection ? (
           <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 gap-4">
               <div className="flex-grow max-w-md">
                 <Input
                   label="Search members..."
@@ -203,13 +193,10 @@ export default function CommunityBroadcastPage() {
             </div>
             
             <MembersList
+              community={community!}
               members={filteredMembers}
+              userRole="admin" // Assume admin for selection purposes on this page
               onMemberClick={handleToggleMember}
-              showEmail={true}
-              showPhone={true}
-              showStatus={false}
-              showJoinDate={false}
-              emptyMessage="No members found matching your search."
               selectedMembers={selectedMembers}
               selectable={true}
             />
@@ -244,21 +231,13 @@ export default function CommunityBroadcastPage() {
                 <span className="font-medium">New WhatsApp Broadcast</span>
               </div>
             </Card>
-            
-            {/* Past broadcasts will be listed here */}
-            {broadcasts.map((broadcast) => (
-              <Card key={broadcast.id} className="p-4">
-                {/* Broadcast details */}
-              </Card>
-            ))}
           </div>
         )}
       
-      {/* Broadcast Dialog */}
       <BroadcastDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        members={selectedMembers.filter(m => m.phone)} // Only include selected members with phone numbers
+        members={selectedMembers.filter(m => m.userDetails?.phoneNumber)}
       />
       </div>
     </div>
