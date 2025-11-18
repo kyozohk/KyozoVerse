@@ -45,6 +45,14 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   );
   
   const canManage = userRole === 'owner' || userRole === 'admin';
+  
+  const hexToRgba = (hex: string, alpha: number) => {
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   const ListComponent = (
     <div className="space-y-2 p-2">
@@ -55,18 +63,21 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
             </div>
         ) : filteredMembers.map((member) => {
           const isSelected = selectedMembers?.some(m => m.userId === member.userId);
+          const itemStyle = isSelected
+              ? { borderColor: activeColor, backgroundColor: hexToRgba(activeColor, 0.3) }
+              : {};
+          
           return (
             <div 
               key={member.userId} 
               className={cn(
                 "flex items-center p-4 border rounded-lg transition-colors",
-                isSelected ? "bg-primary/5 border-primary" : "hover:bg-muted/30",
+                {
+                  "hover:bg-primary/5": onMemberClick && !isSelected
+                },
                 onMemberClick ? "cursor-pointer" : ""
               )}
-               style={{
-                borderColor: isSelected ? activeColor : 'hsl(var(--border))',
-                backgroundColor: isSelected ? activeColor + '1A' : 'transparent', // 10% opacity
-              }}
+               style={itemStyle}
               onClick={() => onMemberClick && onMemberClick(member)}
             >
               {selectable && (
@@ -113,7 +124,7 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   
   // If used on the community overview page (no ListView wrapper)
   if(!community) {
-      return ListComponent;
+      return currentViewMode === 'grid' ? <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">{GridComponent}</div> : ListComponent;
   }
 
   // Standalone Member List for dedicated /members page

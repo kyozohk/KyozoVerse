@@ -14,6 +14,7 @@ import { CreateCommunityDialog } from '@/components/community/create-community-d
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
+import { ListView } from '@/components/ui/list-view';
 
 export default function CommunityPage() {
   const { user, loading: authLoading } = useAuth();
@@ -25,6 +26,8 @@ export default function CommunityPage() {
   const [userRole, setUserRole] = useState<UserRole>('guest');
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
     if (authLoading) return;
@@ -75,6 +78,11 @@ export default function CommunityPage() {
       });
     }
   };
+  
+  const filteredMembers = members.filter(member =>
+    member.userDetails?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading || authLoading) {
     return (
@@ -106,7 +114,14 @@ export default function CommunityPage() {
       <div className="px-4 md:px-8">
          <Card>
             <CardContent className="p-0">
-                <MembersList members={members} userRole={userRole} viewMode='list' />
+                 <ListView
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                  >
+                    <MembersList members={filteredMembers} userRole={userRole} viewMode={viewMode} />
+                </ListView>
             </CardContent>
          </Card>
       </div>
