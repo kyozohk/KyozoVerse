@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useParams } from 'next/navigation';
 import { CustomButton } from '@/components/ui';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, CopyCheck, CopyX } from 'lucide-react';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -12,10 +12,13 @@ import { type CommunityMember, type User, type Community } from '@/lib/types';
 import { getCommunityByHandle } from '@/lib/community-utils';
 import { ListView } from '@/components/ui/list-view';
 import MembersList from '@/components/broadcast/members-list';
+import { Button } from '@/components/ui/button';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 export default function CommunityBroadcastPage() {
   const params = useParams();
   const handle = params.handle as string;
+  const pathname = usePathname();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -24,6 +27,8 @@ export default function CommunityBroadcastPage() {
   const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
+
+  const { activeColor } = getThemeForPath(pathname);
 
   // Fetch community and members data
   useEffect(() => {
@@ -106,9 +111,13 @@ export default function CommunityBroadcastPage() {
         onViewModeChange={setViewMode}
         loading={loading}
         actions={
-          <div className="flex items-center gap-4">
-            <button className="text-sm font-medium text-primary hover:underline" onClick={handleSelectAll}>Select All</button>
-            <button className="text-sm font-medium text-primary hover:underline" onClick={handleDeselectAll}>Deselect All</button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={handleSelectAll} style={{ color: activeColor }}>
+                <CopyCheck className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleDeselectAll} style={{ color: activeColor }}>
+                <CopyX className="h-5 w-5" />
+            </Button>
           </div>
         }
       >
