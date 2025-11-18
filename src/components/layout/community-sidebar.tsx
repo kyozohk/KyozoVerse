@@ -72,18 +72,7 @@ export default function CommunitySidebar() {
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
-    const currentSubPath = pathname.split('/').slice(2).join('/');
-    
-    const targetItem = communityNavItems.find(item => {
-        const itemPath = item.href(handle).split('/').slice(2).join('/');
-        return itemPath === currentSubPath;
-    });
-
-    if (targetItem) {
-        router.push(targetItem.href(handle));
-    } else {
-        router.push(`/${handle}`);
-    }
+    router.push(`/${handle}`);
   };
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
@@ -102,7 +91,7 @@ export default function CommunitySidebar() {
         } as React.CSSProperties}
     >
       <div className="flex h-full max-h-screen flex-col">
-        <div className="flex h-[80px] items-center border-b px-2" style={{borderColor: `var(--sidebar-active-border)`}}>
+        <div className="flex h-[80px] items-center px-2">
             {loading ? (
                 <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
@@ -130,7 +119,7 @@ export default function CommunitySidebar() {
                         <SelectItem 
                             key={community.communityId} 
                             value={community.handle}
-                            className="h-[80px] border-b"
+                            className="h-[80px] border-b px-2"
                             style={{'--sidebar-active-border': activeColor} as React.CSSProperties}
                         >
                             <div className="flex items-center gap-3 truncate">
