@@ -82,18 +82,19 @@ export default function CommunitySidebar() {
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
   
-  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
+  const { activeColor, activeBgColor } = getThemeForPath(pathname);
 
   return (
     <div 
-        className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection} sidebar-shadow`}
+        className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow`}
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
-            backgroundColor: activeBgColor
-        }}
+            backgroundColor: activeBgColor,
+            '--sidebar-active-border': activeColor
+        } as React.CSSProperties}
     >
       <div className="flex h-full max-h-screen flex-col">
-        <div className="flex h-[80px] items-center border-b px-2" style={{borderColor: `var(--${currentSection}-color-border)`}}>
+        <div className="flex h-[80px] items-center border-b px-2" style={{borderColor: `var(--sidebar-active-border)`}}>
             {loading ? (
                 <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
@@ -125,7 +126,7 @@ export default function CommunitySidebar() {
               </Select>
             ) : null}
         </div>
-        <div className="flex-1 py-2">
+        <div className="flex-1 py-2 mt-2">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {selectedCommunityHandle && communityNavItems.map((item) => {
               const Icon = item.icon;

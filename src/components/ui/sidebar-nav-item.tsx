@@ -64,7 +64,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
           {...props}
         >
           {React.cloneElement(icon, {
-              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'font-light')
+              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-5 w-5 font-light')
           })}
           {children}
         </Link>

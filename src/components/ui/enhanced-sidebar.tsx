@@ -223,6 +223,7 @@ const Sidebar = React.forwardRef<
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
               transform: openMobile ? "translateX(0)" : "translateX(-100%)",
               backgroundColor: 'var(--sidebar-active-bg)',
+              borderColor: 'var(--sidebar-active-border)',
               ...style
             } as React.CSSProperties
           }
@@ -265,6 +266,7 @@ const Sidebar = React.forwardRef<
            variant !== 'inset' && 'bg-[--sidebar-active-bg]',
            className
            )}
+           style={{borderColor: 'var(--sidebar-active-border)'}}
         >
           {children}
         </div>

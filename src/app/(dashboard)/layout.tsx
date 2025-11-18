@@ -61,12 +61,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
-  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
+  const { activeColor, activeBgColor } = getThemeForPath(pathname);
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor} as React.CSSProperties}>
+        <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor, '--sidebar-active-border': activeColor} as React.CSSProperties}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
@@ -81,15 +81,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <SidebarMenu>
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
-                  const itemTheme = getThemeForPath(item.href);
                   return (
                     <SidebarNavItem
                         key={item.href}
                         href={item.href}
                         icon={<Icon />}
                         isActive={pathname.startsWith(item.href)}
-                        activeColor={itemTheme.activeColor}
-                        activeBgColor={itemTheme.activeBgColor}
+                        activeColor={activeColor}
+                        activeBgColor={activeBgColor}
                     >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </SidebarNavItem>
