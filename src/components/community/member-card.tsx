@@ -1,11 +1,12 @@
 
 import { type CommunityMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Mail, Phone, Edit, Trash2, MessageCircle, GripVertical } from 'lucide-react';
+import { Mail, Phone, Edit, Trash2, MessageCircle, GripVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 interface MemberCardProps {
   member: CommunityMember;
@@ -31,14 +32,17 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
                 <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
             </div>
           </div>
-          <GripVertical className="h-5 w-5 text-muted-foreground" />
+          {canManage && <GripVertical className="h-5 w-5 text-muted-foreground" />}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <Badge
             variant={member.status === 'active' ? 'default' : 'destructive'}
-            className={member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+            className={cn(
+              'capitalize',
+              member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            )}
           >
             {member.status}
           </Badge>

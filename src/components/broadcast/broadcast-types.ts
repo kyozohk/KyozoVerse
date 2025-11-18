@@ -1,3 +1,4 @@
+
 // broadcast-types.ts
 export interface TemplateVariable {
   index: number;

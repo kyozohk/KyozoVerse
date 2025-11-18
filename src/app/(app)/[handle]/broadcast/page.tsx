@@ -3,11 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useParams } from 'next/navigation';
-import { ListView } from '@/components/ui/list-view';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CustomButton } from '@/components/ui';
-import { PlusCircle, MessageSquare, Search, Users, Check } from 'lucide-react';
+import { MessageSquare, Search, Users } from 'lucide-react';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
 import MembersList from '@/components/broadcast/members-list';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -20,14 +19,12 @@ export default function CommunityBroadcastPage() {
   const handle = params.handle as string;
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [communityId, setCommunityId] = useState<string>('');
   const [broadcasts, setBroadcasts] = useState<any[]>([]);
-  const [successMessage, setSuccessMessage] = useState<string>('');
   const [showMemberSelection, setShowMemberSelection] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'name' | 'phone'>('all');
   const [showOnlyWithPhone, setShowOnlyWithPhone] = useState(true);
@@ -35,6 +32,7 @@ export default function CommunityBroadcastPage() {
   // Fetch community and members data
   useEffect(() => {
     const fetchData = async () => {
+      if (!handle) return;
       try {
         setLoading(true);
         
@@ -49,7 +47,6 @@ export default function CommunityBroadcastPage() {
         }
         
         const communityDoc = communitySnapshot.docs[0];
-        const communityData = { id: communityDoc.id, ...communityDoc.data() };
         setCommunityId(communityDoc.id);
         
         // Get community members
@@ -60,10 +57,10 @@ export default function CommunityBroadcastPage() {
           const data = doc.data();
           return {
             id: doc.id,
-            displayName: data.displayName || 'Unknown Member',
-            email: data.email,
-            phone: data.phone,
-            photoURL: data.photoURL,
+            displayName: data.userDetails?.displayName || 'Unknown Member',
+            email: data.userDetails?.email,
+            phone: data.userDetails?.phoneNumber,
+            photoURL: data.userDetails?.avatarUrl,
             role: data.role || 'member',
             status: data.status || 'active',
             joinedAt: data.joinedAt
@@ -76,10 +73,6 @@ export default function CommunityBroadcastPage() {
         const membersWithPhone = membersData.filter(m => m.phone);
         setSelectedMembers(membersWithPhone);
         
-        // TODO: Fetch past broadcasts when we implement history
-        // For now, we'll just use an empty array
-        setBroadcasts([]);
-        
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -87,9 +80,7 @@ export default function CommunityBroadcastPage() {
       }
     };
     
-    if (handle) {
-      fetchData();
-    }
+    fetchData();
   }, [handle]);
 
   const handleNewBroadcast = () => {
@@ -165,7 +156,7 @@ export default function CommunityBroadcastPage() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex-grow max-w-md">
                 <Input
-                  placeholder="Search members..."
+                  label="Search members..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
@@ -263,29 +254,10 @@ export default function CommunityBroadcastPage() {
           </div>
         )}
       
-      {successMessage && (
-        <div className="fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-md z-50">
-          {successMessage}
-          <button 
-            className="ml-4 text-green-700 hover:text-green-900" 
-            onClick={() => setSuccessMessage('')}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-      
       {/* Broadcast Dialog */}
       <BroadcastDialog
         isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setShowMemberSelection(false);
-          // If we have broadcast results, show a success message
-          setSuccessMessage('WhatsApp broadcast sent successfully!');
-          // After 5 seconds, clear the success message
-          setTimeout(() => setSuccessMessage(''), 5000);
-        }}
+        onClose={() => setIsDialogOpen(false)}
         members={selectedMembers.filter(m => m.phone)} // Only include selected members with phone numbers
       />
       </div>

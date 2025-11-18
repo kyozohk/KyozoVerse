@@ -1,10 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { Member } from './broadcast-types';
 import { Avatar, AvatarImage, AvatarFallback, Checkbox } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { MessageSquare, Phone, Mail, Users } from 'lucide-react';
+import { Phone, Users } from 'lucide-react';
 
 export interface MembersListProps {
   members: Member[];
@@ -81,7 +82,7 @@ const MembersList: React.FC<MembersListProps> = ({
                   <AvatarImage src={member.photoURL} alt={member.displayName} />
                 ) : (
                   <AvatarFallback>
-                    {member.displayName.charAt(0).toUpperCase()}
+                    {member.displayName?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -117,9 +118,9 @@ const MembersList: React.FC<MembersListProps> = ({
               </div>
             )}
             
-            {showJoinDate && (
+            {showJoinDate && member.joinedAt && (
               <div className="text-sm text-muted-foreground">
-                {member.joinedAt ? formatDate(member.joinedAt) : '-'}
+                {formatDate(member.joinedAt)}
               </div>
             )}
           </div>
