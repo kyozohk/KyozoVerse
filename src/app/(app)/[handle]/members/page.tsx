@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Users, Search, UserPlus } from "lucide-react";
+import { Users, Search, UserPlus, List, LayoutGrid, Edit, MessageCircle, Phone, Mail, Trash2 } from "lucide-react";
 import { type CommunityMember } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export default function CommunityMembersPage() {
   const { user } = useAuth();
@@ -84,78 +86,99 @@ export default function CommunityMembersPage() {
   const canManageMembers = userRole === "owner" || userRole === "admin";
   
   return (
-    <div className="container mx-auto max-w-4xl p-4 md:p-8">
-      <Card className="bg-transparent border-none text-white">
-        <CardHeader>
-          <div className="flex justify-between items-center">
+    <div className="p-6 md:p-8">
+      <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border border-gray-200/80">
+        <div className="flex items-center justify-between gap-4 mb-6">
             <div>
-              <CardTitle className="text-2xl text-white">Community Members</CardTitle>
-              <CardDescription className="text-gray-400">
-                Manage and view all members of @{handle}
-              </CardDescription>
+            <h2 className="text-2xl font-bold text-foreground">Members</h2>
+            <p className="text-muted-foreground">Manage your community members.</p>
             </div>
-            {canManageMembers && (
-              <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Invite Members
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center mb-6 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search members..."
-              className="pl-9 bg-gray-700/50 border-gray-600/80 text-white focus:ring-primary-purple"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          {loading ? (
-            <div className="text-center py-8 text-gray-400">Loading members...</div>
-          ) : (
-            <div className="space-y-2">
-              {filteredMembers.length > 0 ? (
-                filteredMembers.map((member) => (
-                  <div key={member.userId} className="flex items-center justify-between p-3 border border-gray-700/80 rounded-md hover:bg-gray-800/50">
+            <div className="flex items-center gap-4">
+            <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 bg-card border-primary-purple text-foreground focus:ring-primary-purple"
+                />
+            </div>
+            <div className="flex items-center gap-1 rounded-md bg-gray-800 p-1">
+                <Button
+                variant={'secondary'}
+                size="icon"
+                className="h-8 w-8 text-white hover:bg-gray-700"
+                >
+                <List className="h-4 w-4" />
+                </Button>
+                <Button
+                variant={'ghost'}
+                size="icon"
+                className="h-8 w-8 text-white hover:bg-gray-700"
+                >
+                <LayoutGrid className="h-4 w-4" />
+                </Button>
+            </div>
+            </div>
+        </div>
+        
+        {loading ? (
+            <div className="text-center text-muted-foreground py-10">Loading members...</div>
+        ) : (
+            <div className="grid grid-cols-1 gap-4">
+            {filteredMembers.map((member) => (
+                <div key={member.userId} className="flex items-center justify-between p-3 border border-gray-200/80 rounded-md hover:border-primary-purple transition-colors">
                     <div className="flex items-center gap-3">
-                      <Avatar>
+                    <Avatar>
                         <AvatarImage src={member.userDetails?.avatarUrl} />
                         <AvatarFallback>
-                          {member.userDetails?.displayName?.charAt(0) || "U"}
+                        {member.userDetails?.displayName?.charAt(0) || "U"}
                         </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-white">{member.userDetails?.displayName}</p>
-                        <p className="text-sm text-gray-400">{member.userDetails?.email}</p>
-                      </div>
+                    </Avatar>
+                    <div>
+                        <p className="font-medium text-foreground">{member.userDetails?.displayName}</p>
+                        <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm capitalize bg-gray-700/50 px-2 py-1 rounded">
-                        {member.role}
-                      </span>
-                      {canManageMembers && (
-                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                          Manage
-                        </Button>
-                      )}
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 flex flex-col items-center">
-                  <Users className="h-12 w-12 text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground">
-                    {searchQuery ? "No members match your search" : "No members found"}
-                  </p>
+                    <div className="flex items-center gap-4">
+                        <Badge
+                            variant={
+                            member.status === 'active' ? 'default' : 'destructive'
+                            }
+                            className={
+                            member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }
+                        >
+                            {member.status}
+                        </Badge>
+                        <div className="text-sm text-muted-foreground">
+                            {member.joinedAt ? format(member.joinedAt.toDate(), 'PP') : '-'}
+                        </div>
+                        {canManageMembers && (
+                        <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <MessageCircle className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <Phone className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        )}
+                    </div>
                 </div>
-              )}
+                ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+        </div>
     </div>
   );
 }
