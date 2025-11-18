@@ -38,8 +38,6 @@ export default function CommunitySidebar() {
   const router = useRouter();
 
   useEffect(() => {
-    const handleFromPath = pathname.split('/')[1];
-    
     if (!user) {
       setLoading(false);
       return;
@@ -51,15 +49,14 @@ export default function CommunitySidebar() {
         const userCommunities = querySnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
         setCommunities(userCommunities);
 
+        const handleFromPath = pathname.split('/')[1];
         const currentCommunity = userCommunities.find(c => c.handle === handleFromPath);
         
         if (currentCommunity) {
             setSelectedCommunityHandle(currentCommunity.handle);
-        } else if (userCommunities.length > 0 && handleFromPath) {
-            const communityExists = communities.some(c => c.handle === handleFromPath);
-            if(communityExists) {
-                setSelectedCommunityHandle(handleFromPath);
-            }
+        } else if (userCommunities.length > 0) {
+            // Fallback to first community if handle not found, but don't navigate
+            setSelectedCommunityHandle(userCommunities[0].handle);
         } else {
             setSelectedCommunityHandle(null);
         }
@@ -71,13 +68,24 @@ export default function CommunitySidebar() {
     });
 
     return () => unsubscribe();
-  }, [user, pathname, communities]);
+  }, [user, pathname]);
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
     const currentSubPath = pathname.split('/').slice(2).join('/');
-    const targetItem = communityNavItems.find(item => item.href(handle).endsWith(currentSubPath)) || communityNavItems[0];
-    router.push(targetItem.href(handle));
+    
+    // Check if the current sub-path is a valid one for the new community
+    const targetItem = communityNavItems.find(item => {
+        const itemSubPath = item.href(handle).split('/').slice(2).join('/');
+        return itemSubPath === currentSubPath;
+    });
+
+    // If the sub-path is valid, navigate to it, otherwise go to the overview page
+    if (targetItem) {
+        router.push(targetItem.href(handle));
+    } else {
+        router.push(`/${handle}`);
+    }
   };
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
@@ -89,9 +97,10 @@ export default function CommunitySidebar() {
         className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow`}
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
-            backgroundColor: activeBgColor,
-            borderColor: activeColor,
+            backgroundColor: 'var(--sidebar-active-bg)',
+            borderColor: 'var(--sidebar-active-border)',
             '--sidebar-active-border': activeColor,
+            '--sidebar-active-bg': activeBgColor,
         } as React.CSSProperties}
     >
       <div className="flex h-full max-h-screen flex-col">
@@ -111,11 +120,21 @@ export default function CommunitySidebar() {
                             </SelectValue>
                         </div>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent 
+                        className="w-[240px]" 
+                        style={{
+                            '--sidebar-active-border': activeColor,
+                            '--sidebar-active-bg': activeBgColor
+                        } as React.CSSProperties}
+                    >
                     {communities.map((community) => (
-                        <SelectItem key={community.communityId} value={community.handle}>
+                        <SelectItem 
+                            key={community.communityId} 
+                            value={community.handle}
+                            className="h-[56px]"
+                        >
                         <div className="flex items-center gap-3">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-8 w-8">
                                 <AvatarImage src={community.communityProfileImage} />
                                 <AvatarFallback>{community.name.substring(0,2)}</AvatarFallback>
                             </Avatar>
