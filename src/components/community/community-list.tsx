@@ -33,8 +33,6 @@ export function CommunityList({ communities }: CommunityListProps) {
       />
       
       <ListView
-        title="My Communities"
-        subtitle="An overview of all your communities."
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}

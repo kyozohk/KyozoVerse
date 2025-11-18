@@ -98,7 +98,7 @@
 
 /* Input styles */
 .inputWrapper {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0rem; /* Removed margin */
   width: 100%;
 }
 
@@ -109,7 +109,7 @@
 
 .input {
   background-color: transparent;
-  border: 1px solid var(--button-border);
+  border: 1px solid var(--input-border-color, var(--button-border)); /* Use CSS variable for border color */
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   width: 100%;
@@ -121,7 +121,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #843484;
+  border-color: var(--input-border-color, #843484); /* Use CSS variable for focus border color */
 }
 
 .input-with-icon {
@@ -133,7 +133,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--button-border);
+  color: var(--input-border-color, var(--button-border)); /* Use CSS variable for icon color */
   pointer-events: none;
   z-index: 1;
 }
@@ -157,10 +157,11 @@
   top: -0.75rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  color: #843484;
+  color: var(--input-border-color, #843484); /* Use CSS variable for focused label color */
   background-color: white;
   padding: 0 0.25rem;
 }
+
 
 /* Checkbox styles */
 .checkboxWrapper {

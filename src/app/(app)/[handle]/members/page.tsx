@@ -3,13 +3,12 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { collection, query, where, getDocs, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
-import { type CommunityMember } from "@/lib/types";
+import { type CommunityMember, type Community } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
-import { MemberCard } from "@/components/community/member-card";
-import { ListView } from "@/components/ui/list-view";
+import { MembersList } from "@/components/community/members-list";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CommunityMembersPage() {
@@ -19,10 +18,8 @@ export default function CommunityMembersPage() {
   
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [userRole, setUserRole] = useState<string>("guest");
-  const [communityId, setCommunityId] = useState<string>("");
+  const [community, setCommunity] = useState<Community | null>(null);
   
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -32,7 +29,7 @@ export default function CommunityMembersPage() {
         const communityData = await getCommunityByHandle(handle);
         
         if (communityData) {
-          setCommunityId(communityData.communityId);
+          setCommunity(communityData);
           
           if (user) {
             const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
@@ -48,12 +45,12 @@ export default function CommunityMembersPage() {
   }, [handle, user]);
   
   useEffect(() => {
-    if (!communityId) return;
+    if (!community?.communityId) return;
 
     const membersRef = collection(db, "communityMembers");
     const q = query(
       membersRef,
-      where("communityId", "==", communityId),
+      where("communityId", "==", community.communityId),
       orderBy("joinedAt", "desc")
     );
 
@@ -70,33 +67,32 @@ export default function CommunityMembersPage() {
     });
 
     return () => unsubscribe();
-  }, [communityId]);
-
-  const filteredMembers = members.filter(member => {
-    const displayName = member.userDetails?.displayName?.toLowerCase() || "";
-    const email = member.userDetails?.email?.toLowerCase() || "";
-    const query = searchTerm.toLowerCase();
-    return displayName.includes(query) || email.includes(query);
-  });
+  }, [community?.communityId]);
   
-  const canManageMembers = userRole === "owner" || userRole === "admin";
+  if (loading || !community) {
+    return (
+        <div className="p-6 md:p-8">
+            <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border border-gray-200/80">
+                <div className="flex items-center justify-between gap-4 mb-6">
+                    <Skeleton className="h-10 flex-grow" />
+                    <div className="flex items-center gap-1 rounded-md p-1">
+                        <Skeleton className="h-9 w-9" />
+                        <Skeleton className="h-9 w-9" />
+                    </div>
+                </div>
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({length: 6}).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                </div>
+            </div>
+        </div>
+    )
+  }
   
   return (
-    <ListView
-      title="Members"
-      subtitle="Manage your community members."
-      searchTerm={searchTerm}
-      onSearchChange={setSearchTerm}
-      viewMode={viewMode}
-      onViewModeChange={setViewMode}
-    >
-      {loading ? (
-        Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)
-      ) : (
-        filteredMembers.map((member) => (
-          <MemberCard key={member.userId} member={member} canManage={canManageMembers} />
-        ))
-      )}
-    </ListView>
+    <MembersList
+      community={community}
+      members={members}
+      userRole={userRole}
+    />
   );
 }

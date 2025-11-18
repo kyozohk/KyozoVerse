@@ -1,5 +1,4 @@
 
-
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -7,14 +6,14 @@ import { cn } from "@/lib/utils"
 import "@/styles/components.css"
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string; // Made label mandatory for floating label
+  label?: string;
   error?: string;
   wrapperClassName?: string;
   icon?: React.ReactNode;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, error, wrapperClassName, icon, ...props }, ref) => {
+  ({ className, type, label, error, wrapperClassName, icon, style, ...props }, ref) => {
     const inputId = React.useId();
 
     return (
@@ -27,6 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn("input", icon ? "input-with-icon" : "", error ? "hasError" : "", className)}
             ref={ref}
             placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
+            style={style}
             {...props}
           />
           {label && (
