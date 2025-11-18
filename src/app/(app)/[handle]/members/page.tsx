@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { collection, query, where, orderBy, onSnapshot, getDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { type CommunityMember, type Community, type User } from "@/lib/types";
