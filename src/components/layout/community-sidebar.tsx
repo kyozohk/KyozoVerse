@@ -75,8 +75,8 @@ export default function CommunitySidebar() {
     const currentSubPath = pathname.split('/').slice(2).join('/');
     
     const targetItem = communityNavItems.find(item => {
-        const itemSubPath = item.href(handle).split('/').slice(2).join('/');
-        return itemSubPath === currentSubPath;
+        const itemPath = item.href(handle).split('/').slice(2).join('/');
+        return itemPath === currentSubPath;
     });
 
     if (targetItem) {
@@ -146,7 +146,7 @@ export default function CommunitySidebar() {
               </Select>
             ) : null}
         </div>
-        <div className="flex-1 py-2 mt-2">
+        <div className="flex-1 py-2">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {selectedCommunityHandle && communityNavItems.map((item) => {
               const Icon = item.icon;
