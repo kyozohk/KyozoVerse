@@ -96,7 +96,7 @@ export default function CommunitySidebar() {
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
             backgroundColor: 'var(--sidebar-active-bg)',
-            borderColor: 'var(--sidebar-active-border)',
+            borderColor: activeColor,
             '--sidebar-active-border': activeColor,
             '--sidebar-active-bg': activeBgColor,
         } as React.CSSProperties}
@@ -119,7 +119,7 @@ export default function CommunitySidebar() {
                         </div>
                     </SelectTrigger>
                     <SelectContent 
-                        className="w-[240px]" 
+                        className="w-64 h-screen"
                         useSidebarTheme={true}
                         style={{
                             '--sidebar-active-border': activeColor,
@@ -130,15 +130,16 @@ export default function CommunitySidebar() {
                         <SelectItem 
                             key={community.communityId} 
                             value={community.handle}
-                            className="h-[56px]"
+                            className="h-[80px] border-b"
+                            style={{'--sidebar-active-border': activeColor} as React.CSSProperties}
                         >
-                        <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={community.communityProfileImage} />
-                                <AvatarFallback>{community.name.substring(0,2)}</AvatarFallback>
-                            </Avatar>
-                            <span>{community.name}</span>
-                        </div>
+                            <div className="flex items-center gap-3 truncate">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={community.communityProfileImage} />
+                                    <AvatarFallback>{community.name.substring(0,2)}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-semibold text-lg text-foreground truncate">{community.name}</span>
+                            </div>
                         </SelectItem>
                     ))}
                     </SelectContent>
