@@ -21,7 +21,7 @@ export default function CommunityBroadcastPage() {
   const pathname = usePathname();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'list'>('list');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
@@ -89,18 +89,20 @@ export default function CommunityBroadcastPage() {
     );
   };
   
-  const handleSelectAll = () => {
-    setSelectedMembers(filteredMembers);
-  };
-  
-  const handleDeselectAll = () => {
-    setSelectedMembers([]);
-  };
-  
   const filteredMembers = members.filter(member =>
     member.userDetails?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const allSelected = filteredMembers.length > 0 && selectedMembers.length === filteredMembers.length;
+
+  const handleToggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedMembers([]);
+    } else {
+      setSelectedMembers(filteredMembers);
+    }
+  };
   
   return (
     <div className="relative min-h-screen">
@@ -112,11 +114,8 @@ export default function CommunityBroadcastPage() {
         loading={loading}
         actions={
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={handleSelectAll} style={{ color: activeColor }}>
-                <CopyCheck className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleDeselectAll} style={{ color: activeColor }}>
-                <CopyX className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={handleToggleSelectAll} style={{ color: activeColor }}>
+              {allSelected ? <CopyX className="h-5 w-5" /> : <CopyCheck className="h-5 w-5" />}
             </Button>
           </div>
         }
