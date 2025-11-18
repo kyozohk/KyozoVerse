@@ -71,7 +71,7 @@ export default function CommunitySidebar() {
     });
 
     return () => unsubscribe();
-  }, [user, pathname]);
+  }, [user, pathname, communities]);
 
   const handleValueChange = (handle: string) => {
     setSelectedCommunityHandle(handle);
@@ -90,7 +90,8 @@ export default function CommunitySidebar() {
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
             backgroundColor: activeBgColor,
-            '--sidebar-active-border': activeColor
+            borderColor: activeColor,
+            '--sidebar-active-border': activeColor,
         } as React.CSSProperties}
     >
       <div className="flex h-full max-h-screen flex-col">
