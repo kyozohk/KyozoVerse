@@ -1,3 +1,4 @@
+import { CommunityMember } from "@/lib/types";
 
 // broadcast-types.ts
 export interface TemplateVariable {
@@ -63,13 +64,16 @@ export interface Member {
   role?: string;
   joinedAt?: any;
   metadata?: any;
+  userDetails?: {
+      phoneNumber?: string;
+  }
 }
 
 export interface BroadcastModalProps {
   isOpen: boolean;
   onClose: () => void;
-  members: Member[];
-  onContinue?: (selectedMembers: Member[], templateData?: any) => void;
+  members: (Member | CommunityMember)[];
+  onContinue?: (selectedMembers: (Member | CommunityMember)[], templateData?: any) => void;
   templates?: Template[];
   loadingTemplates?: boolean;
 }

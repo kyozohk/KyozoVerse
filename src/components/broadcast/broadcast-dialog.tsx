@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CustomFormDialog } from '@/components/ui/dialog';
 import { CustomButton } from '@/components/ui';
-import { BroadcastStep, BroadcastModalProps, Template, TemplateVariable, BroadcastResult } from './broadcast-types';
+import { BroadcastStep, BroadcastModalProps, Template, TemplateVariable, BroadcastResult, Member } from './broadcast-types';
 import { StepIndicator, RecipientsStep, TemplateStep, PreviewStep, ConfirmStep } from './broadcast-components';
 import { processTemplate, processVariablesForMember, autoFillVariables, templateHasImageHeader } from './broadcast-utils';
+import { CommunityMember } from '@/lib/types';
 
 /**
  * BroadcastDialog Component
@@ -167,10 +168,12 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           // Set default value based on variable type
           let value = '';
           if (variableType === 'firstName' && members.length > 0) {
-            const fullName = members[0].displayName || '';
+            const displayName = 'userId' in members[0] ? members[0].userDetails?.displayName : (members[0] as Member).displayName;
+            const fullName = displayName || '';
             value = fullName.split(' ')[0];
           } else if (variableType === 'lastName' && members.length > 0) {
-            const fullName = members[0].displayName || '';
+            const displayName = 'userId' in members[0] ? members[0].userDetails?.displayName : (members[0] as Member).displayName;
+            const fullName = displayName || '';
             value = fullName.split(' ').length > 1 ? fullName.split(' ').slice(1).join(' ') : '';
           } else if (variableType === 'communityName') {
             value = 'Kyozo Community';
@@ -298,12 +301,16 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       // Process each recipient
       for (const member of members) {
         try {
+          const memberPhone = 'userId' in member ? member.userDetails?.phoneNumber : (member as Member).phone;
+          const memberId = 'userId' in member ? member.userId : (member as Member).id;
+          const memberDisplayName = 'userId' in member ? member.userDetails?.displayName : (member as Member).displayName;
+
           // Skip members without phone numbers
-          if (!member.phone) {
+          if (!memberPhone) {
             results.failed++;
             results.details.push({
-              memberId: member.id,
-              name: member.displayName,
+              memberId: memberId,
+              name: memberDisplayName || 'Unknown',
               status: 'failed',
               error: 'No phone number provided'
             });
@@ -324,7 +331,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           
           // Create payload
           const recipientPayload = {
-            to: member.phone?.startsWith('+') ? member.phone.substring(1) : member.phone,
+            to: memberPhone.startsWith('+') ? memberPhone.substring(1) : memberPhone,
             type: "template",
             template: memberTemplateData,
             messaging_product: "whatsapp"
@@ -343,24 +350,26 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           if (response.ok && data.success) {
             results.successful++;
             results.details.push({
-              memberId: member.id,
-              name: member.displayName,
+              memberId: memberId,
+              name: memberDisplayName || 'Unknown',
               status: 'sent',
             });
           } else {
             results.failed++;
             results.details.push({
-              memberId: member.id,
-              name: member.displayName,
+              memberId: memberId,
+              name: memberDisplayName || 'Unknown',
               status: 'failed',
               error: typeof data.error === 'object' ? JSON.stringify(data.error) : data.error || data.errorMessage || 'Unknown error'
             });
           }
         } catch (error) {
+          const memberId = 'userId' in member ? member.userId : (member as Member).id;
+          const memberDisplayName = 'userId' in member ? member.userDetails?.displayName : (member as Member).displayName;
           results.failed++;
           results.details.push({
-            memberId: member.id,
-            name: member.displayName,
+            memberId: memberId,
+            name: memberDisplayName || 'Unknown',
             status: 'failed',
             error: error instanceof Error ? error.message : 'Unknown error'
           });
