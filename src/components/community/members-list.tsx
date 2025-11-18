@@ -93,7 +93,7 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   const GridComponent = (
      <>
         {filteredMembers.map((member) => (
-            <MemberCard key={member.userId} member={member} canManage={canManage} borderColor={activeColor} />
+            <MemberCard key={member.id} member={member} canManage={canManage} borderColor={activeColor} />
         ))}
      </>
   );

@@ -3,16 +3,14 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useParams } from 'next/navigation';
-import { Input } from '@/components/ui/input';
 import { CustomButton } from '@/components/ui';
-import { MessageSquare, Search } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
 import { MembersList } from '@/components/community/members-list';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Member, type User, type Community } from '@/lib/types';
 import { getCommunityByHandle } from '@/lib/community-utils';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ListView } from '@/components/ui/list-view';
 
 export default function CommunityBroadcastPage() {
@@ -20,7 +18,7 @@ export default function CommunityBroadcastPage() {
   const handle = params.handle as string;
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
@@ -41,7 +39,7 @@ export default function CommunityBroadcastPage() {
         }
         setCommunity(communityData);
 
-        const membersQuery = query(collection(db, 'communityMembers'), where('communityId', '==', communityData.communityId));
+        const membersQuery = query(collection(db, "communities", communityData.communityId, "members"));
         const membersSnapshot = await getDocs(membersQuery);
 
         const membersData = await Promise.all(membersSnapshot.docs.map(async (memberDoc) => {
@@ -58,9 +56,8 @@ export default function CommunityBroadcastPage() {
         }));
         
         setMembers(membersData);
-        // By default, select members with a phone number
-        const membersWithPhone = membersData.filter(m => m.userDetails?.phoneNumber);
-        setSelectedMembers(membersWithPhone);
+        // By default, select all members
+        setSelectedMembers(membersData);
         
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -81,11 +78,11 @@ export default function CommunityBroadcastPage() {
   };
   
   const handleToggleMember = (member: Member) => {
-    if (selectedMembers.some(m => m.id === member.id)) {
-      setSelectedMembers(selectedMembers.filter(m => m.id !== member.id));
-    } else {
-      setSelectedMembers([...selectedMembers, member]);
-    }
+    setSelectedMembers(prev => 
+        prev.some(m => m.id === member.id)
+            ? prev.filter(m => m.id !== member.id)
+            : [...prev, member]
+    );
   };
   
   const handleSelectAll = () => {
@@ -104,17 +101,15 @@ export default function CommunityBroadcastPage() {
   return (
     <div className="relative min-h-screen">
        <ListView
-        title="Broadcast"
-        subtitle="Select members to send a WhatsApp message."
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         loading={loading}
         actions={
-          <div className="flex items-center gap-2">
-            <CustomButton variant="outline" onClick={handleSelectAll}>Select All</CustomButton>
-            <CustomButton variant="outline" onClick={handleDeselectAll}>Deselect All</CustomButton>
+          <div className="flex items-center gap-4">
+            <button className="text-sm font-medium text-primary hover:underline" onClick={handleSelectAll}>Select All</button>
+            <button className="text-sm font-medium text-primary hover:underline" onClick={handleDeselectAll}>Deselect All</button>
           </div>
         }
       >
