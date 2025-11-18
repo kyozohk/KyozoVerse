@@ -18,6 +18,7 @@ export interface MembersListProps {
   className?: string;
   selectedMembers?: Member[];
   selectable?: boolean;
+  viewMode?: 'grid' | 'list';
 }
 
 const formatDate = (timestamp: any): string => {
@@ -40,7 +41,8 @@ const MembersList: React.FC<MembersListProps> = ({
   emptyMessage = "No members found",
   className = "",
   selectedMembers = [],
-  selectable = false
+  selectable = false,
+  viewMode = 'list' // Default to list for broadcast
 }) => {
   if (members.length === 0) {
     return (

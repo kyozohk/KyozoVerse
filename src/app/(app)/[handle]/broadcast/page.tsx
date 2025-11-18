@@ -11,7 +11,7 @@ import { db } from '@/firebase/firestore';
 import { type CommunityMember, type User, type Community } from '@/lib/types';
 import { getCommunityByHandle } from '@/lib/community-utils';
 import { ListView } from '@/components/ui/list-view';
-import { MembersList } from '@/components/broadcast/members-list';
+import MembersList from '@/components/broadcast/members-list';
 
 export default function CommunityBroadcastPage() {
   const params = useParams();
