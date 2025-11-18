@@ -62,6 +62,16 @@ const themeColors: Record<string, { active: string; bg: string }> = {
 };
 
 export const getThemeForPath = (path: string) => {
+    if (typeof path !== 'string') {
+        console.warn('getThemeForPath received a non-string path:', path);
+        // Return default theme to prevent crash
+        const defaultTheme = themeColors.default;
+        return {
+            section: 'default',
+            activeColor: defaultTheme.active,
+            activeBgColor: defaultTheme.bg,
+        };
+    }
     const segments = path.split('/').filter(Boolean);
 
     let section = 'default';

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, ListView, Skeleton } from "@/components/ui";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
@@ -11,6 +11,7 @@ import { getThemeForPath } from '@/lib/theme-utils';
 export default function CommunityInboxPage() {
   const { user } = useAuth();
   const params = useParams();
+  const pathname = usePathname();
   const handle = params.handle as string;
   
   const [userRole, setUserRole] = useState<string>("guest");
@@ -18,7 +19,7 @@ export default function CommunityInboxPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const { activeColor } = getThemeForPath(useParams().pathname);
+  const { activeColor } = getThemeForPath(pathname);
 
   useEffect(() => {
     async function fetchCommunityAndRole() {
