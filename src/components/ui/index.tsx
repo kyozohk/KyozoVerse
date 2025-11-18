@@ -10,6 +10,7 @@ export { Header } from './header';
 export { GradientText } from './gradient-text';
 export { CustomFormDialog, Dialog, DialogPortal, DialogOverlay, DialogTrigger, DialogClose, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './dialog';
 export { Dropzone } from './dropzone';
+export { ListView } from './list-view';
 
 // Shadcn components
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
