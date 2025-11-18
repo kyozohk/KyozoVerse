@@ -12,19 +12,25 @@ import { usePathname } from 'next/navigation';
 type ViewMode = 'grid' | 'list';
 
 interface ListViewProps {
+  title?: string;
+  subtitle?: string;
   searchTerm: string;
   onSearchChange: (value: string) => void;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   children: React.ReactNode;
+  loading?: boolean;
 }
 
 export function ListView({
+  title,
+  subtitle,
   searchTerm,
   onSearchChange,
   viewMode,
   onViewModeChange,
-  children
+  children,
+  loading = false
 }: ListViewProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
@@ -42,6 +48,12 @@ export function ListView({
   return (
     <div className="p-6 md:p-8">
       <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border border-gray-200/80">
+        {(title || subtitle) && (
+          <div className="mb-6">
+            {title && <h1 className="text-2xl font-semibold mb-1">{title}</h1>}
+            {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+          </div>
+        )}
         <div className="flex items-center justify-between gap-4 mb-6">
             <Input
               label="Search..."
@@ -79,9 +91,15 @@ export function ListView({
             </Button>
           </div>
         </div>
-        <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-          {children}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: activeColor }}></div>
+          </div>
+        ) : (
+          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );
