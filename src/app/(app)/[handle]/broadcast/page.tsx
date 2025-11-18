@@ -59,7 +59,8 @@ export default function CommunityBroadcastPage() {
         
         setMembers(membersData);
         // By default, select members with a phone number
-        setSelectedMembers(membersData.filter(m => m.userDetails?.phoneNumber));
+        const membersWithPhone = membersData.filter(m => m.userDetails?.phoneNumber);
+        setSelectedMembers(membersWithPhone);
         
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -118,12 +119,11 @@ export default function CommunityBroadcastPage() {
         }
       >
         <MembersList
-            community={community!}
             members={filteredMembers}
-            userRole="admin" 
             onMemberClick={handleToggleMember}
             selectedMembers={selectedMembers}
             selectable={true}
+            viewMode={viewMode}
         />
       </ListView>
       
