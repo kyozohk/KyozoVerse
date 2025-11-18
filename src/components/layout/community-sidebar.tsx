@@ -74,13 +74,11 @@ export default function CommunitySidebar() {
     setSelectedCommunityHandle(handle);
     const currentSubPath = pathname.split('/').slice(2).join('/');
     
-    // Check if the current sub-path is a valid one for the new community
     const targetItem = communityNavItems.find(item => {
         const itemSubPath = item.href(handle).split('/').slice(2).join('/');
         return itemSubPath === currentSubPath;
     });
 
-    // If the sub-path is valid, navigate to it, otherwise go to the overview page
     if (targetItem) {
         router.push(targetItem.href(handle));
     } else {
@@ -122,6 +120,7 @@ export default function CommunitySidebar() {
                     </SelectTrigger>
                     <SelectContent 
                         className="w-[240px]" 
+                        useSidebarTheme={true}
                         style={{
                             '--sidebar-active-border': activeColor,
                             '--sidebar-active-bg': activeBgColor
