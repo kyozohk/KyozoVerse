@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className="sidebar-bg-default">
+        <Sidebar className="sidebar-bg-default" style={{backgroundColor: activeBgColor}}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
@@ -86,8 +86,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         key={item.href}
                         href={item.href}
                         icon={<Icon />}
-                        activeColor={`var(--${item.section}-color-active)`}
-                        activeBgColor={`var(--${item.section}-color-border)`}
+                        activeColor={activeColor}
+                        activeBgColor={activeBgColor}
                     >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </SidebarNavItem>
@@ -112,8 +112,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     href="#"
                     icon={<LogOut />}
                     onClick={handleLogout}
-                    activeColor={`var(--${currentSection}-color-active)`}
-                    activeBgColor={`var(--${currentSection}-color-border)`}
+                    activeColor={activeColor}
+                    activeBgColor={activeBgColor}
                 >
                     <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
                 </SidebarNavItem>

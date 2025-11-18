@@ -96,15 +96,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = item.href === '/communities' ? isCommunitiesActive : pathname.startsWith(item.href);
-                  const theme = getThemeForPath(item.href);
                   return (
                       <SidebarNavItem 
                           key={item.label} 
                           href={item.href} 
                           icon={<Icon />}
                           isActive={isActive}
-                          activeColor={theme.activeColor}
-                          activeBgColor={theme.activeBgColor}
+                          activeColor={activeColor}
+                          activeBgColor={activeBgColor}
                       >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                       </SidebarNavItem>
