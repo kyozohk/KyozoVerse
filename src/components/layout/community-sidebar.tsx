@@ -89,9 +89,10 @@ export default function CommunitySidebar() {
         className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection} sidebar-shadow`}
         style={{ 
             marginLeft: mainSidebarOpen ? '0' : '0',
+            backgroundColor: activeBgColor
         }}
     >
-      <div className="flex h-full max-h-screen flex-col gap-2">
+      <div className="flex h-full max-h-screen flex-col">
         <div className="flex h-[80px] items-center border-b px-2" style={{borderColor: `var(--${currentSection}-color-border)`}}>
             {loading ? (
                 <Skeleton className="h-10 w-full" />
@@ -122,14 +123,7 @@ export default function CommunitySidebar() {
                     ))}
                     </SelectContent>
               </Select>
-            ) : (
-                <div className="w-full">
-                    <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Community
-                    </CustomButton>
-                </div>
-            )}
+            ) : null}
         </div>
         <div className="flex-1 py-2">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">

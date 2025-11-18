@@ -82,7 +82,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className="sidebar-bg-default sidebar-shadow">
+        <Sidebar className="sidebar-bg-default sidebar-shadow" style={{backgroundColor: activeBgColor}}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
