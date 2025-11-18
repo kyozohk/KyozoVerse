@@ -66,6 +66,7 @@ export default function CommunitySidebar() {
         let memberCommunities: Community[] = [];
         
         if(memberCommunityIds.length > 0) {
+            // Firestore 'in' query can take an array of up to 30 values
             const communitiesQuery = query(collection(db, 'communities'), where('__name__', 'in', memberCommunityIds));
             const communitiesSnapshot = await getDocs(communitiesQuery);
             memberCommunities = communitiesSnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
@@ -141,7 +142,7 @@ export default function CommunitySidebar() {
                             '--sidebar-active-bg': activeBgColor,
                         } as React.CSSProperties}
                     >
-                      <div className="h-screen w-full">
+                      <div className="h-full w-full">
                         {communities.map((community) => (
                             <SelectItem 
                                 key={community.communityId} 
