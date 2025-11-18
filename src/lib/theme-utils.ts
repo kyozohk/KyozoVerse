@@ -51,7 +51,7 @@ const themeColors: Record<string, { active: string; bg: string }> = {
     members: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.3)' },
     broadcast: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.3)' },
     inbox: { active: '#CF7770', bg: 'rgba(207, 119, 112, 0.1)' },
-    feed: { active: '#699FE5', bg: 'rgba(105, 159, 229, 0.1)' },
+    feed: { active: '#699FE5', bg: 'rgba(105, 159, 229, 0.3)' },
     ticketing: { active: '#475569', bg: 'rgba(71, 85, 105, 0.1)' },
     integrations: { active: '#0891B2', bg: 'rgba(8, 145, 178, 0.1)' },
     analytics: { active: '#4F46E5', bg: 'rgba(79, 70, 229, 0.1)' },
