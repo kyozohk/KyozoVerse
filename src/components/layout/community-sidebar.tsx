@@ -190,6 +190,7 @@ export default function CommunitySidebar() {
                   isActive={pathname === item.href(selectedCommunityHandle)}
                   activeColor={activeColor}
                   activeBgColor={activeBgColor}
+                  className="my-1"
                 >
                   {item.label}
                 </SidebarNavItem>

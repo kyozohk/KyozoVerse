@@ -1,0 +1,1144 @@
+commit 08fb3c687a84dbbc2f69c0a60114956fc1d5d0a9
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 18 17:52:02 2025 +0800
+
+    * Added the diloag
+
+commit eb4a72a7f867d39dbffa5b7dc0146fc7682ac8d8
+Merge: 4861db2 8c5c0c0
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 18 17:38:13 2025 +0800
+
+    WIP on wip: 4861db2 * Added the broadcast
+
+commit 8c5c0c0fa28d04338360c2282617d140dc0ed0ad
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 18 17:38:13 2025 +0800
+
+    index on wip: 4861db2 * Added the broadcast
+
+commit 26b79a30a0f5d44e46b89240378f8f86b765efc1
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 09:36:43 2025 +0000
+
+    fix the members list to use the slug color for item backgorund and borde
+
+commit b83d71f27984d70e3e27968409fdc2c2f124241b
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 09:35:43 2025 +0000
+
+    fix the sidebar drop down height to be full height of the side bar so th
+
+commit b41b92aae854843aedf89fb3a6b4316ba0166486
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 09:33:27 2025 +0000
+
+    make the select deselect toggle
+
+commit 2e4f9a5e5fc53d15af2b84a9d2e870ba47343757
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 09:32:35 2025 +0000
+
+    use select deselect toggle icons like attached  from react-icons import
+
+commit 7a7fdd8c8388894c938c63643c31ec1190efe3d3
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 09:25:52 2025 +0000
+
+    Try fixing this error: `Build Error: Export MembersList doesn't exist in
+
+commit d2779112d903a0a99e0485cd0074504dd7b5f12b
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 09:25:03 2025 +0000
+
+    why there are no members in the broadcast route? no other communities vi
+
+commit 2f81a450864f56b00eafc96d10c193dd314030f0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 08:05:19 2025 +0000
+
+    good progress, get rid of the header, make the select/deselct a toggle i
+
+commit 7c0fc28e204432819ccb42359ff9f137dd2b0709
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 08:01:19 2025 +0000
+
+    fix it
+
+commit 203c85383889e3dfbfe4795f357b9a408b6554f8
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:59:59 2025 +0000
+
+    make the copy of members route and place it in the boradcast route and t
+
+commit 46d755538b61f083cd718ab456eaeb76ee2060a9
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:45:42 2025 +0000
+
+    Try fixing this error: `Runtime Error: Error: Cannot read properties of
+
+commit 30a804e8cb399e7fb002188b56df52584f5a9286
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:44:11 2025 +0000
+
+    we need to extend the members list component we created, add the select/
+
+commit 726f4daa527a9824ca06f9cc9b3c8994c3f9214b
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:42:08 2025 +0000
+
+    whole drop down should be sheemless with the sidebar get rid off the pad
+
+commit d5fa7cb16d53901a3a2f1725d7515b9ea6b8d89a
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:40:17 2025 +0000
+
+    get rid off the white boarder and space/adding after the line so that si
+
+commit b67464ec0db2c315da5b50821d3223bb839dbe83
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:39:34 2025 +0000
+
+    make the drop down same width and height as the side bar so it looks lik
+
+commit e8dbf7c63ec2ad6c8291516b5bcd7e1023c3d4b7
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:37:28 2025 +0000
+
+    in the communit list drop down, add the background image used in the lan
+
+commit cb07a2c1306ebb67ae3039fc0466009f0b820dfe
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:36:06 2025 +0000
+
+    why the broadcast route does not have the members list to select / desel
+
+commit ab6e860c26ad888742f6cd3d9bd25f2397aa601c
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:34:25 2025 +0000
+
+    in the secondary sidebar drop down, i should be able to select the comun
+
+commit e68013e7d1a9cc1e8de8ed48ca351cd0bcca762e
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 07:31:39 2025 +0000
+
+    we need to now implement the boradcast route, here we will load the memb
+
+commit 4861db2983c24f6fbea6cfe3b7861c37c5dacb65
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 18 15:14:30 2025 +0800
+
+    * Added the broadcast
+
+commit 016940f5062e7f031868b539d7acafc68c9eee0f
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:38:52 2025 +0000
+
+    perfect, now only the secondary sidebar border colors is still purple, n
+
+commit ba7914efea0a1d9cebe9104dc6011e3741300e35
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:37:40 2025 +0000
+
+    perfect now but now icon colors in main side bar gone wrong and the bord
+
+commit cb20d127915a6e2f4a2c4c5fec4338c4d4d4a416
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:32:19 2025 +0000
+
+    its progress, now there is no color in the background, icons have right
+
+commit 501874381ae85e2b8103b50c99fcd1bf5962cf31
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:26:21 2025 +0000
+
+    still main narrow side bar color not synched with secondary side bar col
+
+commit 037985cc1999429b18ee751f57202bef692c22ff
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:24:43 2025 +0000
+
+    icon color changed in the main narrow sidebar but the backround color di
+
+commit 79b9381ef56852e18c9622ad827731eb62835211
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:21:32 2025 +0000
+
+    lets do that
+
+commit 91a864cffa82284d17c31fbee64b494ead286e71
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 04:18:52 2025 +0000
+
+    in main route, mainside bar has hover on navitem of different colors, we
+
+commit e6ba87f0bf021d6e2a7eb644901e74dfb90368ad
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 03:49:06 2025 +0000
+
+    now navitems are aligned but seems like secondary bar icons are too big,
+
+commit 4ff6722231f1e1ef4739d905c6e29b8702c9d573
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 03:46:28 2025 +0000
+
+    narro main bar still does not changes the color, also icons on the mainb
+
+commit f2cc27752e7b6b00c9e6724ce16f7e23b779cc11
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 03:41:27 2025 +0000
+
+    now add the same list in the feed route too, also remove the New Communi
+
+commit 27a4a31fe266571fb72d82142b3466f3f13fb2e2
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 03:31:00 2025 +0000
+
+    continue
+
+commit d39035e1ab6f26e664c23eeed77d214ef89f28f3
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 03:21:50 2025 +0000
+
+    below changes we made jsut now worked out perfect but i accidently delet
+
+commit f101390d0150677128dab43897f9110e70067b05
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 02:54:52 2025 +0000
+
+    Error: Cannot read properties of undefined (reading 'split')
+    
+    src/lib/th
+
+commit 92b17f16903e7772775fa85670a48a10ec71ed26
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 02:48:10 2025 +0000
+
+    community-list.tsx has perfect layout out for the search bar, icon/list
+
+commit 8e9c298469fdd29bd6a4e21f935af5f55708f1a0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 18 02:24:24 2025 +0000
+
+    now in /aeropriest/members route, use the same color formain side bar an
+
+commit 0aa6dbf5a3f11563578e27d6736642d9b211fca7
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Mon Nov 17 14:53:12 2025 +0000
+
+    now in the public view of community feed, we want to be able to track wh
+
+commit fec74b1cb5c2f428addacced3b57797e1ed9c43b
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Mon Nov 17 14:50:06 2025 +0000
+
+    now sidebar is visible but cant  navitem click is broken
+
+commit 974bed306b8f63dfbb809c48132ab6204644fcff
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Mon Nov 17 14:48:31 2025 +0000
+
+    why in the community slug, secondary sidebar shows up and then goes back
+
+commit 8cd4e47bffa7e5dc39ec946547516f20e6b09bc0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Mon Nov 17 14:45:52 2025 +0000
+
+    Try fixing this error: `Console Error: Cannot update a component (`Route
+
+commit d2da7fcaabdf74ab0bebd06d12089cbdb33a17cc
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Mon Nov 17 04:41:28 2025 +0000
+
+    The app isn't starting. Please investigate what could be wrong based on
+
+commit 0fd7a3beafb822550bbeb357476b9845a82361bf
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:55:05 2025 +0000
+
+    Fixed the banner
+
+commit 6ea03ff2eba20081b15211cdd8c4678b3cd304c8
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:52:44 2025 +0000
+
+    banner improved but the list header and other boxes data did not, make t
+
+commit f7366e1d5a83d7ca48c562bf19617119d508f8d0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:50:16 2025 +0000
+
+    now update community slug t/aeropriest UI, make following chantes
+    
+    1. re
+
+commit 617f2ae8370032427f8abfa68961406c11ab3abf
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:45:25 2025 +0000
+
+    now once member is signed in, change the button above to sign out
+
+commit cac837a1cc5e0bc9b200960e0d1ead31f65bb16a
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:43:25 2025 +0000
+
+    Try fixing this error: `Build Error: Export DialogContent doesn't exist
+
+commit cf2a3579ec678a816567f4a76e48949bf8236ea8
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:42:44 2025 +0000
+
+    Try fixing this error: `Console Error: In HTML, <h2> cannot be a child o
+
+commit 6612ca842d58c22c057f7c9e90143b124012b32f
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:38:37 2025 +0000
+
+    i just signed up as member and then was logged in but now with this logi
+
+commit a7ca389b4d8e731874ca3a8c8c4835ae96aed547
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:35:34 2025 +0000
+
+    Try fixing this error: `Console Error: `DialogContent` requires a `Dialo
+
+commit 858f99a18573da0c3dd2195c6c60bec2bc536ffa
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:33:46 2025 +0000
+
+    Try fixing this error: `Runtime Error: Error: ./src/components/community
+
+commit c041db0e0789ac03f7e4f105e14823ffc3646f4c
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:33:14 2025 +0000
+
+    Try fixing this error: `Build Error: Export DialogContent doesn't exist
+
+commit 26582fb18cad7afb136c21afae8c896ea17fd720
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:32:23 2025 +0000
+
+    Try fixing this error: `Console Error: `DialogContent` requires a `Dialo
+
+commit 81b6fb7df240c407e71ea79a9f1464d3005e260d
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:31:25 2025 +0000
+
+    what is this magic link? why dont we make the visitor sign up with their
+
+commit b2a3d67019f1416e829bcc0b4bbfa71d44cdb355
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:28:58 2025 +0000
+
+    signin button top naviates back to landing page
+
+commit aa004cb3a358da568167f40a51f0c3efb25c7251
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sun Nov 16 02:26:50 2025 +0000
+
+    in the feed public view, add the signup/signin dialog
+
+commit c735d630373044c2300817581dc26d78b250aefb
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 07:17:49 2025 +0000
+
+    now fix the text styling of this community slug route
+
+commit f639ccba46303530e4cebabc04533d85b1412596
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 07:08:32 2025 +0000
+
+    fix this dialog to upload the images in fire bucket and then display in
+
+commit dd406a1c56d89f76c5624bda16a21fa29590867e
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:57:07 2025 +0000
+
+    better but text color need adjustment and so does the list header - repl
+
+commit 495ec0c6a44702a301e732d466c14e4e09056285
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:54:08 2025 +0000
+
+    get rid off those gray brackgournd and keep it transaprent, this is comm
+
+commit 3c703e40f3a60f735b323a1618bc60fe8643ae5d
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:35:50 2025 +0000
+
+    keep the compnents transapren and use the theme color for this route
+
+commit 89d72571f482607602a101b71978b68cf0393254
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:26:10 2025 +0000
+
+    now in community slug /aeropriest, we gonna have a header that has banne
+
+commit f01af444ef951e56dd171f0ec30cec730801bd9f
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:21:30 2025 +0000
+
+    fix the text color toggle, fix the profile image, parallax.jpg images ar
+
+commit 2b2d12a6f010ddb55f1e4884f8ce4312dc04cd61
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:16:43 2025 +0000
+
+    make the both the icon colored (list icon is gray right now ) but select
+
+commit 7eeee3d62a334c710bee1dbbaba27c93ab3fc2fc
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:15:39 2025 +0000
+
+    add firebase hook in /dashboard so that ass soon as community is created
+
+commit f94055b015d679624416d6d0d353767fa4367653
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:11:26 2025 +0000
+
+    reduce the height of text areas and make the also floating label with tr
+
+commit ebdbfca86d16e13e6c62457477ac68b519529342
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Sat Nov 15 06:04:06 2025 +0000
+
+    now apply these changes
+    
+    in the /dashboard, add a button of same size a
+
+commit 6f0e9a82ff12ab9c6a028b36d474a4a51505bf43
+Author: kyozohk <ashok@kyozo.com>
+Date:   Fri Nov 14 20:03:23 2025 +0800
+
+    Fix Vercel build error by adding script to generate missing client-reference-manifest.js file
+
+commit ebb4a1baac6a540f59bcda1b0292e0f2b4aefeed
+Author: kyozohk <ashok@kyozo.com>
+Date:   Fri Nov 14 19:51:03 2025 +0800
+
+    Fix dashboard client-reference-manifest issue by splitting into server and client components
+
+commit 63111c0eeac04522f3fa1a0aaa92b8147a6ec51d
+Author: kyozohk <ashok@kyozo.com>
+Date:   Fri Nov 14 19:39:24 2025 +0800
+
+    *Fixed the fav icon
+
+commit a70312bb4fc76c88cc4b00bc9117a08b490cf6b4
+Author: kyozohk <ashok@kyozo.com>
+Date:   Fri Nov 14 19:32:25 2025 +0800
+
+    Fixed the public view
+
+commit c381f01e73d93e0679580ea0088da3795d09e57f
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 07:17:38 2025 +0000
+
+    now main branch has same route? can we try it?
+
+commit c64bda4a0775fe1ef1b525ecb007fd2c8a886664
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 07:15:52 2025 +0000
+
+    now how do we make sure this is same on the main branch too?
+
+commit d66dd653cc3a81f50d9f47a83fd00a558d0625b4
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 07:14:32 2025 +0000
+
+    its already like this, make sure this route continue to work in the main
+
+commit de9122f9577ad9df29ddb2110a433e2074ba2060
+Author: kyozohk <ashok@kyozo.com>
+Date:   Fri Nov 14 15:10:21 2025 +0800
+
+    Fixed the feed back to where it was
+
+commit de5c4739d4d1c01a3ca9a6b87b42f6e00e581340
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 05:09:43 2025 +0000
+
+    in the /communities header, add on the right botton Add Community button
+
+commit 15eb382d5123ff02617180f977ede278a16336c2
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 00:55:40 2025 +0000
+
+    what about sharding?
+
+commit 72d21fd8824be44e490e545d16943cc771a9e460
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 00:54:35 2025 +0000
+
+    now this sass is gonna have 1000's of community owners and leaders, they
+
+commit 5162da0af214a87773d7822e481f203e7a90ab86
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Fri Nov 14 00:49:42 2025 +0000
+
+    right now we have feed route for communitliy leader to post on and then
+
+commit 94ac5570beff40e5ba2110b1725b1cef90f93a31
+Author: kyozohk <ashok@kyozo.com>
+Date:   Fri Nov 14 08:46:50 2025 +0800
+
+    Fixed the logout
+
+commit 59a70d7a8b10d43641856d7d177b357937c2a906
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:28:29 2025 +0000
+
+    still not aligned
+
+commit e25e035f9739f0a6dd52b2ad350908485add8033
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:26:48 2025 +0000
+
+    now align the items in the main bar secondary bar, lower the logo a bit
+
+commit 20492f5f36741c1d3e682c85c5ea88db5aad5444
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:24:42 2025 +0000
+
+    we will change both sidebars background colors based on selection, we sh
+
+commit 5ef9e4ee394b80a096b815e38a97d07b3196e014
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:21:17 2025 +0000
+
+    Try fixing this error: `Build Error: Parsing ecmascript source code fail
+
+commit f9f4e6afe760ffb5731515caa3cee19a66b31d21
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:19:11 2025 +0000
+
+    now when sub menu pages are loaded, we will chose different color for th
+
+commit 170350f54eede5ac6e1c75217d7f848dee8b42b1
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:11:12 2025 +0000
+
+    when secondary sidebar is open, make the primary side bar narrow, also s
+
+commit f3ec07c4834f49d20d707878ed7c5977b8ad9043
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:07:09 2025 +0000
+
+    Try fixing this error: `Build Error: Module not found: Can't resolve '..
+
+commit 9f4db1a9a238c17dffd6394eb00b1ee196e4ee43
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 10:01:21 2025 +0000
+
+    Try fixing this error: `Runtime Error: Error: Image with src "/logo.png"
+
+commit 0d52f9f78340eadc9832527fa7dfa569bde58b77
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 17:56:56 2025 +0800
+
+    Fixed the upload and public view
+
+commit e1fb523ad947c40908bd814a62853bff9793e4ff
+Merge: 4e78022 ae1423d
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 17:48:33 2025 +0800
+
+    Merge branch 'studio-feed'
+
+commit 4e78022e6d610dfc56fe484b847156f07642597a
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 16:49:20 2025 +0800
+
+    * Added the public view
+
+commit 92db071952d361bf34345254fcbbef4e988dd551
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 08:23:34 2025 +0000
+
+    Try fixing this error: `Build Error: Parsing ecmascript source code fail
+
+commit abd6e29cfbea00763ccb2ffe8e677f7ad0ea5ee9
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 16:19:06 2025 +0800
+
+    * Added the new card
+
+commit 14fa941b161adcdeada22cd160691cf7650a4cd1
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 15:15:16 2025 +0800
+
+    * Added the public view
+
+commit 591521dbb46255926d1f747eb5790f7f1a848055
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 14:40:23 2025 +0800
+
+    Can delete the post but not the files yet
+
+commit 4ce3f468b40cd11e9bc0e5f29f90dc40d722d555
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 14:32:33 2025 +0800
+
+    * Added the privacy content
+
+commit ab3ba006216e63e75ddaaecd15e2a1fab3b3cf89
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 14:24:28 2025 +0800
+
+    Fixed the content upload
+
+commit ae1423d5544bdd9d9333373b2e8a5c547d74a4a0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 06:20:54 2025 +0000
+
+    did we make the navitem component to makes the items in the nav bars loo
+
+commit cb04d2e7498e8aebb77fdea39ff769ac1e7fce86
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 14:14:01 2025 +0800
+
+    * Added the upload
+
+commit fdaeeb2a107f8e927a62d3976ddfe5167fae4ade
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 14:04:27 2025 +0800
+
+    * Fixed the image upload
+
+commit 8521dff263e3f1b73c62c4d295dcbfb4cdf75021
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:44:43 2025 +0000
+
+    i see images in fire storage, why dont they show up in the feed?
+    
+    /uploa
+
+commit aa83cdaa6d07dd716d30606c9e13c400fe011d0c
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:43:22 2025 +0000
+
+    Try fixing this error: `Console Error: Error: Failed to generate upload
+
+commit 0d80cb97ef3326f68e7a6c3f11e386d062a4ecfa
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:42:18 2025 +0000
+
+    did image upload? why does it not show in the feed?
+    
+    Dialog props: Objec
+
+commit da41dc6f57de88fee7c631f2f4ca82352ba9bb44
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:39:40 2025 +0000
+
+    Try fixing this error: `Console Error: Error: Failed to upload file. Err
+
+commit 6414bf9caa6b7abb3a94d26c748ff3bbc776bb57
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:37:48 2025 +0000
+
+    remove the + circle, make the other 3 full circle and increase the backg
+
+commit 15fb1301974c4b3f45a320882cc05eef6879ce40
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:35:50 2025 +0000
+
+    Try fixing this error: `Runtime Error: Error: LayoutDashboard is not def
+
+commit ae3c2b1ef724ab8033a8c1b9c72d8a953d08f3b2
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:34:59 2025 +0000
+
+    make following changes
+    
+    1. we change the second side bar color based on
+
+commit d0a735ce7e690cce2f6b2ad50dae2a24f126ed44
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:30:51 2025 +0000
+
+    Try fixing this error: `Runtime Error: Error: Invalid src prop (https://
+
+commit dba9ebf2706340f227740fd2f3c9973864cfd661
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:29:35 2025 +0000
+
+    Try fixing this error: `Console Error: Image failed to load: "https://fi
+
+commit 0ea99d71e1b1b5ec7551c6e3656977064b586e33
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:12:19 2025 +0000
+
+    Try fixing this error: `Console Error: Image failed to load: "https://fi
+
+commit 36591020918e1d1257c309bad268b47867ac9dc1
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:11:11 2025 +0000
+
+    why are't our images in /kyozo-dev-one/feed displayed?
+    
+    warn-once.ts:6 I
+
+commit 7da099f2d53fcebbb59157d4995546dcb1344490
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 05:05:33 2025 +0000
+
+    Added the font and dsiplay
+
+commit 0c683dc897e8507d5dc80fb16955ef8746f9ca23
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 13:04:21 2025 +0800
+
+    * Upload and display of images in the posts
+
+commit 55e1bbcae2a5eac27098fb21a10649d1d0a8f0bf
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 02:45:54 2025 +0000
+
+    in the text post, add a dropzone for photo also, if there is photo, rend
+
+commit f9f0ea0061ef4700dd5980f13105daf3337bfe71
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 02:37:56 2025 +0000
+
+    se the custom dialog component we created for login/signup we created, a
+
+commit 1235a7663a059ad5ad274e381b8c7063c9fea2e1
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 02:35:30 2025 +0000
+
+    add the icons and + sign on the edge of the circles, keep all the 3 circ
+
+commit 1ac1c71384d4fcd51c0f5ec6c6c578e8342fb246
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 02:34:09 2025 +0000
+
+    Try fixing this error: `Console Error: React has detected a change in th
+
+commit 27da0a846a4c2493c3349403cd6faf7b50df6dcb
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 02:33:28 2025 +0000
+
+    Try fixing this error: `Console Error: React does not recognize the `isI
+
+commit e98f37ecbd679f2ed1290ea7375173cce3d95ae6
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Thu Nov 13 02:31:05 2025 +0000
+
+    Try fixing this error: `Build Error: Export DialogContent doesn't exist
+
+commit 3576268746336dd951d14c4651470250da32a9a0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 10:13:34 2025 +0000
+
+    Added the gray tint
+
+commit 67a5a82e23a489b6a2ecdf6f2c6d7fedbf1f92d9
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 09:52:53 2025 +0800
+
+    * Added the side bar
+
+commit a3ccffe83ee24914ff0819fbc561551051c1d30c
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 09:46:12 2025 +0800
+
+    * Added inside pages
+
+commit 07e83810e174d5d7929f74af085cd6dc8eafa431
+Author: kyozohk <ashok@kyozo.com>
+Date:   Thu Nov 13 09:38:40 2025 +0800
+
+    * Brokend community sidebar
+
+commit a94942b562f345f85a48c5bec28a189f810abd34
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 10:58:08 2025 +0000
+
+    Added the coming soon pages
+
+commit 502383f368955d9e1a3e573bb852492cd951c8b8
+Author: kyozohk <ashok@kyozo.com>
+Date:   Wed Nov 12 18:12:47 2025 +0800
+
+    * Added the sidebar
+
+commit af64b7d3268e7b3eb5dadbff44066e9659ed35bb
+Author: kyozohk <ashok@kyozo.com>
+Date:   Wed Nov 12 17:23:44 2025 +0800
+
+    * Fixed the exports from a single file
+
+commit ff087879adf5729973f15b38e4afb08b7f9e3838
+Author: kyozohk <ashok@kyozo.com>
+Date:   Wed Nov 12 16:32:44 2025 +0800
+
+    Added the placeholder pages
+
+commit ea76b6a7e0f2bab4d16b293873f765cbfd3ba4ed
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:46:06 2025 +0000
+
+    Image with src "https://6000-firebase-studio-1762837857154.cluster-euie3
+
+commit 91a0001fe0339815be4c638d8dcececc1982d310
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:42:06 2025 +0000
+
+    i still see the same error and commuinity not displayed
+
+commit 4402d42604f50a43f95c2ac98f071e5b8d372c0a
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:38:01 2025 +0000
+
+    i am logged in with dev@kyozo.com and then i created a new community whi
+
+commit 4fcab957bfc702c1f9e8cdd16cd5f0daea10dceb
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:25:56 2025 +0000
+
+    /**
+    * Paste one or more documents here
+    */
+    {
+      "whatsAppProvider": {
+
+commit 3d71130a561e3daf8ea40b49c6a92352de1d48d1
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:24:52 2025 +0000
+
+    why is the sidebar in dashboard, which by defaults loads the communities
+
+commit 2706e8db16c9abf986451243ab0cb6765947b43a
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:21:26 2025 +0000
+
+    why is sidebar changes not updated (icons should be th button border col
+
+commit 7f1f8cc1bfc34fac108edc7e2a03aa30a8fad0f6
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:16:12 2025 +0000
+
+    why is nothing changed? no mainsidebar changes showing up, see the scree
+
+commit df1abf18fc30688e96474bb4d210e8ca762d9393
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 06:07:28 2025 +0000
+
+    make the side bar background same color as 'Join the waitlist' button ba
+
+commit 31c4d2984abaa79a04bc9977cc345dad650bc2cd
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 05:36:39 2025 +0000
+
+    Try fixing this error: `Console Error: FirebaseError: Missing or insuffi
+
+commit ac1cc154e53021eb7498af5774f478ffa10b9742
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 04:04:58 2025 +0000
+
+    keep the buttons at the bottom similar i.e. take the full width of the a
+
+commit daf818260236f372647936f45014a5a7e8cd0904
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 04:02:56 2025 +0000
+
+    use the same dialog style used for login/waitlist/signup where there is
+
+commit ea2ea774441c6b9521d859e1de5fc4edb8ef0f9d
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 03:53:39 2025 +0000
+
+    /**
+    * Paste one or more documents here
+    */
+    {
+      "whatsAppProvider": {
+
+commit 59b7ca0c0bff94528b7490f231b41d42bf7835af
+Author: kyozohk <ashok@kyozo.com>
+Date:   Wed Nov 12 13:43:24 2025 +0800
+
+    * Updated the UI controls
+
+commit 6719ea68ad52ddfc6c87694e090e0fc1281edc1f
+Author: kyozohk <ashok@kyozo.com>
+Date:   Wed Nov 12 11:10:50 2025 +0800
+
+    * Added the dashboard
+
+commit c33fd2a7a3d453e982caf1639f1c6c07cef46031
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 00:05:08 2025 +0000
+
+    Try fixing this error: `Build Error: Export DialogContent doesn't exist
+
+commit 68cdae29588b6780c3a8f1577b69bba80cb09cfa
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Wed Nov 12 00:03:30 2025 +0000
+
+    now when user signs in, we want user to land in the Dashboard  like atta
+
+commit 08f82cff86fcd8928a158aa4612578077cf9ebbf
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 23:51:16 2025 +0000
+
+    Added the signup option
+
+commit 2d56e6b16f4a1799aa5b60b1bf53aa3382e6d4ae
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 23:31:44 2025 +0000
+
+    Added password reset dialog screen
+
+commit eaf2c6973ee77beb775a1e15ca1dc08802eec591
+Author: kyozohk <ashok@kyozo.com>
+Date:   Wed Nov 12 06:55:59 2025 +0800
+
+    * Updated the dialog
+
+commit aa9e4902af72473b3816fbc6e8032fadda5bed3c
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 22:17:29 2025 +0000
+
+    Make the dialog bigger
+
+commit 28b7760f549bfc020109950c46a4f35104ed20f2
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 14:27:29 2025 +0000
+
+    Updated the UI
+
+commit 94df850f852549104b37c9ffab337611ad141660
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 11 21:51:50 2025 +0800
+
+    * Added the invite and accept the invite
+
+commit 785c1997af38b5492b5aa8586ff726cd249b2ef1
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 11 21:01:23 2025 +0800
+
+    * Added the custom controls
+
+commit 5c902b19cf2895dd316eff59b2d9f51c93944a71
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 08:34:43 2025 +0000
+
+    still have errors
+
+commit 47d2872e043cb0eea9167ccd538412237ffdbd64
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 08:28:21 2025 +0000
+
+    i see failed to send invite
+
+commit a7c2db40cd85383d6f074140f3fabda3bf473efa
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 08:26:45 2025 +0000
+
+    Try fixing this error: `Build Error: Module not found: Can't resolve '@/
+
+commit 87ba3897ddefaf6b86eb90b529def424a24c2ec7
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 11 16:07:53 2025 +0800
+
+    * Added the logo
+
+commit 8446f354e0a04aadddbb5fe0d27e7eec6122b948
+Merge: 06c20ed ba41c52
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 11 16:05:11 2025 +0800
+
+    Merge remote changes and resolve conflicts
+
+commit 06c20eda287caa2bedb829863639e06ce625604e
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 11 15:59:25 2025 +0800
+
+    * Added the public folder
+
+commit d6b447e4e8b0b4bb579a4f84af84a7b048f11c9d
+Author: kyozohk <ashok@kyozo.com>
+Date:   Tue Nov 11 15:27:22 2025 +0800
+
+    * Added
+
+commit ba41c52201257604827e2afc6bb0b4ccd5a98499
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 07:01:01 2025 +0000
+
+    FirestorePermissionError: FirestoreError: Missing or insufficient permis
+
+commit e2a9b8b169237448b2bb7ab9784ffb0c3fe39ae0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:42:51 2025 +0000
+
+    no luck here, can you explore any other stragegy to make it work
+
+commit c391653f13ed031c8679e5afd46371025aa2473b
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:41:32 2025 +0000
+
+    i still see the dashboard instead of feed and still see below error
+    
+    Fir
+
+commit 5876107c837bd4d8c9e55e1884a68f8426f9de4c
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:40:01 2025 +0000
+
+    i am seeing below error, we need to setup the security rule?
+    
+    FirestoreP
+
+commit 7f4b5853227664d1b336306b40b057a70a8f2053
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:38:03 2025 +0000
+
+    now i am not taken to the login instead i am on the dashboard but since
+
+commit 29bcc86aff9716fc2d91e4b537aaaaf537762874
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:36:08 2025 +0000
+
+    if i goto community handle, i am redirected to login page instead of see
+
+commit 6052ec4fa2a9f40ef940ac1954c8205bd2284d42
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:28:31 2025 +0000
+
+    Try fixing this error: `Console Error: FirebaseError: Firebase: Error (a
+
+commit 97cba33dfc69e2e83e53360bbbdea84c7e4d89ce
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:27:36 2025 +0000
+
+    getting started got me direclty to a slug even though i was not logged i
+
+commit e82267707c5f314ee342961628a308c7bfb49ad0
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:26:56 2025 +0000
+
+    Try fixing this error: `Runtime Error: FirestorePermissionError: Firesto
+
+commit 1de511376b070aaed87e7919d2f37abfbab23889
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:24:59 2025 +0000
+
+    handle does not need to have @ in it, its like twitter handle or instagr
+
+commit 44b37d28c0d1f54a7bb0e62d2d52c1349a67934c
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:21:10 2025 +0000
+
+    now get rid off made up data in the community drop down, show what user
+
+commit b17fbd0fd7adc519766909f8c09046e3470886a8
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:19:04 2025 +0000
+
+    add the settings page where we can see the users details, handle, title
+
+commit 611dae892ee4926c9d00d443079f83af2aaa01a7
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:17:43 2025 +0000
+
+    i have add some posts now, what is the handle of this user? why do i see
+
+commit 740dc282e841ee51cca04b3ca6173952ce369d39
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:13:49 2025 +0000
+
+    Try fixing this error: `Runtime Error: FirestorePermissionError: Firesto
+
+commit 797cd603ed1ad8d659e0ddf4bf9d7d48f2d0a7f1
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:13:24 2025 +0000
+
+    Try fixing this error: `Console Error: A param property was accessed dir
+
+commit 6ee9ed0f22d50050c12c17768bab972b765c5345
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:12:48 2025 +0000
+
+    Try fixing this error: `Console Error: A param property was accessed dir
+
+commit e89a2122b9654d2789e635f17cb10a78a16682ab
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:11:37 2025 +0000
+
+    Try fixing this error: `Console Error: FirebaseError: Missing or insuffi
+
+commit af920805f83cea8b1faca0682c625e5a2d79ab38
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:10:06 2025 +0000
+
+    Try fixing this error: `Console Error: A param property was accessed dir
+
+commit 50f5c288f48f53d98083531e9526ae3a783eb08e
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:08:59 2025 +0000
+
+    Try fixing this error: `Console Error: FirebaseError: The query requires
+
+commit 376d41a2028a8846ccce03ab285b0afc6c51ef44
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:08:05 2025 +0000
+
+    the handle should actually be slug of the community itself, when the com
+
+commit 43e1167007da298125ae3f9fca8f8308b5d3e210
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:04:53 2025 +0000
+
+    also add a drop zone so user can add an image to the post if wanted to,
+
+commit 3bb5b77231cf55d4ea0627c3be451b287cc901ae
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:03:27 2025 +0000
+
+    in creating post, add a checkbox for Public and have it checked by defau
+
+commit 95f94aa3a05d6a652096ca1e9554cdcbf31687a2
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:01:16 2025 +0000
+
+    capture first and last name in signup form
+
+commit 095d1780113ac8fd558bc5d7da9102552824ef4d
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 06:00:36 2025 +0000
+
+    Try fixing this error: `Console Error: FirebaseError: Firebase: Error (a
+
+commit 723c34106be68cd051112802feb619c093ed7290
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 05:59:07 2025 +0000
+
+    File changes
+
+commit 18cd241e1e8245f8048a5d75a3c9f279562139ce
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 05:52:08 2025 +0000
+
+    Try fixing this error: `Build Error: Parsing ecmascript source code fail
+
+commit c30f4daaf9a34db9442692b9d9e0958201285fa3
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 05:50:10 2025 +0000
+
+    use following api keys to add the firebase auth with email and google, a
+
+commit e58b6646ec45b1e9454cde60412469865fe23652
+Author: Kyozo Development <kyozodevelopment@gmail.com>
+Date:   Tue Nov 11 05:33:35 2025 +0000
+
+    Initial prototype
+
+commit eb3bfa13e3f4486da74cc0ad83673ce5d176e3e1
+Author: Firebase Studio <noreply@firebase.studio>
+Date:   Thu Oct 30 19:32:57 2025 +0000
+
+    Initialized workspace with Firebase Studio
