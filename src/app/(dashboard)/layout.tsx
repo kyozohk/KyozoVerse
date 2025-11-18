@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className="sidebar-bg-default" style={{backgroundColor: activeBgColor}}>
+        <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor} as React.CSSProperties}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
@@ -81,14 +81,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <SidebarMenu>
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
+                  const itemTheme = getThemeForPath(item.href);
                   return (
                     <SidebarNavItem
                         key={item.href}
                         href={item.href}
                         icon={<Icon />}
                         isActive={pathname.startsWith(item.href)}
-                        activeColor={activeColor}
-                        activeBgColor={activeBgColor}
+                        activeColor={itemTheme.activeColor}
+                        activeBgColor={itemTheme.activeBgColor}
                     >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </SidebarNavItem>

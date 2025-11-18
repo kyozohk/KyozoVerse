@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -188,6 +189,7 @@ const Sidebar = React.forwardRef<
       collapsible = "icon",
       className,
       children,
+      style,
       ...props
     },
     ref
@@ -202,6 +204,7 @@ const Sidebar = React.forwardRef<
             className
           )}
           ref={ref}
+          style={style}
           {...props}
         >
           {children}
@@ -214,11 +217,13 @@ const Sidebar = React.forwardRef<
         <div
           data-sidebar="sidebar"
           data-mobile="true"
-          className="w-[--sidebar-width] bg-card p-0 text-card-foreground fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out"
+          className="w-[--sidebar-width] p-0 text-card-foreground fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              transform: openMobile ? "translateX(0)" : "translateX(-100%)"
+              transform: openMobile ? "translateX(0)" : "translateX(-100%)",
+              backgroundColor: 'var(--sidebar-active-bg)',
+              ...style
             } as React.CSSProperties
           }
           {...props}
@@ -248,6 +253,7 @@ const Sidebar = React.forwardRef<
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
+        style={style}
       >
         <div
           data-sidebar="sidebar"
@@ -256,7 +262,7 @@ const Sidebar = React.forwardRef<
            side === "right" && "border-r-0 border-l",
            variant === 'floating' && 'rounded-lg border shadow',
            variant === 'inset' && 'bg-transparent',
-           variant !== 'inset' && 'bg-card',
+           variant !== 'inset' && 'bg-[--sidebar-active-bg]',
            className
            )}
         >
