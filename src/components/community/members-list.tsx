@@ -16,14 +16,14 @@ import { Users } from 'lucide-react';
 
 interface MembersListProps {
   community: Community;
-  members: CommunityMember[];
+  members?: CommunityMember[];
   userRole: UserRole;
   onMemberClick?: (member: CommunityMember) => void;
   selectedMembers?: CommunityMember[];
   selectable?: boolean;
 }
 
-export function MembersList({ community, members: initialMembers, userRole, onMemberClick, selectedMembers, selectable }: MembersListProps) {
+export function MembersList({ community, members: initialMembers = [], userRole, onMemberClick, selectedMembers, selectable }: MembersListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [members, setMembers] = useState<CommunityMember[]>(initialMembers);
