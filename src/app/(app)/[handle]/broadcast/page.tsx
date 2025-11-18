@@ -9,6 +9,7 @@ import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type CommunityMember, type User, type Community } from '@/lib/types';
+import { Member } from '@/components/broadcast/broadcast-types';
 import { getCommunityByHandle } from '@/lib/community-utils';
 import { ListView } from '@/components/ui/list-view';
 import MembersList from '@/components/broadcast/members-list';
@@ -21,7 +22,11 @@ export default function CommunityBroadcastPage() {
   const pathname = usePathname();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  // Define a handler for view mode changes that works with the ListView component
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+  };
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
@@ -52,11 +57,17 @@ export default function CommunityBroadcastPage() {
           const userDocRef = doc(db, 'users', data.userId);
           const userSnap = await getDoc(userDocRef);
           
-          return {
-            id: memberDoc.id,
-            ...data,
-            userDetails: userSnap.exists() ? userSnap.data() as User : undefined,
-          } as CommunityMember;
+          // Create a properly typed CommunityMember object
+          const memberData: CommunityMember = {
+            userId: data.userId,
+            communityId: data.communityId,
+            role: data.role || 'member',
+            joinedAt: data.joinedAt,
+            status: data.status || 'active',
+            userDetails: userSnap.exists() ? userSnap.data() as User : undefined
+          };
+          
+          return memberData;
         }));
         
         setMembers(membersData);
@@ -81,11 +92,13 @@ export default function CommunityBroadcastPage() {
     setIsDialogOpen(true);
   };
   
-  const handleToggleMember = (member: CommunityMember) => {
+  const handleToggleMember = (member: Member | CommunityMember) => {
+    const memberId = 'userId' in member ? member.userId : member.id;
+    
     setSelectedMembers(prev => 
-        prev.some(m => m.id === member.id)
-            ? prev.filter(m => m.id !== member.id)
-            : [...prev, member]
+        prev.some(m => ('userId' in m ? m.userId : (m as Member).id) === memberId)
+            ? prev.filter(m => ('userId' in m ? m.userId : (m as Member).id) !== memberId)
+            : [...prev, member as CommunityMember]
     );
   };
   
@@ -110,7 +123,7 @@ export default function CommunityBroadcastPage() {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={handleViewModeChange}
         loading={loading}
         actions={
           <div className="flex items-center gap-1">
@@ -127,6 +140,7 @@ export default function CommunityBroadcastPage() {
             selectable={true}
             viewMode={viewMode}
             activeColor={activeColor}
+            loading={loading}
         />
       </ListView>
       
