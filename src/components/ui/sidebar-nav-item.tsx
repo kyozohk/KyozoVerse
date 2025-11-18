@@ -23,7 +23,7 @@ const sidebarNavItemVariants = cva(
 );
 
 const iconVariants = cva(
-    'h-6 w-6 transition-colors', // Standardized icon size
+    'h-5 w-5 transition-colors', // Standardized icon size
     {
         variants: {
             state: {

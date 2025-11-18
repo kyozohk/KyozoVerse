@@ -75,7 +75,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
-  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
+  const { activeColor, activeBgColor } = getThemeForPath(pathname);
   
   const isCommunitiesActive = isCommunityPage || pathname.startsWith('/communities');
 

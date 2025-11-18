@@ -10,11 +10,15 @@ import { Button } from '../ui/button';
 interface MemberCardProps {
   member: CommunityMember;
   canManage: boolean;
+  borderColor?: string;
 }
 
-export function MemberCard({ member, canManage }: MemberCardProps) {
+export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))' }: MemberCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
+    <Card 
+        className="hover:shadow-lg transition-shadow duration-300 h-full"
+        style={{ borderColor: borderColor }}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">

@@ -2,9 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Community, UserRole } from '@/lib/types';
+import { usePathname } from 'next/navigation';
+import { Community, CommunityMember, UserRole } from '@/lib/types';
 import { ListView } from '@/components/ui/list-view';
 import { MemberCard } from './member-card';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 interface MembersListProps {
   community: Community;
@@ -15,6 +17,9 @@ interface MembersListProps {
 export function MembersList({ community, members, userRole }: MembersListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const pathname = usePathname();
+  
+  const { activeColor } = getThemeForPath(pathname);
 
   const filteredMembers = (members || []).filter(
     (member) =>
@@ -36,7 +41,7 @@ export function MembersList({ community, members, userRole }: MembersListProps) 
       onViewModeChange={setViewMode}
     >
       {filteredMembers.map((member) => (
-        <MemberCard key={member.userId} member={member} canManage={canManage} />
+        <MemberCard key={member.userId} member={member} canManage={canManage} borderColor={activeColor} />
       ))}
     </ListView>
   );
