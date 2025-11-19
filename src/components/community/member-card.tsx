@@ -12,13 +12,29 @@ interface MemberCardProps {
   member: CommunityMember;
   canManage: boolean;
   borderColor?: string;
+  onClick?: () => void;
 }
 
-export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))' }: MemberCardProps) {
+export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))', onClick }: MemberCardProps) {
+    
+  const hexToRgba = (hex: string, alpha: number) => {
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const itemStyle: React.CSSProperties = {
+    '--hover-bg-color': hexToRgba(borderColor, 0.1),
+    borderColor: borderColor,
+  } as any;
+
   return (
     <Card 
-        className="hover:shadow-lg transition-shadow duration-300 h-full"
-        style={{ borderColor: borderColor }}
+        className="hover:shadow-lg transition-shadow duration-300 h-full cursor-pointer hover:bg-[var(--hover-bg-color)]"
+        style={itemStyle}
+        onClick={onClick}
     >
       <CardHeader>
         <div className="flex items-start justify-between">

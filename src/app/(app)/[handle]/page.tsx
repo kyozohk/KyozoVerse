@@ -13,7 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { Card, CardContent } from '@/components/ui/card';
 import { ListView } from '@/components/ui/list-view';
 
 export default function CommunityPage() {
@@ -27,7 +26,7 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     if (authLoading) return;
@@ -46,15 +45,12 @@ export default function CommunityPage() {
             setUserRole(role);
           }
           
-          // Fetch members
           const membersRef = collection(db, "communityMembers");
           const q = query(membersRef, where("communityId", "==", communityData.communityId));
           const unsubscribe = onSnapshot(q, (snapshot) => {
             const membersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as CommunityMember);
             setMembers(membersData);
           });
-          // Here you should ideally manage the unsubscribe function, 
-          // but for simplicity in this context we'll let it run.
         }
 
       } catch (error) {
@@ -68,8 +64,6 @@ export default function CommunityPage() {
   }, [handle, user, authLoading]);
   
   const handleCommunityUpdated = () => {
-    // Re-fetch community data when the dialog is closed after an update
-    // This logic is simplified; a more robust solution would be better
     if (!authLoading) {
       setLoading(true);
       getCommunityByHandle(handle).then(communityData => {
@@ -111,20 +105,17 @@ export default function CommunityPage() {
       <div className="px-4 md:px-8">
         <CommunityStats community={community} />
       </div>
-      <div className="px-4 md:px-8">
-         <Card>
-            <CardContent className="p-0">
-                 <ListView
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                  >
-                    <MembersList members={filteredMembers} userRole={userRole} viewMode={viewMode} />
-                </ListView>
-            </CardContent>
-         </Card>
-      </div>
+      
+      <ListView
+          title="Members"
+          subtitle={`Browse and manage ${community.name}'s members.`}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        >
+          <MembersList members={filteredMembers} userRole={userRole} viewMode={viewMode} />
+      </ListView>
 
       {isEditDialogOpen && (
         <CreateCommunityDialog

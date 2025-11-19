@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { type CommunityMember, type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
-import { MemberListSkeleton } from "@/components/community/member-list-skeleton";
+import { ListView } from "@/components/ui/list-view";
 
 export default function CommunityMembersPage() {
   const { user } = useAuth();
@@ -20,6 +20,8 @@ export default function CommunityMembersPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("guest");
   const [community, setCommunity] = useState<Community | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -77,29 +79,32 @@ export default function CommunityMembersPage() {
 
     return () => unsubscribe();
   }, [community?.communityId]);
-  
-  if (loading || !community) {
-    return (
-        <div className="p-6 md:p-8">
-            <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border border-gray-200/80">
-                <div className="flex items-center justify-between gap-4 mb-6">
-                   <div className="animate-pulse bg-muted h-10 flex-grow rounded-md"></div>
-                    <div className="flex items-center gap-1 rounded-md p-1">
-                        <div className="animate-pulse bg-muted h-9 w-9 rounded-md"></div>
-                        <div className="animate-pulse bg-muted h-9 w-9 rounded-md"></div>
-                    </div>
-                </div>
-                <MemberListSkeleton count={6} />
-            </div>
-        </div>
-    )
-  }
+
+  const filteredMembers = members.filter(
+    (member) =>
+      member.userDetails?.displayName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      member.userDetails?.email
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  );
   
   return (
-    <MembersList
-      community={community}
-      members={members}
-      userRole={userRole}
-    />
+    <ListView
+      title="Members"
+      subtitle="Browse and manage community members."
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      loading={loading}
+    >
+        <MembersList 
+            members={filteredMembers} 
+            userRole={userRole} 
+            viewMode={viewMode}
+        />
+    </ListView>
   );
 }
