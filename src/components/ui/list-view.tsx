@@ -98,7 +98,7 @@ export function ListView({
             </div>
         </div>
         {loading ? (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1')}>
             {viewMode === 'grid' ? (
               Array(6).fill(0).map((_, i) => (
                 <div key={i} className="animate-pulse">
@@ -118,7 +118,7 @@ export function ListView({
             )}
           </div>
         ) : (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1')}>
             {children}
           </div>
         )}
