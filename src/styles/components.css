@@ -99,7 +99,7 @@
 
 /* Input styles */
 .inputWrapper {
-  margin-bottom: 0rem; /* Removed margin */
+  margin-bottom: 1.5rem; /* Increased gap */
   width: 100%;
 }
 
@@ -155,7 +155,7 @@
 
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -0.85rem;
+  top: -1.2rem; /* Lift the label a bit more */
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
