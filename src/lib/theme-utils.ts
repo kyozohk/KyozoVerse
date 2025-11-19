@@ -47,18 +47,18 @@ export const communityNavItems: CommunityNavItem[] = [
 ];
 
 const themeColors: Record<string, { active: string; bg: string }> = {
-    overview: { active: '#6D28D9', bg: 'rgba(109, 40, 217, 0.1)' },    // Violet
-    members: { active: '#2563EB', bg: 'rgba(37, 99, 235, 0.1)' },      // Blue
-    broadcast: { active: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },   // Amber
-    inbox: { active: '#DC2626', bg: 'rgba(220, 38, 38, 0.1)' },        // Red
-    feed: { active: '#16A34A', bg: 'rgba(22, 163, 74, 0.1)' },        // Green
-    ticketing: { active: '#475569', bg: 'rgba(71, 85, 105, 0.1)' },    // Slate
-    integrations: { active: '#0891B2', bg: 'rgba(8, 145, 178, 0.1)' },   // Cyan
-    analytics: { active: '#4F46E5', bg: 'rgba(79, 70, 229, 0.1)' },    // Indigo
-    communities: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' },   // Default Purple
-    subscription: { active: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },// Amber
-    settings: { active: '#0891B2', bg: 'rgba(8, 145, 178, 0.1)' },     // Cyan
-    default: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' }      // Default Purple
+    overview: { active: '#C170CF', bg: 'rgba(193, 112, 207, 0.3)' },
+    members: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.3)' },
+    broadcast: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.3)' },
+    inbox: { active: '#CF7770', bg: 'rgba(207, 119, 112, 0.3)' },
+    feed: { active: '#699FE5', bg: 'rgba(105, 159, 229, 0.3)' },
+    ticketing: { active: '#475569', bg: 'rgba(71, 85, 105, 0.1)' },
+    integrations: { active: '#0891B2', bg: 'rgba(8, 145, 178, 0.1)' },
+    analytics: { active: '#4F46E5', bg: 'rgba(79, 70, 229, 0.1)' },
+    communities: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' },
+    subscription: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.1)' },
+    settings: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.1)' },
+    default: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' }
 };
 
 export const getThemeForPath = (path: string) => {

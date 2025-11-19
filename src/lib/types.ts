@@ -37,6 +37,7 @@ export type CommunityMember = {
     displayName?: string;
     avatarUrl?: string;
     email?: string;
+    phone?: string;
   };
 };
 

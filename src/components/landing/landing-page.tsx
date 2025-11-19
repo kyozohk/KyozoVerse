@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
-import { RequestAccessForm } from '@/components/auth/request-access-form';
+import { RequestAccessDialog } from '@/components/auth/request-access-dialog';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
@@ -19,7 +19,6 @@ export function LandingPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [formType, setFormType] = useState('waitlist');
   const { user, signIn, signOut } = useAuth();
 
   useEffect(() => {
@@ -33,7 +32,6 @@ export function LandingPage() {
   const openWaitlist = () => {
     setIsSignInOpen(false);
     setIsResetPasswordOpen(false);
-    setFormType('waitlist');
     setIsWaitlistOpen(true);
   };
 
@@ -96,21 +94,10 @@ export function LandingPage() {
         </div>
       </main>
 
-      <CustomFormDialog 
-        open={isWaitlistOpen} 
-        onClose={() => setIsWaitlistOpen(false)}
-        title={formType === 'signup' ? 'Welcome to Kyozo' : 'Join the Waitlist'}
-        description={formType === 'signup' ? 'Create an account to access your community dashboard and settings.' : 'Join the exclusive club of creators, fill up the form and we will get back to you.'}
-        backgroundImage="/bg/light_app_bg.png"
-        color="#C170CF"
-      >
-        <RequestAccessForm 
-          onCancel={() => setIsWaitlistOpen(false)} 
-          onSignInClick={openSignIn} 
-          formType={formType}
-          setFormType={setFormType}
-        />
-      </CustomFormDialog>
+      <RequestAccessDialog
+        open={isWaitlistOpen}
+        onOpenChange={setIsWaitlistOpen}
+      />
       
       <CustomFormDialog 
         open={isSignInOpen} 

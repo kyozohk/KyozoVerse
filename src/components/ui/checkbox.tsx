@@ -1,8 +1,11 @@
+
 "use client"
 
 import * as React from "react"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePathname } from 'next/navigation'
+import { getThemeForPath } from '@/lib/theme-utils'
 
 // Import styles
 import "@/styles/components.css"
@@ -18,6 +21,8 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, error, wrapperClassName, checked, onCheckedChange, ...props }, ref) => {
     const id = React.useId();
+    const pathname = usePathname();
+    const { activeColor } = getThemeForPath(pathname);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (onCheckedChange) {
@@ -37,7 +42,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             onChange={handleChange}
             {...props}
           />
-          <div className={cn("checkbox", checked && "bg-primary-purple")}>
+          <div className={cn("checkbox")} style={{ borderColor: activeColor, backgroundColor: checked ? activeColor : 'transparent' }}>
             <Check className="checkIcon" />
           </div>
           {label && (

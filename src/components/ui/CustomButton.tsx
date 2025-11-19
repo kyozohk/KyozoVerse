@@ -1,8 +1,12 @@
+
 "use client";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { getThemeForPath } from "@/lib/theme-utils";
+
 
 // Import styles
 import "@/styles/components.css";
@@ -23,8 +27,28 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
     icon: Icon, 
     isLoading = false,
     disabled,
+    style,
     ...props 
   }, ref) => {
+    const pathname = usePathname();
+    const { activeColor } = getThemeForPath(pathname);
+    
+    const variantStyles = {
+        primary: {
+            backgroundColor: activeColor,
+            color: 'white',
+            border: 'none',
+        },
+        default: {},
+        outline: {},
+        waitlist: {},
+        'rounded-rect': {},
+        'semi-rounded': {},
+        white: {},
+    };
+    
+    const buttonStyle = variant === 'primary' ? {...style, ...variantStyles.primary} : style;
+    
     return (
       <button
         className={cn(
@@ -41,6 +65,7 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
           },
           className
         )}
+        style={buttonStyle}
         disabled={isLoading || disabled}
         ref={ref}
         {...props}

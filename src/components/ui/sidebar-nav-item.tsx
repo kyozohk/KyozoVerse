@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors font-dm-sans',
+  'group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors font-dm-sans',
   {
     variants: {
       state: {
@@ -55,7 +55,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
       <li className="list-none">
         <Link
           href={href}
-          className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), 'py-3', className)}
+          className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
           style={{ 
               '--active-color': activeColor,
               '--active-color-bg': activeBgColor

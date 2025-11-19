@@ -304,23 +304,32 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                     )}
                 </div>
 
-                 <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
+                 <div className="mt-8 grid grid-cols-2 gap-4">
                     {currentStep > 0 ? (
-                        <CustomButton variant="outline" onClick={handlePrev} className="w-full h-10">
+                        <CustomButton variant="outline" onClick={handlePrev} className="w-full py-3 text-base font-medium">
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Previous
                         </CustomButton>
                     ) : (
-                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full h-10">Cancel</CustomButton>
+                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full py-3 text-base font-medium">Cancel</CustomButton>
                     )}
                     
                     {currentStep < STEPS.length - 1 ? (
-                        <CustomButton onClick={handleNext} className="w-full h-10">
+                        <CustomButton 
+                            onClick={handleNext} 
+                            className="w-full py-3 text-base font-medium"
+                            variant="waitlist"
+                        >
                             Next
                             <ArrowRight className="h-4 w-4 ml-2" />
                         </CustomButton>
                     ) : (
-                        <CustomButton onClick={handleFormSubmit} disabled={isSubmitting} className="w-full h-10">
+                        <CustomButton 
+                            onClick={handleFormSubmit} 
+                            disabled={isSubmitting} 
+                            className="w-full py-3 text-base font-medium"
+                            variant="waitlist"
+                        >
                             {isSubmitting ? 'Saving...' : 'Finish'}
                         </CustomButton>
                     )}

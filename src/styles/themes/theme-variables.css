@@ -19,7 +19,7 @@
   --button-radius: 9999px; /* Fully rounded by default */
 
   /* Input variables */
-  --input-border-color: var(--primary-purple);
+  --input-border-color: #C170CF;
   --dark-text-color: var(--text-color);
 
 

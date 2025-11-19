@@ -147,14 +147,15 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
   }
 
+  // Get file input accept object based on post type
   const getFileInputAccept = () => {
     switch (postType) {
         case 'text': // Allow image for text posts
         case 'image': 
-            return { 'image/*': ['.png', '.jpg', '.jpeg', '.gif']};
-        case 'audio': return { 'audio/*': ['.mp3', '.wav', '.m4a']};
-        case 'video': return { 'video/*': ['.mp4', '.mov', '.webm']};
-        default: return {};
+            return { 'image/*': [] };
+        case 'audio': return { 'audio/*': [] };
+        case 'video': return { 'video/*': [] };
+        default: return undefined;
     }
   }
 
@@ -178,6 +179,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                       onChange={(e) => setTitle(e.target.value)} 
                   />
                   <Textarea 
+                      label="Description"
                       placeholder="Description" 
                       value={description} 
                       onChange={(e) => setDescription(e.target.value)} 
@@ -205,10 +207,20 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                     </p>
                   </div>
               </div>
-              <div className="mt-auto pt-6 flex justify-end gap-4">
-                  <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                  <Button onClick={handleSubmit} disabled={isSubmitting}>
-                      Post
+              <div className="mt-8 flex justify-end gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsOpen(false)} 
+                    className="py-3 text-base font-medium"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSubmit} 
+                    disabled={isSubmitting}
+                    className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
+                  >
+                    Post
                   </Button>
               </div>
           </div>
