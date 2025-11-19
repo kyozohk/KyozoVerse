@@ -157,6 +157,8 @@ input::placeholder {
   color: var(--text-secondary);
   pointer-events: none;
   transition: all 0.2s ease;
+  background-color: transparent;
+  padding: 0 0.25rem;
 }
 
 .input-with-icon ~ .floatingLabel {
@@ -165,12 +167,11 @@ input::placeholder {
 
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -1.4rem; /* Lift the label a bit more */
+  top: -0.7rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
-  background-color: transparent;
-  padding: 0 0.25rem;
+  background-color: #EDEDED;
 }
 
 
