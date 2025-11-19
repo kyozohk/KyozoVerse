@@ -3,12 +3,26 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore";
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  doc, 
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  serverTimestamp,
+  increment,
+} from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { type CommunityMember, type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
+import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from "@/components/ui/list-view";
 
 export default function CommunityMembersPage() {
@@ -22,6 +36,8 @@ export default function CommunityMembersPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
   
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -94,21 +110,118 @@ export default function CommunityMembersPage() {
         .includes(searchTerm.toLowerCase())
   );
   
+  const handleAddMemberSubmit = async (data: {
+    displayName: string;
+    email: string;
+    phone?: string;
+  }) => {
+    if (!community?.communityId) {
+      throw new Error("Community is not loaded yet.");
+    }
+
+    try {
+      // Look up user by email
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", data.email));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        throw new Error("No user found with this email. Make sure the user exists before adding as a member.");
+      }
+
+      const userDoc = snap.docs[0];
+      const userId = userDoc.id;
+      const userDetails = userDoc.data() as User;
+
+      const membersRef = collection(db, "communityMembers");
+
+      await addDoc(membersRef, {
+        userId,
+        communityId: community.communityId,
+        role: "member",
+        status: "active",
+        joinedAt: serverTimestamp(),
+        userDetails: {
+          displayName: data.displayName || userDetails.displayName,
+          email: data.email,
+          avatarUrl: userDetails.avatarUrl,
+          phone: data.phone || userDetails.phoneNumber,
+        },
+      });
+
+      // Increment member count on the community
+      const communityRef = doc(db, "communities", community.communityId);
+      await updateDoc(communityRef, {
+        memberCount: increment(1),
+      });
+    } catch (error: any) {
+      console.error("Error adding member:", error);
+      throw new Error(error?.message || "Unable to add member. Please try again.");
+    }
+  };
+
+  const handleEditMemberSubmit = async (data: {
+    displayName: string;
+    email: string;
+    phone?: string;
+  }) => {
+    if (!editingMember) {
+      throw new Error("No member selected to edit.");
+    }
+
+    const memberId = (editingMember as any).id;
+    if (!memberId) {
+      throw new Error("Selected member is missing an id.");
+    }
+
+    try {
+      const memberRef = doc(db, "communityMembers", memberId);
+
+      await updateDoc(memberRef, {
+        "userDetails.displayName": data.displayName,
+        "userDetails.email": data.email,
+        "userDetails.phone": data.phone ?? editingMember.userDetails?.phone ?? null,
+      });
+    } catch (error: any) {
+      console.error("Error updating member:", error);
+      throw new Error(error?.message || "Unable to update member. Please try again.");
+    }
+  };
+
   return (
-    <ListView
-      title="Members"
-      subtitle="Browse and manage community members."
-      searchTerm={searchTerm}
-      onSearchChange={setSearchTerm}
-      viewMode={viewMode}
-      onViewModeChange={setViewMode}
-      loading={loading}
-    >
+    <>
+      <ListView
+        title="Members"
+        subtitle="Browse and manage community members."
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        loading={loading}
+        onAddAction={() => setIsAddMemberOpen(true)}
+      >
         <MembersList 
-            members={filteredMembers} 
-            userRole={userRole as any}
-            viewMode={viewMode}
+          members={filteredMembers} 
+          userRole={userRole as any}
+          viewMode={viewMode}
+          onEditMember={(member) => setEditingMember(member)}
         />
-    </ListView>
+      </ListView>
+      <MemberDialog
+        open={isAddMemberOpen}
+        mode="add"
+        communityName={community?.name as string | undefined}
+        onClose={() => setIsAddMemberOpen(false)}
+        onSubmit={handleAddMemberSubmit}
+      />
+      <MemberDialog
+        open={!!editingMember}
+        mode="edit"
+        communityName={community?.name as string | undefined}
+        initialMember={editingMember}
+        onClose={() => setEditingMember(null)}
+        onSubmit={handleEditMemberSubmit}
+      />
+    </>
   );
 }

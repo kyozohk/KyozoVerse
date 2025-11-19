@@ -6,7 +6,7 @@ import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Users } from 'lucide-react';
+import { Users, Edit } from 'lucide-react';
 import { MemberCard } from './member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
@@ -19,6 +19,7 @@ interface MembersListProps {
   selectedMembers?: (Member | CommunityMember)[];
   selectable?: boolean;
   viewMode?: 'grid' | 'list';
+  onEditMember?: (member: CommunityMember) => void;
 }
 
 export function MembersList({
@@ -28,6 +29,7 @@ export function MembersList({
   selectedMembers = [],
   selectable,
   viewMode = 'grid',
+  onEditMember,
 }: MembersListProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
@@ -57,8 +59,8 @@ export function MembersList({
         {members.map((member) => {
           const isSelected = selectedMembers.some((m) => 'userId' in m ? m.userId === member.userId : false);
           const itemStyle: React.CSSProperties = {
-            '--hover-bg-color': hexToRgba(activeColor, 0.1),
-            borderColor: isSelected ? activeColor : 'hsl(var(--border))',
+            '--hover-bg-color': hexToRgba(activeColor, 0.08),
+            borderColor: isSelected ? activeColor : hexToRgba(activeColor, 0.5),
           } as any;
           if (isSelected) {
             itemStyle.backgroundColor = hexToRgba(activeColor, 0.1);
@@ -90,6 +92,18 @@ export function MembersList({
                 <div className="font-semibold text-base">{member.userDetails?.displayName}</div>
                 <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
               </div>
+              {canManage && (
+                <button
+                  type="button"
+                  className="ml-4 h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditMember && onEditMember(member);
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+              )}
             </div>
           );
         })}

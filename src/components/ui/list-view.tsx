@@ -5,6 +5,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { LayoutGrid, List, Search } from 'lucide-react';
+import { AiOutlineUserAdd } from 'react-icons/ai';
 import { cn } from '@/lib/utils';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
@@ -21,6 +22,7 @@ interface ListViewProps {
   children: React.ReactNode;
   loading?: boolean;
   actions?: React.ReactNode;
+  onAddAction?: () => void;
 }
 
 export function ListView({
@@ -32,7 +34,8 @@ export function ListView({
   onViewModeChange,
   children,
   loading = false,
-  actions
+  actions,
+  onAddAction
 }: ListViewProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
@@ -79,6 +82,19 @@ export function ListView({
             </div>
             <div className="flex items-center gap-2">
               {actions}
+              {onAddAction && (
+                <button
+                  type="button"
+                  onClick={onAddAction}
+                  className="h-9 w-9 flex items-center justify-center rounded-md border transition-colors"
+                  style={{
+                    borderColor: activeColor,
+                    color: activeColor,
+                  }}
+                >
+                  <AiOutlineUserAdd className="h-5 w-5" />
+                </button>
+              )}
               <div className="flex items-center gap-1 rounded-md bg-muted/10 p-1">
                 <button
                   type="button"
