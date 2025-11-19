@@ -47,8 +47,12 @@ export default function CommunityMembersPage() {
   }, [handle, user]);
   
   useEffect(() => {
-    if (!community?.communityId) return;
+    if (!community?.communityId) {
+      setLoading(false);
+      return
+    };
 
+    setLoading(true);
     const membersRef = collection(db, "communityMembers");
     const q = query(
       membersRef,
@@ -102,7 +106,7 @@ export default function CommunityMembersPage() {
     >
         <MembersList 
             members={filteredMembers} 
-            userRole={userRole} 
+            userRole={userRole as any}
             viewMode={viewMode}
         />
     </ListView>

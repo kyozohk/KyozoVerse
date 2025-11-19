@@ -64,7 +64,7 @@ export function ListView({
                     value={searchTerm}
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="pl-10 bg-card text-foreground focus:ring-primary-purple"
-                    style={{ '--input-border-color': activeColor } as React.CSSProperties}
+                    style={{ '--input-border-color': activeColor, 'borderColor': activeColor } as React.CSSProperties}
                 />
             </div>
             <div className="flex items-center gap-1">

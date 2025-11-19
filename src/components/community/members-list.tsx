@@ -62,6 +62,7 @@ export function MembersList({
           } as any;
           if (isSelected) {
             itemStyle.backgroundColor = hexToRgba(activeColor, 0.1);
+            itemStyle.borderColor = activeColor;
           }
 
           return (
