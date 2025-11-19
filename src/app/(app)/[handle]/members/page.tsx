@@ -3,13 +3,14 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { type CommunityMember, type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { Skeleton } from "@/components/ui/skeleton";
+import { doc } from "firebase/firestore";
 
 export default function CommunityMembersPage() {
   const { user } = useAuth();
