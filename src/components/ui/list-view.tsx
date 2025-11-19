@@ -57,15 +57,16 @@ export function ListView({
           </div>
         )}
         <div className="flex items-center justify-between gap-4 mb-6">
-            <Input
-              label="Search..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-8 bg-card text-foreground focus:ring-primary-purple"
-              style={{ '--input-border-color': activeColor } as React.CSSProperties}
-              icon={<Search className="h-4 w-4 text-muted-foreground" style={{ color: activeColor }}/>}
-              wrapperClassName="flex-grow"
-            />
+            <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" style={{ color: activeColor }} />
+                <Input
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="pl-10 bg-card text-foreground focus:ring-primary-purple"
+                    style={{ '--input-border-color': activeColor } as React.CSSProperties}
+                />
+            </div>
             <div className="flex items-center gap-1">
               {actions}
               <div className="flex items-center gap-1 rounded-md p-1" style={{ backgroundColor: 'transparent' }}>

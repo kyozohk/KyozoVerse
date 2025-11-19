@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback, Checkbox } from '@/components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Phone, Users } from 'lucide-react';
+import { MemberCard } from '../community/member-card';
 
 export interface MembersListProps {
   members: (Member | CommunityMember)[];
@@ -138,11 +139,30 @@ const MembersList: React.FC<MembersListProps> = ({
     
     return isSelected 
       ? { backgroundColor: hexToRgba(activeColor, 0.1), borderColor: activeColor }
-      : { borderColor: hexToRgba(activeColor, 0.2), ':hover': { backgroundColor: hexToRgba(activeColor, 0.05) } };
+      : { borderColor: hexToRgba(activeColor, 0.2), '--hover-bg-color': hexToRgba(activeColor, 0.05) } as React.CSSProperties;
   };
 
+  if(viewMode === 'grid') {
+    return (
+        <>
+            {(members as CommunityMember[]).map((member) => {
+                const canManage = false;
+                return (
+                    <MemberCard
+                        key={member.userId}
+                        member={member}
+                        canManage={canManage}
+                        borderColor={activeColor}
+                        onClick={() => onMemberClick && onMemberClick(member)}
+                    />
+                )
+            })}
+        </>
+    )
+  }
+
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2 col-span-full", className)}>
       {members.map((member) => {
         const isSelected = selectedMembers.some(m => {
     // Handle both Member and CommunityMember types
@@ -160,7 +180,7 @@ const MembersList: React.FC<MembersListProps> = ({
             key={memberKey} 
             className={cn(
               "flex items-center p-3 border rounded-md transition-colors",
-              activeColor ? "hover:bg-opacity-5" : "hover:bg-muted/30",
+              "hover:bg-[var(--hover-bg-color)]",
               onMemberClick ? "cursor-pointer" : ""
             )}
             style={itemStyle}
