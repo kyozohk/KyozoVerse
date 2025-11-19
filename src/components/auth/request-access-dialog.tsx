@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CustomFormDialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CustomButton } from '@/components/ui/CustomButton';
@@ -80,80 +81,68 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-light">Request to Join</DialogTitle>
-          <button 
-            onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+    <CustomFormDialog
+        open={open}
+        onClose={() => onOpenChange(false)}
+        title="Join the Waitlist"
+        description="Join the exclusive club of creators, fill up the form and we will get back to you."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            name="firstName"
+            label="Firstname"
+            placeholder="Firstname"
+            required
+          />
+          <Input
+            name="lastName"
+            label="Lastname"
+            placeholder="Lastname"
+            required
+          />
+        </div>
+        
+        <Input
+          name="phone"
+          label="Phone"
+          placeholder="Phone"
+          required
+        />
+        
+        <Input
+          name="email"
+          label="Email"
+          placeholder="Email"
+          type="email"
+          required
+        />
+        
+        <div className="space-y-2 pt-2">
+          <Checkbox
+            checked={newsletter}
+            onCheckedChange={(checked) => setNewsletter(checked === true)}
+            label="Sign me up to the CreativeLab newsletter"
+          />
+          
+          <Checkbox
+            checked={whatsapp}
+            onCheckedChange={(checked) => setWhatsapp(checked === true)}
+            label="By submitting this form I agree to be contacted via WhatsApp"
+          />
+        </div>
+        
+        <div className="pt-4">
+          <CustomButton 
+            type="submit" 
+            variant="waitlist" 
+            disabled={isSubmitting}
+            className="w-full"
           >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
-        </DialogHeader>
-        
-        <p className="text-sm text-muted-foreground mb-4">
-          Enter your email to request access to our platform.
-        </p>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              name="firstName"
-              label="Firstname"
-              placeholder="Firstname"
-              required
-            />
-            <Input
-              name="lastName"
-              label="Lastname"
-              placeholder="Lastname"
-              required
-            />
-          </div>
-          
-          <Input
-            name="phone"
-            label="Phone"
-            placeholder="Phone"
-            required
-          />
-          
-          <Input
-            name="email"
-            label="Email"
-            placeholder="Email"
-            type="email"
-            required
-          />
-          
-          <div className="space-y-2 pt-2">
-            <Checkbox
-              checked={newsletter}
-              onCheckedChange={(checked) => setNewsletter(checked === true)}
-              label="Sign me up to the CreativeLab newsletter"
-            />
-            
-            <Checkbox
-              checked={whatsapp}
-              onCheckedChange={(checked) => setWhatsapp(checked === true)}
-              label="By submitting this form I agree to be contacted via WhatsApp"
-            />
-          </div>
-          
-          <div className="pt-4">
-            <CustomButton 
-              type="submit" 
-              variant="waitlist" 
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </CustomButton>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </CustomButton>
+        </div>
+      </form>
+    </CustomFormDialog>
   );
 }

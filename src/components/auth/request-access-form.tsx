@@ -98,7 +98,7 @@ export function RequestAccessForm({ onCancel, onSignInClick, formType, setFormTy
         {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
 
         <div className="grid grid-cols-2 gap-4 mt-8">
-            <CustomButton variant="default" onClick={onCancel}>Cancel</CustomButton>
+            <CustomButton variant="outline" onClick={onCancel}>Cancel</CustomButton>
             <CustomButton variant="primary" onClick={handleSubmit}>{formType === 'waitlist' ? 'Submit' : 'Sign Up'}</CustomButton>
         </div>
 
