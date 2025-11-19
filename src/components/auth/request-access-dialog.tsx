@@ -86,6 +86,8 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
         onClose={() => onOpenChange(false)}
         title="Join the Waitlist"
         description="Join the exclusive club of creators, fill up the form and we will get back to you."
+        backgroundImage="/bg/light_app_bg.png"
+        color="#843484"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">

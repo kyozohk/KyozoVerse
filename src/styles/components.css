@@ -159,7 +159,7 @@
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
-  background-color: transparent;
+  background-color: var(--background-color);
   padding: 0 0.25rem;
 }
 
