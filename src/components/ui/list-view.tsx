@@ -38,7 +38,7 @@ export function ListView({
   const { activeColor } = getThemeForPath(pathname);
   
   const hexToRgba = (hex: string, alpha: number) => {
-    if (!/^#[0-9A-F]{6}$/i.test(hex)) return hex; // Return original if not a valid hex
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return hex; // Return original if not a valid hex
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -49,7 +49,7 @@ export function ListView({
 
   return (
     <div className="p-6 md:p-8">
-      <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border border-gray-200/80">
+      <div className="bg-card text-foreground p-6 md:p-8 rounded-xl border" style={{ borderColor: activeColor }}>
         {(title || subtitle) && (
           <div className="mb-6">
             {title && <h1 className="text-2xl font-semibold mb-1">{title}</h1>}
@@ -95,7 +95,7 @@ export function ListView({
           </div>
         </div>
         {loading ? (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
             {viewMode === 'grid' ? (
               // Grid skeleton
               Array(6).fill(0).map((_, i) => (
@@ -117,7 +117,7 @@ export function ListView({
             )}
           </div>
         ) : (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
             {children}
           </div>
         )}

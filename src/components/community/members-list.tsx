@@ -25,11 +25,11 @@ interface MembersListProps {
   viewMode?: 'grid' | 'list';
 }
 
-export function MembersList({ community, members, userRole, onMemberClick, selectedMembers, selectable, viewMode = 'grid' }: MembersListProps) {
+export function MembersList({ community, members, userRole, onMemberClick, selectedMembers, selectable, viewMode: initialViewMode = 'grid' }: MembersListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [internalViewMode, setInternalViewMode] = useState<'grid' | 'list'>(viewMode);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialViewMode);
   
-  const currentViewMode = selectable ? viewMode : internalViewMode;
+  const currentViewMode = selectable ? initialViewMode : viewMode;
 
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
@@ -55,7 +55,7 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   };
 
   const ListComponent = (
-    <div className="space-y-2 p-2">
+    <div className="space-y-2">
         {filteredMembers.length === 0 ? (
             <div className={cn("flex flex-col items-center justify-center py-12 text-muted-foreground")}>
                 <Users className="h-12 w-12 mb-4 opacity-50" />
@@ -63,19 +63,16 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
             </div>
         ) : filteredMembers.map((member) => {
           const isSelected = selectedMembers?.some(m => m.userId === member.userId);
-          const itemStyle = isSelected
+          const itemStyle: React.CSSProperties = isSelected
               ? { borderColor: activeColor, backgroundColor: hexToRgba(activeColor, 0.3) }
-              : {};
-          
+              : { '--hover-bg-color': hexToRgba(activeColor, 0.1) } as any;
+
           return (
             <div 
               key={member.userId} 
               className={cn(
                 "flex items-center p-4 border rounded-lg transition-colors",
-                {
-                  "hover:bg-primary/5": onMemberClick && !isSelected
-                },
-                onMemberClick ? "cursor-pointer" : ""
+                onMemberClick ? "cursor-pointer hover:bg-[var(--hover-bg-color)]" : ""
               )}
                style={itemStyle}
               onClick={() => onMemberClick && onMemberClick(member)}
@@ -124,29 +121,38 @@ export function MembersList({ community, members, userRole, onMemberClick, selec
   
   // If used on the community overview page (no ListView wrapper)
   if(!community) {
-      return currentViewMode === 'grid' ? <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">{GridComponent}</div> : ListComponent;
+      return (
+        <ListView
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        >
+          {viewMode === 'grid' ? (
+              filteredMembers.map((member) => (
+                <MemberCard key={member.userId} member={member} canManage={canManage} borderColor={activeColor} />
+              ))
+          ) : (
+            <div className="col-span-full">
+              {ListComponent}
+            </div>
+          )}
+        </ListView>
+      );
   }
 
   // Standalone Member List for dedicated /members page
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Members</CardTitle>
-        <CardDescription>
-          Browse and manage community members.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ListView
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          viewMode={currentViewMode}
-          onViewModeChange={setInternalViewMode}
-          loading={!members}
-        >
-          {currentViewMode === 'grid' ? GridComponent : ListComponent}
-        </ListView>
-      </CardContent>
-    </Card>
+      <ListView
+        title="Members"
+        subtitle="Browse and manage community members."
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        loading={!members}
+      >
+        {viewMode === 'grid' ? GridComponent : ListComponent}
+      </ListView>
   );
 }

@@ -37,8 +37,7 @@ export default function CommunitySidebar() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
-  const sidebarBorderColor = `var(--${currentSection}-color-border)`;
-
+  
   useEffect(() => {
     const handleFromPath = pathname.split('/')[1];
 
@@ -82,27 +81,28 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-bg-${currentSection} sidebar-shadow`}
+      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
         padding: '0 8px',
+        backgroundColor: activeBgColor,
+        borderColor: activeColor,
       }}
     >
       <div className="flex h-full max-h-screen flex-col">
         {/* Header: Dropdown or Create Community Button */}
-        <div className="flex h-[88px] items-center border-b" style={{ borderColor: sidebarBorderColor }}>
+        <div className="flex h-[88px] items-center border-b" style={{ borderColor: activeColor }}>
           {loading ? (
             <Skeleton className="h-10 w-full" />
           ) : (communities.length > 0 && selectedCommunityHandle ? (
             <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
               {/* DROPDOWN CONTROL */}
               <SelectTrigger
-                className="w-full h-full shadow-none focus:ring-0 bg-transparent text-foreground p-0"
+                className="w-full h-full shadow-none focus:ring-0 bg-transparent text-foreground p-0 border-0"
                 style={{
-                  border: `2px solid ${sidebarBorderColor}`,
                   borderRadius: '12px',
                   boxShadow: 'none',
-                  background: activeBgColor,
+                  background: 'transparent',
                 }}
               >
                 <div className="flex items-center gap-3 truncate min-h-20">
@@ -126,7 +126,7 @@ export default function CommunitySidebar() {
               <SelectContent
                 className="max-h-[800px] p-0"
                 style={{
-                  border: `2px solid ${sidebarBorderColor}`,
+                  border: `2px solid ${activeColor}`,
                   borderRadius: '12px',
                   boxShadow: 'none',
                   padding: 0,
@@ -141,10 +141,9 @@ export default function CommunitySidebar() {
                       value={community.handle}
                       className="py-3 px-2 h-20 w-full"
                       style={{
-                        // All items same style, background, and border
-                        backgroundColor: activeBgColor,
+                        backgroundColor: isSelected ? activeBgColor : 'transparent',
                         borderRadius: '12px',
-                        border: `2px solid ${sidebarBorderColor}`,
+                        border: `2px solid ${isSelected ? activeColor : 'transparent'}`,
                         marginBottom: 8,
                       }}
                     >
