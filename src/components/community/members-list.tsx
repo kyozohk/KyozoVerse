@@ -10,12 +10,13 @@ import { Users } from 'lucide-react';
 import { MemberCard } from './member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
+import { Member } from '../broadcast/broadcast-types';
 
 interface MembersListProps {
   members: CommunityMember[];
   userRole?: UserRole;
   onMemberClick?: (member: CommunityMember) => void;
-  selectedMembers?: CommunityMember[];
+  selectedMembers?: (Member | CommunityMember)[];
   selectable?: boolean;
   viewMode?: 'grid' | 'list';
 }
@@ -24,7 +25,7 @@ export function MembersList({
   members,
   userRole,
   onMemberClick,
-  selectedMembers,
+  selectedMembers = [],
   selectable,
   viewMode = 'grid',
 }: MembersListProps) {
@@ -54,7 +55,7 @@ export function MembersList({
     return (
       <div className="col-span-full space-y-2">
         {members.map((member) => {
-          const isSelected = selectedMembers?.some((m) => m.userId === member.userId);
+          const isSelected = selectedMembers.some((m) => 'userId' in m ? m.userId === member.userId : false);
           const itemStyle: React.CSSProperties = {
             '--hover-bg-color': hexToRgba(activeColor, 0.1),
             borderColor: isSelected ? activeColor : 'hsl(var(--border))',
@@ -88,9 +89,6 @@ export function MembersList({
                 <div className="font-semibold text-base">{member.userDetails?.displayName}</div>
                 <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
               </div>
-              <div className="text-sm text-muted-foreground">
-                <p>{member.userDetails?.phoneNumber}</p>
-              </div>
             </div>
           );
         })}
@@ -107,6 +105,7 @@ export function MembersList({
           member={member}
           canManage={canManage}
           borderColor={activeColor}
+          onClick={() => onMemberClick && onMemberClick(member)}
         />
       ))}
     </>
