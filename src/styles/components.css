@@ -1,4 +1,5 @@
 
+
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -158,7 +159,7 @@
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
-  background-color: white;
+  background-color: transparent;
   padding: 0 0.25rem;
 }
 
