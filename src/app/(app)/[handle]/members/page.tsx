@@ -164,29 +164,46 @@ export default function CommunityMembersPage() {
     displayName: string;
     email: string;
     phone?: string;
+    avatarUrl?: string;
+    coverUrl?: string;
   }) => {
-    if (!editingMember) {
-      throw new Error("No member selected to edit.");
-    }
-
-    const memberId = (editingMember as any).id;
-    if (!memberId) {
-      throw new Error("Selected member is missing an id.");
+    if (!editingMember?.userId) {
+        throw new Error("No member selected to edit or member is missing ID.");
     }
 
     try {
-      const memberRef = doc(db, "communityMembers", memberId);
+        const userRef = doc(db, "users", editingMember.userId);
+        
+        const updateData: Partial<User> = {
+            displayName: data.displayName,
+            email: data.email,
+            phoneNumber: data.phone,
+        };
 
-      await updateDoc(memberRef, {
-        "userDetails.displayName": data.displayName,
-        "userDetails.email": data.email,
-        "userDetails.phone": data.phone ?? editingMember.userDetails?.phone ?? null,
-      });
+        if (data.avatarUrl) {
+            updateData.avatarUrl = data.avatarUrl;
+        }
+        if (data.coverUrl) {
+            updateData.coverUrl = data.coverUrl;
+        }
+
+        await updateDoc(userRef, updateData);
+        
+        // Also update the denormalized data in communityMembers
+        const memberRef = doc(db, "communityMembers", (editingMember as any).id);
+        await updateDoc(memberRef, {
+            'userDetails.displayName': data.displayName,
+            'userDetails.email': data.email,
+            'userDetails.phone': data.phone,
+            'userDetails.avatarUrl': data.avatarUrl || editingMember.userDetails?.avatarUrl,
+        });
+
     } catch (error: any) {
-      console.error("Error updating member:", error);
-      throw new Error(error?.message || "Unable to update member. Please try again.");
+        console.error("Error updating member:", error);
+        throw new Error(error?.message || "Unable to update member. Please try again.");
     }
   };
+
 
   return (
     <>

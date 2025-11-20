@@ -1,4 +1,5 @@
 
+
 export type User = {
   userId: string;
   email?: string;
@@ -21,6 +22,7 @@ export type Community = {
   handle: string;
   tagline?: string;
   communityProfileImage?: string;
+  communityBackgroundImage?: string;
   memberCount: number;
   ownerId: string;
   description?: string;
@@ -38,6 +40,7 @@ export type CommunityMember = {
     avatarUrl?: string;
     email?: string;
     phone?: string;
+    coverUrl?: string;
   };
 };
 
@@ -59,3 +62,4 @@ export type Post = {
   createdAt: any; // Firestore Timestamp
   visibility: 'public' | 'private' | 'members-only';
 };
+
