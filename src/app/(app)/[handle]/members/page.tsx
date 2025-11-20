@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -134,6 +135,10 @@ export default function CommunityMembersPage() {
       if (snap.empty) {
         // User does not exist, create a new one
         console.log(`No user found with email ${data.email}. Creating a new user.`);
+        
+        if (!data.email || !data.email.includes('@')) {
+          throw new Error("A valid email address is required to create a new user.");
+        }
         
         const tempPassword = Math.random().toString(36).slice(-8);
         const auth = getAuth();
