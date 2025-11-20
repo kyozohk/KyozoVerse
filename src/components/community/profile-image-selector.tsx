@@ -56,7 +56,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
           />
           {isPresetSelected(src) && (
             <div
-              className="absolute inset-0 rounded-full border-2"
+              className="absolute inset-0 rounded-full border-5 p-4"
               style={{ borderColor: activeColor }}
             />
           )}

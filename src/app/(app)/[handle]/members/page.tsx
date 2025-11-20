@@ -26,7 +26,8 @@ import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-ut
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from "@/components/ui/list-view";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { communityAuth } from "@/firebase/community-auth";
 
 
 export default function CommunityMembersPage() {
@@ -141,10 +142,9 @@ export default function CommunityMembersPage() {
         }
         
         const tempPassword = Math.random().toString(36).slice(-8);
-        const auth = getAuth();
         
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, data.email, tempPassword);
+            const userCredential = await createUserWithEmailAndPassword(communityAuth, data.email, tempPassword);
             userId = userCredential.user.uid;
             
             userDetails = {
