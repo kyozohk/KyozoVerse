@@ -138,8 +138,8 @@ export const MembersList: React.FC<MembersListProps> = ({
     if (!activeColor) return {};
     
     return isSelected 
-      ? { backgroundColor: hexToRgba(activeColor, 0.1), borderColor: activeColor }
-      : { borderColor: hexToRgba(activeColor, 0.2), '--hover-bg-color': hexToRgba(activeColor, 0.05) } as React.CSSProperties;
+      ? { backgroundColor: hexToRgba(activeColor, 0.18), borderColor: activeColor }
+      : { borderColor: hexToRgba(activeColor, 0.35), '--hover-bg-color': hexToRgba(activeColor, 0.08) } as React.CSSProperties;
   };
 
   if(viewMode === 'grid') {
@@ -179,7 +179,7 @@ export const MembersList: React.FC<MembersListProps> = ({
           <div 
             key={memberKey} 
             className={cn(
-              "flex items-center p-3 border rounded-md transition-colors",
+              "flex items-center p-3 border rounded-md transition-colors text-foreground",
               "hover:bg-[var(--hover-bg-color)]",
               onMemberClick ? "cursor-pointer" : ""
             )}

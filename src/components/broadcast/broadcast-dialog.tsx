@@ -321,6 +321,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
               memberId: memberId,
               name: memberDisplayName || 'Unknown',
               status: 'failed',
+              phone: undefined,
               error: 'No phone number provided'
             });
             continue;
@@ -362,6 +363,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
               memberId: memberId,
               name: memberDisplayName || 'Unknown',
               status: 'sent',
+              phone: memberPhone,
             });
           } else {
             results.failed++;
@@ -369,6 +371,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
               memberId: memberId,
               name: memberDisplayName || 'Unknown',
               status: 'failed',
+              phone: memberPhone,
               error: typeof data.error === 'object' ? JSON.stringify(data.error) : data.error || data.errorMessage || 'Unknown error'
             });
           }
@@ -380,6 +383,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
             memberId: memberId,
             name: memberDisplayName || 'Unknown',
             status: 'failed',
+            phone: memberPhone,
             error: error instanceof Error ? error.message : 'Unknown error'
           });
         }

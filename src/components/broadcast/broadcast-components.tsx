@@ -5,6 +5,7 @@ import React from 'react';
 import { BroadcastStep, Member, Template, TemplateVariable, BroadcastResult } from './broadcast-types';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Check, Image as ImageIcon } from 'lucide-react';
 import { CommunityMember } from '@/lib/types';
@@ -26,14 +27,26 @@ export const StepIndicator = ({ currentStep }: { currentStep: BroadcastStep }) =
   return (
     <div className="flex items-center justify-between w-full mb-8">
       {steps.map((step) => (
-        <div 
-          key={step.num} 
-          className={`flex flex-col items-center ${currentStep === step.num ? 'text-primary' : currentStep > step.num ? 'text-green-500' : 'text-gray-400'}`}
+        <div
+          key={step.num}
+          className={`flex flex-col items-center ${
+            currentStep === step.num
+              ? 'text-primary'
+              : currentStep > step.num
+              ? 'text-green-500'
+              : 'text-gray-400'
+          }`}
         >
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 mb-2 
-            ${currentStep === step.num ? 'border-primary text-primary' : 
-              currentStep > step.num ? 'border-green-500 bg-green-500 text-white' : 
-              'border-gray-300 text-gray-400'}`}>
+          <div
+            className={`flex items-center justify-center w-8 h-8 rounded-full border-2 mb-2 
+            ${
+              currentStep === step.num
+                ? 'border-primary text-primary'
+                : currentStep > step.num
+                ? 'border-green-500 bg-green-500 text-white'
+                : 'border-gray-300 text-gray-400'
+            }`}
+          >
             {currentStep > step.num ? <Check className="h-4 w-4" /> : step.num}
           </div>
           <div className="text-xs font-medium">{step.label}</div>
@@ -102,33 +115,35 @@ export const TemplateStep = ({
   loadingTemplates: boolean
 }) => (
   <div className="space-y-6">
-    <div>
-      <label className="block text-sm font-medium mb-2">Select Template</label>
-      {loadingTemplates ? (
-        <div className="text-center py-4 text-muted-foreground">Loading templates...</div>
-      ) : templates.length === 0 ? (
-        <div className="text-center py-4 text-muted-foreground">No templates available</div>
-      ) : (
-        <Select
-          value={selectedTemplate}
-          onValueChange={onTemplateChange}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a template" />
-          </SelectTrigger>
-          <SelectContent>
-            {templates.map(template => (
-              <SelectItem key={template.id} value={template.id}>
-                {template.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+    <div className="inputWrapper">
+      <div className="inputContainer">
+        <label className="floatingLabel">Select Template</label>
+        {loadingTemplates ? (
+          <div className="text-center py-4 text-muted-foreground">Loading templates...</div>
+        ) : templates.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">No templates available</div>
+        ) : (
+          <Select
+            value={selectedTemplate}
+            onValueChange={onTemplateChange}
+          >
+            <SelectTrigger className="w-full input">
+              <SelectValue placeholder="Select a template" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {templates.map(template => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
     </div>
     
     {selectedTemplate && (
-      <div className="border rounded-md p-4 bg-muted/30">
+      <div className="inputWrapper">
         {(() => {
           const template = templates.find(t => t.id === selectedTemplate);
           if (!template) return null;
@@ -143,18 +158,15 @@ export const TemplateStep = ({
           }
           
           return (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Template Preview</h4>
-              <div className="p-3 bg-background border rounded-md">
-                {templateContent ? (
-                  templateContent.split('\n').map((line, i) => (
-                    <React.Fragment key={i}>
-                      {line}
-                      {i < templateContent.split('\n').length - 1 && <br />}
-                    </React.Fragment>
-                  ))
-                ) : 'No content available'}                              
-              </div>
+            <div className="inputContainer">
+              <label className="floatingLabel">Template Preview</label>
+              <Textarea
+                label="Template Preview"
+                readOnly
+                value={templateContent || 'No content available'}
+                rows={4}
+                className="resize-none bg-muted/20"
+              />
             </div>
           );
         })()}
@@ -163,28 +175,27 @@ export const TemplateStep = ({
     
     {templateVariables.length > 0 && (
       <div className="space-y-4">
-        <h4 className="text-sm font-medium">Template Variables</h4>
         {templateVariables.map((variable) => (
           <div key={variable.index} className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="flex-grow">
-                <label className="block text-xs text-muted-foreground mb-1">
-                  Variable {variable.index}: {variable.placeholder}
-                </label>
-                <Select
-                  value={variable.variableType || 'freeText'}
-                  onValueChange={(value) => onVariableTypeChange(variable.index, value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="firstName">First Name</SelectItem>
-                    <SelectItem value="lastName">Last Name</SelectItem>
-                    <SelectItem value="communityName">Community Name</SelectItem>
-                    <SelectItem value="freeText">Free Text</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex-grow inputWrapper">
+                <div className="inputContainer">
+                  <label className="floatingLabel">Variable {variable.index}</label>
+                  <Select
+                    value={variable.variableType || 'freeText'}
+                    onValueChange={(value) => onVariableTypeChange(variable.index, value)}
+                  >
+                    <SelectTrigger className="w-full input">
+                      <SelectValue placeholder={variable.placeholder} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-80">
+                      <SelectItem value="firstName">First Name</SelectItem>
+                      <SelectItem value="lastName">Last Name</SelectItem>
+                      <SelectItem value="communityName">Community Name</SelectItem>
+                      <SelectItem value="freeText">Free Text</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             
@@ -236,77 +247,61 @@ export const PreviewStep = ({
   templates: Template[],
   templateVariables: TemplateVariable[],
   members: (Member | CommunityMember)[]
-}) => (
-  <div className="space-y-6">
-    <div>
-      <h3 className="text-lg font-medium mb-2">Message Preview</h3>
-      <div className="text-sm text-muted-foreground mb-4">
-        This is how your message will appear to recipients.
-      </div>
-    </div>
-    
-    <div className="border rounded-md p-4 bg-muted/30">
-      <div className="mb-2 text-sm font-medium">
-        To: {members.length} recipients
-      </div>
-      
-      {selectedTemplate && (
-        <div className="p-4 bg-background border rounded-md">
-          {(() => {
-            const template = templates.find(t => t.id === selectedTemplate);
-            
-            if (template) {
-              // Get template content
-              let displayText = '';
-              
-              if (template.components) {
-                // For real templates from 360dialog
-                const bodyComponent = template.components.find(c => c.type === 'BODY' || c.type === 'body');
-                if (bodyComponent && bodyComponent.text) {
-                  displayText = bodyComponent.text;
-                }
-              }
-              
-              // Replace variables in the text
-              if (displayText && templateVariables.length > 0) {
-                templateVariables.forEach(variable => {
-                  const placeholder = `{{${variable.index}}}`;
-                  let value = '';
-                  
-                  // Use the appropriate value based on variable type
-                  if (variable.variableType === 'freeText') {
-                    value = variable.freeText?.trim() || `[${variable.placeholder}]`;
-                  } else {
-                    value = variable.value.trim() || `[${variable.placeholder}]`;
-                  }
-                  
-                  displayText = displayText.replace(new RegExp(placeholder, 'g'), value);
-                });
-              }
-              
-              return (
-                <div>
-                  <div className="mb-3 text-sm font-medium">
-                    Template: {template.name} {template.language ? `(${typeof template.language === 'string' ? template.language : template.language.code})` : ''}
-                  </div>
-                  <div className="p-3 bg-muted/20 rounded-md border">
-                    {displayText || 'No content available'}
-                  </div>
-                </div>
-              );
-            }
-            
-            return <p>No template selected</p>;
-          })()}
+}) => {
+  // Build final text once for display
+  let displayText = '';
+  const template = templates.find(t => t.id === selectedTemplate);
+
+  if (template && template.components) {
+    const bodyComponent = template.components.find(c => c.type === 'BODY' || c.type === 'body');
+    if (bodyComponent && bodyComponent.text) {
+      displayText = bodyComponent.text;
+    }
+  }
+
+  if (displayText && templateVariables.length > 0) {
+    templateVariables.forEach(variable => {
+      const placeholder = `{{${variable.index}}}`;
+      let value = '';
+
+      if (variable.variableType === 'freeText') {
+        value = variable.freeText?.trim() || `[${variable.placeholder}]`;
+      } else {
+        value = variable.value.trim() || `[${variable.placeholder}]`;
+      }
+
+      displayText = displayText.replace(new RegExp(placeholder, 'g'), value);
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-medium mb-2">Message Preview</h3>
+        <div className="text-sm text-muted-foreground">
+          This is how your message will appear to recipients.
         </div>
-      )}
+      </div>
+
+      <div className="inputWrapper">
+        <div className="inputContainer">
+          <label className="floatingLabel">Preview for {members.length} recipients</label>
+          <Textarea
+            label="Message Preview"
+            readOnly
+            value={displayText || 'No content available'}
+            rows={5}
+            className="resize-none bg-muted/20"
+          />
+        </div>
+      </div>
+
+      <div className="text-sm text-amber-600">
+        Please review the message carefully before proceeding to send.
+      </div>
     </div>
-    
-    <div className="text-sm text-amber-600 mt-4">
-      Please review the message carefully before proceeding to send.
-    </div>
-  </div>
-);
+  );
+};
 
 /**
  * Confirm step component
@@ -329,7 +324,7 @@ export const ConfirmStep = ({
   broadcastResults: BroadcastResult | null
 }) => (
   <div className="space-y-6">
-    <div>
+    <div className="text-foreground">
       <h3 className="text-lg font-medium mb-4">Confirm Broadcast</h3>
       
       <div className="space-y-2 mb-6">
@@ -345,7 +340,7 @@ export const ConfirmStep = ({
     </div>
     
     {/* Pricing Information */}
-    <div className="border rounded-md p-4 bg-muted/30">
+    <div className="border rounded-md p-4 bg-muted/30 text-foreground">
       <h4 className="text-sm font-medium mb-3">Broadcast Cost</h4>
       
       {loadingPricing ? (
@@ -372,7 +367,7 @@ export const ConfirmStep = ({
     
     {/* Broadcast Results */}
     {broadcastResults && (
-      <div className="border rounded-md p-4 bg-muted/30">
+      <div className="border rounded-md p-4 bg-muted/30 text-foreground">
         {broadcastResults.error ? (
           <div className="text-red-500">
             <h4 className="font-medium mb-2">Error Sending Broadcast</h4>
@@ -403,7 +398,12 @@ export const ConfirmStep = ({
                       className={`p-2 rounded-md text-sm ${detail.status === 'sent' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
                     >
                       <div className="flex justify-between">
-                        <div className="font-medium">{detail.name}</div>
+                        <div>
+                          <div className="font-medium">{detail.name}</div>
+                          {detail.phone && (
+                            <div className="text-xs text-muted-foreground">{detail.phone}</div>
+                          )}
+                        </div>
                         <div>
                           {detail.status === 'sent' ? (
                             <span className="text-green-600 flex items-center">
@@ -415,7 +415,9 @@ export const ConfirmStep = ({
                         </div>
                       </div>
                       {detail.error && (
-                        <div className="text-xs text-red-500 mt-1">{detail.error}</div>
+                        <div className="text-xs text-red-500 mt-1">
+                          {detail.error.length > 160 ? `${detail.error.slice(0, 157)}...` : detail.error}
+                        </div>
                       )}
                     </div>
                   ))}

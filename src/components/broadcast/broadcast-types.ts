@@ -85,6 +85,7 @@ export interface BroadcastResult {
     memberId: string;
     name: string;
     status: string;
+    phone?: string;
     error?: string;
   }>;
   error?: string;

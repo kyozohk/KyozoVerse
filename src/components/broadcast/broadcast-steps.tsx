@@ -163,7 +163,6 @@ export const TemplateStep = ({
     
     {templateVariables.length > 0 && (
       <div className="space-y-4">
-        <h3 className="text-sm font-medium">Template Variables</h3>
         {templateVariables.map((variable) => (
           <div key={variable.index} className="space-y-2">
             <div>
