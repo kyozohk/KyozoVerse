@@ -114,7 +114,7 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image', exist
       {!previewUrl ? (
         <div
           {...getRootProps()}
-          className={`flex justify-center items-center w-full h-64 rounded-lg border-2 border-dashed border-input p-6 cursor-pointer transition-colors ${isDragActive ? 'bg-accent' : 'bg-muted/50'}`}
+          className={`flex justify-center items-center w-full h-36 rounded-lg border-2 border-dashed border-input p-6 cursor-pointer transition-colors ${isDragActive ? 'bg-accent' : 'bg-muted/50'}`}
         >
           <input {...getInputProps()} />
           <div className="text-center">
@@ -130,7 +130,7 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image', exist
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-64 rounded-md border bg-muted flex items-center justify-center">
+        <div className="relative w-full h-36 rounded-md border bg-muted flex items-center justify-center">
           {getPreview()}
           <Button
             variant="destructive"

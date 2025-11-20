@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CustomFormDialog, Input, CustomButton, Label, Avatar, AvatarFallback, AvatarImage, Dropzone } from "@/components/ui";
+import { CustomFormDialog, Input, CustomButton, Label, Dropzone } from "@/components/ui";
 import type { CommunityMember } from "@/lib/types";
 import { ProfileImageSelector } from './profile-image-selector';
 import { uploadFile } from "@/lib/upload-helper";
@@ -49,9 +49,9 @@ export function MemberDialog({
       if (mode === "edit" && initialMember) {
         setDisplayName(initialMember.userDetails?.displayName || "");
         setEmail(initialMember.userDetails?.email || "");
-        setPhone((initialMember as any).userDetails?.phone || "");
+        setPhone(initialMember.userDetails?.phone || "");
         setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
-        setCoverUrl((initialMember.userDetails as any).coverUrl || null);
+        setCoverUrl(initialMember.userDetails?.coverUrl || null);
       } else {
         setDisplayName("");
         setEmail("");
@@ -127,7 +127,7 @@ export function MemberDialog({
       ? communityName
         ? `Invite a new member to ${communityName}.`
         : "Add new member to your community."
-      : "Update member's details.";
+      : "";
 
   return (
     <CustomFormDialog
@@ -135,7 +135,7 @@ export function MemberDialog({
       onClose={onClose}
       title={title}
       description={description}
-      color="#06C4B5" // Members section color
+      color="#843484" // Default Purple
     >
       <div className="flex flex-col h-full gap-6 pt-2">
         <div className="space-y-4">
@@ -189,10 +189,10 @@ export function MemberDialog({
           <CustomButton
             onClick={handleSubmit}
             className="flex-1"
-            variant="primary"
+            variant="outline"
             disabled={submitting}
           >
-            {submitting ? (mode === "add" ? "Adding..." : "Saving...") : mode === "add" ? "Add member" : "Save changes"}
+            {submitting ? (mode === "add" ? "Adding..." : "Saving...") : "Save changes"}
           </CustomButton>
         </div>
       </div>

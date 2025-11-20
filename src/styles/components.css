@@ -116,7 +116,7 @@
   width: 100%;
   height: 44px; /* Make inputs 10% taller */
   font-size: 1rem;
-  color: var(--input-border-color, hsl(var(--foreground)));
+  color: hsl(var(--foreground));
   transition: border-color 0.2s ease;
 }
 
