@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -514,11 +515,9 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       title={title}
       description={subtitle}
       backgroundImage="/bg/light_app_bg.png"
-      color="#F59E0B" // Amber color for broadcast
+      color="#C170CF" // Purple color for broadcast
     >
       <div className="flex flex-col h-full">
-        {currentStep > 0 && <StepIndicator currentStep={currentStep} />}
-        
         <div className="flex-grow overflow-y-auto mb-6">
           {currentStep === BroadcastStep.RECIPIENTS && (
             <RecipientsStep members={members} onMemberClick={handleToggleMember} selectedMembers={selectedMembers} />
@@ -573,7 +572,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           </CustomButton>
           
           <CustomButton
-            variant="primary"
+            variant="outline"
             onClick={goToNextStep}
             disabled={(currentStep === BroadcastStep.TEMPLATE && !areVariablesFilled()) || sendingBroadcast || selectedMembers.length === 0}
             isLoading={sendingBroadcast}

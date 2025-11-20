@@ -37,7 +37,7 @@ const formatDate = (timestamp: any): string => {
   });
 };
 
-const MembersList: React.FC<MembersListProps> = ({
+export const MembersList: React.FC<MembersListProps> = ({
   members,
   onMemberClick,
   showEmail = true,
@@ -100,7 +100,6 @@ const MembersList: React.FC<MembersListProps> = ({
   // Helper function to get phone from either Member or CommunityMember
   const getPhone = (member: Member | CommunityMember): string | undefined => {
     if (isCommunityMember(member)) {
-      // CommunityMember doesn't have phone directly, use userDetails if available
       return (member.userDetails as any)?.phone;
     } else {
       return member.phone;
@@ -220,14 +219,14 @@ const MembersList: React.FC<MembersListProps> = ({
                     {getEmail(member)}
                 </div>
               )}
+               {showPhone && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                    <Phone className="h-3 w-3 mr-1.5" />
+                    <span>{getPhone(member) || '-'}</span>
+                </div>
+                )}
             </div>
             
-            {showPhone && (
-              <div className="flex items-center text-sm mr-4">
-                <Phone className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{getPhone(member) || '-'}</span>
-              </div>
-            )}
             
             {showStatus && (
               <div className="mr-4">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Check, Image as ImageIcon } from 'lucide-react';
 import { CommunityMember } from '@/lib/types';
-import { MembersList } from '../community/members-list';
+import { MembersList } from './members-list';
 import { usePathname } from 'next/navigation';
 import { getThemeForPath } from '@/lib/theme-utils';
 
@@ -51,7 +52,7 @@ export const RecipientsStep = ({ members, onMemberClick, selectedMembers }: { me
   
   return (
       <div className="space-y-4">
-          <h3 className="text-lg font-medium text-foreground">Selected Recipients ({members.length})</h3>
+          <h3 className="text-lg font-medium text-foreground">Selected Recipients ({selectedMembers.length})</h3>
           
           <div className="max-h-[400px] overflow-y-auto space-y-2 -mx-6 px-6">
               <MembersList
@@ -61,9 +62,10 @@ export const RecipientsStep = ({ members, onMemberClick, selectedMembers }: { me
                   selectable={true}
                   viewMode="list"
                   showEmail={false}
+                  showPhone={true}
                   showStatus={false}
                   showJoinDate={false}
-                  activeColor={activeColor || '#843484'} // Default to purple if no theme
+                  activeColor={activeColor || '#C170CF'} // Default to purple if no theme
               />
           </div>
       </div>
