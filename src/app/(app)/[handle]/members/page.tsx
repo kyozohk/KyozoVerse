@@ -121,22 +121,20 @@ export default function CommunityMembersPage() {
     if (!community?.communityId) {
       throw new Error("Community is not loaded yet.");
     }
-
+  
     try {
       const usersRef = collection(db, "users");
       let userId: string;
       let userDetails: Partial<User>;
-
+  
       // Look up user by email
       const q = query(usersRef, where("email", "==", data.email));
       const snap = await getDocs(q);
-
+  
       if (snap.empty) {
         // User does not exist, create a new one
         console.log(`No user found with email ${data.email}. Creating a new user.`);
         
-        // This is a temporary, less secure way to create a user.
-        // In a real app, you would send an invite link.
         const tempPassword = Math.random().toString(36).slice(-8);
         const auth = getAuth();
         
@@ -152,18 +150,16 @@ export default function CommunityMembersPage() {
                 createdAt: serverTimestamp(),
             };
             
-            // Create user profile in Firestore
             await setDoc(doc(db, "users", userId), userDetails);
-            
             console.log(`New user created with UID: ${userId}. A temporary password was used.`);
-
+  
         } catch (authError: any) {
             if (authError.code === 'auth/email-already-in-use') {
                 throw new Error("This email is already associated with an account in Firebase Authentication, but no profile was found in Firestore. Please resolve this inconsistency.");
             }
-            throw authError; // Rethrow other auth errors
+            throw authError;
         }
-
+  
       } else {
         // User exists, use their data
         const userDoc = snap.docs[0];
@@ -171,7 +167,7 @@ export default function CommunityMembersPage() {
         userDetails = userDoc.data() as User;
         console.log(`Found existing user with UID: ${userId}`);
       }
-
+  
       // Add user to the community members subcollection
       const membersRef = collection(db, "communityMembers");
       await addDoc(membersRef, {
@@ -187,13 +183,13 @@ export default function CommunityMembersPage() {
           phone: data.phone || userDetails.phoneNumber,
         },
       });
-
+  
       // Increment member count on the community
       const communityRef = doc(db, "communities", community.communityId);
       await updateDoc(communityRef, {
         memberCount: increment(1),
       });
-
+  
     } catch (error: any) {
       console.error("Error adding member:", error);
       throw new Error(error?.message || "Unable to add member. Please try again.");
@@ -229,7 +225,6 @@ export default function CommunityMembersPage() {
 
         await updateDoc(userRef, updateData);
         
-        // Also update the denormalized data in communityMembers
         const memberRef = doc(db, "communityMembers", (editingMember as any).id);
         await updateDoc(memberRef, {
             'userDetails.displayName': data.displayName,

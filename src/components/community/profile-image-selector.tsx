@@ -11,7 +11,7 @@ interface ProfileImageSelectorProps {
   onSelectFile: (file: File) => void;
 }
 
-const profileImageOptions = ['/images/Parallax1.jpg', '/images/Parallax2.jpg', '/images/Parallax3.jpg', '/images/Parallax4.jpg', '/images/Parallax5.jpg'];
+const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg'];
 const activeColor = "#843484"; // Default purple color
 
 export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFile }: ProfileImageSelectorProps) {
@@ -95,4 +95,3 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
     </div>
   );
 }
-

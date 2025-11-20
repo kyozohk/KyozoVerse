@@ -7,6 +7,7 @@ import type { CommunityMember } from "@/lib/types";
 import { ProfileImageSelector } from './profile-image-selector';
 import { uploadFile } from "@/lib/upload-helper";
 import { useToast } from "@/hooks/use-toast";
+import { PhoneInput } from "../ui/phone-input";
 
 interface MemberDialogProps {
   open: boolean;
@@ -137,7 +138,7 @@ export function MemberDialog({
       description={description}
       color="#843484" // Default Purple
     >
-      <div className="flex flex-col h-full gap-6 pt-2">
+      <div className="flex flex-col h-full gap-2">
         <div className="space-y-4">
           <Input
             label="Name"
@@ -150,30 +151,29 @@ export function MemberDialog({
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           />
-          <Input
-            label="Phone"
+          <PhoneInput
             value={phone}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+            onChange={setPhone}
           />
           
-          <div className="space-y-2 pt-2">
-            <Label className="text-sm font-medium">Profile Icon</Label>
-            <ProfileImageSelector
-              selectedImage={avatarUrl}
-              onSelectImage={setAvatarUrl}
-              onSelectFile={setAvatarFile}
-            />
+          <div className="inputWrapper">
+             <div className="inputContainer pt-4">
+                 <ProfileImageSelector
+                    selectedImage={avatarUrl}
+                    onSelectImage={setAvatarUrl}
+                    onSelectFile={setAvatarFile}
+                />
+                <label className="floatingLabel" style={{top: '-0.7rem', fontSize: '0.75rem', backgroundColor: '#EDEDED', color: '#C170CF'}}>Profile Icon</label>
+             </div>
           </div>
           
-          <div className="space-y-2 pt-2">
-            <Label className="text-sm font-medium">Profile Banner</Label>
-            <Dropzone 
-              file={coverFile} 
-              onFileChange={setCoverFile}
-              fileType="image"
-              existingImageUrl={coverUrl}
-            />
-          </div>
+          <Dropzone 
+            label="Profile Banner"
+            file={coverFile} 
+            onFileChange={setCoverFile}
+            fileType="image"
+            existingImageUrl={coverUrl}
+          />
           
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
         </div>
@@ -182,14 +182,14 @@ export function MemberDialog({
             variant="outline"
             onClick={onClose}
             disabled={submitting}
-            className="flex-1"
+            className="w-full"
           >
             Cancel
           </CustomButton>
           <CustomButton
-            onClick={handleSubmit}
-            className="flex-1"
             variant="outline"
+            onClick={handleSubmit}
+            className="w-full"
             disabled={submitting}
           >
             {submitting ? (mode === "add" ? "Adding..." : "Saving...") : "Save changes"}

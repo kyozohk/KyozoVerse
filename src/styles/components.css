@@ -99,7 +99,7 @@
 
 /* Input styles */
 .inputWrapper {
-  margin-bottom: 2rem; /* Increased gap */
+  position: relative;
   width: 100%;
 }
 
