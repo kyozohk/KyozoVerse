@@ -117,8 +117,9 @@ export async function POST(request: NextRequest) {
           type: componentType
         };
         
-        // Add text if present (for body and footer)
-        if (comp.text && (componentType === 'BODY' || componentType === 'FOOTER')) {
+        // Add text only for FOOTER. BODY text is defined in the template itself and
+        // 360dialog rejects a "text" key on BODY components in the payload.
+        if (comp.text && componentType === 'FOOTER') {
           cleanComponent.text = comp.text;
         }
         
