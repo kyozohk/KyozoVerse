@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Check, Image as ImageIcon } from 'lucide-react';
 import { CommunityMember } from '@/lib/types';
+import { MembersList } from '../community/members-list';
+import { usePathname } from 'next/navigation';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 /**
  * Step indicator component
@@ -39,67 +42,34 @@ export const StepIndicator = ({ currentStep }: { currentStep: BroadcastStep }) =
   );
 };
 
-const getMemberId = (member: Member | CommunityMember) => {
-    return 'userId' in member ? member.userId : member.id;
-}
-
-const getMemberPhoto = (member: Member | CommunityMember) => {
-    return 'userId' in member ? member.userDetails?.avatarUrl : member.photoURL;
-}
-
-const getMemberDisplayName = (member: Member | CommunityMember) => {
-    return ('userId' in member ? member.userDetails?.displayName : member.displayName) || 'Unknown';
-}
-
-const getMemberPhone = (member: Member | CommunityMember) => {
-    return 'userId' in member ? member.userDetails?.phoneNumber : member.phone;
-}
-
-const getMemberEmail = (member: Member | CommunityMember) => {
-    return 'userId' in member ? member.userDetails?.email : member.email;
-}
-
-
 /**
  * Recipients step component
  */
-export const RecipientsStep = ({ members }: { members: (Member | CommunityMember)[] }) => (
-  <div className="space-y-4">
-    <h3 className="text-lg font-medium mb-4">Selected Recipients ({members.length})</h3>
-    
-    <div className="max-h-[300px] overflow-y-auto space-y-2 border rounded-md p-2">
-      {members.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">No members selected.</div>
-      ) : (
-        members.map((member) => (
-          <div key={getMemberId(member)} className="flex items-center p-2 border rounded-md">
-            <Avatar className="h-8 w-8 mr-3">
-              {getMemberPhoto(member) ? (
-                <AvatarImage src={getMemberPhoto(member)} alt={getMemberDisplayName(member)} />
-              ) : (
-                <AvatarFallback>
-                  {getMemberDisplayName(member)?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            
-            <div className="flex-grow">
-              <div className="font-medium">{getMemberDisplayName(member)}</div>
-              <div className="text-sm text-muted-foreground">
-                {getMemberPhone(member) && <span className="mr-3">{getMemberPhone(member)}</span>}
-                {getMemberEmail(member) && <span>{getMemberEmail(member)}</span>}
-              </div>
-            </div>
+export const RecipientsStep = ({ members, onMemberClick, selectedMembers }: { members: (Member | CommunityMember)[], onMemberClick: (member: Member | CommunityMember) => void, selectedMembers: (Member | CommunityMember)[] }) => {
+  const pathname = usePathname();
+  const { activeColor } = getThemeForPath(pathname);
+  
+  return (
+      <div className="space-y-4">
+          <h3 className="text-lg font-medium text-foreground">Selected Recipients ({members.length})</h3>
+          
+          <div className="max-h-[400px] overflow-y-auto space-y-2 -mx-6 px-6">
+              <MembersList
+                  members={members as CommunityMember[]}
+                  onMemberClick={onMemberClick}
+                  selectedMembers={selectedMembers}
+                  selectable={true}
+                  viewMode="list"
+                  showEmail={false}
+                  showStatus={false}
+                  showJoinDate={false}
+                  activeColor={activeColor || '#843484'} // Default to purple if no theme
+              />
           </div>
-        ))
-      )}
-    </div>
-    
-    <div className="text-sm text-muted-foreground mt-4">
-      These members will receive your WhatsApp broadcast message.
-    </div>
-  </div>
-);
+      </div>
+  );
+};
+
 
 /**
  * Template step component

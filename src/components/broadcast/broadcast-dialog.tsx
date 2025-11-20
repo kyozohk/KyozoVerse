@@ -7,6 +7,7 @@ import { BroadcastStep, BroadcastModalProps, Template, TemplateVariable, Broadca
 import { StepIndicator, RecipientsStep, TemplateStep, PreviewStep, ConfirmStep } from './broadcast-components';
 import { processTemplate, processVariablesForMember, autoFillVariables, templateHasImageHeader } from './broadcast-utils';
 import { CommunityMember } from '@/lib/types';
+import { useAuth } from '@/hooks/use-auth';
 
 /**
  * BroadcastDialog Component
@@ -22,6 +23,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   loadingTemplates = false
 }) => {
   // State management
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState<BroadcastStep>(BroadcastStep.RECIPIENTS);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateVariables, setTemplateVariables] = useState<TemplateVariable[]>([]);
@@ -30,6 +32,8 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   const [loadingPricing, setLoadingPricing] = useState(false);
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const [broadcastResults, setBroadcastResults] = useState<BroadcastResult | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<(Member | CommunityMember)[]>([]);
+
   
   // Refs for preventing double submissions
   const initialOpenRef = useRef(true);
@@ -38,13 +42,17 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   
   // Reset on open/close
   useEffect(() => {
-    if (isOpen && initialOpenRef.current) {
-      setCurrentStep(BroadcastStep.RECIPIENTS);
-      initialOpenRef.current = false;
-    } else if (!isOpen) {
-      initialOpenRef.current = true;
+    if (isOpen) {
+        setSelectedMembers(members);
+        if (initialOpenRef.current) {
+            setCurrentStep(BroadcastStep.RECIPIENTS);
+            initialOpenRef.current = false;
+        }
+    } else {
+        initialOpenRef.current = true;
     }
-  }, [isOpen]);
+}, [isOpen, members]);
+
 
   // Fallback templates if no templates are provided from API
   const fallbackTemplates: Template[] = [
@@ -454,13 +462,22 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
     }, 500);
   };
   
+  const handleToggleMember = (member: Member | CommunityMember) => {
+    const memberId = 'userId' in member ? member.userId : (member as Member).id;
+    setSelectedMembers(prev =>
+        prev.some(m => ('userId' in m ? m.userId : (m as Member).id) === memberId)
+            ? prev.filter(m => ('userId' in m ? m.userId : (m as Member).id) !== memberId)
+            : [...prev, member]
+    );
+  };
+  
   // Get step info for UI
   const getStepInfo = () => {
     switch (currentStep) {
       case BroadcastStep.RECIPIENTS:
         return {
           title: "Confirm Recipients",
-          subtitle: `Send message to ${members.length} selected members`,
+          subtitle: `Send message to ${selectedMembers.length} selected members`,
         };
       case BroadcastStep.TEMPLATE:
         return {
@@ -500,11 +517,11 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       color="#F59E0B" // Amber color for broadcast
     >
       <div className="flex flex-col h-full">
-        <StepIndicator currentStep={currentStep} />
+        {currentStep > 0 && <StepIndicator currentStep={currentStep} />}
         
         <div className="flex-grow overflow-y-auto mb-6">
           {currentStep === BroadcastStep.RECIPIENTS && (
-            <RecipientsStep members={members} />
+            <RecipientsStep members={members} onMemberClick={handleToggleMember} selectedMembers={selectedMembers} />
           )}
           
           {currentStep === BroadcastStep.TEMPLATE && (
@@ -545,11 +562,12 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           )}
         </div>
         
-        <div className="flex justify-between mt-auto">
+        <div className="grid grid-cols-2 gap-4 mt-auto">
           <CustomButton
             variant="outline"
             onClick={currentStep === BroadcastStep.RECIPIENTS ? onClose : goToPreviousStep}
             disabled={sendingBroadcast}
+            className="w-full"
           >
             {currentStep === BroadcastStep.RECIPIENTS ? "Cancel" : "Back"}
           </CustomButton>
@@ -557,8 +575,9 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           <CustomButton
             variant="primary"
             onClick={goToNextStep}
-            disabled={(currentStep === BroadcastStep.TEMPLATE && !areVariablesFilled()) || sendingBroadcast}
+            disabled={(currentStep === BroadcastStep.TEMPLATE && !areVariablesFilled()) || sendingBroadcast || selectedMembers.length === 0}
             isLoading={sendingBroadcast}
+            className="w-full"
           >
             {currentStep === BroadcastStep.CONFIRM ? "Send Message" : "Next"}
           </CustomButton>

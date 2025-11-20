@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -100,7 +101,7 @@ const MembersList: React.FC<MembersListProps> = ({
   const getPhone = (member: Member | CommunityMember): string | undefined => {
     if (isCommunityMember(member)) {
       // CommunityMember doesn't have phone directly, use userDetails if available
-      return undefined; // Adjust based on your actual data structure
+      return (member.userDetails as any)?.phone;
     } else {
       return member.phone;
     }
@@ -214,12 +215,11 @@ const MembersList: React.FC<MembersListProps> = ({
                   ? member.userDetails?.displayName || 'Unknown Member'
                   : member.displayName || 'Unknown Member'}
               </div>
-              <div className="text-sm text-muted-foreground">
-                <span className="capitalize">{member.role || 'member'}</span>
-                {showEmail && getEmail(member) && (
-                  <span className="ml-3">{getEmail(member)}</span>
-                )}
-              </div>
+              {showEmail && getEmail(member) && (
+                <div className="text-sm text-muted-foreground">
+                    {getEmail(member)}
+                </div>
+              )}
             </div>
             
             {showPhone && (
