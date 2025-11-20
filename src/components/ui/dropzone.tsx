@@ -15,9 +15,10 @@ interface DropzoneProps {
   fileType?: 'image' | 'audio' | 'video' | 'text';
   existingImageUrl?: string | null;
   label?: string;
+  className?: string;
 }
 
-export function Dropzone({ onFileChange, file, accept, fileType = 'image', existingImageUrl, label }: DropzoneProps) {
+export function Dropzone({ onFileChange, file, accept, fileType = 'image', existingImageUrl, label, className }: DropzoneProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -113,8 +114,9 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image', exist
         <div
           {...getRootProps()}
           className={cn(
-              "relative flex justify-center items-center w-full h-32 rounded-lg border-2 border-dashed border-input p-4 cursor-pointer transition-colors",
-              isDragActive ? 'bg-accent' : 'bg-muted/10'
+              "relative flex justify-center items-center w-full h-32 rounded-lg border border-dashed border-input p-4 cursor-pointer transition-colors",
+              isDragActive ? 'bg-accent' : 'bg-muted/10',
+              className
           )}
           style={{borderWidth: '1px'}}
         >

@@ -136,6 +136,7 @@ export function MemberDialog({
       onClose={onClose}
       title={title}
       description={description}
+      backgroundImage="/bg/light_app_bg.png"
       color="#843484" // Default Purple
     >
       <div className="flex flex-col h-full gap-2">
@@ -163,7 +164,7 @@ export function MemberDialog({
                     onSelectImage={setAvatarUrl}
                     onSelectFile={setAvatarFile}
                 />
-                <label className="floatingLabel" style={{top: '-0.7rem', fontSize: '0.75rem', backgroundColor: '#EDEDED', color: '#C170CF'}}>Profile Icon</label>
+                <label className="floatingLabel" style={{top: '-0.7rem', fontSize: '0.75rem', backgroundColor: '#EDEDED', color: 'var(--input-border-color, #C170CF)'}}>Profile Icon</label>
              </div>
           </div>
           
@@ -173,6 +174,7 @@ export function MemberDialog({
             onFileChange={setCoverFile}
             fileType="image"
             existingImageUrl={coverUrl}
+            className="h-24"
           />
           
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}

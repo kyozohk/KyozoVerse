@@ -299,3 +299,12 @@ input::placeholder {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
 }
+
+/* Fix for phone input label */
+.phone-dropdown + input + label.floatingLabel {
+  left: 5.25rem;
+}
+.phone-dropdown + input:focus ~ label.floatingLabel,
+.phone-dropdown + input:not(:placeholder-shown) ~ label.floatingLabel {
+  left: 0.75rem;
+}

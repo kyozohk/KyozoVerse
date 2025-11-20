@@ -187,7 +187,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
         <label htmlFor={inputId} className={cn(
           "floatingLabel transition-all", 
           "left-[5.25rem]", // Position after the country button
-          (hasValue) ? "top-[-0.7rem] text-xs bg-[#EDEDED] text-[var(--input-border-color,#C170CF)]" : "top-[0.7rem] text-base"
+          (hasValue) ? "top-[-0.7rem] text-xs" : "top-[0.7rem] text-base"
         )}>
           {label}
         </label>
