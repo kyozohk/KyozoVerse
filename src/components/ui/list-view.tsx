@@ -4,8 +4,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, List, Search } from 'lucide-react';
-import { AiOutlineUserAdd } from 'react-icons/ai';
+import { LayoutGrid, List, Search, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
@@ -92,7 +91,7 @@ export function ListView({
                     color: activeColor,
                   }}
                 >
-                  <AiOutlineUserAdd className="h-5 w-5" />
+                  <UserPlus className="h-5 w-5" />
                 </button>
               )}
               <div className="flex items-center gap-1 rounded-md bg-muted/10 p-1">
