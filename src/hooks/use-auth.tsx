@@ -36,12 +36,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
-      
-      const isPublicPath = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/c/') || pathname.startsWith('/invite');
-      
-      if (firebaseUser && isPublicPath && pathname !== '/landing') {
+
+      // Routes that are public when the user is NOT authenticated
+      const isPublicForGuests =
+        pathname === '/' ||
+        pathname.startsWith('/landing') ||
+        pathname.startsWith('/c/') ||
+        pathname.startsWith('/invite');
+
+      // Routes that should redirect an authenticated user to their dashboard
+      const isAuthLanding =
+        pathname === '/' ||
+        pathname.startsWith('/landing') ||
+        pathname.startsWith('/invite');
+
+      if (firebaseUser && isAuthLanding) {
         router.replace('/communities');
-      } else if (!firebaseUser && !isPublicPath) {
+      } else if (!firebaseUser && !isPublicForGuests) {
         router.replace('/landing');
       }
     });

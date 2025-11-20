@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
@@ -142,6 +143,14 @@ export default function CommunityFeedPage() {
   
   return (
     <>
+      <div className="px-6 md:px-8 mt-4 mb-2 flex justify-end text-sm">
+        <Link
+          href={`/c/${handle}`}
+          className="text-primary hover:underline"
+        >
+          View public feed
+        </Link>
+      </div>
       <ListView
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
