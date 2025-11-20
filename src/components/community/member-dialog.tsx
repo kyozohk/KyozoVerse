@@ -33,7 +33,8 @@ export function MemberDialog({
   onSubmit,
 }: MemberDialogProps) {
   const { toast } = useToast();
-  const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -48,13 +49,16 @@ export function MemberDialog({
   useEffect(() => {
     if (open) {
       if (mode === "edit" && initialMember) {
-        setDisplayName(initialMember.userDetails?.displayName || "");
+        const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
+        setFirstName(nameParts[0] || "");
+        setLastName(nameParts.slice(1).join(' ') || "");
         setEmail(initialMember.userDetails?.email || "");
         setPhone(initialMember.userDetails?.phone || "");
         setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
         setCoverUrl(initialMember.userDetails?.coverUrl || null);
       } else {
-        setDisplayName("");
+        setFirstName("");
+        setLastName("");
         setEmail("");
         setPhone("");
         setAvatarUrl(null);
@@ -85,8 +89,8 @@ export function MemberDialog({
   };
 
   const handleSubmit = async () => {
-    if (!displayName.trim()) {
-      setError("Name is required");
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last names are required");
       return;
     }
     if (!email.trim()) {
@@ -108,7 +112,7 @@ export function MemberDialog({
       }
 
       await onSubmit({ 
-        displayName: displayName.trim(), 
+        displayName: `${firstName.trim()} ${lastName.trim()}`, 
         email: email.trim(), 
         phone: phone.trim() || undefined,
         avatarUrl: finalAvatarUrl || undefined,
@@ -141,11 +145,18 @@ export function MemberDialog({
     >
       <div className="flex flex-col h-full gap-2">
         <div className="space-y-4">
-          <Input
-            label="Name"
-            value={displayName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
-          />
+            <div className="grid grid-cols-2 gap-4">
+                <Input
+                    label="First Name"
+                    value={firstName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
+                />
+                <Input
+                    label="Last Name"
+                    value={lastName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
+                />
+            </div>
           <Input
             label="Email"
             type="email"
@@ -157,7 +168,7 @@ export function MemberDialog({
             onChange={setPhone}
           />
           
-          <div className="inputWrapper">
+          <div className="inputWrapper my-2">
              <div className="inputContainer pt-4">
                  <ProfileImageSelector
                     selectedImage={avatarUrl}
@@ -168,14 +179,16 @@ export function MemberDialog({
              </div>
           </div>
           
-          <Dropzone 
-            label="Profile Banner"
-            file={coverFile} 
-            onFileChange={setCoverFile}
-            fileType="image"
-            existingImageUrl={coverUrl}
-            className="h-24"
-          />
+          <div className="my-2">
+            <Dropzone 
+              label="Profile Banner"
+              file={coverFile} 
+              onFileChange={setCoverFile}
+              fileType="image"
+              existingImageUrl={coverUrl}
+              className="h-24"
+            />
+          </div>
           
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
         </div>

@@ -52,7 +52,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
             alt="Profile option"
             width={48}
             height={48}
-            className="rounded-full object-cover"
+            className="rounded-full object-cover w-full h-full"
           />
           {isPresetSelected(src) && (
             <div
@@ -74,7 +74,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
               alt="Custom selection"
               width={48}
               height={48}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover w-full h-full"
             />
              <div
               className="absolute inset-0 rounded-full border-2"
