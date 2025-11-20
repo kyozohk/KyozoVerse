@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -6,7 +7,7 @@ import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Users, Edit } from 'lucide-react';
+import { Users, Edit, Phone } from 'lucide-react';
 import { MemberCard } from './member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
@@ -90,7 +91,13 @@ export function MembersList({
               </Avatar>
               <div className="flex-grow">
                 <div className="font-semibold text-base">{member.userDetails?.displayName}</div>
-                <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
+                <div className="flex flex-col text-sm text-muted-foreground">
+                    <span>{member.userDetails?.email}</span>
+                    <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {member.userDetails?.phone || 'No phone'}
+                    </span>
+                </div>
               </div>
               {canManage && (
                 <button

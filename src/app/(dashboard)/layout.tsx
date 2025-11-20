@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/landing');
+    router.push('/');
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {

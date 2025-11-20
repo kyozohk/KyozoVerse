@@ -40,7 +40,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
   const isCustomSelected = selectedImage && !profileImageOptions.includes(selectedImage);
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 border-5 p-4 border dashed my-2">
       {profileImageOptions.map((src) => (
         <div
           key={src}
@@ -56,7 +56,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
           />
           {isPresetSelected(src) && (
             <div
-              className="absolute inset-0 rounded-full border-5 p-4"
+              className="absolute inset-0 rounded-full"
               style={{ borderColor: activeColor }}
             />
           )}
