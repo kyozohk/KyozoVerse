@@ -76,7 +76,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
     }, [existingCommunity, isOpen]);
 
     const colors = ['#843484', '#06C4B5', '#E1B327', '#CF7770', '#699FE5'];
-    const profileImageOptions = ['/images/Parallax1.jpg', '/images/Parallax2.jpg', '/images/Parallax3.jpg', '/images/Parallax4.jpg'];
+    const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
 
     const handleNext = () => {
         if (currentStep < STEPS.length - 1) {

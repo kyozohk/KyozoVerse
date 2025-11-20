@@ -11,7 +11,7 @@ interface ProfileImageSelectorProps {
   onSelectFile: (file: File) => void;
 }
 
-const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg'];
+const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
 const activeColor = "#843484"; // Default purple color
 
 export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFile }: ProfileImageSelectorProps) {
@@ -40,7 +40,11 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
   const isCustomSelected = selectedImage && !profileImageOptions.includes(selectedImage);
 
   return (
-    <div className="flex items-center gap-4 border-5 p-4 border dashed my-2">
+    <div className="inputWrapper my-2 relative">
+      <div
+        className="flex items-center gap-4 p-4 rounded-lg border border-dotted"
+        style={{ borderWidth: '1px', borderColor: 'var(--input-border-color, #C170CF)' }}
+      >
       {profileImageOptions.map((src) => (
         <div
           key={src}
@@ -92,6 +96,18 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
         accept="image/*"
         onChange={handleFileChange}
       />
+      </div>
+      <label
+        className="floatingLabel"
+        style={{
+          top: '-0.7rem',
+          fontSize: '0.75rem',
+          backgroundColor: '#EDEDED',
+          color: 'var(--input-border-color, #C170CF)',
+        }}
+      >
+        Profile Icon
+      </label>
     </div>
   );
 }

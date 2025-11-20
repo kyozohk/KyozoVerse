@@ -11,6 +11,7 @@ export type User = {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
+  phone?: string;
   handle?: string;
 };
 

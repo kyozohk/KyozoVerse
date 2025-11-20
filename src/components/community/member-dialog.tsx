@@ -167,17 +167,12 @@ export function MemberDialog({
             value={phone}
             onChange={setPhone}
           />
-          
-          <div className="inputWrapper my-2">
-             <div className="inputContainer pt-4">
-                 <ProfileImageSelector
-                    selectedImage={avatarUrl}
-                    onSelectImage={setAvatarUrl}
-                    onSelectFile={setAvatarFile}
-                />
-                <label className="floatingLabel" style={{top: '-0.7rem', fontSize: '0.75rem', backgroundColor: '#EDEDED', color: 'var(--input-border-color, #C170CF)'}}>Profile Icon</label>
-             </div>
-          </div>
+
+          <ProfileImageSelector
+            selectedImage={avatarUrl}
+            onSelectImage={setAvatarUrl}
+            onSelectFile={setAvatarFile}
+          />
           
           <div className="my-2">
             <Dropzone 

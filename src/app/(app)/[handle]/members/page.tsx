@@ -86,7 +86,14 @@ export default function CommunityMembersPage() {
         const memberData = docSnap.data() as Omit<CommunityMember, 'userDetails'>;
         const userDocRef = doc(db, 'users', memberData.userId);
         const userSnap = await getDoc(userDocRef);
-        const userDetails = userSnap.exists() ? userSnap.data() as User : undefined;
+        let userDetails: (User & { phone?: string }) | undefined = undefined;
+        if (userSnap.exists()) {
+          const raw = userSnap.data() as User & { phone?: string };
+          userDetails = {
+            ...raw,
+            phone: (raw as any).phone || raw.phoneNumber,
+          };
+        }
         return {
           id: docSnap.id,
           ...memberData,
@@ -151,8 +158,9 @@ export default function CommunityMembersPage() {
                 displayName: data.displayName,
                 email: data.email,
                 phone: data.phone,
+                phoneNumber: data.phone,
                 createdAt: serverTimestamp(),
-            };
+            } as unknown as User;
             
             await setDoc(doc(db, "users", userId), userDetails);
             console.log(`New user created with UID: ${userId}. A temporary password was used.`);
@@ -170,9 +178,9 @@ export default function CommunityMembersPage() {
         userId = userDoc.id;
         userDetails = userDoc.data() as User;
         // Ensure phone number is updated if it was provided
-        if (data.phone && userDetails.phone !== data.phone) {
-          await updateDoc(doc(db, "users", userId), { phone: data.phone });
-          userDetails.phone = data.phone;
+        if (data.phone && (userDetails as any).phone !== data.phone) {
+          await updateDoc(doc(db, "users", userId), { phone: data.phone, phoneNumber: data.phone });
+          (userDetails as any).phone = data.phone;
         }
         console.log(`Found existing user with UID: ${userId}`);
       }

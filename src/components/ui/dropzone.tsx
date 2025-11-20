@@ -114,11 +114,11 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image', exist
         <div
           {...getRootProps()}
           className={cn(
-              "relative flex justify-center items-center w-full h-32 rounded-lg border border-dashed border-input p-4 cursor-pointer transition-colors",
+              "relative flex justify-center items-center w-full h-32 rounded-lg border border-dotted p-4 cursor-pointer transition-colors",
               isDragActive ? 'bg-accent' : 'bg-muted/10',
               className
           )}
-          style={{borderWidth: '1px'}}
+          style={{ borderWidth: '1px', borderColor: 'var(--input-border-color, #C170CF)' }}
         >
         <input {...getInputProps()} id={id} />
 
