@@ -16,6 +16,7 @@ import {
   updateDoc,
   serverTimestamp,
   increment,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,6 +25,8 @@ import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-ut
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from "@/components/ui/list-view";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+
 
 export default function CommunityMembersPage() {
   const { user } = useAuth();
@@ -120,21 +123,57 @@ export default function CommunityMembersPage() {
     }
 
     try {
-      // Look up user by email
       const usersRef = collection(db, "users");
+      let userId: string;
+      let userDetails: Partial<User>;
+
+      // Look up user by email
       const q = query(usersRef, where("email", "==", data.email));
       const snap = await getDocs(q);
 
       if (snap.empty) {
-        throw new Error("No user found with this email. Make sure the user exists before adding as a member.");
+        // User does not exist, create a new one
+        console.log(`No user found with email ${data.email}. Creating a new user.`);
+        
+        // This is a temporary, less secure way to create a user.
+        // In a real app, you would send an invite link.
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const auth = getAuth();
+        
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, tempPassword);
+            userId = userCredential.user.uid;
+            
+            userDetails = {
+                userId: userId,
+                displayName: data.displayName,
+                email: data.email,
+                phoneNumber: data.phone,
+                createdAt: serverTimestamp(),
+            };
+            
+            // Create user profile in Firestore
+            await setDoc(doc(db, "users", userId), userDetails);
+            
+            console.log(`New user created with UID: ${userId}. A temporary password was used.`);
+
+        } catch (authError: any) {
+            if (authError.code === 'auth/email-already-in-use') {
+                throw new Error("This email is already associated with an account in Firebase Authentication, but no profile was found in Firestore. Please resolve this inconsistency.");
+            }
+            throw authError; // Rethrow other auth errors
+        }
+
+      } else {
+        // User exists, use their data
+        const userDoc = snap.docs[0];
+        userId = userDoc.id;
+        userDetails = userDoc.data() as User;
+        console.log(`Found existing user with UID: ${userId}`);
       }
 
-      const userDoc = snap.docs[0];
-      const userId = userDoc.id;
-      const userDetails = userDoc.data() as User;
-
+      // Add user to the community members subcollection
       const membersRef = collection(db, "communityMembers");
-
       await addDoc(membersRef, {
         userId,
         communityId: community.communityId,
@@ -144,7 +183,7 @@ export default function CommunityMembersPage() {
         userDetails: {
           displayName: data.displayName || userDetails.displayName,
           email: data.email,
-          avatarUrl: userDetails.avatarUrl,
+          avatarUrl: userDetails.avatarUrl || null,
           phone: data.phone || userDetails.phoneNumber,
         },
       });
@@ -154,6 +193,7 @@ export default function CommunityMembersPage() {
       await updateDoc(communityRef, {
         memberCount: increment(1),
       });
+
     } catch (error: any) {
       console.error("Error adding member:", error);
       throw new Error(error?.message || "Unable to add member. Please try again.");
