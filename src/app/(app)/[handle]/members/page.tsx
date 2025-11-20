@@ -1,6 +1,5 @@
 
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,7 +25,7 @@ import { type CommunityMember, type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
-import { ListView } from "@/components/ui/list-view";
+import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
 
@@ -124,6 +123,9 @@ export default function CommunityMembersPage() {
     if (!community?.communityId) {
       throw new Error("Community is not loaded yet.");
     }
+    if (!data.email || !data.email.includes('@')) {
+      throw new Error("A valid email address is required to create a new user.");
+    }
   
     try {
       const usersRef = collection(db, "users");
@@ -138,10 +140,6 @@ export default function CommunityMembersPage() {
         // User does not exist, create a new one
         console.log(`No user found with email ${data.email}. Creating a new user.`);
         
-        if (!data.email || !data.email.includes('@')) {
-          throw new Error("A valid email address is required to create a new user.");
-        }
-        
         const tempPassword = Math.random().toString(36).slice(-8);
         
         try {
@@ -152,7 +150,7 @@ export default function CommunityMembersPage() {
                 userId: userId,
                 displayName: data.displayName,
                 email: data.email,
-                phoneNumber: data.phone,
+                phone: data.phone,
                 createdAt: serverTimestamp(),
             };
             
@@ -171,6 +169,11 @@ export default function CommunityMembersPage() {
         const userDoc = snap.docs[0];
         userId = userDoc.id;
         userDetails = userDoc.data() as User;
+        // Ensure phone number is updated if it was provided
+        if (data.phone && userDetails.phone !== data.phone) {
+          await updateDoc(doc(db, "users", userId), { phone: data.phone });
+          userDetails.phone = data.phone;
+        }
         console.log(`Found existing user with UID: ${userId}`);
       }
   
@@ -183,10 +186,10 @@ export default function CommunityMembersPage() {
         status: "active",
         joinedAt: serverTimestamp(),
         userDetails: {
-          displayName: data.displayName || userDetails.displayName,
+          displayName: data.displayName,
           email: data.email,
           avatarUrl: userDetails.avatarUrl || null,
-          phone: data.phone || userDetails.phoneNumber,
+          phone: data.phone,
         },
       });
   
@@ -219,7 +222,7 @@ export default function CommunityMembersPage() {
         const updateData: Partial<User> = {
             displayName: data.displayName,
             email: data.email,
-            phoneNumber: data.phone,
+            phone: data.phone,
         };
 
         if (data.avatarUrl) {
