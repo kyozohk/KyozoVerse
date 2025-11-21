@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { BroadcastStep, Member, Template, TemplateVariable, BroadcastResult } from './broadcast-types';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
+import { Avatar, AvatarImage, AvatarFallback, FloatingSelect } from '@/components/ui';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -117,27 +117,24 @@ export const TemplateStep = ({
   <div className="space-y-6">
     <div className="inputWrapper">
       <div className="inputContainer">
-        <label className="floatingLabel">Select Template</label>
         {loadingTemplates ? (
           <div className="text-center py-4 text-muted-foreground">Loading templates...</div>
         ) : templates.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">No templates available</div>
         ) : (
-          <Select
+          <FloatingSelect
+            label="Select Template"
             value={selectedTemplate}
             onValueChange={onTemplateChange}
           >
-            <SelectTrigger className="w-full input">
-              <SelectValue placeholder="Select a template" />
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
+            <SelectContent className="max-h-80">
               {templates.map(template => (
                 <SelectItem key={template.id} value={template.id}>
                   {template.name}
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </FloatingSelect>
         )}
       </div>
     </div>
@@ -161,6 +158,7 @@ export const TemplateStep = ({
             <div className="inputContainer">
               <label className="floatingLabel">Template Preview</label>
               <Textarea
+                placeholder=''
                 label="Template Preview"
                 readOnly
                 value={templateContent || 'No content available'}
@@ -178,24 +176,19 @@ export const TemplateStep = ({
         {templateVariables.map((variable) => (
           <div key={variable.index} className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="flex-grow inputWrapper">
-                <div className="inputContainer">
-                  <label className="floatingLabel">Variable {variable.index}</label>
-                  <Select
-                    value={variable.variableType || 'freeText'}
-                    onValueChange={(value) => onVariableTypeChange(variable.index, value)}
-                  >
-                    <SelectTrigger className="w-full input">
-                      <SelectValue placeholder={variable.placeholder} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-80">
-                      <SelectItem value="firstName">First Name</SelectItem>
-                      <SelectItem value="lastName">Last Name</SelectItem>
-                      <SelectItem value="communityName">Community Name</SelectItem>
-                      <SelectItem value="freeText">Free Text</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex-grow">
+                <FloatingSelect
+                  label={`Variable ${variable.index}`}
+                  value={variable.variableType || 'freeText'}
+                  onValueChange={(value) => onVariableTypeChange(variable.index, value)}
+                >
+                  <SelectContent className="max-h-80">
+                    <SelectItem value="firstName">First Name</SelectItem>
+                    <SelectItem value="lastName">Last Name</SelectItem>
+                    <SelectItem value="communityName">Community Name</SelectItem>
+                    <SelectItem value="freeText">Free Text</SelectItem>
+                  </SelectContent>
+                </FloatingSelect>
               </div>
             </div>
             

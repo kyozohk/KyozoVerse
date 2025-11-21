@@ -28,6 +28,8 @@ export default function CommunityBroadcastPage() {
   const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const { activeColor } = getThemeForPath(pathname);
 
@@ -77,6 +79,34 @@ export default function CommunityBroadcastPage() {
     
     fetchData();
   }, [handle]);
+
+  // Fetch WhatsApp templates from backend, similar to reference project
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      console.log('[BroadcastPage] Fetching templates from 360dialog API...');
+      setLoadingTemplates(true);
+      try {
+        const res = await fetch('/api/whatsapp/templates');
+        const data = await res.json();
+        console.log('[BroadcastPage] Templates response:', data);
+
+        if (data.success && Array.isArray(data.templates) && data.templates.length > 0) {
+          setTemplates(data.templates);
+          console.log('[BroadcastPage] Processed templates count:', data.templates.length);
+        } else {
+          console.warn('[BroadcastPage] No templates returned from /api/whatsapp/templates, keeping fallback behavior');
+          setTemplates([]);
+        }
+      } catch (err) {
+        console.error('[BroadcastPage] Error fetching templates:', err);
+        setTemplates([]);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
 
   const handleNewBroadcast = () => {
     if (selectedMembers.length === 0) {
@@ -155,6 +185,8 @@ export default function CommunityBroadcastPage() {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         members={selectedMembers}
+        templates={templates}
+        loadingTemplates={loadingTemplates}
       />
     </div>
   );

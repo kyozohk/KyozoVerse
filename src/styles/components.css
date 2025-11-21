@@ -174,6 +174,28 @@ input::placeholder {
   background-color: #EDEDED;
 }
 
+/* Select trigger styled like input, used in FloatingSelect */
+.selectTrigger {
+  background-color: transparent;
+  border: 1px solid var(--input-border-color, var(--button-border));
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  width: 100%;
+  height: 44px;
+  font-size: 1rem;
+  color: hsl(var(--foreground));
+}
+
+/* Floating label behaviour for select trigger */
+.selectTrigger:focus ~ .floatingLabel,
+.selectTrigger.select-has-value ~ .floatingLabel {
+  top: -0.7rem;
+  left: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--input-border-color, #C170CF);
+  background-color: #EDEDED;
+}
+
 
 /* Checkbox styles */
 .checkboxWrapper {

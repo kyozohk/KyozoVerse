@@ -281,6 +281,13 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
 
   // Function to send the broadcast
   const sendBroadcast = async () => {
+    console.log('[BroadcastDialog] Starting broadcast send', {
+      membersCount: members.length,
+      selectedTemplate,
+      hasImageHeader: hasImageHeader(),
+      headerImageUrl,
+    });
+
     setSendingBroadcast(true);
     setBroadcastResults(null);
     
@@ -294,11 +301,13 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       
       const template = displayTemplates.find(t => t.id === selectedTemplate);
       if (!template) {
+        console.error('[BroadcastDialog] Template not found for id', selectedTemplate);
         throw new Error('Template not found');
       }
       
       // Process template structure
       const templateData = processTemplate(template, templateVariables, headerImageUrl);
+      console.log('[BroadcastDialog] Base templateData for broadcast:', templateData);
       
       // Track results
       const results: BroadcastResult = {
@@ -316,6 +325,10 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
 
           // Skip members without phone numbers
           if (!memberPhone) {
+            console.warn('[BroadcastDialog] Skipping member without phone number', {
+              memberId,
+              memberDisplayName,
+            });
             results.failed++;
             results.details.push({
               memberId: memberId,
@@ -346,6 +359,14 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
             template: memberTemplateData,
             messaging_product: "whatsapp"
           };
+          console.log('[BroadcastDialog] Sending WhatsApp message for member', {
+            memberId,
+            memberDisplayName,
+            rawPhone: memberPhone,
+            to: recipientPayload.to,
+            templateName: recipientPayload.template?.name,
+            templateLanguage: recipientPayload.template?.language?.code,
+          });
           
           // Send message
           const response = await fetch('/api/whatsapp/send-template', {
@@ -355,6 +376,12 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           });
           
           const data = await response.json();
+          console.log('[BroadcastDialog] Response from /api/whatsapp/send-template', {
+            memberId,
+            status: response.status,
+            ok: response.ok,
+            data,
+          });
           
           // Process response
           if (response.ok && data.success) {
@@ -378,6 +405,11 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
         } catch (error) {
           const memberId = 'userId' in member ? member.userId : (member as Member).id;
           const memberDisplayName = 'userId' in member ? member.userDetails?.displayName : (member as Member).displayName;
+          console.error('[BroadcastDialog] Error sending message to member', {
+            memberId,
+            memberDisplayName,
+            error,
+          });
           results.failed++;
           results.details.push({
             memberId: memberId,
@@ -389,6 +421,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
         }
       }
       
+      console.log('[BroadcastDialog] Broadcast completed with results', results);
       setBroadcastResults(results);
       
       // Close modal on success after delay

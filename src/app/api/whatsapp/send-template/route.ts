@@ -1,19 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Environment variables should be set in .env.local
-const API_KEY = process.env.D360_API_KEY || '';
+// Support multiple possible env var names for the 360dialog API key,
+// mirroring the reference project's behavior.
+const RAW_API_KEY =
+  process.env.D360_API_KEY ||
+  process.env.D360_DIALOG_API_KEY ||
+  process.env['360_API_KEY'] ||
+  '';
+
+const API_KEY_SOURCE = RAW_API_KEY
+  ? (process.env.D360_API_KEY
+      ? 'D360_API_KEY'
+      : process.env.D360_DIALOG_API_KEY
+        ? 'D360_DIALOG_API_KEY'
+        : process.env['360_API_KEY']
+          ? '360_API_KEY'
+          : 'unknown')
+  : null;
+
+const API_KEY = RAW_API_KEY;
+
 const WEBHOOK_URL = process.env['360_WEBHOOK'] || 'https://waba-v2.360dialog.io';
 const API_URL = `${WEBHOOK_URL}/messages`;
 const PARTNER_ID = process.env['360_PARTNER_ID'] || '';
 const WHATSAPP_NUMBER = process.env['360_NUMBER'] || '';
 const CALLBACK_URL = process.env['360_CALLBACK'] || '';
 
-console.log('WhatsApp API Configuration:', {
-  API_KEY: API_KEY ? '✓ Set' : '✗ Missing',
+// Safe configuration log: never print secret values, only whether they exist
+console.log('WhatsApp API Configuration (KyozoVerse):', {
+  hasApiKey: !!API_KEY,
+  apiKeySource: API_KEY_SOURCE,
+  WEBHOOK_URL,
   API_URL,
-  PARTNER_ID: PARTNER_ID ? '✓ Set' : '✗ Missing',
-  WHATSAPP_NUMBER: WHATSAPP_NUMBER ? '✓ Set' : '✗ Missing',
-  CALLBACK_URL: CALLBACK_URL ? '✓ Set' : '✗ Missing',
+  has_360_PARTNER_ID: !!PARTNER_ID,
+  has_360_NUMBER: !!WHATSAPP_NUMBER,
+  has_360_CALLBACK: !!CALLBACK_URL,
 });
 
 // Helper function to map component types to the correct format expected by the API
@@ -57,7 +79,7 @@ function hasHeaderWithImage(template: any): boolean {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.to || !body.template?.name) {
       return NextResponse.json(
@@ -65,7 +87,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
+    // Log which template and language we are about to send, for debugging 360 errors
+    console.log('WhatsApp template debug (KyozoVerse):', {
+      to: body.to,
+      templateName: body.template.name,
+      templateLanguage: body.template.language?.code || body.template.language,
+    });
+
     // Log the incoming template structure
     console.log('Incoming template structure:', JSON.stringify(body.template, null, 2));
     
@@ -231,9 +260,16 @@ export async function POST(request: NextRequest) {
     
     // Get the response data
     const data = await response.json();
-    
-    // Log the response
-    console.log('360dialog template response:', JSON.stringify(data, null, 2));
+
+    // Log the response with HTTP status and any structured error info
+    console.log('360dialog template response:', {
+      httpStatus: response.status,
+      ok: response.ok,
+      errorMessage: data?.error?.message,
+      errorCode: data?.error?.code,
+      errorDetails: data?.error?.error_data?.details,
+      raw: data,
+    });
     
     // Store the message in our database for history
     // This would typically save to Firestore or another database
