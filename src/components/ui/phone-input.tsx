@@ -130,16 +130,16 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       <div className={cn("inputContainer relative flex items-center", error ? "hasError" : "")}>
         <button
           type="button"
-          className="absolute left-0 top-0 h-full flex items-center justify-between gap-1 px-3 bg-transparent z-10 w-24"
+          className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-between gap-1.5 px-2 py-1 bg-transparent z-10 rounded hover:bg-muted/50"
           onClick={handleCountryButtonClick}
           disabled={disabled}
         >
-          <span className="text-base leading-none">{selectedCountry.flag}</span>
-          <span className="text-xs text-foreground">▼</span>
+          <span className="text-lg leading-none">{selectedCountry.flag}</span>
+          <span className="text-xs text-muted-foreground">▼</span>
         </button>
 
         {isDropdownOpen && !disabled && (
-          <div className="phone-dropdown absolute top-full left-0 z-50 mt-1 w-64 max-h-60 overflow-y-auto bg-card border rounded-md shadow-lg">
+          <div className="phone-dropdown absolute top-full left-0 z-50 mt-1 w-72 max-h-60 overflow-y-auto bg-card border rounded-md shadow-lg">
             <div className="p-2 border-b">
               <input
                 ref={searchInputRef}
@@ -182,12 +182,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           placeholder=" "
           disabled={disabled}
           required={required}
-          className="input pl-28"
+          className="input pl-20"
         />
         <label htmlFor={inputId} className={cn(
-          "floatingLabel transition-all", 
-          "left-[7rem]", // Position after the country button
-          (hasValue) ? "top-[-0.7rem] text-xs" : "top-[0.7rem] text-base"
+          "floatingLabel transition-all"
         )}>
           {label}
         </label>

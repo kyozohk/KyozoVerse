@@ -265,10 +265,20 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
     
     try {
       // Validate header image requirements
-      if (hasImageHeader() && !headerImageUrl) {
-        alert('Please provide an image URL for the template header');
-        setSendingBroadcast(false);
-        return;
+      if (hasImageHeader()) {
+        if (!headerImageUrl || !headerImageUrl.trim()) {
+          alert('Please provide an image URL for the template header');
+          setSendingBroadcast(false);
+          return;
+        }
+        // Validate URL format
+        try {
+          new URL(headerImageUrl);
+        } catch (e) {
+          alert('Please provide a valid image URL (must start with http:// or https://)');
+          setSendingBroadcast(false);
+          return;
+        }
       }
       
       const template = displayTemplates.find(t => t.id === selectedTemplate);
@@ -291,7 +301,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       // Process each recipient
       for (const member of members) {
         try {
-          const memberPhone = 'userId' in member ? member.userDetails?.phoneNumber : (member as Member).phone;
+          const memberPhone = 'userId' in member ? (member.userDetails?.phone || member.userDetails?.phoneNumber) : (member as Member).phone;
           const memberId = 'userId' in member ? member.userId : (member as Member).id;
           const memberDisplayName = 'userId' in member ? member.userDetails?.displayName : (member as Member).displayName;
 
@@ -324,9 +334,23 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
             }
           }
           
+          // Clean and format phone number
+          // Remove all spaces, dashes, and parentheses
+          let cleanPhone = memberPhone.replace(/[\s\-\(\)]/g, '');
+          // Remove leading + if present
+          if (cleanPhone.startsWith('+')) {
+            cleanPhone = cleanPhone.substring(1);
+          }
+          // Remove duplicate country codes (e.g., "852852..." becomes "852...")
+          // This handles cases where phone is stored as "852 +852 1234 5678"
+          const countryCodeMatch = cleanPhone.match(/^(\d{1,4})\1/);
+          if (countryCodeMatch) {
+            cleanPhone = cleanPhone.substring(countryCodeMatch[1].length);
+          }
+          
           // Create payload
           const recipientPayload = {
-            to: memberPhone.startsWith('+') ? memberPhone.substring(1) : memberPhone,
+            to: cleanPhone,
             type: "template",
             template: memberTemplateData,
             messaging_product: "whatsapp"

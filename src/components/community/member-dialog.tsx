@@ -72,11 +72,28 @@ export function MemberDialog({
   }, [open, mode, initialMember]);
 
   const handleFileUpload = async (file: File | null, type: 'avatar' | 'cover') => {
-    if (!file || !initialMember?.userId) return null;
+    if (!file) {
+      console.log(`No ${type} file to upload`);
+      return null;
+    }
+    
+    if (!initialMember?.userId) {
+      console.error('No userId found for file upload');
+      toast({
+        title: 'Upload Failed',
+        description: 'User ID is missing. Cannot upload image.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
+    console.log(`Uploading ${type} for user ${initialMember.userId}`);
     
     try {
         const result = await uploadFile(file, `user-media/${initialMember.userId}/${type}`);
-        return typeof result === 'string' ? result : result.url;
+        const url = typeof result === 'string' ? result : result.url;
+        console.log(`${type} uploaded successfully:`, url);
+        return url;
     } catch (error) {
         console.error(`Error uploading ${type} image:`, error);
         toast({
@@ -100,16 +117,29 @@ export function MemberDialog({
     setError(null);
     setSubmitting(true);
     try {
+      console.log('Starting member save...', {
+        avatarFile: !!avatarFile,
+        coverFile: !!coverFile,
+        currentAvatarUrl: avatarUrl,
+        currentCoverUrl: coverUrl
+      });
 
       let finalAvatarUrl = avatarUrl;
       if (avatarFile) {
+        console.log('Uploading avatar file...');
         finalAvatarUrl = await handleFileUpload(avatarFile, 'avatar');
       }
 
       let finalCoverUrl = coverUrl;
       if (coverFile) {
+        console.log('Uploading cover file...');
         finalCoverUrl = await handleFileUpload(coverFile, 'cover');
       }
+
+      console.log('Final URLs:', {
+        avatarUrl: finalAvatarUrl,
+        coverUrl: finalCoverUrl
+      });
 
       await onSubmit({ 
         displayName: `${firstName.trim()} ${lastName.trim()}`, 
@@ -120,6 +150,7 @@ export function MemberDialog({
       });
       onClose();
     } catch (e: any) {
+      console.error('Error in handleSubmit:', e);
       setError(e?.message || "Unable to save member. Please try again.");
     } finally {
       setSubmitting(false);
