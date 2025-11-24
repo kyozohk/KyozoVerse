@@ -1,17 +1,17 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { User, CommunityMember } from '@/lib/types';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Skeleton } from '@/components/ui';
-import { Mail, Phone, Edit, Trash2, MessageCircle, Users, Heart, Eye } from 'lucide-react';
+import { Mail, Phone, Edit, Trash2, MessageCircle, Users, Heart, Eye, ArrowLeft } from 'lucide-react';
 
 export default function MemberProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const { handle, memberId } = params as { handle: string, memberId: string };
   
   const [member, setMember] = useState<(User & { role?: string }) | null>(null);
@@ -63,6 +63,12 @@ export default function MemberProfilePage() {
 
   return (
     <div className="flex-1">
+      <div className="p-4">
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Members
+        </Button>
+      </div>
       {/* Banner */}
       <div className="relative h-48 w-full bg-slate-200">
         {member.coverUrl ? (
