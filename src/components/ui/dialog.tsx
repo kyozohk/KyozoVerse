@@ -134,7 +134,7 @@ export function CustomFormDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent 
-        className="max-w-6xl grid grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0 rounded-lg overflow-hidden"
+        className="max-w-[90vw] w-full grid grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0 rounded-lg overflow-hidden"
         style={{
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
