@@ -7,10 +7,10 @@ import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Users, Edit, Phone } from 'lucide-react';
+import { Users, Edit, Phone, Mail } from 'lucide-react';
 import { MemberCard } from './member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
 
 interface MembersListProps {
@@ -33,6 +33,7 @@ export function MembersList({
   onEditMember,
 }: MembersListProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { activeColor } = getThemeForPath(pathname);
 
   const hexToRgba = (hex: string, alpha: number) => {
@@ -54,6 +55,16 @@ export function MembersList({
 
   const canManage = userRole === 'owner' || userRole === 'admin';
 
+  const handleItemClick = (member: CommunityMember) => {
+    if (onMemberClick) {
+      onMemberClick(member);
+    } else {
+      // Default navigation behavior
+      const handle = pathname.split('/')[1];
+      router.push(`/${handle}/members/${member.userId}`);
+    }
+  };
+
   if (viewMode === 'list') {
     return (
       <div className="col-span-full space-y-2">
@@ -73,7 +84,7 @@ export function MembersList({
               key={member.userId}
               className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
               style={itemStyle}
-              onClick={() => onMemberClick && onMemberClick(member)}
+              onClick={() => handleItemClick(member)}
             >
               {selectable && (
                 <div className="mr-4">
@@ -89,14 +100,15 @@ export function MembersList({
                   {member.userDetails?.displayName?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-grow">
-                <div className="font-semibold text-base">{member.userDetails?.displayName}</div>
-                <div className="flex flex-col text-sm text-muted-foreground">
-                    <span>{member.userDetails?.email}</span>
-                    <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {member.userDetails?.phone || 'No phone'}
-                    </span>
+              <div className="flex-grow grid grid-cols-3 items-center gap-4">
+                <div className="font-semibold text-base truncate">{member.userDetails?.displayName}</div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span>{member.userDetails?.phone || 'No phone'}</span>
+                </div>
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                    <Mail className="h-4 w-4 shrink-0" />
+                    <span>{member.userDetails?.email || 'No email'}</span>
                 </div>
               </div>
               {canManage && (
@@ -127,7 +139,7 @@ export function MembersList({
           member={member}
           canManage={canManage}
           borderColor={activeColor}
-          onClick={() => onMemberClick && onMemberClick(member)}
+          onClick={() => handleItemClick(member)}
         />
       ))}
     </>

@@ -134,7 +134,7 @@ export function CustomFormDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent 
-        className="max-w-[90vw] w-full grid grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0 rounded-lg overflow-hidden"
+        className="max-w-[90vw] max-h-[90vh] w-full h-[90vh] grid grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0 rounded-lg overflow-hidden"
         style={{
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
@@ -142,8 +142,8 @@ export function CustomFormDialog({
             '--input-border-color': color,
         } as React.CSSProperties}
       >
-        <div className="p-8 md:p-16 flex flex-col justify-between h-full">
-          <DialogHeader className="mb-8">
+        <div className="p-8 md:p-16 flex flex-col h-full overflow-y-auto">
+          <DialogHeader className="mb-8 flex-shrink-0">
              <DialogTitle>
                 <div 
                     className="text-5xl font-normal text-left mb-2 text-black" 
@@ -155,7 +155,7 @@ export function CustomFormDialog({
             <DialogDescription className="text-left text-base">{description}</DialogDescription>
           </DialogHeader>
           
-          <div className="flex-grow">
+          <div className="flex-grow overflow-y-auto">
             {children}
           </div>
         </div>

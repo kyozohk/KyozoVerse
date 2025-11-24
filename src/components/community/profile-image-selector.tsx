@@ -48,7 +48,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
       {profileImageOptions.map((src) => (
         <div
           key={src}
-          className="relative w-12 h-12 rounded-full cursor-pointer"
+          className="relative w-12 h-12 rounded-full cursor-pointer transition-all"
           onClick={() => handlePresetClick(src)}
         >
           <Image
@@ -60,7 +60,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
           />
           {isPresetSelected(src) && (
             <div
-              className="absolute inset-0 rounded-full"
+              className="absolute inset-0 rounded-full border-[3px]"
               style={{ borderColor: activeColor }}
             />
           )}
