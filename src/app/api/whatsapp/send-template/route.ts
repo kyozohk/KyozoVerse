@@ -141,6 +141,28 @@ export async function POST(request: NextRequest) {
         // Map the component type to the correct format
         const componentType = mapComponentType(comp.type);
         
+        // TEMPORARY WORKAROUND:
+        // 360dialog is currently rejecting BUTTON components from the payload
+        // with "Missing parameter sub_type" errors when using certain
+        // marketing templates (e.g. auto_welcome_message). The reference
+        // project succeeds primarily with non-button templates (e.g. sample_1).
+        //
+        // To ensure broadcast sending works reliably while we refine full
+        // button support, we omit BUTTON components entirely from the payload
+        // and rely on the template definition itself to manage buttons.
+        if (componentType === 'BUTTON') {
+          console.log('Omitting BUTTON component from payload; handled by template definition in 360dialog.');
+          return;
+        }
+        
+        // Skip HEADER components without parameters
+        // 360dialog expects HEADER components to have parameters (e.g., image, document, video)
+        // If no parameters are provided, omit the HEADER component entirely
+        if (componentType === 'HEADER' && (!comp.parameters || comp.parameters.length === 0)) {
+          console.log('Omitting HEADER component without parameters from payload.');
+          return;
+        }
+        
         // Create a clean component object
         const cleanComponent: any = {
           type: componentType
@@ -183,34 +205,6 @@ export async function POST(request: NextRequest) {
             
             return cleanParam;
           });
-        }
-        
-        // Handle buttons specifically
-        if (componentType === 'BUTTON' && comp.buttons && Array.isArray(comp.buttons)) {
-          cleanComponent.buttons = comp.buttons.map((button: any) => {
-            if (!button || !button.type) return null;
-            
-            // Create a clean button based on type
-            if (button.type === 'URL' && button.text && button.url) {
-              return {
-                type: 'URL',
-                text: button.text,
-                url: button.url
-              };
-            } else if (button.type === 'PHONE_NUMBER' && button.text && button.phone_number) {
-              return {
-                type: 'PHONE_NUMBER',
-                text: button.text,
-                phone_number: button.phone_number
-              };
-            } else if (button.type === 'QUICK_REPLY' && button.text) {
-              return {
-                type: 'QUICK_REPLY',
-                text: button.text
-              };
-            }
-            return null;
-          }).filter(Boolean);
         }
         
         // Add the component to the payload

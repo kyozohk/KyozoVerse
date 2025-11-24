@@ -134,6 +134,9 @@ export function mapComponentType(type: string): string {
 
 /**
  * Checks if a template has a header with an image
+ * Matches the reference project's logic by checking for:
+ * 1. HEADER component with format: "IMAGE"
+ * 2. HEADER component with example.header_handle (from 360dialog API)
  */
 export function templateHasImageHeader(template: any): boolean {
   if (!template || !template.components || !Array.isArray(template.components)) {
@@ -142,9 +145,7 @@ export function templateHasImageHeader(template: any): boolean {
   
   const headerComponent = template.components.find((comp: any) => 
     (comp.type === 'HEADER' || comp.type === 'header') &&
-    comp.parameters && 
-    Array.isArray(comp.parameters) &&
-    comp.parameters.some((param: any) => param.type === 'image' && param.image?.link)
+    (comp.format === 'IMAGE' || (comp.example && comp.example.header_handle))
   );
   
   return !!headerComponent;

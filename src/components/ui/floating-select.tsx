@@ -66,7 +66,7 @@ export const FloatingSelect: React.FC<FloatingSelectProps> = ({
         >
           <SelectTrigger
             className={cn(
-              "input selectTrigger",
+              "selectTrigger border-none focus:ring-0 focus:ring-offset-0 px-0 h-full",
               currentValue ? "select-has-value" : ""
             )}
           >

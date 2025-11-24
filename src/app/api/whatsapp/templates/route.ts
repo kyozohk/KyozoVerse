@@ -40,13 +40,17 @@ export async function GET(_req: NextRequest) {
     };
 
     // Try direct message-templates endpoint first (returns waba_templates[])
-    let raw = await fetchFrom(DIRECT_TEMPLATES_URL);
-
-    // If that fails or is empty, try the alternative configs/templates endpoint
-    if (!raw) {
-      console.log('[whatsapp/templates] Direct endpoint failed, trying alternative');
-      raw = await fetchFrom(ALT_TEMPLATES_URL);
-    }
+    // NOTE: The direct endpoint consistently returns 404 for this account,
+    // so we skip it and go straight to the working alternative endpoint.
+    // Uncomment the lines below if you want to try both endpoints:
+    // let raw = await fetchFrom(DIRECT_TEMPLATES_URL);
+    // if (!raw) {
+    //   console.log('[whatsapp/templates] Direct endpoint failed, trying alternative');
+    //   raw = await fetchFrom(ALT_TEMPLATES_URL);
+    // }
+    
+    // Use the working endpoint directly
+    let raw = await fetchFrom(ALT_TEMPLATES_URL);
 
     if (!raw) {
       return NextResponse.json(
@@ -73,6 +77,9 @@ export async function GET(_req: NextRequest) {
         ? t.components.map((c: any) => ({
             type: c.type,
             text: c.text,
+            format: c.format, // Preserve format field (e.g., "IMAGE", "TEXT", "DOCUMENT")
+            example: c.example, // Preserve example field (contains header_handle for images)
+            buttons: c.buttons, // Preserve buttons for button components
           }))
         : [],
     }));

@@ -151,7 +151,7 @@ input::placeholder {
 
 .floatingLabel {
   position: absolute;
-  top: 0.7rem;
+  top: 0.9rem;
   left: 0.75rem;
   font-size: 1rem;
   color: var(--text-secondary);
@@ -167,7 +167,7 @@ input::placeholder {
 
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -0.7rem;
+  top: -0.2rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
@@ -189,7 +189,7 @@ input::placeholder {
 /* Floating label behaviour for select trigger */
 .selectTrigger:focus ~ .floatingLabel,
 .selectTrigger.select-has-value ~ .floatingLabel {
-  top: -0.7rem;
+  top: -0.2rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF);

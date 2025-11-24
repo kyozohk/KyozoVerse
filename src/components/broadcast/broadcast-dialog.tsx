@@ -55,42 +55,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
 }, [isOpen, members]);
 
 
-  // Fallback templates if no templates are provided from API
-  const fallbackTemplates: Template[] = [
-    { 
-      id: 'template1', 
-      name: 'Welcome Message',
-      language: 'en_US',
-      components: [
-        {
-          type: 'BODY',
-          text: 'Hi {{1}}, thanks for getting in touch with {{2}}. We will process your request and get back to you shortly'
-        }
-      ],
-      variables: [
-        { index: 1, value: '', placeholder: 'Customer Name' },
-        { index: 2, value: '', placeholder: 'Company Name' }
-      ]
-    },
-    { 
-      id: 'template2', 
-      name: 'Event Reminder',
-      language: 'en_US',
-      components: [
-        {
-          type: 'BODY',
-          text: 'Hello {{1}}, this is a reminder for your upcoming event on {{2}} at {{3}}. We look forward to seeing you there!'
-        }
-      ],
-      variables: [
-        { index: 1, value: '', placeholder: 'Customer Name' },
-        { index: 2, value: '', placeholder: 'Event Date' },
-        { index: 3, value: '', placeholder: 'Event Time' }
-      ]
-    },
-  ];
-  
-  // Use real templates from API or fallback to default templates
+  // Use templates only from API/props; do not fall back to hard-coded templates
   const displayTemplates = templates && templates.length > 0 
     ? templates.map(template => {
         // Extract variables from template components if they exist
@@ -125,7 +90,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           variables: variables
         };
       })
-    : fallbackTemplates;
+    : [];
     
   // Set default template when templates are loaded
   useEffect(() => {
@@ -225,7 +190,14 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   // Check if the selected template has an image header
   const hasImageHeader = () => {
     const template = displayTemplates.find(t => t.id === selectedTemplate);
-    return template ? templateHasImageHeader(template) : false;
+    const result = template ? templateHasImageHeader(template) : false;
+    console.log('[BroadcastDialog] hasImageHeader check:', {
+      selectedTemplate,
+      hasTemplate: !!template,
+      templateComponents: template?.components,
+      result
+    });
+    return result;
   };
   
   // Function to check pricing for the broadcast

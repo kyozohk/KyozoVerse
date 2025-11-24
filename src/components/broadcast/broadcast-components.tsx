@@ -206,22 +206,14 @@ export const TemplateStep = ({
     )}
     
     {hasImageHeader && (
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Header Image URL</label>
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            value={headerImageUrl}
-            onChange={(e) => onHeaderImageChange(e.target.value)}
-            placeholder="Enter image URL for template header"
-          />
-          <div className="flex-shrink-0">
-            <ImageIcon className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          This template requires an image header.
-        </p>
+      <div className="inputWrapper">
+        <Input
+          type="text"
+          value={headerImageUrl}
+          onChange={(e) => onHeaderImageChange(e.target.value)}
+          placeholder="Enter image URL for template header"
+          label="Enter image URL for template header"
+        />
       </div>
     )}
   </div>
@@ -269,12 +261,6 @@ export const PreviewStep = ({
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-medium mb-2">Message Preview</h3>
-        <div className="text-sm text-muted-foreground">
-          This is how your message will appear to recipients.
-        </div>
-      </div>
 
       <div className="inputWrapper">
         <div className="inputContainer">
@@ -283,12 +269,11 @@ export const PreviewStep = ({
             label="Message Preview"
             readOnly
             value={displayText || 'No content available'}
-            rows={5}
+            rows={12}
             className="resize-none bg-muted/20"
           />
         </div>
       </div>
-
       <div className="text-sm text-amber-600">
         Please review the message carefully before proceeding to send.
       </div>
