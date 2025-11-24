@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
     BarChart3,
     CreditCard,
@@ -17,15 +18,31 @@ export default function MainSidebar() {
         { href: '/account', icon: <Settings />, label: 'Settings' },
     ];
 
+    // Use the same background color as the community sidebar
     return (
-        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r bg-card sm:flex">
-            <nav className="flex flex-col items-center gap-4 px-2 py-4">
-                {navItems.map((item) => (
-                    <SidebarNavItem key={item.label} href={item.href} icon={item.icon}>
-                        <span className="sr-only">{item.label}</span>
-                    </SidebarNavItem>
-                ))}
-            </nav>
+        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r sm:flex sidebar-bg-default">
+            <div className="flex h-full flex-col">
+                {/* Logo section with same height as community sidebar dropdown */}
+                <div className="flex h-[88px] items-center justify-center border-b" style={{ borderColor: 'var(--default-color-border)' }}>
+                    <div className="flex items-center justify-center">
+                        <Image src="/logo-icon.svg" alt="Kyozo" width={48} height={48} />
+                    </div>
+                </div>
+                
+                {/* Navigation items with same spacing as community sidebar */}
+                <nav className="flex flex-col items-center py-2">
+                    {navItems.map((item) => (
+                        <SidebarNavItem 
+                            key={item.label} 
+                            href={item.href} 
+                            icon={item.icon}
+                            className="w-full justify-center my-1"
+                        >
+                            <span className="sr-only">{item.label}</span>
+                        </SidebarNavItem>
+                    ))}
+                </nav>
+            </div>
         </aside>
     );
 }

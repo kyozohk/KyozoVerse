@@ -22,10 +22,10 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
+  className={cn(
+    "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+    className
+  )}    
     {...props}
   />
 ))
@@ -40,14 +40,14 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full h-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
+      <DialogPrimitive.Close className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary z-50">
+        <X className="h-5 w-5" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -128,34 +128,31 @@ export function CustomFormDialog({
   children,
   backgroundImage,
   showVideo = true,
-  videoSrc = "/bg/form_video.mp4",
+  videoSrc = "/videos/form-right.mp4",
   color = "#843484",
 }: CustomFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent 
-        className="max-w-4xl grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0"
+        className="max-w-[90vw] w-full grid grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0 rounded-lg overflow-hidden"
         style={{
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
-        }}
+            backgroundPosition: 'center',
+            '--input-border-color': color,
+        } as React.CSSProperties}
       >
-        <div className="p-8 md:p-12 flex flex-col justify-between">
-          <DialogHeader>
+        <div className="p-8 md:p-16 flex flex-col justify-between h-full">
+          <DialogHeader className="mb-8">
              <DialogTitle>
-                <div className="flex items-center gap-2 mb-8">
-                <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: color }}></div>
-                <Image src="/logo-icon.svg" alt="Kyozo Icon" width={40} height={40} />
-                </div>
                 <div 
-                    className="text-4xl font-normal text-left" 
+                    className="text-5xl font-normal text-left mb-2 text-black" 
                     style={{ fontFamily: 'Canicule Display, serif' }}
                 >
                     {title}
                 </div>
              </DialogTitle>
-            <DialogDescription className="text-left pt-2">{description}</DialogDescription>
+            <DialogDescription className="text-left text-base">{description}</DialogDescription>
           </DialogHeader>
           
           <div className="flex-grow">
@@ -164,7 +161,7 @@ export function CustomFormDialog({
         </div>
 
         {showVideo && (
-          <div className="relative hidden md:block overflow-hidden rounded-r-lg">
+          <div className="relative hidden md:block overflow-hidden">
             <video
               className="absolute top-0 left-0 w-full h-full object-cover"
               src={videoSrc}

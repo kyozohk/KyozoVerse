@@ -58,13 +58,17 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
               />
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
-            <div className="mt-6">
+            <div className="mt-8">
               <div className="mb-4">
-                <CustomButton onClick={handleSubmit} className="w-full">
+                <CustomButton 
+                  onClick={handleSubmit} 
+                  className="w-full py-3 text-base font-medium" 
+                  variant="waitlist"
+                >
                   Send reset link
                 </CustomButton>
               </div>
-              <div className="text-center text-sm text-secondary">
+              <div className="text-center text-sm">
                 <button type="button" className="text-primary hover:underline" onClick={onGoBack}>
                   Go back
                 </button>

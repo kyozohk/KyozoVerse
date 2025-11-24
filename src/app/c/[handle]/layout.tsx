@@ -110,11 +110,12 @@ export default function PublicLayout({
           title="Welcome Back"
           description="Sign in to access your Kyozo dashboard and community."
           backgroundImage="/bg/light_app_bg.png"
+          videoSrc="/bg/form-right.mp4"
           color="#C170CF"
         >
           <div className="flex flex-col h-full">
             <div className="flex-grow">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <Input 
                   label="Email" 
                   type="email" 
@@ -136,9 +137,21 @@ export default function PublicLayout({
               </div>
             </div>
             
-            <div className="mt-6">
+            <div className="mt-8">
               <div className="mb-4">
-                <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
+                <CustomButton 
+                  onClick={handleSignIn} 
+                  className="w-full py-3 text-base font-medium" 
+                  variant="waitlist"
+                >
+                  Sign In
+                </CustomButton>
+              </div>
+              <div className="text-center text-sm">
+                Don't have an account? <button type="button" className="text-primary hover:underline" onClick={() => {
+                  setIsSignInOpen(false);
+                  // Add waitlist functionality here
+                }}>Join the waitlist</button>
               </div>
             </div>
           </div>

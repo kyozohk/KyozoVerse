@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent } from '@/components/ui/card';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-utils';
 import { type Post, type User } from '@/lib/types';
@@ -61,19 +60,7 @@ export default function CommunityFeedPage() {
     }
 
     const postsCollection = collection(db, 'blogs');
-
-    const constraints = [];
-    constraints.push(where('communityHandle', '==', handle));
-
-    // Only show public posts to non-logged in users
-    if (!user) {
-      constraints.push(where('visibility', '==', 'public'));
-    }
-    // For logged in users, we'll filter by visibility later in the code
-    // This allows us to fetch all posts and then filter them client-side
-
-    constraints.push(orderBy('createdAt', 'desc'));
-
+    const constraints = [where('communityHandle', '==', handle), orderBy('createdAt', 'desc')];
     const q = query(postsCollection, ...constraints);
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
@@ -103,20 +90,15 @@ export default function CommunityFeedPage() {
         });
       }
 
-      // Filter posts based on visibility and user role
       let visiblePosts = postsData;
-      
-      // If user is not logged in, only show public posts
       if (!user) {
         visiblePosts = postsData.filter((p) => p.visibility === 'public');
       } 
-      // If user is logged in but not an admin/owner, show public posts and their own private posts
       else if (userRole !== 'admin' && userRole !== 'owner') {
         visiblePosts = postsData.filter((p) => 
           p.visibility === 'public' || (p.visibility === 'private' && p.authorId === user.uid)
         );
       }
-      // Admins and owners can see all posts
       
       setPosts(visiblePosts);
       setLoading(false);
@@ -138,7 +120,6 @@ export default function CommunityFeedPage() {
     post.content.text?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Only admins and owners can create/edit content
   const canEditContent = userRole === 'admin' || userRole === 'owner';
   
   return (
@@ -152,22 +133,21 @@ export default function CommunityFeedPage() {
         </Link>
       </div>
       <ListView
+        title="Feed"
+        subtitle="Latest posts from the community."
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        loading={loading}
       >
-        {loading ? (
-          <FeedSkeletons />
-        ) : filteredPosts.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
+        {filteredPosts.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
               <h2 className="text-xl font-semibold">No posts to display</h2>
-              <p className="text-muted-foreground mt-2">
+              <p className="mt-2">
                 There are no posts in this community yet that match your search.
               </p>
-            </CardContent>
-          </Card>
+            </div>
         ) : (
           filteredPosts.map((post) => {
             switch (post.type) {

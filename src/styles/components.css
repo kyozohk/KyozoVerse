@@ -1,4 +1,5 @@
 
+
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -98,7 +99,7 @@
 
 /* Input styles */
 .inputWrapper {
-  margin-bottom: 0rem; /* Removed margin */
+  position: relative;
   width: 100%;
 }
 
@@ -115,8 +116,18 @@
   width: 100%;
   height: 44px; /* Make inputs 10% taller */
   font-size: 1rem;
-  color: #222;
+  color: hsl(var(--foreground));
   transition: border-color 0.2s ease;
+}
+
+.input::placeholder {
+  color: var(--input-border-color, var(--text-secondary));
+  opacity: 0.7;
+}
+
+input::placeholder {
+  color: var(--placeholder-color, var(--text-secondary));
+  opacity: 0.7;
 }
 
 .input:focus {
@@ -140,12 +151,14 @@
 
 .floatingLabel {
   position: absolute;
-  top: 0.7rem;
+  top: 0.9rem;
   left: 0.75rem;
   font-size: 1rem;
   color: var(--text-secondary);
   pointer-events: none;
   transition: all 0.2s ease;
+  background-color: transparent;
+  padding: 0 0.25rem;
 }
 
 .input-with-icon ~ .floatingLabel {
@@ -154,12 +167,33 @@
 
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -0.75rem;
+  top: -0.2rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  color: var(--input-border-color, #843484); /* Use CSS variable for focused label color */
-  background-color: white;
-  padding: 0 0.25rem;
+  color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
+  background-color: #EDEDED;
+}
+
+/* Select trigger styled like input, used in FloatingSelect */
+.selectTrigger {
+  background-color: transparent;
+  border: 1px solid var(--input-border-color, var(--button-border));
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  width: 100%;
+  height: 44px;
+  font-size: 1rem;
+  color: hsl(var(--foreground));
+}
+
+/* Floating label behaviour for select trigger */
+.selectTrigger:focus ~ .floatingLabel,
+.selectTrigger.select-has-value ~ .floatingLabel {
+  top: -0.2rem;
+  left: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--input-border-color, #C170CF);
+  background-color: #EDEDED;
 }
 
 
@@ -286,4 +320,13 @@
 .community-select-trigger {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+}
+
+/* Fix for phone input label */
+.phone-dropdown + input + label.floatingLabel {
+  left: 5.25rem;
+}
+.phone-dropdown + input:focus ~ label.floatingLabel,
+.phone-dropdown + input:not(:placeholder-shown) ~ label.floatingLabel {
+  left: 0.75rem;
 }

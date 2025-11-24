@@ -2,13 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { ListView } from '@/components/ui/list-view';
 import { Card } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 
 export default function CommunityTicketingPage() {
-  const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 

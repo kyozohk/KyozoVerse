@@ -5,6 +5,7 @@
 
 // Custom components
 export { CustomButton } from './CustomButton';
+export { FloatingSelect } from './floating-select';
 export { PasswordInput } from './PasswordInput';
 export { Header } from './header';
 export { GradientText } from './gradient-text';
