@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 
 // Environment variables should be set in .env.local
 // Support multiple possible env var names for the 360dialog API key,
@@ -265,8 +267,67 @@ export async function POST(request: NextRequest) {
       raw: data,
     });
     
-    // Store the message in our database for history
-    // This would typically save to Firestore or another database
+    // Store the message in Firestore
+    if (response.ok && data.messages?.[0]?.id) {
+      try {
+        // Find user by phone number
+        const recipientPhone = body.to.startsWith('+') ? body.to : `+${body.to}`;
+        const usersRef = collection(db, 'users');
+        const phoneQuery = query(
+          usersRef,
+          where('phoneNumber', '==', recipientPhone)
+        );
+        const phoneQuery2 = query(
+          usersRef,
+          where('phone', '==', recipientPhone)
+        );
+        
+        let userSnapshot = await getDocs(phoneQuery);
+        if (userSnapshot.empty) {
+          userSnapshot = await getDocs(phoneQuery2);
+        }
+        
+        let userId = null;
+        let userName = 'Unknown';
+        if (!userSnapshot.empty) {
+          userId = userSnapshot.docs[0].id;
+          userName = userSnapshot.docs[0].data().displayName || 'Unknown';
+        }
+        
+        // Extract message text from template
+        let messageText = '';
+        const bodyComponent = body.template.components?.find((c: any) => c.type === 'BODY' || c.type === 'body');
+        if (bodyComponent?.text) {
+          messageText = bodyComponent.text;
+          // Replace variables with actual values
+          bodyComponent.parameters?.forEach((param: any, index: number) => {
+            if (param.type === 'text') {
+              messageText = messageText.replace(`{{${index + 1}}}`, param.text);
+            }
+          });
+        }
+        
+        // Save outgoing message to Firestore
+        const messagesRef = collection(db, 'whatsapp_messages');
+        await addDoc(messagesRef, {
+          messageId: data.messages[0].id,
+          userId,
+          recipientPhone: body.to,
+          recipientName: userName,
+          messageText,
+          templateName: body.template.name,
+          direction: 'outgoing', // outgoing to user
+          timestamp: serverTimestamp(),
+          read: true, // outgoing messages are always "read" by us
+          status: 'sent',
+        });
+        
+        console.log(`✅ Outgoing message saved to Firestore for user ${userId || body.to}`);
+      } catch (error) {
+        console.error('Error saving outgoing message to Firestore:', error);
+      }
+    }
+    
     console.log('Template message stored in history:', {
       to: body.to,
       template: body.template.name,
