@@ -2,12 +2,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { db } from '@/firebase/firestore';
 import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, updateDoc, doc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage, Card, Input } from '@/components/ui';
 import { Search, Send } from 'lucide-react';
 import { User } from '@/lib/types';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 interface WhatsAppMessage {
   id: string;
@@ -35,7 +36,9 @@ interface Conversation {
 
 export default function CommunityInboxPage() {
   const params = useParams();
+  const pathname = usePathname();
   const handle = params?.handle as string;
+  const { activeColor } = getThemeForPath(pathname);
   
   const [communityMembers, setCommunityMembers] = useState<User[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -283,9 +286,9 @@ export default function CommunityInboxPage() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold truncate">{conv.userName}</p>
+                      <p className="font-semibold truncate" style={{ color: activeColor }}>{conv.userName}</p>
                       {conv.unreadCount > 0 && (
-                        <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
+                        <span className="text-xs rounded-full px-2 py-0.5" style={{ backgroundColor: activeColor, color: 'white' }}>
                           {conv.unreadCount}
                         </span>
                       )}
@@ -318,7 +321,7 @@ export default function CommunityInboxPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{selectedConversation?.userName}</p>
+                  <p className="font-semibold" style={{ color: activeColor }}>{selectedConversation?.userName}</p>
                   <p className="text-sm text-muted-foreground">
                     {selectedConversation?.userPhone}
                   </p>
@@ -342,17 +345,35 @@ export default function CommunityInboxPage() {
                   >
                     <div
                       className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        msg.direction === 'outgoing'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                        msg.direction === 'incoming'
+                          ? 'bg-secondary text-secondary-foreground border border-border'
+                          : ''
                       }`}
+                      style={msg.direction === 'outgoing' ? { backgroundColor: activeColor, color: 'white' } : {}}
                     >
+                      {/* Show media if it's a media message */}
+                      {(msg as any).media?.id && (
+                        <div className="mb-2">
+                          <div className="bg-muted/50 rounded p-2 text-sm">
+                            {(msg as any).messageType === 'image' && '📷 Image'}
+                            {(msg as any).messageType === 'video' && '🎥 Video'}
+                            {(msg as any).messageType === 'audio' && '🎵 Audio'}
+                            {(msg as any).messageType === 'voice' && '🎤 Voice'}
+                            {(msg as any).messageType === 'document' && `📄 ${(msg as any).media.fileName || 'Document'}`}
+                            {(msg as any).messageType === 'sticker' && '🎨 Sticker'}
+                            {!(msg as any).messageType && '📎 Media'}
+                            <div className="text-xs mt-1 opacity-70">
+                              Media ID: {(msg as any).media.id}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       <p className="whitespace-pre-wrap break-words">{msg.messageText}</p>
                       <p
                         className={`text-xs mt-1 ${
                           msg.direction === 'outgoing'
                             ? 'text-primary-foreground/70'
-                            : 'text-muted-foreground'
+                            : 'text-secondary-foreground/70'
                         }`}
                       >
                         {msg.timestamp?.toDate?.()?.toLocaleTimeString() || 'Just now'}

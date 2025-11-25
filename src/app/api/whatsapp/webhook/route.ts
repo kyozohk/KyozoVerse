@@ -52,14 +52,57 @@ export async function POST(req: NextRequest) {
                 const message = value.messages[i];
                 const contact = value.contacts?.[i];
                 
-                if (message.type === 'text' && message.text?.body) {
+                // Handle all message types: text, image, video, audio, document, etc.
+                if (message.type) {
                   const senderPhone = message.from;
-                  const messageText = message.text.body;
                   const messageId = message.id;
                   const timestamp = message.timestamp;
                   const senderName = contact?.profile?.name || 'Unknown';
                   
-                  console.log(`[Webhook] Incoming message from: ${senderPhone} (${senderName}) | Text: ${messageText}`);
+                  // Extract message content based on type
+                  let messageText = '';
+                  let mediaId = null;
+                  let mimeType = null;
+                  let fileName = null;
+                  
+                  if (message.type === 'text') {
+                    messageText = message.text?.body || '';
+                    console.log(`[Webhook] Incoming TEXT from: ${senderPhone} (${senderName}) | Text: ${messageText}`);
+                  } else if (message.type === 'image') {
+                    messageText = message.image?.caption || '📷 Image';
+                    mediaId = message.image?.id;
+                    mimeType = message.image?.mime_type;
+                    console.log(`[Webhook] Incoming IMAGE from: ${senderPhone} (${senderName}) | Caption: ${messageText} | MediaID: ${mediaId}`);
+                  } else if (message.type === 'video') {
+                    messageText = message.video?.caption || '🎥 Video';
+                    mediaId = message.video?.id;
+                    mimeType = message.video?.mime_type;
+                    console.log(`[Webhook] Incoming VIDEO from: ${senderPhone} (${senderName}) | Caption: ${messageText} | MediaID: ${mediaId}`);
+                  } else if (message.type === 'audio') {
+                    messageText = '🎵 Audio';
+                    mediaId = message.audio?.id;
+                    mimeType = message.audio?.mime_type;
+                    console.log(`[Webhook] Incoming AUDIO from: ${senderPhone} (${senderName}) | MediaID: ${mediaId}`);
+                  } else if (message.type === 'document') {
+                    fileName = message.document?.filename || 'Document';
+                    messageText = message.document?.caption || `📄 ${fileName}`;
+                    mediaId = message.document?.id;
+                    mimeType = message.document?.mime_type;
+                    console.log(`[Webhook] Incoming DOCUMENT from: ${senderPhone} (${senderName}) | File: ${fileName} | MediaID: ${mediaId}`);
+                  } else if (message.type === 'voice') {
+                    messageText = '🎤 Voice message';
+                    mediaId = message.voice?.id;
+                    mimeType = message.voice?.mime_type;
+                    console.log(`[Webhook] Incoming VOICE from: ${senderPhone} (${senderName}) | MediaID: ${mediaId}`);
+                  } else if (message.type === 'sticker') {
+                    messageText = '🎨 Sticker';
+                    mediaId = message.sticker?.id;
+                    mimeType = message.sticker?.mime_type;
+                    console.log(`[Webhook] Incoming STICKER from: ${senderPhone} (${senderName}) | MediaID: ${mediaId}`);
+                  } else {
+                    messageText = `📎 ${message.type}`;
+                    console.log(`[Webhook] Incoming ${message.type.toUpperCase()} from: ${senderPhone} (${senderName})`);
+                  }
                   
                   // Find user by wa_id (WhatsApp ID - phone without + and spaces)
                   const wa_id = senderPhone; // 360dialog sends it without +
@@ -120,12 +163,13 @@ export async function POST(req: NextRequest) {
                   
                   // Save message to Firestore
                   const messagesRef = collection(db, 'whatsapp_messages');
-                  await addDoc(messagesRef, {
+                  const messageData: any = {
                     messageId,
                     userId,
                     senderPhone: `+${senderPhone}`,
                     senderName: userName,
                     messageText,
+                    messageType: message.type, // 'text' or 'image'
                     direction: 'incoming', // incoming from user
                     timestamp: serverTimestamp(),
                     whatsappTimestamp: timestamp,
@@ -134,9 +178,23 @@ export async function POST(req: NextRequest) {
                       displayPhoneNumber: value.metadata?.display_phone_number,
                       phoneNumberId: value.metadata?.phone_number_id,
                     }
-                  });
+                  };
                   
-                  console.log(`✅ Message saved to Firestore for user ${userId || senderPhone}`);
+                  // Add media data if it's a media message (image, video, audio, document, etc.)
+                  if (mediaId) {
+                    messageData.media = {
+                      id: mediaId,
+                      mimeType: mimeType,
+                      fileName: fileName,
+                      // Note: To get the actual media URL, you need to call 360dialog API
+                      // GET https://waba.360dialog.io/v1/media/{mediaId}
+                      // For now, we'll store the ID and fetch it later
+                    };
+                  }
+                  
+                  await addDoc(messagesRef, messageData);
+                  
+                  console.log(`✅ ${message.type.toUpperCase()} message saved to Firestore for user ${userId || senderPhone}`);
                 }
               }
             }
