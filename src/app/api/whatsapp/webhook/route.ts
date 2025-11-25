@@ -2,6 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from '@/firebase/firestore';
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 
+/**
+ * GET handler for webhook verification
+ * 360dialog sends GET requests to verify the webhook endpoint
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const mode = searchParams.get('hub.mode');
+    const token = searchParams.get('hub.verify_token');
+    const challenge = searchParams.get('hub.challenge');
+
+    console.log('[Webhook] GET verification request:', { mode, token, challenge });
+
+    // Verify token (you can set a custom token in your env)
+    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN || 'kyozo_webhook_token';
+
+    if (mode === 'subscribe' && token === verifyToken) {
+      console.log('[Webhook] Verification successful');
+      return new NextResponse(challenge, { status: 200 });
+    }
+
+    console.log('[Webhook] Verification failed');
+    return NextResponse.json({ error: 'Verification failed' }, { status: 403 });
+  } catch (error) {
+    console.error('[Webhook] GET error:', error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+
+/**
+ * POST handler for incoming WhatsApp messages
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

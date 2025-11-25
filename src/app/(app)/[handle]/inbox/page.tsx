@@ -174,38 +174,61 @@ export default function CommunityInboxPage() {
   // Load messages for selected user and mark as read
   useEffect(() => {
     if (!selectedUserId) {
+      console.log('[Inbox] No user selected, clearing messages');
       setMessages([]);
       return;
     }
 
+    console.log('[Inbox] Loading messages for userId:', selectedUserId);
+
     const messagesRef = collection(db, 'whatsapp_messages');
+    
+    // Query messages by userId
     const messagesQuery = query(
       messagesRef,
       where('userId', '==', selectedUserId),
       orderBy('timestamp', 'asc')
     );
 
-    const unsubscribe = onSnapshot(messagesQuery, async (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as WhatsAppMessage[];
-      setMessages(msgs);
+    const unsubscribe = onSnapshot(
+      messagesQuery,
+      async (snapshot) => {
+        console.log('[Inbox] Messages snapshot received:', snapshot.docs.length, 'messages');
+        
+        const msgs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as WhatsAppMessage[];
+        
+        console.log('[Inbox] Parsed messages:', msgs);
+        setMessages(msgs);
 
-      // Mark all incoming unread messages as read
-      const unreadMessages = msgs.filter(
-        (msg) => msg.direction === 'incoming' && !msg.read
-      );
-      
-      for (const msg of unreadMessages) {
-        try {
-          const msgRef = doc(db, 'whatsapp_messages', msg.id);
-          await updateDoc(msgRef, { read: true });
-        } catch (error) {
-          console.error('Error marking message as read:', error);
+        // Mark all incoming unread messages as read
+        const unreadMessages = msgs.filter(
+          (msg) => msg.direction === 'incoming' && !msg.read
+        );
+        
+        if (unreadMessages.length > 0) {
+          console.log('[Inbox] Marking', unreadMessages.length, 'messages as read');
+        }
+        
+        for (const msg of unreadMessages) {
+          try {
+            const msgRef = doc(db, 'whatsapp_messages', msg.id);
+            await updateDoc(msgRef, { read: true });
+          } catch (error) {
+            console.error('[Inbox] Error marking message as read:', error);
+          }
+        }
+      },
+      (error) => {
+        console.error('[Inbox] Error loading messages:', error);
+        // If index error, show helpful message
+        if (error.code === 'failed-precondition') {
+          console.error('[Inbox] Firestore index required. Click the link in the error above to create it.');
         }
       }
-    });
+    );
 
     return () => unsubscribe();
   }, [selectedUserId]);
@@ -262,7 +285,7 @@ export default function CommunityInboxPage() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold truncate">{conv.userName}</p>
+                      <p className="font-semibold truncate text-primary">{conv.userName}</p>
                       {conv.unreadCount > 0 && (
                         <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
                           {conv.unreadCount}
