@@ -6,36 +6,54 @@ const storage = getStorage(app);
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { mediaId: string } }
+  { params }: { params: Promise<{ mediaId: string }> }
 ) {
   try {
-    const { mediaId } = params;
+    const { mediaId } = await params;
     
     if (!mediaId) {
       return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.WHATSAPP_API_KEY;
+    const apiKey = process.env.D360_API_KEY || process.env.D360_DIALOG_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
     console.log(`[Media API] Fetching media: ${mediaId}`);
 
-    // Step 1: Get media URL from 360dialog
-    const mediaInfoResponse = await fetch(`https://waba.360dialog.io/v1/media/${mediaId}`, {
-      headers: {
-        'D360-API-KEY': apiKey,
-      },
-    });
+    // Step 1: Get media URL from 360dialog (with retry for temporary errors)
+    let mediaInfoResponse;
+    let retries = 2;
+    
+    while (retries >= 0) {
+      mediaInfoResponse = await fetch(`https://waba.360dialog.io/v1/media/${mediaId}`, {
+        headers: {
+          'D360-API-KEY': apiKey,
+        },
+      });
 
-    if (!mediaInfoResponse.ok) {
-      const errorText = await mediaInfoResponse.text();
-      console.error(`[Media API] Failed to get media info:`, errorText);
-      return NextResponse.json({ error: 'Failed to get media info' }, { status: mediaInfoResponse.status });
+      if (mediaInfoResponse.ok) {
+        break;
+      }
+
+      // If it's a 555 error and we have retries left, wait and retry
+      if (mediaInfoResponse.status === 555 && retries > 0) {
+        console.log(`[Media API] Got 555 error, retrying in 1s... (${retries} retries left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        retries--;
+      } else {
+        const errorText = await mediaInfoResponse.text();
+        console.error(`[Media API] Failed to get media info:`, errorText);
+        return NextResponse.json({ 
+          error: 'Failed to get media info',
+          details: errorText,
+          mediaId 
+        }, { status: mediaInfoResponse.status });
+      }
     }
 
-    const mediaInfo = await mediaInfoResponse.json();
+    const mediaInfo = await mediaInfoResponse!.json();
     const mediaUrl = mediaInfo.url;
     const mimeType = mediaInfo.mime_type;
     

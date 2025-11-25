@@ -183,10 +183,21 @@ export async function POST(req: NextRequest) {
                   
                   // Add media data if it's a media message (image, video, audio, document, etc.)
                   if (mediaId) {
-                    // Download media immediately
+                    // Download media immediately using internal API call
                     try {
-                      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-                      const mediaResponse = await fetch(`${baseUrl}/api/whatsapp/media/${mediaId}`);
+                      // Use request headers to construct base URL
+                      const headers = new Headers(req.headers);
+                      const protocol = (headers.get('x-forwarded-proto') || 'http').split(',')[0].trim();
+                      const host = (headers.get('host') || 'localhost:3000').split(',')[0].trim();
+                      const baseUrl = `${protocol}://${host}`;
+                      
+                      console.log(`[Webhook] Downloading media from: ${baseUrl}/api/whatsapp/media/${mediaId}`);
+                      
+                      const mediaResponse = await fetch(`${baseUrl}/api/whatsapp/media/${mediaId}`, {
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      });
                       
                       if (mediaResponse.ok) {
                         const mediaData = await mediaResponse.json();
@@ -198,13 +209,14 @@ export async function POST(req: NextRequest) {
                         };
                         console.log(`[Webhook] ✅ Media downloaded: ${mediaData.url}`);
                       } else {
+                        const errorText = await mediaResponse.text();
+                        console.log(`[Webhook] ⚠️ Media download failed (${mediaResponse.status}): ${errorText}`);
                         // Fallback: store ID only
                         messageData.media = {
                           id: mediaId,
                           mimeType: mimeType,
                           fileName: fileName,
                         };
-                        console.log(`[Webhook] ⚠️ Media download failed, storing ID only`);
                       }
                     } catch (error) {
                       console.error(`[Webhook] Error downloading media:`, error);
