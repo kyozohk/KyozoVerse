@@ -134,6 +134,8 @@ export default function CommunityInboxPage() {
           (msg) => msg.direction === 'incoming' && !msg.read
         ).length;
 
+        console.log('[Inbox] Member:', member.displayName, 'userId:', member.userId, 'phone:', member.phone || member.phoneNumber, 'messages:', memberMessages.length, 'unread:', unreadCount);
+
         conversationMap.set(member.userId, {
           userId: member.userId,
           userPhone: member.phone || member.phoneNumber || '',
@@ -223,10 +225,6 @@ export default function CommunityInboxPage() {
       },
       (error) => {
         console.error('[Inbox] Error loading messages:', error);
-        // If index error, show helpful message
-        if (error.code === 'failed-precondition') {
-          console.error('[Inbox] Firestore index required. Click the link in the error above to create it.');
-        }
       }
     );
 
@@ -278,14 +276,14 @@ export default function CommunityInboxPage() {
               >
                 <div className="flex items-start gap-3">
                   <Avatar>
-                    <AvatarImage src={conv.userAvatar} />
+                    <AvatarImage src={conv.userAvatar || undefined} />
                     <AvatarFallback>
                       {conv.userName.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold truncate text-primary">{conv.userName}</p>
+                      <p className="font-semibold truncate">{conv.userName}</p>
                       {conv.unreadCount > 0 && (
                         <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
                           {conv.unreadCount}
@@ -314,7 +312,7 @@ export default function CommunityInboxPage() {
             <div className="p-4 border-b bg-background">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={selectedConversation?.userAvatar} />
+                  <AvatarImage src={selectedConversation?.userAvatar || undefined} />
                   <AvatarFallback>
                     {selectedConversation?.userName.charAt(0).toUpperCase()}
                   </AvatarFallback>

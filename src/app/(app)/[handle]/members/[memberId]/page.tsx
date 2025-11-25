@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, updateDoc, collection, query, where, getDocs, increment } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { User, CommunityMember } from '@/lib/types';
 import Image from 'next/image';
@@ -279,12 +279,52 @@ export default function MemberProfilePage() {
                     variant="destructive" 
                     onClick={async () => {
                       try {
-                        // In a real app, you would delete the member from communityMembers collection
-                        // await deleteDoc(doc(db, 'communityMembers', memberId));
+                        // First get community by handle
+                        const communitiesRef = collection(db, 'communities');
+                        const communityQuery = query(communitiesRef, where('handle', '==', handle));
+                        const communitySnap = await getDocs(communityQuery);
+                        
+                        if (communitySnap.empty) {
+                          throw new Error('Community not found');
+                        }
+                        
+                        const communityId = communitySnap.docs[0].id;
+                        
+                        // Find and delete the member document from communityMembers
+                        const membersRef = collection(db, 'communityMembers');
+                        const memberQuery = query(
+                          membersRef,
+                          where('userId', '==', memberId),
+                          where('communityId', '==', communityId)
+                        );
+                        const memberSnapshot = await getDocs(memberQuery);
+                        
+                        if (!memberSnapshot.empty) {
+                          // Delete the community member document
+                          await deleteDoc(memberSnapshot.docs[0].ref);
+                          console.log('Member removed from community');
+                          
+                          // Decrement member count
+                          const communityRef = doc(db, 'communities', communityId);
+                          await updateDoc(communityRef, {
+                            memberCount: increment(-1),
+                          });
+                          
+                          toast({
+                            title: "Member Removed",
+                            description: "The member has been removed from the community.",
+                          });
+                        }
+                        
                         setIsDeleteConfirmOpen(false);
                         router.push(`/${handle}/members`);
                       } catch (error) {
                         console.error('Error deleting member:', error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to remove member. Please try again.",
+                          variant: "destructive",
+                        });
                       }
                     }}
                   >

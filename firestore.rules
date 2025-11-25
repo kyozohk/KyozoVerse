@@ -11,7 +11,7 @@ service cloud.firestore {
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
-      allow write: if false; // Or define admin rules
+      allow write: if request.auth != null; // Allow authenticated users to update communities
     }
 
     // Community members can be read by other members of that same community
@@ -32,10 +32,12 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
     }
 
-    // Users collection can be read by anyone, but only the user can write to their own document
+    // Users collection can be read by anyone
+    // Allow write if: user is writing to their own document OR user is authenticated (for creating new members)
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null; // Allow authenticated users to create new user documents
+      allow update, delete: if request.auth != null && request.auth.uid == userId; // Only user can update/delete their own
     }
 
     // WhatsApp messages - allow read for authenticated users, write for anyone (webhook needs this)

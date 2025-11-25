@@ -59,27 +59,63 @@ export async function POST(req: NextRequest) {
                   const timestamp = message.timestamp;
                   const senderName = contact?.profile?.name || 'Unknown';
                   
-                  console.log(`[FROM USER] Sender: ${senderPhone} (${senderName}) | Message: ${messageText}`);
+                  console.log(`[Webhook] Incoming message from: ${senderPhone} (${senderName}) | Text: ${messageText}`);
                   
-                  // Find user by phone number
+                  // Find user by wa_id (WhatsApp ID - phone without + and spaces)
+                  const wa_id = senderPhone; // 360dialog sends it without +
+                  
+                  console.log(`[Webhook] Searching for user with wa_id: ${wa_id}`);
+                  
                   const usersRef = collection(db, 'users');
-                  const phoneQuery = query(
-                    usersRef,
-                    where('phoneNumber', '==', `+${senderPhone}`)
-                  );
-                  const phoneQuery2 = query(
-                    usersRef,
-                    where('phone', '==', `+${senderPhone}`)
-                  );
+                  let userId = null;
+                  let userName = senderName;
                   
-                  let userSnapshot = await getDocs(phoneQuery);
-                  if (userSnapshot.empty) {
-                    userSnapshot = await getDocs(phoneQuery2);
+                  // Try wa_id first (most reliable)
+                  const waIdQuery = query(usersRef, where('wa_id', '==', wa_id));
+                  let userSnapshot = await getDocs(waIdQuery);
+                  
+                  if (!userSnapshot.empty) {
+                    console.log(`[Webhook] ✅ Found user by wa_id: ${wa_id}`);
+                  } else {
+                    // Fallback: try phone formats
+                    const phoneFormats = [
+                      `+${senderPhone}`,      // +85260434478
+                      senderPhone,            // 85260434478
+                    ];
+                    
+                    console.log(`[Webhook] wa_id not found, trying phone formats:`, phoneFormats);
+                    
+                    // Try phoneNumber field
+                    for (const phoneFormat of phoneFormats) {
+                      const phoneQuery = query(usersRef, where('phoneNumber', '==', phoneFormat));
+                      userSnapshot = await getDocs(phoneQuery);
+                      if (!userSnapshot.empty) {
+                        console.log(`[Webhook] Found user by phoneNumber: ${phoneFormat}`);
+                        break;
+                      }
+                    }
+                    
+                    // Try phone field if not found
+                    if (userSnapshot.empty) {
+                      for (const phoneFormat of phoneFormats) {
+                        const phoneQuery = query(usersRef, where('phone', '==', phoneFormat));
+                        userSnapshot = await getDocs(phoneQuery);
+                        if (!userSnapshot.empty) {
+                          console.log(`[Webhook] Found user by phone: ${phoneFormat}`);
+                          break;
+                        }
+                      }
+                    }
                   }
                   
-                  let userId = null;
                   if (!userSnapshot.empty) {
-                    userId = userSnapshot.docs[0].id;
+                    const userDoc = userSnapshot.docs[0];
+                    userId = userDoc.id;
+                    const userData = userDoc.data();
+                    userName = userData.displayName || senderName;
+                    console.log(`[Webhook] ✅ Found user: ${userId} (${userName})`);
+                  } else {
+                    console.log(`[Webhook] ❌ User not found for wa_id: ${wa_id}`);
                   }
                   
                   // Save message to Firestore
@@ -87,8 +123,8 @@ export async function POST(req: NextRequest) {
                   await addDoc(messagesRef, {
                     messageId,
                     userId,
-                    senderPhone,
-                    senderName,
+                    senderPhone: `+${senderPhone}`,
+                    senderName: userName,
                     messageText,
                     direction: 'incoming', // incoming from user
                     timestamp: serverTimestamp(),

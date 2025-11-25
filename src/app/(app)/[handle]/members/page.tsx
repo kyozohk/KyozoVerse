@@ -133,15 +133,52 @@ export default function CommunityMembersPage() {
     if (!data.email || !data.email.includes('@')) {
       throw new Error("A valid email address is required to create a new user.");
     }
+    
+    // Validate and normalize phone number
+    if (!data.phone) {
+      throw new Error("Phone number is required.");
+    }
+    
+    // Normalize phone number: ensure it starts with +
+    let normalizedPhone = data.phone.trim().replace(/\s+/g, '');
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = '+' + normalizedPhone;
+    }
+    
+    // Create wa_id (WhatsApp ID) - phone without + and spaces
+    const wa_id = normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '');
+    
+    console.log('[Add Member] Normalized phone:', normalizedPhone, 'wa_id:', wa_id);
   
     try {
       const usersRef = collection(db, "users");
       let userId: string;
       let userDetails: Partial<User>;
   
-      // Look up user by email
-      const q = query(usersRef, where("email", "==", data.email));
-      const snap = await getDocs(q);
+      // Check if user exists by email OR phone
+      const emailQuery = query(usersRef, where("email", "==", data.email));
+      const phoneQuery = query(usersRef, where("phoneNumber", "==", normalizedPhone));
+      const phoneQuery2 = query(usersRef, where("phone", "==", normalizedPhone));
+      
+      const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
+        getDocs(emailQuery),
+        getDocs(phoneQuery),
+        getDocs(phoneQuery2)
+      ]);
+      
+      // Check if user exists by email or phone
+      const existingByEmail = !emailSnap.empty;
+      const existingByPhone = !phoneSnap.empty || !phoneSnap2.empty;
+      
+      if (existingByEmail || existingByPhone) {
+        const existingUser = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
+        const userData = existingUser.data();
+        throw new Error(
+          `A user with this ${existingByEmail ? 'email' : 'phone number'} already exists (${userData.displayName || userData.email}). Please use a different ${existingByEmail ? 'email' : 'phone number'} or ask them to login.`
+        );
+      }
+      
+      const snap = emailSnap;
   
       if (snap.empty) {
         // User does not exist, create a new one
@@ -157,13 +194,14 @@ export default function CommunityMembersPage() {
                 userId: userId,
                 displayName: data.displayName,
                 email: data.email,
-                phone: data.phone,
-                phoneNumber: data.phone,
+                phone: normalizedPhone,
+                phoneNumber: normalizedPhone,
+                wa_id: wa_id,
                 createdAt: serverTimestamp(),
             } as unknown as User;
             
             await setDoc(doc(db, "users", userId), userDetails);
-            console.log(`New user created with UID: ${userId}. A temporary password was used.`);
+            console.log(`New user created with UID: ${userId}, phone: ${normalizedPhone}, wa_id: ${wa_id}. A temporary password was used.`);
   
         } catch (authError: any) {
             if (authError.code === 'auth/email-already-in-use') {
@@ -177,12 +215,21 @@ export default function CommunityMembersPage() {
         const userDoc = snap.docs[0];
         userId = userDoc.id;
         userDetails = userDoc.data() as User;
-        // Ensure phone number is updated if it was provided
-        if (data.phone && (userDetails as any).phone !== data.phone) {
-          await updateDoc(doc(db, "users", userId), { phone: data.phone, phoneNumber: data.phone });
-          (userDetails as any).phone = data.phone;
+        // Ensure phone number and wa_id are updated if needed
+        const updateData: any = {};
+        if (normalizedPhone && (userDetails as any).phone !== normalizedPhone) {
+          updateData.phone = normalizedPhone;
+          updateData.phoneNumber = normalizedPhone;
+          updateData.wa_id = wa_id;
+          (userDetails as any).phone = normalizedPhone;
+        } else if (!(userDetails as any).wa_id) {
+          // Add wa_id if it doesn't exist
+          updateData.wa_id = wa_id;
         }
-        console.log(`Found existing user with UID: ${userId}`);
+        if (Object.keys(updateData).length > 0) {
+          await updateDoc(doc(db, "users", userId), updateData);
+        }
+        console.log(`Found existing user with UID: ${userId}, phone: ${normalizedPhone}, wa_id: ${wa_id}`);
       }
   
       // Add user to the community members subcollection
@@ -197,7 +244,7 @@ export default function CommunityMembersPage() {
           displayName: data.displayName,
           email: data.email,
           avatarUrl: userDetails.avatarUrl || null,
-          phone: data.phone,
+          phone: normalizedPhone,
         },
       });
   

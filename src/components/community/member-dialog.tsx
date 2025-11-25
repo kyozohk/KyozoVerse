@@ -118,6 +118,7 @@ export function MemberDialog({
     setSubmitting(true);
     try {
       console.log('Starting member save...', {
+        mode,
         avatarFile: !!avatarFile,
         coverFile: !!coverFile,
         currentAvatarUrl: avatarUrl,
@@ -125,15 +126,22 @@ export function MemberDialog({
       });
 
       let finalAvatarUrl = avatarUrl;
-      if (avatarFile) {
-        console.log('Uploading avatar file...');
-        finalAvatarUrl = await handleFileUpload(avatarFile, 'avatar');
-      }
-
       let finalCoverUrl = coverUrl;
-      if (coverFile) {
-        console.log('Uploading cover file...');
-        finalCoverUrl = await handleFileUpload(coverFile, 'cover');
+
+      // Only upload files when editing existing members (not when adding new ones)
+      if (mode === 'edit' && initialMember?.userId) {
+        if (avatarFile) {
+          console.log('Uploading avatar file...');
+          finalAvatarUrl = await handleFileUpload(avatarFile, 'avatar');
+        }
+
+        if (coverFile) {
+          console.log('Uploading cover file...');
+          finalCoverUrl = await handleFileUpload(coverFile, 'cover');
+        }
+      } else if (mode === 'add') {
+        // For new members, just use the selected preset URLs (no file upload)
+        console.log('New member - using preset URLs only');
       }
 
       console.log('Final URLs:', {

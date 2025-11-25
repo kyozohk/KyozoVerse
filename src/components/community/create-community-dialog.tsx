@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
@@ -175,23 +175,44 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
 
         try {
             const docRef = await addDoc(collection(db, 'communities'), communityData);
+            const communityId = docRef.id;
             
             let finalProfileImageUrl = null;
             if (profileImageFile) {
-                finalProfileImageUrl = await handleFileUpload(profileImageFile, docRef.id, 'profile');
+                finalProfileImageUrl = await handleFileUpload(profileImageFile, communityId, 'profile');
             } else if(profileImageUrl) {
                 finalProfileImageUrl = profileImageUrl; // Use pre-selected URL
             }
             
             let finalBackgroundImageUrl = null;
             if (backgroundImageFile) {
-                finalBackgroundImageUrl = await handleFileUpload(backgroundImageFile, docRef.id, 'background');
+                finalBackgroundImageUrl = await handleFileUpload(backgroundImageFile, communityId, 'background');
             }
             
-            // Update doc with image URLs
+            // Update doc with image URLs and communityId
             await updateDoc(docRef, {
+                communityId: communityId,
                 communityProfileImage: finalProfileImageUrl,
-                communityBackgroundImage: finalBackgroundImageUrl
+                communityBackgroundImage: finalBackgroundImageUrl,
+                memberCount: 1, // Owner is the first member
+            });
+
+            // Add owner as the first member of the community
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            
+            await addDoc(collection(db, 'communityMembers'), {
+                userId: user.uid,
+                communityId: communityId,
+                role: 'owner',
+                status: 'active',
+                joinedAt: serverTimestamp(),
+                userDetails: {
+                    displayName: userData.displayName || user.displayName || 'Unknown',
+                    email: userData.email || user.email || '',
+                    avatarUrl: userData.avatarUrl || user.photoURL || null,
+                    phone: userData.phone || userData.phoneNumber || null,
+                },
             });
 
             toast({
