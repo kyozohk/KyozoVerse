@@ -29,3 +29,9 @@ color pallet showing 5 colors in rounded rects, clicking on any color brings cho
                 }
 
 
+
+
+curl -X POST 'https://waba.360dialog.io/v1/configs/webhook' \
+  -H 'D360-API-Key: aZ7WxT0jyL2oQlzkHHIbD4zvAK' \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://4edf439c13a8.ngrok-free.app/api/whatsapp/webhook"}'
