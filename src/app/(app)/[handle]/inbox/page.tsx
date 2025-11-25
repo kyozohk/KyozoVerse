@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage, Card, Input } from '@/components/u
 import { Search, Send } from 'lucide-react';
 import { User } from '@/lib/types';
 import { getThemeForPath } from '@/lib/theme-utils';
+import { MessagingServiceDropdown } from '@/components/inbox/messaging-service-dropdown';
 
 interface WhatsAppMessage {
   id: string;
@@ -46,6 +47,7 @@ export default function CommunityInboxPage() {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedService, setSelectedService] = useState<string>('all');
 
   // Load community members
   useEffect(() => {
@@ -111,7 +113,8 @@ export default function CommunityInboxPage() {
 
   // Load all conversations with unread counts
   useEffect(() => {
-    const messagesRef = collection(db, 'whatsapp_messages');
+    // Query from WhatsApp messages collection (add more services as they're implemented)
+    const messagesRef = collection(db, 'messages_whatsapp');
     const messagesQuery = query(messagesRef, orderBy('timestamp', 'desc'));
 
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
@@ -179,26 +182,39 @@ export default function CommunityInboxPage() {
   // Load messages for selected user and mark as read
   useEffect(() => {
     if (!selectedUserId) {
-      console.log('[Inbox] No user selected, clearing messages');
       setMessages([]);
       return;
     }
 
-    console.log('[Inbox] Loading messages for userId:', selectedUserId);
+    console.log('[Inbox] Loading messages for user:', selectedUserId, 'service:', selectedService);
 
-    const messagesRef = collection(db, 'whatsapp_messages');
+    // Query from service-specific collections or all collections
+    let messagesQuery;
     
-    // Query messages by userId
-    const messagesQuery = query(
-      messagesRef,
-      where('userId', '==', selectedUserId),
-      orderBy('timestamp', 'asc')
-    );
+    if (selectedService === 'all') {
+      // For "all", we need to query all service collections
+      // For now, we'll just query WhatsApp (add more services as they're implemented)
+      const messagesRef = collection(db, 'messages_whatsapp');
+      messagesQuery = query(
+        messagesRef,
+        where('userId', '==', selectedUserId),
+        orderBy('timestamp', 'asc') // Changed to 'asc' for oldest first (latest at bottom)
+      );
+    } else {
+      // Query specific service collection
+      const collectionName = `messages_${selectedService}`;
+      const messagesRef = collection(db, collectionName);
+      messagesQuery = query(
+        messagesRef,
+        where('userId', '==', selectedUserId),
+        orderBy('timestamp', 'asc') // Changed to 'asc' for oldest first (latest at bottom)
+      );
+    }
 
     const unsubscribe = onSnapshot(
       messagesQuery,
       async (snapshot) => {
-        console.log('[Inbox] Messages snapshot received:', snapshot.docs.length, 'messages');
+        console.log('[Inbox] Messages snapshot received:', snapshot.docs.length, 'messages for user:', selectedUserId, 'service:', selectedService);
         
         const msgs = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -206,6 +222,7 @@ export default function CommunityInboxPage() {
         })) as WhatsAppMessage[];
         
         console.log('[Inbox] Parsed messages:', msgs);
+        console.log('[Inbox] Query collection:', selectedService === 'all' ? 'messages_whatsapp' : `messages_${selectedService}`);
         setMessages(msgs);
 
         // Mark all incoming unread messages as read
@@ -219,7 +236,11 @@ export default function CommunityInboxPage() {
         
         for (const msg of unreadMessages) {
           try {
-            const msgRef = doc(db, 'whatsapp_messages', msg.id);
+            // Determine which collection this message is from
+            const collectionName = (msg as any).messagingService 
+              ? `messages_${(msg as any).messagingService}` 
+              : 'messages_whatsapp';
+            const msgRef = doc(db, collectionName, msg.id);
             await updateDoc(msgRef, { read: true });
           } catch (error) {
             console.error('[Inbox] Error marking message as read:', error);
@@ -232,7 +253,7 @@ export default function CommunityInboxPage() {
     );
 
     return () => unsubscribe();
-  }, [selectedUserId]);
+  }, [selectedUserId, selectedService]);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -246,8 +267,8 @@ export default function CommunityInboxPage() {
   return (
     <div className="h-[calc(100vh)] flex">
       {/* Left sidebar - Conversations list */}
-      <div className="w-80 border-r bg-background flex flex-col">
-        <div className="p-4 border-b">
+      <div className="w-80 border-r flex flex-col" style={{ borderColor: `${activeColor}70` }}>
+        <div className="p-4 border-b" style={{ borderColor: `${activeColor}70` }}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -272,9 +293,11 @@ export default function CommunityInboxPage() {
             filteredConversations.map((conv) => (
               <div
                 key={conv.userId || conv.userPhone}
-                className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                  selectedUserId === conv.userId ? 'bg-muted' : ''
-                }`}
+                className="p-4 border-b cursor-pointer hover:bg-muted/20 transition-colors"
+                style={{ 
+                  borderColor: `${activeColor}70`,
+                  backgroundColor: selectedUserId === conv.userId ? `${activeColor}10` : 'transparent'
+                }}
                 onClick={() => setSelectedUserId(conv.userId)}
               >
                 <div className="flex items-start gap-3">
@@ -312,20 +335,29 @@ export default function CommunityInboxPage() {
         {selectedUserId ? (
           <>
             {/* Chat header */}
-            <div className="p-4 border-b bg-background">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src={selectedConversation?.userAvatar || undefined} />
-                  <AvatarFallback>
-                    {selectedConversation?.userName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold" style={{ color: activeColor }}>{selectedConversation?.userName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedConversation?.userPhone}
-                  </p>
+            <div className="p-4 border-b" style={{ borderColor: `${activeColor}70` }}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={selectedConversation?.userAvatar || undefined} />
+                    <AvatarFallback>
+                      {selectedConversation?.userName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold" style={{ color: activeColor }}>{selectedConversation?.userName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedConversation?.userPhone}
+                    </p>
+                  </div>
                 </div>
+                
+                {/* Messaging Service Filter */}
+                <MessagingServiceDropdown
+                  value={selectedService}
+                  onChange={setSelectedService}
+                  activeColor={activeColor}
+                />
               </div>
             </div>
 
@@ -344,37 +376,82 @@ export default function CommunityInboxPage() {
                     }`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        msg.direction === 'incoming'
-                          ? 'bg-secondary text-secondary-foreground border border-border'
-                          : ''
-                      }`}
-                      style={msg.direction === 'outgoing' ? { backgroundColor: activeColor, color: 'white' } : {}}
+                      className="max-w-[70%] rounded-lg px-4 py-2"
+                      style={
+                        msg.direction === 'outgoing' 
+                          ? { backgroundColor: activeColor, color: 'white' }
+                          : { backgroundColor: `${activeColor}15`, border: `1px solid ${activeColor}70`, color: '#1f2937' }
+                      }
                     >
                       {/* Show media if it's a media message */}
                       {(msg as any).media?.id && (
                         <div className="mb-2">
-                          <div className="bg-muted/50 rounded p-2 text-sm">
-                            {(msg as any).messageType === 'image' && '📷 Image'}
-                            {(msg as any).messageType === 'video' && '🎥 Video'}
-                            {(msg as any).messageType === 'audio' && '🎵 Audio'}
-                            {(msg as any).messageType === 'voice' && '🎤 Voice'}
-                            {(msg as any).messageType === 'document' && `📄 ${(msg as any).media.fileName || 'Document'}`}
-                            {(msg as any).messageType === 'sticker' && '🎨 Sticker'}
-                            {!(msg as any).messageType && '📎 Media'}
-                            <div className="text-xs mt-1 opacity-70">
-                              Media ID: {(msg as any).media.id}
+                          {/* Display actual image/video if URL is available */}
+                          {(msg as any).media.url && (msg as any).messageType === 'image' && (
+                            <img 
+                              src={(msg as any).media.url} 
+                              alt="WhatsApp image"
+                              className="max-w-full rounded-lg mb-2 max-h-96 object-contain"
+                            />
+                          )}
+                          {(msg as any).media.url && (msg as any).messageType === 'video' && (
+                            <video 
+                              src={(msg as any).media.url} 
+                              controls
+                              className="max-w-full rounded-lg mb-2 max-h-96"
+                            />
+                          )}
+                          {(msg as any).media.url && (msg as any).messageType === 'audio' && (
+                            <audio 
+                              src={(msg as any).media.url} 
+                              controls
+                              className="w-full mb-2"
+                            />
+                          )}
+                          {(msg as any).media.url && (msg as any).messageType === 'voice' && (
+                            <audio 
+                              src={(msg as any).media.url} 
+                              controls
+                              className="w-full mb-2"
+                            />
+                          )}
+                          {/* Fallback or document display */}
+                          {!(msg as any).media.url && (
+                            <div className="bg-muted/50 rounded p-2 text-sm">
+                              {(msg as any).messageType === 'image' && '📷 Image'}
+                              {(msg as any).messageType === 'video' && '🎥 Video'}
+                              {(msg as any).messageType === 'audio' && '🎵 Audio'}
+                              {(msg as any).messageType === 'voice' && '🎤 Voice'}
+                              {(msg as any).messageType === 'document' && `📄 ${(msg as any).media.fileName || 'Document'}`}
+                              {(msg as any).messageType === 'sticker' && '🎨 Sticker'}
+                              {!(msg as any).messageType && '📎 Media'}
+                              <div className="text-xs mt-1 opacity-70">
+                                Media ID: {(msg as any).media.id}
+                              </div>
                             </div>
-                          </div>
+                          )}
+                          {/* Document link */}
+                          {(msg as any).media.url && (msg as any).messageType === 'document' && (
+                            <a 
+                              href={(msg as any).media.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 bg-muted/50 rounded p-2 text-sm hover:bg-muted"
+                            >
+                              📄 {(msg as any).media.fileName || 'Document'}
+                              <span className="text-xs opacity-70">Click to download</span>
+                            </a>
+                          )}
                         </div>
                       )}
                       <p className="whitespace-pre-wrap break-words">{msg.messageText}</p>
                       <p
-                        className={`text-xs mt-1 ${
-                          msg.direction === 'outgoing'
-                            ? 'text-primary-foreground/70'
-                            : 'text-secondary-foreground/70'
-                        }`}
+                        className="text-xs mt-1"
+                        style={{
+                          color: msg.direction === 'outgoing' 
+                            ? 'rgba(255, 255, 255, 0.7)' 
+                            : 'rgba(0, 0, 0, 0.5)'
+                        }}
                       >
                         {msg.timestamp?.toDate?.()?.toLocaleTimeString() || 'Just now'}
                       </p>
@@ -385,7 +462,7 @@ export default function CommunityInboxPage() {
             </div>
 
             {/* Message input (placeholder) */}
-            <div className="p-4 border-t bg-background">
+            <div className="p-4 border-t-1" style={{ borderColor: activeColor }}>
               <div className="flex items-center gap-2">
                 <Input
                   placeholder="Type a message... (replies not yet supported)"
@@ -394,7 +471,8 @@ export default function CommunityInboxPage() {
                 />
                 <button
                   disabled
-                  className="p-2 rounded-lg bg-primary text-primary-foreground opacity-50 cursor-not-allowed"
+                  className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                  style={{ backgroundColor: activeColor, color: 'white' }}
                 >
                   <Send className="h-5 w-5" />
                 </button>

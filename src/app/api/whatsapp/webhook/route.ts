@@ -161,15 +161,16 @@ export async function POST(req: NextRequest) {
                     console.log(`[Webhook] ❌ User not found for wa_id: ${wa_id}`);
                   }
                   
-                  // Save message to Firestore
-                  const messagesRef = collection(db, 'whatsapp_messages');
+                  // Save message to Firestore - using service-specific collection
+                  const messagesRef = collection(db, 'messages_whatsapp');
                   const messageData: any = {
                     messageId,
                     userId,
                     senderPhone: `+${senderPhone}`,
                     senderName: userName,
                     messageText,
-                    messageType: message.type, // 'text' or 'image'
+                    messageType: message.type, // 'text', 'image', 'video', etc.
+                    messagingService: 'whatsapp', // Service type: whatsapp, email, sms, telegram, app, etc.
                     direction: 'incoming', // incoming from user
                     timestamp: serverTimestamp(),
                     whatsappTimestamp: timestamp,
@@ -182,14 +183,38 @@ export async function POST(req: NextRequest) {
                   
                   // Add media data if it's a media message (image, video, audio, document, etc.)
                   if (mediaId) {
-                    messageData.media = {
-                      id: mediaId,
-                      mimeType: mimeType,
-                      fileName: fileName,
-                      // Note: To get the actual media URL, you need to call 360dialog API
-                      // GET https://waba.360dialog.io/v1/media/{mediaId}
-                      // For now, we'll store the ID and fetch it later
-                    };
+                    // Download media immediately
+                    try {
+                      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+                      const mediaResponse = await fetch(`${baseUrl}/api/whatsapp/media/${mediaId}`);
+                      
+                      if (mediaResponse.ok) {
+                        const mediaData = await mediaResponse.json();
+                        messageData.media = {
+                          id: mediaId,
+                          url: mediaData.url,
+                          mimeType: mimeType,
+                          fileName: fileName,
+                        };
+                        console.log(`[Webhook] ✅ Media downloaded: ${mediaData.url}`);
+                      } else {
+                        // Fallback: store ID only
+                        messageData.media = {
+                          id: mediaId,
+                          mimeType: mimeType,
+                          fileName: fileName,
+                        };
+                        console.log(`[Webhook] ⚠️ Media download failed, storing ID only`);
+                      }
+                    } catch (error) {
+                      console.error(`[Webhook] Error downloading media:`, error);
+                      // Fallback: store ID only
+                      messageData.media = {
+                        id: mediaId,
+                        mimeType: mimeType,
+                        fileName: fileName,
+                      };
+                    }
                   }
                   
                   await addDoc(messagesRef, messageData);

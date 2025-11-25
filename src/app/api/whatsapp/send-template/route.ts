@@ -270,20 +270,22 @@ export async function POST(request: NextRequest) {
     // Store the message in Firestore
     if (response.ok && data.messages?.[0]?.id) {
       try {
-        // Find user by phone number
+        // Find user by phone number or wa_id
         const recipientPhone = body.to.startsWith('+') ? body.to : `+${body.to}`;
+        const wa_id = body.to.replace(/\+/g, '').replace(/\s+/g, ''); // Remove + and spaces
         const usersRef = collection(db, 'users');
-        const phoneQuery = query(
-          usersRef,
-          where('phoneNumber', '==', recipientPhone)
-        );
-        const phoneQuery2 = query(
-          usersRef,
-          where('phone', '==', recipientPhone)
-        );
         
-        let userSnapshot = await getDocs(phoneQuery);
+        // Try wa_id first (most reliable)
+        const waIdQuery = query(usersRef, where('wa_id', '==', wa_id));
+        let userSnapshot = await getDocs(waIdQuery);
+        
+        // Fallback to phone number formats
         if (userSnapshot.empty) {
+          const phoneQuery = query(usersRef, where('phoneNumber', '==', recipientPhone));
+          userSnapshot = await getDocs(phoneQuery);
+        }
+        if (userSnapshot.empty) {
+          const phoneQuery2 = query(usersRef, where('phone', '==', recipientPhone));
           userSnapshot = await getDocs(phoneQuery2);
         }
         
@@ -292,6 +294,9 @@ export async function POST(request: NextRequest) {
         if (!userSnapshot.empty) {
           userId = userSnapshot.docs[0].id;
           userName = userSnapshot.docs[0].data().displayName || 'Unknown';
+          console.log(`[Send Template] Found user: ${userId} (${userName})`);
+        } else {
+          console.log(`[Send Template] User not found for ${body.to}`);
         }
         
         // Extract message text from template
@@ -307,14 +312,16 @@ export async function POST(request: NextRequest) {
           });
         }
         
-        // Save outgoing message to Firestore
-        const messagesRef = collection(db, 'whatsapp_messages');
+        // Save outgoing message to Firestore - using service-specific collection
+        const messagesRef = collection(db, 'messages_whatsapp');
         await addDoc(messagesRef, {
           messageId: data.messages[0].id,
           userId,
           recipientPhone: body.to,
           recipientName: userName,
           messageText,
+          messageType: 'text', // Templates are text-based
+          messagingService: 'whatsapp', // Service type
           templateName: body.template.name,
           direction: 'outgoing', // outgoing to user
           timestamp: serverTimestamp(),
