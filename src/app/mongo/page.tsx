@@ -1,9 +1,10 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getCommunities, getMembers, getMessagesForMember, getRawDocument } from './actions';
 import { Copy } from 'lucide-react';
+import { Switch } from '@/components/ui/switch'; // Assuming you have a Switch component
 
 // A simple debounce hook
 function useDebounce(value: any, delay: number) {
@@ -49,17 +50,27 @@ interface Message {
 }
 
 const CommunityListMongo = ({ communities, onSelect, selectedCommunity, onCopyJson }: { communities: Community[], onSelect: (c: Community) => void, selectedCommunity: Community | null, onCopyJson: (collection: string, id: string) => void }) => (
-    <div className="overflow-y-auto">
-        {communities.map(c => (
-            <div key={c.id} onClick={() => onSelect(c)} className={`p-4 border-b cursor-pointer flex justify-between items-center ${selectedCommunity?.id === c.id ? 'bg-gray-200' : ''}`}>
+    <ul className="overflow-y-auto">
+      {communities.map((community) => (
+        <li
+          key={community.id}
+          className={`p-4 cursor-pointer hover:bg-gray-100 ${selectedCommunity?.id === community.id ? 'bg-blue-100' : ''}`}
+          onClick={() => onSelect(community)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <img src={community.communityProfileImage || 'https://static.productionready.io/images/smiley-cyrus.jpg'} alt={community.name} className="w-10 h-10 rounded-full" />
                 <div>
-                    <p className="font-semibold">{c.name}</p>
-                    <p className="text-sm text-gray-500">{c.memberCount} members</p>
+                    <p className="font-semibold">{community.name}</p>
+                    <p className="text-sm text-gray-500">{community.memberCount} members</p>
+                    <p className="text-sm text-gray-500">Owner: {community.owner}</p>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); onCopyJson('communities', c.id); }} className="p-1 hover:bg-gray-300 rounded"><Copy size={16} /></button>
             </div>
-        ))}
-    </div>
+            <button onClick={(e) => { e.stopPropagation(); onCopyJson('communities', community.id); }} className="p-2 text-sm rounded hover:bg-gray-200"><Copy className="h-5 w-5" /></button>
+          </div>
+        </li>
+      ))}
+    </ul>
 );
 
 
@@ -79,6 +90,7 @@ export default function MongoDashboard() {
   const [communitySearch, setCommunitySearch] = useState('');
   const [memberSearch, setMemberSearch] = useState('');
   const [messageSearch, setMessageSearch] = useState('');
+  const [showEmptyCommunities, setShowEmptyCommunities] = useState(false);
 
   const debouncedCommunitySearch = useDebounce(communitySearch, 500);
   const debouncedMemberSearch = useDebounce(memberSearch, 500);
@@ -88,12 +100,14 @@ export default function MongoDashboard() {
   useEffect(() => {
     async function fetchCommunities() {
       setIsLoadingCommunities(true);
-      const communities = await getCommunities(debouncedCommunitySearch);
-      setCommunities(communities);
+      const fetchedCommunities = await getCommunities(debouncedCommunitySearch);
+      setCommunities(fetchedCommunities);
       setIsLoadingCommunities(false);
     }
     fetchCommunities();
   }, [debouncedCommunitySearch]);
+
+  const filteredCommunities = communities.filter(c => showEmptyCommunities || c.memberCount > 0);
 
   // Handle community selection
   const handleCommunitySelect = async (community: Community) => {
@@ -159,11 +173,15 @@ export default function MongoDashboard() {
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">Communities</h2>
           <input type="text" placeholder="Search communities..." value={communitySearch} onChange={(e) => setCommunitySearch(e.target.value)} className="w-full p-2 mt-2 border rounded text-black" />
+          <div className="flex items-center space-x-2 mt-2">
+            <Switch id="show-empty" checked={showEmptyCommunities} onCheckedChange={setShowEmptyCommunities} />
+            <label htmlFor="show-empty">Show empty communities</label>
+          </div>
         </div>
         {isLoadingCommunities ? (
           <p className="p-4">Loading communities...</p>
         ) : (
-          <CommunityListMongo communities={communities} onSelect={handleCommunitySelect} selectedCommunity={selectedCommunity} onCopyJson={handleCopyJson} />
+          <CommunityListMongo communities={filteredCommunities} onSelect={handleCommunitySelect} selectedCommunity={selectedCommunity} onCopyJson={handleCopyJson} />
         )}
       </div>
 
