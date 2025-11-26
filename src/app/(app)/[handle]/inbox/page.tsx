@@ -24,6 +24,15 @@ interface WhatsAppMessage {
   direction: 'incoming' | 'outgoing';
   timestamp: any;
   read: boolean;
+  messageType?: string;
+  media?: {
+    url?: string;
+    caption?: string;
+  };
+  image?: {
+    url?: string;
+    caption?: string;
+  }
 }
 
 interface Conversation {
@@ -372,96 +381,52 @@ useEffect(() => {
                   No messages yet
                 </div>
               ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.direction === 'outgoing' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
+                messages.map((msg) => {
+                  const mediaUrl = msg.media?.url || msg.image?.url;
+                  const messageText = msg.messageText || msg.media?.caption || msg.image?.caption || '';
+
+                  return (
                     <div
-                      className="max-w-[70%] rounded-lg px-4 py-2"
-                      style={
-                        msg.direction === 'outgoing' 
-                          ? { backgroundColor: activeColor, color: 'white' }
-                          : { backgroundColor: `${activeColor}15`, border: `1px solid ${activeColor}70`, color: '#1f2937' }
-                      }
+                      key={msg.id}
+                      className={`flex ${
+                        msg.direction === 'outgoing' ? 'justify-end' : 'justify-start'
+                      }`}
                     >
-                      {/* Show media if it's a media message */}
-                      {(msg as any).media?.id && (
-                        <div className="mb-2">
-                          {/* Display actual image/video if URL is available */}
-                          {(msg as any).media.url && (msg as any).messageType === 'image' && (
-                            <img 
-                              src={(msg as any).media.url} 
-                              alt="WhatsApp image"
-                              className="max-w-full rounded-lg mb-2 max-h-96 object-contain"
-                            />
-                          )}
-                          {(msg as any).media.url && (msg as any).messageType === 'video' && (
-                            <video 
-                              src={(msg as any).media.url} 
-                              controls
-                              className="max-w-full rounded-lg mb-2 max-h-96"
-                            />
-                          )}
-                          {(msg as any).media.url && (msg as any).messageType === 'audio' && (
-                            <audio 
-                              src={(msg as any).media.url} 
-                              controls
-                              className="w-full mb-2"
-                            />
-                          )}
-                          {(msg as any).media.url && (msg as any).messageType === 'voice' && (
-                            <audio 
-                              src={(msg as any).media.url} 
-                              controls
-                              className="w-full mb-2"
-                            />
-                          )}
-                          {/* Fallback or document display */}
-                          {!(msg as any).media.url && (
-                            <div className="bg-muted/50 rounded p-2 text-sm">
-                              {(msg as any).messageType === 'image' && '📷 Image'}
-                              {(msg as any).messageType === 'video' && '🎥 Video'}
-                              {(msg as any).messageType === 'audio' && '🎵 Audio'}
-                              {(msg as any).messageType === 'voice' && '🎤 Voice'}
-                              {(msg as any).messageType === 'document' && `📄 ${(msg as any).media.fileName || 'Document'}`}
-                              {(msg as any).messageType === 'sticker' && '🎨 Sticker'}
-                              {!(msg as any).messageType && '📎 Media'}
-                              <div className="text-xs mt-1 opacity-70">
-                                Media ID: {(msg as any).media.id}
-                              </div>
-                            </div>
-                          )}
-                          {/* Document link */}
-                          {(msg as any).media.url && (msg as any).messageType === 'document' && (
-                            <a 
-                              href={(msg as any).media.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 bg-muted/50 rounded p-2 text-sm hover:bg-muted"
-                            >
-                              📄 {(msg as any).media.fileName || 'Document'}
-                              <span className="text-xs opacity-70">Click to download</span>
-                            </a>
-                          )}
-                        </div>
-                      )}
-                      <p className="whitespace-pre-wrap break-words">{msg.messageText}</p>
-                      <p
-                        className="text-xs mt-1"
-                        style={{
-                          color: msg.direction === 'outgoing' 
-                            ? 'rgba(255, 255, 255, 0.7)' 
-                            : 'rgba(0, 0, 0, 0.5)'
-                        }}
+                      <div
+                        className="max-w-[70%] rounded-lg px-4 py-2"
+                        style={
+                          msg.direction === 'outgoing'
+                            ? { backgroundColor: activeColor, color: 'white' }
+                            : { backgroundColor: `${activeColor}15`, border: `1px solid ${activeColor}70`, color: '#1f2937' }
+                        }
                       >
-                        {msg.timestamp?.toDate?.()?.toLocaleTimeString() || 'Just now'}
-                      </p>
+                        {mediaUrl && (msg.messageType === 'image') && (
+                          <img
+                            src={mediaUrl}
+                            alt="WhatsApp image"
+                            className="max-w-full rounded-lg mb-2 max-h-96 object-contain"
+                          />
+                        )}
+                        {/* Add other media types here as needed */}
+
+                        {messageText && (
+                            <p className="whitespace-pre-wrap break-words">{messageText}</p>
+                        )}
+                        
+                        <p
+                          className="text-xs mt-1"
+                          style={{
+                            color: msg.direction === 'outgoing'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(0, 0, 0, 0.5)'
+                          }}
+                        >
+                          {msg.timestamp?.toDate?.()?.toLocaleTimeString() || 'Just now'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
 
