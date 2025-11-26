@@ -27,9 +27,9 @@ export function ExportDialog({ isOpen, onClose, data, onImport, isImporting }: E
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Export Community Data</DialogTitle>
+                    <DialogTitle>Export & Import Community Data</DialogTitle>
                     <DialogDescription>
-                        Review the JSON data that will be exported for this community.
+                        Review the JSON data below. Click "Import to Firebase" to start the migration process.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex-grow overflow-y-auto p-4 border rounded-md bg-muted/50">
@@ -40,7 +40,7 @@ export function ExportDialog({ isOpen, onClose, data, onImport, isImporting }: E
                     )}
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button variant="outline" onClick={onClose} disabled={isImporting}>Cancel</Button>
                     <Button onClick={onImport} disabled={isImporting}>
                         {isImporting ? 'Importing...' : 'Import to Firebase'}
                     </Button>
