@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { connectToDatabase } from '@/lib/mongodb';
@@ -174,9 +175,10 @@ export async function getCommunityExportData(communityId: string) {
         };
       })
     );
-  
-    return {
+
+    // This is the fix: We stringify and then parse to convert all BSON types to plain JSON.
+    return JSON.parse(JSON.stringify({
       community,
       members: membersWithMessages,
-    };
+    }));
   }
