@@ -21,13 +21,15 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
-import { type CommunityMember, type Community, type User } from "@/lib/types";
+import { type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
+import { getMembers } from "@/app/mongo/actions";
+import { CommunityMember } from "@/lib/types";
 
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -86,63 +88,22 @@ export default function CommunityMembersPage() {
   useEffect(() => {
     if (!community?.communityId) {
       setLoading(false);
-      return
-    };
+      return;
+    }
 
-    setLoading(true);
-    const membersRef = collection(db, "communityMembers");
-    const q = query(
-      membersRef,
-      where("communityId", "==", community.communityId),
-      orderBy("joinedAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const membersDataPromises = querySnapshot.docs.map(async (docSnap) => {
-        const memberData = docSnap.data() as Omit<CommunityMember, 'userDetails'>;
-        const userDocRef = doc(db, 'users', memberData.userId);
-        const userSnap = await getDoc(userDocRef);
-        let userDetails: (User & { phone?: string }) | undefined = undefined;
-        if (userSnap.exists()) {
-          const raw = userSnap.data() as User & { phone?: string };
-          userDetails = {
-            ...raw,
-            phone: (raw as any).phone || raw.phoneNumber,
-          };
-        }
-        return {
-          id: docSnap.id,
-          ...memberData,
-          userDetails
-        } as unknown as CommunityMember;
-      });
-
-      const membersData = await Promise.all(membersDataPromises);
-
-      // Client-side filtering based on debounced search term
-      if (debouncedSearchTerm) {
-        const lowercasedFilter = debouncedSearchTerm.toLowerCase();
-        const filtered = membersData.filter(
-          (member) =>
-            member.userDetails?.displayName
-              ?.toLowerCase()
-              .includes(lowercasedFilter) ||
-            member.userDetails?.email
-              ?.toLowerCase()
-              .includes(lowercasedFilter)
-        );
-        setMembers(filtered);
-      } else {
-        setMembers(membersData);
+    async function fetchMembers() {
+      setLoading(true);
+      try {
+        const membersData = await getMembers(community!.communityId, debouncedSearchTerm);
+        setMembers(membersData as unknown as CommunityMember[]);
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching members:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
+    
+    fetchMembers();
   }, [community?.communityId, debouncedSearchTerm]);
   
   const handleAddMemberSubmit = async (data: {

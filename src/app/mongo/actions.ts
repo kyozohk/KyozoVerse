@@ -65,8 +65,23 @@ export async function getMembers(communityId: string, search: string = ''): Prom
   }
 
   const userOids = community.usersList.map((user: any) => new ObjectId(user.userId));
-  const query = search ? { _id: { $in: userOids }, name: { $regex: search, $options: 'i' } } : { _id: { $in: userOids } };
-  const users = await db.collection('users').find(query).toArray();
+  
+  let userQuery: any = { _id: { $in: userOids } };
+  
+  if (search) {
+    const searchRegex = { $regex: search, $options: 'i' };
+    userQuery = {
+      ...userQuery,
+      $or: [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { fullName: searchRegex },
+        { email: searchRegex },
+      ],
+    };
+  }
+  
+  const users = await db.collection('users').find(userQuery).toArray();
 
   return users.map((user) => {
     let role: 'owner' | 'admin' | 'member' = 'member';
