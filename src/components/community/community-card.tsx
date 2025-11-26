@@ -48,7 +48,7 @@ export function CommunityCard({ community }: { community: Community }) {
         )}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="h-4 w-4" />
-          <span>Created on {community.createdAt ? format(community.createdAt.toDate(), 'MMM dd, yyyy') : 'N/A'}</span>
+          <span>Created on {community.createdAt ? format(new Date(community.createdAt.seconds * 1000), 'MMM dd, yyyy') : 'N/A'}</span>
         </div>
       </CardContent>
     </Card>
