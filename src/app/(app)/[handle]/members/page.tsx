@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { 
   collection, 
@@ -29,6 +29,20 @@ import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
 
+// A simple debounce hook
+function useDebounce(value: string, delay: number) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+}
+
 
 export default function CommunityMembersPage() {
   const { user } = useAuth();
@@ -44,6 +58,8 @@ export default function CommunityMembersPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
   
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   useEffect(() => {
     async function fetchCommunityAndRole() {
       if (!handle) return;
@@ -102,7 +118,24 @@ export default function CommunityMembersPage() {
       });
 
       const membersData = await Promise.all(membersDataPromises);
-      setMembers(membersData);
+
+      // Client-side filtering based on debounced search term
+      if (debouncedSearchTerm) {
+        const lowercasedFilter = debouncedSearchTerm.toLowerCase();
+        const filtered = membersData.filter(
+          (member) =>
+            member.userDetails?.displayName
+              ?.toLowerCase()
+              .includes(lowercasedFilter) ||
+            member.userDetails?.email
+              ?.toLowerCase()
+              .includes(lowercasedFilter)
+        );
+        setMembers(filtered);
+      } else {
+        setMembers(membersData);
+      }
+
       setLoading(false);
     }, (error) => {
       console.error("Error fetching members:", error);
@@ -110,17 +143,7 @@ export default function CommunityMembersPage() {
     });
 
     return () => unsubscribe();
-  }, [community?.communityId]);
-
-  const filteredMembers = members.filter(
-    (member) =>
-      member.userDetails?.displayName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      member.userDetails?.email
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+  }, [community?.communityId, debouncedSearchTerm]);
   
   const handleAddMemberSubmit = async (data: {
     displayName: string;
@@ -317,7 +340,7 @@ export default function CommunityMembersPage() {
         onAddAction={() => setIsAddMemberOpen(true)}
       >
         <MembersList 
-          members={filteredMembers} 
+          members={members} 
           userRole={userRole as any}
           viewMode={viewMode}
           onEditMember={(member) => setEditingMember(member)}
