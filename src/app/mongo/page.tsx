@@ -2,9 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCommunities, getMembers, getMessagesForMember, getRawDocument } from './actions';
-import { Copy } from 'lucide-react';
-import { Switch } from '@/components/ui/switch'; // Assuming you have a Switch component
+import { getCommunities, getMembers, getMessagesForMember, getRawDocument, getCommunityExportData } from './actions';
+import { Copy, Upload } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ExportDialog } from '@/components/mongo/export-dialog';
 
 // A simple debounce hook
 function useDebounce(value: any, delay: number) {
@@ -30,7 +31,8 @@ interface Community {
 }
 
 interface Member {
-  id: string;
+  id:string;
+  userId: string;
   name: string;
   role: 'owner' | 'admin' | 'member';
   email: string;
@@ -49,7 +51,7 @@ interface Message {
   };
 }
 
-const CommunityListMongo = ({ communities, onSelect, selectedCommunity, onCopyJson }: { communities: Community[], onSelect: (c: Community) => void, selectedCommunity: Community | null, onCopyJson: (collection: string, id: string) => void }) => (
+const CommunityListMongo = ({ communities, onSelect, selectedCommunity, onCopyJson, onExport }: { communities: Community[], onSelect: (c: Community) => void, selectedCommunity: Community | null, onCopyJson: (collection: string, id: string) => void, onExport: (id: string) => void }) => (
     <ul className="overflow-y-auto">
       {communities.map((community) => (
         <li
@@ -66,7 +68,10 @@ const CommunityListMongo = ({ communities, onSelect, selectedCommunity, onCopyJs
                     <p className="text-sm text-gray-500">Owner: {community.owner}</p>
                 </div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); onCopyJson('communities', community.id); }} className="p-2 text-sm rounded hover:bg-gray-200"><Copy className="h-5 w-5" /></button>
+            <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); onExport(community.id); }} className="p-2 text-sm rounded hover:bg-gray-200"><Upload className="h-5 w-5" /></button>
+                <button onClick={(e) => { e.stopPropagation(); onCopyJson('communities', community.id); }} className="p-2 text-sm rounded hover:bg-gray-200"><Copy className="h-5 w-5" /></button>
+            </div>
           </div>
         </li>
       ))}
@@ -86,11 +91,15 @@ export default function MongoDashboard() {
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [communitySearch, setCommunitySearch] = useState('');
   const [memberSearch, setMemberSearch] = useState('');
   const [messageSearch, setMessageSearch] = useState('');
   const [showEmptyCommunities, setShowEmptyCommunities] = useState(false);
+
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportData, setExportData] = useState<any>(null);
 
   const debouncedCommunitySearch = useDebounce(communitySearch, 500);
   const debouncedMemberSearch = useDebounce(memberSearch, 500);
@@ -166,7 +175,22 @@ export default function MongoDashboard() {
     alert('JSON copied to clipboard!');
   };
 
+  const handleExport = async (communityId: string) => {
+    setIsExporting(true);
+    try {
+        const data = await getCommunityExportData(communityId);
+        setExportData(data);
+        setIsExportDialogOpen(true);
+    } catch(error) {
+        console.error('Failed to get export data', error);
+        alert('Failed to get export data.');
+    } finally {
+        setIsExporting(false);
+    }
+  }
+
   return (
+    <>
     <div className="flex h-screen bg-white text-black">
       {/* Communities Panel */}
       <div className="w-1/4 bg-white border-r flex flex-col">
@@ -181,7 +205,7 @@ export default function MongoDashboard() {
         {isLoadingCommunities ? (
           <p className="p-4">Loading communities...</p>
         ) : (
-          <CommunityListMongo communities={filteredCommunities} onSelect={handleCommunitySelect} selectedCommunity={selectedCommunity} onCopyJson={handleCopyJson} />
+          <CommunityListMongo communities={filteredCommunities} onSelect={handleCommunitySelect} selectedCommunity={selectedCommunity} onCopyJson={handleCopyJson} onExport={handleExport} />
         )}
       </div>
 
@@ -232,5 +256,11 @@ export default function MongoDashboard() {
         ) : <p className="p-4 text-gray-500">Select a member to see messages</p>}
       </div>
     </div>
+    <ExportDialog 
+        isOpen={isExportDialogOpen} 
+        onClose={() => setIsExportDialogOpen(false)} 
+        data={exportData} 
+    />
+    </>
   );
 }

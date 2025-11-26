@@ -14,7 +14,8 @@ interface Community {
 }
 
 interface Member {
-  id: string;
+  id:string;
+  userId: string;
   name: string;
   role: 'owner' | 'admin' | 'member';
   email: string;
@@ -57,50 +58,52 @@ export async function getCommunities(search: string = ''): Promise<Community[]> 
 
 // Server Action to get members of a specific community with search
 export async function getMembers(communityId: string, search: string = ''): Promise<Member[]> {
-  const { db } = await connectToDatabase();
-  const community = await db.collection('communities').findOne({ _id: new ObjectId(communityId) });
-
-  if (!community) {
-    return [];
-  }
-
-  const userOids = community.usersList.map((user: any) => new ObjectId(user.userId));
+    const { db } = await connectToDatabase();
+    const community = await db.collection('communities').findOne({ _id: new ObjectId(communityId) });
   
-  let userQuery: any = { _id: { $in: userOids } };
-  
-  if (search) {
-    const searchRegex = { $regex: search, $options: 'i' };
-    userQuery = {
-      ...userQuery,
-      $or: [
-        { firstName: searchRegex },
-        { lastName: searchRegex },
-        { fullName: searchRegex },
-        { email: searchRegex },
-      ],
-    };
-  }
-  
-  const users = await db.collection('users').find(userQuery).toArray();
-
-  return users.map((user) => {
-    let role: 'owner' | 'admin' | 'member' = 'member';
-    if (community.owner.toString() === user._id.toString()) {
-      role = 'owner';
-    } else if (community.communityHandles?.some((h: any) => h.userId.toString() === user._id.toString() && h.role === 'admin')) {
-      role = 'admin';
+    if (!community) {
+      return [];
     }
-
-    return {
-      id: user._id.toString(),
-      name: user.displayName || user.fullName,
-      role,
-      email: user.email,
-      photoURL: user.photoURL || user.profileImage,
-      phoneNumber: user.phoneNumber,
-    };
-  });
+  
+    const userOids = community.usersList.map((user: any) => new ObjectId(user.userId));
+    
+    let userQuery: any = { _id: { $in: userOids } };
+    
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      userQuery = {
+        ...userQuery,
+        $or: [
+          { firstName: searchRegex },
+          { lastName: searchRegex },
+          { fullName: searchRegex },
+          { email: searchRegex },
+        ],
+      };
+    }
+    
+    const users = await db.collection('users').find(userQuery).toArray();
+  
+    return users.map((user) => {
+      let role: 'owner' | 'admin' | 'member' = 'member';
+      if (community.owner.toString() === user._id.toString()) {
+        role = 'owner';
+      } else if (community.communityHandles?.some((h: any) => h.userId.toString() === user._id.toString() && h.role === 'admin')) {
+        role = 'admin';
+      }
+  
+      return {
+        id: user._id.toString(),
+        userId: user._id.toString(),
+        name: user.displayName || user.fullName,
+        role,
+        email: user.email,
+        photoURL: user.photoURL || user.profileImage,
+        phoneNumber: user.phoneNumber,
+      };
+    });
 }
+  
 
 // Server Action to get direct messages for a member in a community with search
 export async function getMessagesForMember(communityId: string, memberId: string, search: string = ''): Promise<Message[]> {
@@ -145,3 +148,35 @@ export async function getMessagesForMember(communityId: string, memberId: string
     },
   }));
 }
+
+export async function getCommunityExportData(communityId: string) {
+    const { db } = await connectToDatabase();
+  
+    // 1. Fetch the community
+    const community = await db.collection('communities').findOne({ _id: new ObjectId(communityId) });
+    if (!community) {
+      throw new Error('Community not found');
+    }
+  
+    // 2. Fetch all members of the community
+    const memberIds = community.usersList.map((u: any) => u.userId);
+    const memberObjectIds = memberIds.map((id: string) => new ObjectId(id));
+    const members = await db.collection('users').find({ _id: { $in: memberObjectIds } }).toArray();
+  
+    // 3. For each member, fetch their messages in this community
+    const membersWithMessages = await Promise.all(
+      members.map(async (member) => {
+        const memberIdString = member._id.toString();
+        const messages = await getMessagesForMember(communityId, memberIdString);
+        return {
+          ...member,
+          messages,
+        };
+      })
+    );
+  
+    return {
+      community,
+      members: membersWithMessages,
+    };
+  }
