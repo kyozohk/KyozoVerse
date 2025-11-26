@@ -17,16 +17,12 @@ interface ExportDialogProps {
     isOpen: boolean;
     onClose: () => void;
     data: any;
+    onImport: () => void;
+    isImporting: boolean;
 }
 
-export function ExportDialog({ isOpen, onClose, data }: ExportDialogProps) {
-    const handleExport = () => {
-        // Implement actual export logic here
-        // For now, it just closes the dialog
-        console.log("Exporting data:", data);
-        onClose();
-    };
-
+export function ExportDialog({ isOpen, onClose, data, onImport, isImporting }: ExportDialogProps) {
+    
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
@@ -45,7 +41,9 @@ export function ExportDialog({ isOpen, onClose, data }: ExportDialogProps) {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleExport}>Export</Button>
+                    <Button onClick={onImport} disabled={isImporting}>
+                        {isImporting ? 'Importing...' : 'Import to Firebase'}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

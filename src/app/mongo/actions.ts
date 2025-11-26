@@ -1,9 +1,13 @@
 
-
 'use server';
 
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { adminAuth, adminFirestore, initAdmin } from '@/firebase/admin-config';
+import { randomBytes } from 'crypto';
+
+// Initialize Firebase Admin
+initAdmin();
 
 // Interfaces for data modeling
 interface Community {
@@ -176,9 +180,108 @@ export async function getCommunityExportData(communityId: string) {
       })
     );
 
-    // This is the fix: We stringify and then parse to convert all BSON types to plain JSON.
     return JSON.parse(JSON.stringify({
       community,
       members: membersWithMessages,
     }));
+  }
+
+
+  export async function importCommunityToFirebase(data: any): Promise<{ success: boolean; message: string; communityId?: string }> {
+    const { community: mongoCommunity, members: mongoMembers } = data;
+    const ownerMongoId = mongoCommunity.owner.toString();
+    const userMap = new Map<string, string>(); // Maps mongoId to firebaseUID
+  
+    try {
+      // Step 1: Create/update users in Firebase Auth and Firestore 'users' collection
+      for (const member of mongoMembers) {
+        const mongoId = member._id.toString();
+        let firebaseUid: string;
+  
+        // Create a secure, random password
+        const password = randomBytes(16).toString('hex');
+        
+        try {
+          const userRecord = await adminAuth.createUser({
+            email: member.email || `${mongoId}@example.com`,
+            password: password,
+            displayName: member.fullName || `${member.firstName} ${member.lastName}`,
+            photoURL: member.profileImage || member.communityProfileImage,
+          });
+          firebaseUid = userRecord.uid;
+        } catch (error: any) {
+          if (error.code === 'auth/email-already-exists') {
+            const userRecord = await adminAuth.getUserByEmail(member.email);
+            firebaseUid = userRecord.uid;
+          } else {
+            throw error;
+          }
+        }
+  
+        userMap.set(mongoId, firebaseUid);
+  
+        const userDocRef = adminFirestore.collection('users').doc(firebaseUid);
+        await userDocRef.set({
+          userId: firebaseUid,
+          mongoId: mongoId,
+          email: member.email,
+          displayName: member.fullName,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          avatarUrl: member.profileImage,
+          coverUrl: member.coverUrl || '',
+          bio: '',
+          createdAt: new Date(member.createdAt),
+          updatedAt: new Date(member.updatedAt),
+        }, { merge: true });
+      }
+  
+      // Step 2: Create the community document in Firestore
+      const newCommunityRef = adminFirestore.collection('communities').doc();
+      await newCommunityRef.set({
+        name: mongoCommunity.name,
+        handle: mongoCommunity.slug,
+        ownerId: userMap.get(ownerMongoId),
+        tagline: mongoCommunity.tagline,
+        lore: mongoCommunity.lore,
+        mantras: mongoCommunity.mantras,
+        communityPrivacy: mongoCommunity.communityPrivacy,
+        communityProfileImage: mongoCommunity.communityProfileImage,
+        communityBackgroundImage: mongoCommunity.communityBackgroundImage,
+        tags: mongoCommunity.tags,
+        location: mongoCommunity.location,
+        colorPalette: mongoCommunity.colorPalette,
+        createdAt: new Date(mongoCommunity.createdAt),
+        memberCount: mongoMembers.length,
+      });
+  
+      // Step 3: Create member documents in the 'communityMembers' subcollection
+      const batch = adminFirestore.batch();
+      for (const member of mongoMembers) {
+        const mongoId = member._id.toString();
+        const firebaseUid = userMap.get(mongoId);
+        if (firebaseUid) {
+          const memberRef = adminFirestore.collection('communityMembers').doc();
+          batch.set(memberRef, {
+            userId: firebaseUid,
+            communityId: newCommunityRef.id,
+            role: mongoId === ownerMongoId ? 'owner' : 'member',
+            status: 'active',
+            joinedAt: new Date(member.createdAt), // Assuming createdAt is join date
+            userDetails: {
+              displayName: member.fullName,
+              email: member.email,
+              avatarUrl: member.profileImage,
+              phone: member.phoneNumber,
+            }
+          });
+        }
+      }
+      await batch.commit();
+  
+      return { success: true, message: 'Community imported successfully!', communityId: newCommunityRef.id };
+    } catch (error: any) {
+      console.error("Import failed:", error);
+      return { success: false, message: error.message };
+    }
   }

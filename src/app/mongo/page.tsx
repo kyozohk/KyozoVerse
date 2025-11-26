@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCommunities, getMembers, getMessagesForMember, getRawDocument, getCommunityExportData } from './actions';
+import { getCommunities, getMembers, getMessagesForMember, getRawDocument, getCommunityExportData, importCommunityToFirebase } from './actions';
 import { Copy, Upload } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ExportDialog } from '@/components/mongo/export-dialog';
@@ -189,6 +189,24 @@ export default function MongoDashboard() {
     }
   }
 
+  const handleImport = async () => {
+    if (!exportData) {
+      alert('No data to import.');
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const result = await importCommunityToFirebase(exportData);
+      alert(result.message);
+      setIsExportDialogOpen(false);
+    } catch (error: any) {
+      console.error('Import failed', error);
+      alert(`Import failed: ${error.message}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <>
     <div className="flex h-screen bg-white text-black">
@@ -259,7 +277,9 @@ export default function MongoDashboard() {
     <ExportDialog 
         isOpen={isExportDialogOpen} 
         onClose={() => setIsExportDialogOpen(false)} 
-        data={exportData} 
+        data={exportData}
+        onImport={handleImport}
+        isImporting={isExporting}
     />
     </>
   );
