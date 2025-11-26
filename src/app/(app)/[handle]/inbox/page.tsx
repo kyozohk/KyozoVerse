@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -180,80 +181,83 @@ export default function CommunityInboxPage() {
   }, [communityMembers]);
 
   // Load messages for selected user and mark as read
-  useEffect(() => {
+useEffect(() => {
     if (!selectedUserId) {
-      setMessages([]);
-      return;
+        setMessages([]);
+        return;
     }
 
-    console.log('[Inbox] Loading messages for user:', selectedUserId, 'service:', selectedService);
-
-    // Query from service-specific collections or all collections
-    let messagesQuery;
+    const member = communityMembers.find(m => m.userId === selectedUserId);
+    if (!member) {
+        setMessages([]);
+        return;
+    }
     
-    if (selectedService === 'all') {
-      // For "all", we need to query all service collections
-      // For now, we'll just query WhatsApp (add more services as they're implemented)
-      const messagesRef = collection(db, 'messages_whatsapp');
-      messagesQuery = query(
-        messagesRef,
-        where('userId', '==', selectedUserId),
-        orderBy('timestamp', 'asc') // Changed to 'asc' for oldest first (latest at bottom)
-      );
-    } else {
-      // Query specific service collection
-      const collectionName = `messages_${selectedService}`;
-      const messagesRef = collection(db, collectionName);
-      messagesQuery = query(
-        messagesRef,
-        where('userId', '==', selectedUserId),
-        orderBy('timestamp', 'asc') // Changed to 'asc' for oldest first (latest at bottom)
-      );
+    // Normalize phone number - crucial for matching
+    const memberPhone = member.phone || member.phoneNumber;
+    if (!memberPhone) {
+        console.warn(`[Inbox] Selected member ${member.displayName} has no phone number.`);
+        setMessages([]);
+        return;
     }
+    
+    const normalizedPhone = memberPhone.replace(/\D/g, ''); // Remove all non-digit characters
 
-    const unsubscribe = onSnapshot(
-      messagesQuery,
-      async (snapshot) => {
-        console.log('[Inbox] Messages snapshot received:', snapshot.docs.length, 'messages for user:', selectedUserId, 'service:', selectedService);
-        
-        const msgs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as WhatsAppMessage[];
-        
-        console.log('[Inbox] Parsed messages:', msgs);
-        console.log('[Inbox] Query collection:', selectedService === 'all' ? 'messages_whatsapp' : `messages_${selectedService}`);
-        setMessages(msgs);
+    console.log(`[Inbox] Loading messages for user: ${selectedUserId}, phone: ${normalizedPhone}`);
 
-        // Mark all incoming unread messages as read
-        const unreadMessages = msgs.filter(
-          (msg) => msg.direction === 'incoming' && !msg.read
-        );
-        
-        if (unreadMessages.length > 0) {
-          console.log('[Inbox] Marking', unreadMessages.length, 'messages as read');
-        }
-        
-        for (const msg of unreadMessages) {
-          try {
-            // Determine which collection this message is from
-            const collectionName = (msg as any).messagingService 
-              ? `messages_${(msg as any).messagingService}` 
-              : 'messages_whatsapp';
-            const msgRef = doc(db, collectionName, msg.id);
-            await updateDoc(msgRef, { read: true });
-          } catch (error) {
-            console.error('[Inbox] Error marking message as read:', error);
-          }
-        }
-      },
-      (error) => {
-        console.error('[Inbox] Error loading messages:', error);
-      }
+    const messagesRef = collection(db, 'messages_whatsapp');
+    
+    // Query for messages sent TO this user (outgoing from us)
+    const outgoingQuery = query(
+        messagesRef,
+        where('recipientPhone', '==', normalizedPhone),
+        orderBy('timestamp', 'asc')
+    );
+    
+    // Query for messages sent FROM this user (incoming to us)
+    const incomingQuery = query(
+        messagesRef,
+        where('senderPhone', '==', `+${normalizedPhone}`), // Webhook adds '+'
+        orderBy('timestamp', 'asc')
     );
 
-    return () => unsubscribe();
-  }, [selectedUserId, selectedService]);
+    const unsubOutgoing = onSnapshot(outgoingQuery, (outgoingSnap) => {
+        const outgoingMsgs = outgoingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhatsAppMessage));
+        
+        const unsubIncoming = onSnapshot(incomingQuery, async (incomingSnap) => {
+            const incomingMsgs = incomingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhatsAppMessage));
+            
+            const allMessages = [...outgoingMsgs, ...incomingMsgs];
+            
+            // Sort all messages by timestamp
+            allMessages.sort((a, b) => {
+                const timeA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(0);
+                const timeB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(0);
+                return timeA - timeB;
+            });
+            
+            setMessages(allMessages);
+            console.log(`[Inbox] Total messages for ${selectedUserId}: ${allMessages.length}`);
+            
+            // Mark unread messages as read
+            for (const msg of incomingMsgs) {
+                if (!msg.read) {
+                    try {
+                        const msgRef = doc(db, 'messages_whatsapp', msg.id);
+                        await updateDoc(msgRef, { read: true });
+                    } catch (error) {
+                        console.error('[Inbox] Error marking message as read:', error);
+                    }
+                }
+            }
+        });
+        
+        // Return a cleanup function that unsubscribes from both listeners
+        return () => unsubIncoming();
+    });
+
+    return () => unsubOutgoing();
+}, [selectedUserId, communityMembers]);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
