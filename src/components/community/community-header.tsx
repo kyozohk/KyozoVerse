@@ -4,6 +4,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import {
   Globe,
   Users,
@@ -14,9 +15,10 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { CustomButton } from '@/components/ui/CustomButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Community, UserRole } from '@/lib/types';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 interface CommunityHeaderProps {
   community: Community;
@@ -28,6 +30,8 @@ interface CommunityHeaderProps {
 
 export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
+  const pathname = usePathname();
+  const { activeBgColor } = getThemeForPath(pathname);
 
   return (
     <div className="relative p-6 md:p-8 text-white">
@@ -45,11 +49,15 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
       <div className="relative z-10">
         <div className="flex justify-between items-start">
             <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-shrink-0">
-                <Avatar className="h-24 w-24 border-4 border-background/10">
-                    <AvatarImage src={community.communityProfileImage} />
-                    <AvatarFallback>{community.name.charAt(0)}</AvatarFallback>
-                </Avatar>
+                <div className="flex-shrink-0 relative">
+                  <div 
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: activeBgColor }}
+                  />
+                  <Avatar className="h-24 w-24 border-4 border-background/10 relative z-10">
+                      <AvatarImage src={community.communityProfileImage} />
+                      <AvatarFallback>{community.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
                 </div>
 
                 <div className="flex-grow">
@@ -71,19 +79,19 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
 
             {canManage && (
                 <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
+                    <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
                         <Pencil className="h-4 w-4" />
-                    </Button>
+                    </CustomButton>
                     {onDelete && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <CustomButton 
+                        variant="rounded-rect" 
+                        size="small" 
                         className="text-white/80 hover:text-white hover:bg-white/10"
                         onClick={onDelete}
                         title="Delete community"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </CustomButton>
                     )}
                 </div>
             )}
@@ -92,23 +100,23 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
         {canManage && (
             <div className="mt-4 flex flex-wrap items-start gap-2 md:gap-4 self-start md:self-center">
               {onAddMember && (
-                <Button 
-                  variant="ghost" 
+                <CustomButton 
+                  variant="rounded-rect" 
                   className="text-white/80 hover:text-white hover:bg-white/10"
                   onClick={onAddMember}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Members
-                </Button>
+                </CustomButton>
               )}
-              <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
+              <CustomButton variant="rounded-rect" className="text-white/80 hover:text-white hover:bg-white/10">
                 <Mail className="h-4 w-4 mr-2" />
                 Invite
-              </Button>
-              <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
+              </CustomButton>
+              <CustomButton variant="rounded-rect" className="text-white/80 hover:text-white hover:bg-white/10">
                 <Bell className="h-4 w-4 mr-2" />
                 Broadcast
-              </Button>
+              </CustomButton>
             </div>
           )}
       </div>

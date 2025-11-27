@@ -27,19 +27,40 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Rounded rect button variant - now uses same background as regular button */
+/* Rounded rect button variant - uses light_app_bg.png with slug color overlay */
 .button.button-rounded-rect {
+  position: relative;
   border-radius: 8px;
-  background-color: rgba(132, 52, 132, 0.2);
   color: var(--button-text-color);
   font-weight: 500;
   padding: 0.6rem 1.5rem;
   border: 1px solid var(--button-border);
   transition: all 0.2s ease;
+  overflow: hidden;
+  background-image: url('/bg/light_app_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.button.button-rounded-rect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(132, 52, 132, 0.2);
+  z-index: 0;
+}
+
+.button.button-rounded-rect > * {
+  position: relative;
+  z-index: 1;
+}
+
+.button.button-rounded-rect:hover::before {
+  background-color: rgba(132, 52, 132, 0.3);
 }
 
 .button.button-rounded-rect:hover {
-  background-color: rgba(132, 52, 132, 0.3);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }

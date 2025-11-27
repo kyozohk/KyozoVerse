@@ -196,12 +196,16 @@ export default function CommunitySidebar() {
                       
                       <div className="flex items-center gap-3 relative z-10">
                         <div className="relative rounded-full h-14 w-14 flex items-center justify-center flex-shrink-0">
-                          <Avatar className="h-12 w-12 border-2">
+                          <div 
+                            className="absolute inset-0 rounded-full"
+                            style={{ backgroundColor: activeBgColor }}
+                          />
+                          <Avatar className="h-12 w-12 border-2 relative z-10">
                             <AvatarImage src={community.communityProfileImage} />
                             <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
                           </Avatar>
                           {isSelected && (
-                            <span className="absolute -top-1 -left-1 bg-white rounded-full p-0.5">
+                            <span className="absolute -top-1 -left-1 bg-white rounded-full p-0.5 z-20">
                               <Check className="h-4 w-4 text-black" />
                             </span>
                           )}
@@ -236,9 +240,13 @@ export default function CommunitySidebar() {
                 onClick={() => setShowCommunityList(true)}
                 className="w-full h-full p-0 bg-transparent hover:opacity-80 transition-opacity"
               >
-                <div className="flex items-center gap-3 truncate min-h-20">
+                <div className="flex items-center gap-2 truncate min-h-20">
                   <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                    <Avatar className="h-12 w-12 border-2">
+                    <div 
+                      className="absolute inset-0 rounded-full"
+                      style={{ backgroundColor: activeBgColor }}
+                    />
+                    <Avatar className="h-14 w-14 border-2 relative z-10">
                       <AvatarImage src={selectedCommunity?.communityProfileImage} />
                       <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
                     </Avatar>
