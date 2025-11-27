@@ -50,9 +50,3 @@ curl -X POST 'https://api.resend.com/emails' \
     "html": "<h1>Hello!</h1><p>This is a test email from welcome@kyozo.space</p>"
   }'
 
-
-curl --request POST \
-  --url https://api.sendgrid.com/v3/mail/send \
-  --header 'Authorization: Bearer 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' \
-  --header 'Content-Type: application/json' \
-  --data '{"personalizations":[{"to":[{"email":"ashok@kyozo.com"}]}],"from":{"email":"test@mail.kyozo.com"},"subject":"Test Email","content":[{"type":"text/plain","value":"This is a test email from SendGrid"}]}'
