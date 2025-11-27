@@ -35,6 +35,7 @@ export default function CommunitySidebar() {
   const [loading, setLoading] = useState(true);
   const [selectedCommunityHandle, setSelectedCommunityHandle] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [showCommunityList, setShowCommunityList] = useState(false);
 
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
   
@@ -114,8 +115,9 @@ export default function CommunitySidebar() {
     return () => unsubscribeOwned();
   }, [user, pathname]);
 
-  const handleValueChange = (handle: string) => {
+  const handleCommunitySelect = (handle: string) => {
     setSelectedCommunityHandle(handle);
+    setShowCommunityList(false);
     const currentSubPath = pathname.split('/').slice(2).join('/');
     const targetItem = communityNavItems.find(item => item.href(handle).endsWith(currentSubPath)) || communityNavItems[0];
     router.push(targetItem.href(handle));
@@ -125,120 +127,161 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow`}
+      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
-        padding: '0 8px',
-        backgroundColor: activeBgColor,
         borderColor: activeColor,
       }}
     >
-      <div className="flex h-full max-h-screen flex-col">
-        {/* Header: Dropdown or Create Community Button */}
-        <div className="flex h-[88px] items-center border-b" style={{ borderColor: activeColor }}>
-          {loading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (communities.length > 0 && selectedCommunityHandle ? (
-            <Select value={selectedCommunityHandle} onValueChange={handleValueChange}>
-              {/* DROPDOWN CONTROL */}
-              <SelectTrigger
-                className="w-full h-full shadow-none focus:ring-0 bg-transparent text-foreground p-0 border-0"
-                style={{
-                  borderRadius: '12px',
-                  boxShadow: 'none',
-                  background: 'transparent',
-                }}
-              >
-                <div className="flex items-center gap-3 truncate min-h-20">
-                  <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                    <Avatar className="h-14 w-14">
-                      <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                      <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <SelectValue asChild>
-                    <span className="font-semibold text-lg text-foreground truncate">
-                      {selectedCommunity?.name}
-                    </span>
-                  </SelectValue>
-                </div>
-              </SelectTrigger>
-              {/* DROPDOWN CONTENT */}
-              <SelectContent
-                className="max-h-[800px] p-0"
-                style={{
-                  border: `2px solid ${activeColor}`,
-                  borderRadius: '12px',
-                  boxShadow: 'none',
-                  padding: 0,
-                  background: activeBgColor,
-                }}
-              >
+      {/* Background with light_app_bg.png and color overlay */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url('/bg/light_app_bg.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundColor: activeBgColor,
+        }}
+      />
+
+      {/* Community List View (Full Height) */}
+      {showCommunityList && (
+        <div className="absolute inset-0 z-20 flex flex-col" style={{ padding: '8px' }}>
+          {/* Header */}
+          <div className="flex h-[88px] items-center justify-between border-b px-2" style={{ borderColor: activeColor }}>
+            <h2 className="text-xl font-bold text-foreground">Communities</h2>
+            <CustomButton 
+              variant="rounded-rect" 
+              size="small"
+              onClick={() => setIsCreateDialogOpen(true)}
+            >
+              <PlusCircle className="h-5 w-5" />
+            </CustomButton>
+          </div>
+
+          {/* Communities List */}
+          <div className="flex-1 overflow-y-auto py-2">
+            {loading ? (
+              <div className="space-y-2 px-2">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full" />)}
+              </div>
+            ) : (
+              <div className="space-y-2 px-2">
                 {communities.map((community) => {
                   const isSelected = community.handle === selectedCommunityHandle;
                   return (
-                    <SelectItem
+                    <button
                       key={community.communityId}
-                      value={community.handle}
-                      className="py-3 px-2 h-20 w-full"
+                      onClick={() => handleCommunitySelect(community.handle)}
+                      className="w-full p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] relative group"
                       style={{
-                        borderRadius: '12px',
                         border: `2px solid ${isSelected ? activeColor : 'transparent'}`,
-                        marginBottom: 8,
+                        backgroundColor: isSelected ? activeBgColor : 'transparent',
                       }}
                     >
-                      <div className="flex items-center gap-3 w-full relative min-h-20">
-                        <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                          <Avatar className="h-14 w-14">
+                      {/* Hover effect */}
+                      <div 
+                        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        style={{
+                          backgroundColor: activeBgColor,
+                          border: `2px solid ${activeColor}`,
+                        }}
+                      />
+                      
+                      <div className="flex items-center gap-3 relative z-10">
+                        <div className="relative rounded-full h-14 w-14 flex items-center justify-center flex-shrink-0">
+                          <Avatar className="h-12 w-12 border-2">
                             <AvatarImage src={community.communityProfileImage} />
                             <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
                           </Avatar>
                           {isSelected && (
-                            <span className="absolute top-1 left-1 bg-white rounded-full p-0.5">
-                              <Check className="h-5 w-5 text-black" />
+                            <span className="absolute -top-1 -left-1 bg-white rounded-full p-0.5">
+                              <Check className="h-4 w-4 text-black" />
                             </span>
                           )}
                         </div>
-                        <span className="truncate font-semibold text-lg text-foreground flex-grow">
-                          {community.name}
-                        </span>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className="font-semibold text-base text-foreground truncate">
+                            {community.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {community.memberCount} members
+                          </p>
+                        </div>
                       </div>
-                    </SelectItem>
+                    </button>
                   );
                 })}
-              </SelectContent>
-            </Select>
-          ) : (
-            <div className="w-full">
-              <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                <PlusCircle className="mr-2 h-12 w-12" />
-                Create Community
-              </CustomButton>
-            </div>
-          ))}
+              </div>
+            )}
+          </div>
         </div>
-        {/* Navigation Items */}
-        <div className="flex-1 py-2">
-          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {selectedCommunityHandle && communityNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <SidebarNavItem
-                  key={item.label}
-                  href={item.href(selectedCommunityHandle)}
-                  icon={<Icon />}
-                  isActive={pathname === item.href(selectedCommunityHandle)}
-                  activeColor={activeColor}
-                  activeBgColor={activeBgColor}
-                  className="my-1"
-                >
-                  {item.label}
-                </SidebarNavItem>
-              );
-            })}
-          </nav>
+      )}
+
+      {/* Navigation View (Default) */}
+      {!showCommunityList && (
+        <div className="relative z-10 flex h-full max-h-screen flex-col" style={{ padding: '0 8px' }}>
+          {/* Selected Community Header (Clickable) */}
+          <div className="flex h-[76px] items-center " style={{ borderColor: activeColor, padding: '0 8px' }}>
+            {loading ? (
+              <Skeleton className="h-10 w-full" />
+            ) : communities.length > 0 && selectedCommunityHandle ? (
+              <button
+                onClick={() => setShowCommunityList(true)}
+                className="w-full h-full p-0 bg-transparent hover:opacity-80 transition-opacity"
+              >
+                <div className="flex items-center gap-3 truncate min-h-20">
+                  <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
+                    <Avatar className="h-12 w-12 border-2">
+                      <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                      <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <span className="font-semibold text-lg text-foreground truncate">
+                    {selectedCommunity?.name}
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <div className="w-full">
+                <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+                  <PlusCircle className="mr-2 h-12 w-12" />
+                  Create Community
+                </CustomButton>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Items */}
+          <div className="flex-1 py-2">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+              {selectedCommunityHandle && communityNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <SidebarNavItem
+                    key={item.label}
+                    href={item.href(selectedCommunityHandle)}
+                    icon={<Icon />}
+                    isActive={pathname === item.href(selectedCommunityHandle)}
+                    activeColor={activeColor}
+                    activeBgColor={activeBgColor}
+                    className="my-1"
+                  >
+                    {item.label}
+                  </SidebarNavItem>
+                );
+              })}
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
+
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
   );
