@@ -22,13 +22,12 @@ import {
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { type Community, type User } from "@/lib/types";
-import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
+import { getUserRoleInCommunity, getCommunityByHandle, getCommunityMembers } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
-import { getMembers } from "@/app/mongo/actions";
 import { CommunityMember } from "@/lib/types";
 
 // A simple debounce hook
@@ -94,8 +93,8 @@ export default function CommunityMembersPage() {
     async function fetchMembers() {
       setLoading(true);
       try {
-        const membersData = await getMembers(community!.communityId, debouncedSearchTerm);
-        setMembers(membersData as unknown as CommunityMember[]);
+        const membersData = await getCommunityMembers(community!.communityId, debouncedSearchTerm);
+        setMembers(membersData);
       } catch (error) {
         console.error("Error fetching members:", error);
       } finally {

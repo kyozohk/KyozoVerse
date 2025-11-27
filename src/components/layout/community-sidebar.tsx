@@ -46,28 +46,72 @@ export default function CommunitySidebar() {
       return;
     }
 
-    const q = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userCommunities = querySnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
-      setCommunities(userCommunities);
+    setLoading(true);
 
-      const currentCommunity = userCommunities.find(c => c.handle === handleFromPath);
-      if (currentCommunity) {
-        setSelectedCommunityHandle(currentCommunity.handle);
-      } else if (userCommunities.length > 0 && handleFromPath) {
-        const communityExists = userCommunities.some(c => c.handle === handleFromPath);
-        setSelectedCommunityHandle(communityExists ? handleFromPath : userCommunities[0]?.handle);
-      } else {
-        setSelectedCommunityHandle(null);
-      }
+    // Fetch communities where user is owner
+    const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+    
+    // Fetch communities where user is a member
+    const memberQuery = query(collection(db, 'communityMembers'), where('userId', '==', user.uid));
+    
+    const unsubscribeOwned = onSnapshot(ownedQuery, async (ownedSnapshot) => {
+      const ownedCommunities = ownedSnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
+      
+      // Get member communities
+      const memberSnapshot = await onSnapshot(memberQuery, async (memberSnap) => {
+        const memberCommunityIds = memberSnap.docs.map(doc => doc.data().communityId);
+        
+        // Fetch community details for member communities
+        let memberCommunities: Community[] = [];
+        if (memberCommunityIds.length > 0) {
+          const memberCommunitiesPromises = memberCommunityIds.map(async (id) => {
+            const communityDoc = await collection(db, 'communities');
+            const communitySnapshot = await onSnapshot(query(communityDoc, where('__name__', '==', id)), (snap) => {
+              return snap.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
+            });
+            return new Promise<Community[]>((resolve) => {
+              const unsubscribe = onSnapshot(query(collection(db, 'communities')), (snapshot) => {
+                const comm = snapshot.docs.find(d => d.id === id);
+                if (comm) {
+                  resolve([{ communityId: comm.id, ...comm.data() } as Community]);
+                } else {
+                  resolve([]);
+                }
+                unsubscribe();
+              });
+            });
+          });
+          
+          const results = await Promise.all(memberCommunitiesPromises);
+          memberCommunities = results.flat();
+        }
+        
+        // Combine and deduplicate
+        const allCommunities = [...ownedCommunities, ...memberCommunities];
+        const uniqueCommunities = Array.from(
+          new Map(allCommunities.map(item => [item.communityId, item])).values()
+        );
+        
+        setCommunities(uniqueCommunities);
 
-      setLoading(false);
+        const currentCommunity = uniqueCommunities.find(c => c.handle === handleFromPath);
+        if (currentCommunity) {
+          setSelectedCommunityHandle(currentCommunity.handle);
+        } else if (uniqueCommunities.length > 0 && handleFromPath) {
+          const communityExists = uniqueCommunities.some(c => c.handle === handleFromPath);
+          setSelectedCommunityHandle(communityExists ? handleFromPath : uniqueCommunities[0]?.handle);
+        } else {
+          setSelectedCommunityHandle(null);
+        }
+
+        setLoading(false);
+      });
     }, (error) => {
       console.error("Error fetching communities:", error);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeOwned();
   }, [user, pathname]);
 
   const handleValueChange = (handle: string) => {

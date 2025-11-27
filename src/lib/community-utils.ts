@@ -79,6 +79,48 @@ export async function isUserCommunityMember(
 }
 
 /**
+ * Get members of a community from Firebase
+ */
+export async function getCommunityMembers(
+  communityId: string,
+  searchTerm: string = ''
+): Promise<CommunityMember[]> {
+  try {
+    const membersRef = collection(db, "communityMembers");
+    const q = query(membersRef, where("communityId", "==", communityId));
+    const querySnapshot = await getDocs(q);
+    
+    let members = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        userId: data.userId,
+        communityId: data.communityId,
+        role: data.role,
+        joinedAt: data.joinedAt,
+        status: data.status,
+        userDetails: data.userDetails
+      } as CommunityMember;
+    });
+    
+    // Filter by search term if provided
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      members = members.filter(member => 
+        member.userDetails?.displayName?.toLowerCase().includes(lowerSearch) ||
+        member.userDetails?.email?.toLowerCase().includes(lowerSearch) ||
+        member.userDetails?.phone?.toLowerCase().includes(lowerSearch)
+      );
+    }
+    
+    return members;
+  } catch (error) {
+    console.error("Error fetching community members:", error);
+    return [];
+  }
+}
+
+/**
  * Join a community as a member
  */
 export async function joinCommunity(
