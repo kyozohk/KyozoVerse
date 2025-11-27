@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { 
   collection, 
@@ -21,13 +21,28 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
-import { type CommunityMember, type Community, type User } from "@/lib/types";
+import { type Community, type User } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
+import { CommunityMember } from "@/lib/types";
+
+// A simple debounce hook
+function useDebounce(value: string, delay: number) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+}
 
 
 export default function CommunityMembersPage() {
@@ -44,6 +59,8 @@ export default function CommunityMembersPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
   
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   useEffect(() => {
     async function fetchCommunityAndRole() {
       if (!handle) return;
@@ -70,57 +87,65 @@ export default function CommunityMembersPage() {
   useEffect(() => {
     if (!community?.communityId) {
       setLoading(false);
-      return
-    };
+      return;
+    }
 
-    setLoading(true);
-    const membersRef = collection(db, "communityMembers");
+    // Query Firestore communityMembers collection
+    const membersRef = collection(db, 'communityMembers');
     const q = query(
       membersRef,
-      where("communityId", "==", community.communityId),
-      orderBy("joinedAt", "desc")
+      where('communityId', '==', community.communityId),
+      orderBy('joinedAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const membersDataPromises = querySnapshot.docs.map(async (docSnap) => {
-        const memberData = docSnap.data() as Omit<CommunityMember, 'userDetails'>;
-        const userDocRef = doc(db, 'users', memberData.userId);
-        const userSnap = await getDoc(userDocRef);
-        let userDetails: (User & { phone?: string }) | undefined = undefined;
-        if (userSnap.exists()) {
-          const raw = userSnap.data() as User & { phone?: string };
-          userDetails = {
-            ...raw,
-            phone: (raw as any).phone || raw.phoneNumber,
-          };
-        }
-        return {
-          id: docSnap.id,
-          ...memberData,
-          userDetails
-        } as unknown as CommunityMember;
-      });
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      setLoading(true);
+      try {
+        const memberPromises = snapshot.docs.map(async (memberDoc) => {
+          const memberData = memberDoc.data();
+          
+          // Fetch user details
+          const userDoc = await getDoc(doc(db, 'users', memberData.userId));
+          const userData = userDoc.data();
+          
+          return {
+            userId: memberData.userId,
+            communityId: memberData.communityId,
+            role: memberData.role || 'member',
+            joinedAt: memberData.joinedAt,
+            status: memberData.status || 'active',
+            userDetails: {
+              displayName: userData?.displayName || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() || 'Unknown',
+              email: userData?.email || '',
+              phone: userData?.phone || userData?.phoneNumber || '',
+              avatarUrl: userData?.photoURL || userData?.avatarUrl || '',
+            },
+            messageToWill: memberData.messageToWill || '',
+          } as CommunityMember & { messageToWill?: string };
+        });
 
-      const membersData = await Promise.all(membersDataPromises);
-      setMembers(membersData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching members:", error);
-      setLoading(false);
+        const membersData = await Promise.all(memberPromises);
+        
+        // Apply search filter if needed
+        if (debouncedSearchTerm) {
+          const filtered = membersData.filter(member => 
+            member.userDetails?.displayName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+            member.userDetails?.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+            member.userDetails?.phone?.includes(debouncedSearchTerm)
+          );
+          setMembers(filtered);
+        } else {
+          setMembers(membersData);
+        }
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      } finally {
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();
-  }, [community?.communityId]);
-
-  const filteredMembers = members.filter(
-    (member) =>
-      member.userDetails?.displayName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      member.userDetails?.email
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+  }, [community?.communityId, debouncedSearchTerm]);
   
   const handleAddMemberSubmit = async (data: {
     displayName: string;
@@ -133,15 +158,52 @@ export default function CommunityMembersPage() {
     if (!data.email || !data.email.includes('@')) {
       throw new Error("A valid email address is required to create a new user.");
     }
+    
+    // Validate and normalize phone number
+    if (!data.phone) {
+      throw new Error("Phone number is required.");
+    }
+    
+    // Normalize phone number: ensure it starts with +
+    let normalizedPhone = data.phone.trim().replace(/\s+/g, '');
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = '+' + normalizedPhone;
+    }
+    
+    // Create wa_id (WhatsApp ID) - phone without + and spaces
+    const wa_id = normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '');
+    
+    console.log('[Add Member] Normalized phone:', normalizedPhone, 'wa_id:', wa_id);
   
     try {
       const usersRef = collection(db, "users");
       let userId: string;
       let userDetails: Partial<User>;
   
-      // Look up user by email
-      const q = query(usersRef, where("email", "==", data.email));
-      const snap = await getDocs(q);
+      // Check if user exists by email OR phone
+      const emailQuery = query(usersRef, where("email", "==", data.email));
+      const phoneQuery = query(usersRef, where("phoneNumber", "==", normalizedPhone));
+      const phoneQuery2 = query(usersRef, where("phone", "==", normalizedPhone));
+      
+      const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
+        getDocs(emailQuery),
+        getDocs(phoneQuery),
+        getDocs(phoneQuery2)
+      ]);
+      
+      // Check if user exists by email or phone
+      const existingByEmail = !emailSnap.empty;
+      const existingByPhone = !phoneSnap.empty || !phoneSnap2.empty;
+      
+      if (existingByEmail || existingByPhone) {
+        const existingUser = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
+        const userData = existingUser.data();
+        throw new Error(
+          `A user with this ${existingByEmail ? 'email' : 'phone number'} already exists (${userData.displayName || userData.email}). Please use a different ${existingByEmail ? 'email' : 'phone number'} or ask them to login.`
+        );
+      }
+      
+      const snap = emailSnap;
   
       if (snap.empty) {
         // User does not exist, create a new one
@@ -157,13 +219,14 @@ export default function CommunityMembersPage() {
                 userId: userId,
                 displayName: data.displayName,
                 email: data.email,
-                phone: data.phone,
-                phoneNumber: data.phone,
+                phone: normalizedPhone,
+                phoneNumber: normalizedPhone,
+                wa_id: wa_id,
                 createdAt: serverTimestamp(),
             } as unknown as User;
             
             await setDoc(doc(db, "users", userId), userDetails);
-            console.log(`New user created with UID: ${userId}. A temporary password was used.`);
+            console.log(`New user created with UID: ${userId}, phone: ${normalizedPhone}, wa_id: ${wa_id}. A temporary password was used.`);
   
         } catch (authError: any) {
             if (authError.code === 'auth/email-already-in-use') {
@@ -177,12 +240,21 @@ export default function CommunityMembersPage() {
         const userDoc = snap.docs[0];
         userId = userDoc.id;
         userDetails = userDoc.data() as User;
-        // Ensure phone number is updated if it was provided
-        if (data.phone && (userDetails as any).phone !== data.phone) {
-          await updateDoc(doc(db, "users", userId), { phone: data.phone, phoneNumber: data.phone });
-          (userDetails as any).phone = data.phone;
+        // Ensure phone number and wa_id are updated if needed
+        const updateData: any = {};
+        if (normalizedPhone && (userDetails as any).phone !== normalizedPhone) {
+          updateData.phone = normalizedPhone;
+          updateData.phoneNumber = normalizedPhone;
+          updateData.wa_id = wa_id;
+          (userDetails as any).phone = normalizedPhone;
+        } else if (!(userDetails as any).wa_id) {
+          // Add wa_id if it doesn't exist
+          updateData.wa_id = wa_id;
         }
-        console.log(`Found existing user with UID: ${userId}`);
+        if (Object.keys(updateData).length > 0) {
+          await updateDoc(doc(db, "users", userId), updateData);
+        }
+        console.log(`Found existing user with UID: ${userId}, phone: ${normalizedPhone}, wa_id: ${wa_id}`);
       }
   
       // Add user to the community members subcollection
@@ -197,7 +269,7 @@ export default function CommunityMembersPage() {
           displayName: data.displayName,
           email: data.email,
           avatarUrl: userDetails.avatarUrl || null,
-          phone: data.phone,
+          phone: normalizedPhone,
         },
       });
   
@@ -270,7 +342,7 @@ export default function CommunityMembersPage() {
         onAddAction={() => setIsAddMemberOpen(true)}
       >
         <MembersList 
-          members={filteredMembers} 
+          members={members} 
           userRole={userRole as any}
           viewMode={viewMode}
           onEditMember={(member) => setEditingMember(member)}

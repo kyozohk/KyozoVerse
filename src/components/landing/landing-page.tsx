@@ -15,11 +15,16 @@ export function LandingPage() {
   const router = useRouter();
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpName, setSignUpName] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { user, signIn, signOut } = useAuth();
+  const [signUpError, setSignUpError] = useState<string | null>(null);
+  const { user, signIn, signOut, signUp } = useAuth();
 
   useEffect(() => {
     // If the user is logged in, redirect them to the dashboard
@@ -31,18 +36,28 @@ export function LandingPage() {
 
   const openWaitlist = () => {
     setIsSignInOpen(false);
+    setIsSignUpOpen(false);
     setIsResetPasswordOpen(false);
     setIsWaitlistOpen(true);
   };
 
   const openSignIn = () => {
     setIsWaitlistOpen(false);
+    setIsSignUpOpen(false);
     setIsResetPasswordOpen(false);
     setIsSignInOpen(true);
   };
 
+  const openSignUp = () => {
+    setIsWaitlistOpen(false);
+    setIsSignInOpen(false);
+    setIsResetPasswordOpen(false);
+    setIsSignUpOpen(true);
+  };
+
   const openResetPassword = () => {
     setIsSignInOpen(false);
+    setIsSignUpOpen(false);
     setIsWaitlistOpen(false);
     setIsResetPasswordOpen(true);
   };
@@ -61,6 +76,35 @@ export function LandingPage() {
             }
         }
         setError(description);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setSignUpError(null);
+    try {
+      if (!signUpName || !signUpEmail || !signUpPassword) {
+        setSignUpError("Please fill in all fields.");
+        return;
+      }
+      if (signUpPassword.length < 6) {
+        setSignUpError("Password must be at least 6 characters.");
+        return;
+      }
+      await signUp(signUpEmail, signUpPassword, { displayName: signUpName });
+      setIsSignUpOpen(false);
+      // The auth provider will handle the redirect
+    } catch (error: any) {
+        let description = "An unexpected error occurred. Please try again.";
+        if (error instanceof FirebaseError) {
+            if (error.code === 'auth/email-already-in-use') {
+                description = "This email is already registered. Please sign in instead.";
+            } else if (error.code === 'auth/invalid-email') {
+                description = "Invalid email address.";
+            } else if (error.code === 'auth/weak-password') {
+                description = "Password is too weak. Please use a stronger password.";
+            }
+        }
+        setSignUpError(description);
     }
   };
   
@@ -137,7 +181,74 @@ export function LandingPage() {
             </div>
 
             <div className="text-center text-sm text-secondary mt-4">
-              Don't have an account? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+              Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button>
+            </div>
+            <div className="text-center text-sm text-secondary mt-2">
+              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+            </div>
+          </div>
+        </div>
+      </CustomFormDialog>
+
+      <CustomFormDialog 
+        open={isSignUpOpen} 
+        onClose={() => setIsSignUpOpen(false)}
+        title="Create Your Account"
+        description="Sign up to create and manage your own communities on Kyozo."
+        backgroundImage="/bg/light_app_bg.png"
+        color="#C170CF"
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="signup-name" className="block text-sm font-medium mb-2">Full Name</label>
+              <Input
+                id="signup-name"
+                type="text"
+                placeholder="Enter your full name"
+                value={signUpName}
+                onChange={(e) => setSignUpName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+              />
+            </div>
+            <div>
+              <label htmlFor="signup-email" className="block text-sm font-medium mb-2">Email</label>
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="Enter your email"
+                value={signUpEmail}
+                onChange={(e) => setSignUpEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+              />
+            </div>
+            <div>
+              <label htmlFor="signup-password" className="block text-sm font-medium mb-2">Password</label>
+              <PasswordInput
+                id="signup-password"
+                placeholder="Create a password (min 6 characters)"
+                value={signUpPassword}
+                onChange={(e) => setSignUpPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+              />
+            </div>
+            {signUpError && (
+              <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
+                {signUpError}
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-6">
+            <div className="mb-4">
+              <CustomButton onClick={handleSignUp} className="w-full">Create Account</CustomButton>
+            </div>
+
+            <div className="text-center text-sm text-secondary mt-4">
+              Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button>
+            </div>
+            <div className="text-center text-sm text-secondary mt-2">
+              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>
         </div>

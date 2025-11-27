@@ -22,9 +22,11 @@ interface CommunityHeaderProps {
   community: Community;
   userRole: UserRole;
   onEdit: () => void;
+  onDelete?: () => void;
+  onAddMember?: () => void;
 }
 
-export function CommunityHeader({ community, userRole, onEdit }: CommunityHeaderProps) {
+export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   return (
@@ -72,19 +74,33 @@ export function CommunityHeader({ community, userRole, onEdit }: CommunityHeader
                     <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
                         <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10">
+                    {onDelete && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-white/80 hover:text-white hover:bg-white/10"
+                        onClick={onDelete}
+                        title="Delete community"
+                      >
                         <Trash2 className="h-4 w-4" />
-                    </Button>
+                      </Button>
+                    )}
                 </div>
             )}
         </div>
 
         {canManage && (
             <div className="mt-4 flex flex-wrap items-start gap-2 md:gap-4 self-start md:self-center">
-              <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Members
-              </Button>
+              {onAddMember && (
+                <Button 
+                  variant="ghost" 
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  onClick={onAddMember}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Members
+                </Button>
+              )}
               <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
                 <Mail className="h-4 w-4 mr-2" />
                 Invite

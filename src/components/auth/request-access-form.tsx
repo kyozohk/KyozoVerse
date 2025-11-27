@@ -111,12 +111,13 @@ export function RequestAccessForm({ onCancel, onSignInClick, formType, setFormTy
         </div>
         
         <div className="text-center text-sm text-secondary mt-2">
-            {formType === 'waitlist' ? (
-              <p></p>
-                // <p>Don't have an account? <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>Sign Up here</button></p>
+          <p>Back to <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>waitlist</button></p>
+          <p>Don't have an account? <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>Sign Up here</button></p>
+            {/* {formType === 'waitlist' ? (
+                <p>Don't have an account? <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>Sign Up here</button></p>
             ) : (
                 <p>Back to <button type="button" className="text-primary hover:underline" onClick={handleFormToggle}>waitlist</button></p>
-            )}
+            )} */}
         </div>
     </div>
   );

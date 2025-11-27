@@ -44,7 +44,12 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   // Reset on open/close
   useEffect(() => {
     if (isOpen) {
-        setSelectedMembers(members);
+        // Filter out owners and admins - only include regular members
+        const regularMembers = members.filter(member => {
+          const role = (member as CommunityMember).role || 'member';
+          return role === 'member'; // Exclude 'owner' and 'admin'
+        });
+        setSelectedMembers(regularMembers);
         if (initialOpenRef.current) {
             setCurrentStep(BroadcastStep.RECIPIENTS);
             initialOpenRef.current = false;

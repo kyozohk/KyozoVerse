@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
+<<<<<<< HEAD
 
       // Routes that are public when the user is NOT authenticated
       const isPublicForGuests =
@@ -54,6 +55,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.replace('/communities');
       } else if (!firebaseUser && !isPublicForGuests) {
         router.replace('/landing');
+=======
+      
+      const isPublicPath = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/c/') || pathname.startsWith('/invite');
+      
+      // TEMP: Disable redirect from root path for Willer birthday campaign
+      if (firebaseUser && isPublicPath && pathname !== '/landing' && pathname !== '/') {
+        router.replace('/communities');
+      } else if (!firebaseUser && !isPublicPath) {
+        // router.replace('/landing');
+        router.replace('/');
+>>>>>>> willer
       }
     });
 

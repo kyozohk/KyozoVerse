@@ -16,5 +16,17 @@ service firebase.storage {
     match /community-media/{communityId}/{allPaths=**} {
       allow write: if request.auth != null;
     }
+    
+    // Allow authenticated users to upload member media (for community owners adding/editing members)
+    match /user-media/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null; // Any authenticated user can upload (community owner uploading for members)
+    }
+    
+    // Allow WhatsApp media uploads (from webhook/API)
+    match /whatsapp-media/{allPaths=**} {
+      allow read: if true; // Public read for displaying in inbox
+      allow write: if true; // Allow webhook to upload media
+    }
   }
 }

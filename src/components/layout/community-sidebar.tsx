@@ -111,9 +111,6 @@ export default function CommunitySidebar() {
                       <AvatarImage src={selectedCommunity?.communityProfileImage} />
                       <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
                     </Avatar>
-                    <span className="absolute top-1 left-1 bg-white rounded-full p-0.5">
-                      <Check className="h-5 w-5 text-black" />
-                    </span>
                   </div>
                   <SelectValue asChild>
                     <span className="font-semibold text-lg text-foreground truncate">
@@ -141,7 +138,6 @@ export default function CommunitySidebar() {
                       value={community.handle}
                       className="py-3 px-2 h-20 w-full"
                       style={{
-                        backgroundColor: isSelected ? activeBgColor : 'transparent',
                         borderRadius: '12px',
                         border: `2px solid ${isSelected ? activeColor : 'transparent'}`,
                         marginBottom: 8,

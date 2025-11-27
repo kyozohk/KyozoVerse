@@ -1,6 +1,6 @@
 import { type Community } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, MessageSquare, Tag, Calendar, GripVertical } from 'lucide-react';
+import { Users, MessageSquare, Tag, Calendar, GripVertical, Upload } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { format } from 'date-fns';
@@ -20,7 +20,10 @@ export function CommunityCard({ community }: { community: Community }) {
                 </Avatar>
                 <CardTitle className="text-lg font-bold">{community.name}</CardTitle>
             </div>
-             <GripVertical className="h-5 w-5 text-muted-foreground" />
+             <div className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground" />
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+            </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -45,7 +48,7 @@ export function CommunityCard({ community }: { community: Community }) {
         )}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="h-4 w-4" />
-          <span>Created on {community.createdAt ? format(community.createdAt.toDate(), 'MMM dd, yyyy') : 'N/A'}</span>
+          <span>Created on {community.createdAt ? format(new Date(community.createdAt.seconds * 1000), 'MMM dd, yyyy') : 'N/A'}</span>
         </div>
       </CardContent>
     </Card>

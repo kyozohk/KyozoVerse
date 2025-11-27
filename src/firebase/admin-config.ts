@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getStorage, Storage } from 'firebase-admin/storage';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
@@ -36,6 +37,14 @@ class MockAuth {
     console.log('[MockAuth] Mock verifyIdToken:', token.substring(0, 10) + '...');
     return { uid: 'mock-user-id' };
   }
+   async createUser(user: any) {
+    console.log('[MockAuth] Mock createUser:', user.email);
+    return { uid: `mock-uid-${Math.random()}` };
+  }
+  async getUserByEmail(email: string) {
+    console.log('[MockAuth] Mock getUserByEmail:', email);
+    return { uid: `mock-uid-${Math.random()}` };
+  }
 }
 
 class MockFirestore {
@@ -49,22 +58,33 @@ class MockFirestore {
             /* mock data */
           })
         })
+      }),
+      batch: () => ({
+        set: () => {},
+        commit: async () => console.log('[MockFirestore] Mock batch commit'),
       })
     };
+  }
+  batch() {
+    return {
+      set: () => {},
+      commit: async () => console.log('[MockFirestore] Mock batch commit'),
+    }
   }
 }
 
 // Initialize Firebase Admin SDK
 function initAdmin(): App {
-  if (useMockAdmin) {
-    console.log('Using mock Firebase Admin SDK because USE_MOCK_ADMIN is true or FIREBASE_SERVICE_ACCOUNT_KEY is not set.');
-    // Return a dummy App object for type compatibility
-    return { name: 'mock-app' } as App;
+  if (getApps().length > 0 && !useMockAdmin) {
+    return getApps()[0];
   }
 
-  const apps = getApps();
-  if (apps.length > 0) {
-    return apps[0];
+  if (useMockAdmin) {
+    console.log('Using mock Firebase Admin SDK because USE_MOCK_ADMIN is true or FIREBASE_SERVICE_ACCOUNT_KEY is not set.');
+    if (getApps().length === 0) {
+        initializeApp({ projectId: 'mock-project' });
+    }
+    return getApps()[0];
   }
   
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY!;
@@ -78,18 +98,20 @@ function initAdmin(): App {
   } catch (error) {
       console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:", error);
       console.warn("Falling back to mock admin SDK due to credential parsing error.");
-      return { name: 'mock-app' } as App;
+      if (getApps().length === 0) {
+        initializeApp({ projectId: 'mock-project-error' });
+      }
+      return getApps()[0];
   }
 }
 
-// Determine if we are actually using mock based on initialization success
 const adminApp = initAdmin();
-// Check if the app is a real initialized app or a mock fallback
-const actuallyUsingMock = adminApp.name === 'mock-app' || useMockAdmin;
+const actuallyUsingMock = useMockAdmin || adminApp.options.credential === undefined;
 
 // Export the services (real or mock)
 export const adminAuth: Auth = actuallyUsingMock ? new MockAuth() as unknown as Auth : getAuth(adminApp);
 export const adminFirestore: Firestore = actuallyUsingMock ? new MockFirestore() as unknown as Firestore : getFirestore(adminApp);
 export const adminStorage: Storage = actuallyUsingMock ? new MockStorage() as unknown as Storage : getStorage(adminApp);
 
+export { initAdmin };
 export default adminApp;
