@@ -39,10 +39,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const isPublicPath = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/c/') || pathname.startsWith('/invite');
       
-      if (firebaseUser && isPublicPath && pathname !== '/landing') {
+      // TEMP: Disable redirect from root path for Willer birthday campaign
+      if (firebaseUser && isPublicPath && pathname !== '/landing' && pathname !== '/') {
         router.replace('/communities');
       } else if (!firebaseUser && !isPublicPath) {
-        router.replace('/landing');
+        // router.replace('/landing');
+        router.replace('/');
       }
     });
 

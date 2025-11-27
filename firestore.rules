@@ -36,7 +36,7 @@ service cloud.firestore {
     // Allow write if: user is writing to their own document OR user is authenticated (for managing members)
     match /users/{userId} {
       allow read: if true;
-      allow create: if request.auth != null; // Allow authenticated users to create new user documents
+      allow create: if true; // Allow anyone to create user documents (for RSVP forms, etc.)
       allow update: if request.auth != null; // Allow authenticated users to update user documents (for community owners managing members)
       allow delete: if request.auth != null && request.auth.uid == userId; // Only user can delete their own
     }
@@ -75,7 +75,8 @@ service cloud.firestore {
     // Community members collection
     match /communityMembers/{memberId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow create: if true; // Allow anyone to create community members (for RSVP forms, etc.)
+      allow update, delete: if request.auth != null;
     }
   }
 }

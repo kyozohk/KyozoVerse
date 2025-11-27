@@ -55,7 +55,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/landing');
+      // router.replace('/landing');
+      router.replace('/');
     }
   }, [user, loading, router]);
   

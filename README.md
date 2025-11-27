@@ -35,3 +35,24 @@ curl -X POST 'https://waba.360dialog.io/v1/configs/webhook' \
   -H 'D360-API-Key: aZ7WxT0jyL2oQlzkHHIbD4zvAK' \
   -H 'Content-Type: application/json' \
   -d '{"url": "https://4edf439c13a8.ngrok-free.app/api/whatsapp/webhook"}'
+
+
+#!/bin/bash
+# test-email.sh
+
+curl -X POST 'https://api.resend.com/emails' \
+  -H 'Authorization: Bearer re_BSraSy53_DxkkdnandZ4mmVtb6doJNn7h' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "from": "Welcome <welcome@kyozo.space>",
+    "to": ["ashok.jaiswal@gmail.com"],
+    "subject": "Test Email from Kyozo.space",
+    "html": "<h1>Hello!</h1><p>This is a test email from welcome@kyozo.space</p>"
+  }'
+
+
+curl --request POST \
+  --url https://api.sendgrid.com/v3/mail/send \
+  --header 'Authorization: Bearer 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' \
+  --header 'Content-Type: application/json' \
+  --data '{"personalizations":[{"to":[{"email":"ashok@kyozo.com"}]}],"from":{"email":"test@mail.kyozo.com"},"subject":"Test Email","content":[{"type":"text/plain","value":"This is a test email from SendGrid"}]}'

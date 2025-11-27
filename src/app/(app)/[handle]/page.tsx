@@ -12,7 +12,7 @@ import { MembersList } from '@/components/community/members-list';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
-import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, addDoc, setDoc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, addDoc, setDoc, serverTimestamp, increment, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
@@ -56,8 +56,31 @@ export default function CommunityPage() {
           
           const membersRef = collection(db, "communityMembers");
           const q = query(membersRef, where("communityId", "==", communityData.communityId));
-          const unsubscribe = onSnapshot(q, (snapshot) => {
-            const membersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as CommunityMember);
+          const unsubscribe = onSnapshot(q, async (snapshot) => {
+            const memberPromises = snapshot.docs.map(async (memberDoc) => {
+              const memberData = memberDoc.data();
+              
+              // Fetch user details
+              const userDocRef = doc(db, 'users', memberData.userId);
+              const userDocSnap = await getDoc(userDocRef);
+              const userData = userDocSnap.data();
+              
+              return {
+                userId: memberData.userId,
+                communityId: memberData.communityId,
+                role: memberData.role || 'member',
+                joinedAt: memberData.joinedAt,
+                status: memberData.status || 'active',
+                userDetails: {
+                  displayName: userData?.displayName || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() || 'Unknown',
+                  email: userData?.email || '',
+                  phone: userData?.phone || userData?.phoneNumber || '',
+                  avatarUrl: userData?.photoURL || userData?.avatarUrl || '',
+                },
+              } as CommunityMember;
+            });
+            
+            const membersData = await Promise.all(memberPromises);
             setMembers(membersData);
           });
         }

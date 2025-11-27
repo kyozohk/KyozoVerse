@@ -27,6 +27,34 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "messages_whatsapp",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "recipientPhone",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "messages_whatsapp",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "senderPhone",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
