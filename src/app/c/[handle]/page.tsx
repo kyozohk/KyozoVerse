@@ -36,8 +36,8 @@ export default function PublicFeedPage() {
         if (data) {
           setCommunityData(data);
           // If a user is logged in, add them to the community members
-          if (communityUser?.email && data.id) {
-            const memberRef = doc(db, 'communities', data.id, 'members', communityUser.uid);
+          if (communityUser?.email && data.communityId) {
+            const memberRef = doc(db, 'communities', data.communityId, 'members', communityUser.uid);
             getDoc(memberRef).then(docSnap => {
               if (!docSnap.exists()) {
                 setDoc(memberRef, { 
@@ -62,8 +62,7 @@ export default function PublicFeedPage() {
     const postsCollection = collection(db, 'blogs');
     const q = query(
       postsCollection,
-      where('communityHandle', '==', handle),
-      orderBy('createdAt', 'desc')
+      where('communityHandle', '==', handle)
     );
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
@@ -86,6 +85,13 @@ export default function PublicFeedPage() {
           createdAt: postData.createdAt?.toDate(),
         });
       }
+      // Sort posts by createdAt in memory
+      postsData.sort((a, b) => {
+        const aTime = a.createdAt?.getTime() || 0;
+        const bTime = b.createdAt?.getTime() || 0;
+        return bTime - aTime;
+      });
+      console.log('[Public Feed] Fetched posts:', postsData.length, postsData);
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
@@ -97,6 +103,8 @@ export default function PublicFeedPage() {
 
   const publicPosts = posts.filter(p => p.visibility === 'public');
   const privatePosts = posts.filter(p => p.visibility !== 'public');
+  
+  console.log('[Public Feed] Total posts:', posts.length, 'Public:', publicPosts.length, 'Private:', privatePosts.length);
 
   const renderPost = (post: Post & { id: string }) => {
     const postProps = { ...post, _isPublicView: true };
@@ -115,7 +123,12 @@ export default function PublicFeedPage() {
 
   return (
     <>
-      <JoinCommunityDialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen} />
+      <JoinCommunityDialog 
+        open={isJoinDialogOpen} 
+        onOpenChange={setIsJoinDialogOpen}
+        communityId={communityData?.communityId || ''}
+        communityName={communityData?.name || handle}
+      />
       <div className="min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 pt-16 pb-8">
           <div className="overflow-hidden rounded-lg p-8">
@@ -155,42 +168,79 @@ export default function PublicFeedPage() {
           </div>
         </div>
 
-        <main className="container mx-auto max-w-4xl px-4 py-8">
-          <div className="space-y-6">
-            {loading || communityAuthLoading ? (
-              <FeedSkeletons />
-            ) : posts.length === 0 ? (
-              <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
-                <div className="text-center py-16 px-4">
-                  <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
-                  <p className="text-white/70 max-w-md mx-auto">
-                    There are no posts in this community yet.
-                  </p>
-                </div>
+        <main className="container mx-auto max-w-7xl px-4 py-8">
+          {loading || communityAuthLoading ? (
+            <FeedSkeletons />
+          ) : posts.length === 0 ? (
+            <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
+              <div className="text-center py-16 px-4">
+                <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
+                <p className="text-white/70 max-w-md mx-auto">
+                  There are no posts in this community yet.
+                </p>
               </div>
-            ) : (
-              <>
-                {publicPosts.map(renderPost)}
+            </div>
+          ) : (
+            <>
+              {/* Bento Box Grid Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-auto">
+                {publicPosts.map((post, index) => {
+                  // Determine card size based on index for bento box effect
+                  const isLarge = index % 5 === 0;
+                  const isMedium = index % 3 === 0 && !isLarge;
+                  const spanClass = isLarge 
+                    ? 'md:col-span-2 md:row-span-2' 
+                    : isMedium 
+                    ? 'md:col-span-1 md:row-span-2'
+                    : 'md:col-span-1 md:row-span-1';
+                  
+                  return (
+                    <div key={post.id} className={spanClass}>
+                      {renderPost(post)}
+                    </div>
+                  );
+                })}
+              </div>
 
-                {communityUser ? (
-                  privatePosts.map(renderPost)
-                ) : privatePosts.length > 0 ? (
-                  <div className="relative rounded-lg border-2 border-dashed border-gray-600 p-8 text-center my-8">
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-                    <div className="relative">
-                      <h3 className="text-2xl font-bold text-white mb-4">You are missing out!</h3>
-                      <p className="text-white/80 mb-6">
-                        Join the {communityData?.name || handle} community to view all private posts and engage with the creator.
-                      </p>
-                      <Button onClick={() => setIsJoinDialogOpen(true)} size="lg">
-                        Join to View All Content
-                      </Button>
+              {communityUser ? (
+                privatePosts.length > 0 && (
+                  <div className="mt-8">
+                    <h2 className="text-2xl font-bold text-white mb-4">Members Only Content</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-auto">
+                      {privatePosts.map((post, index) => {
+                        const isLarge = index % 5 === 0;
+                        const isMedium = index % 3 === 0 && !isLarge;
+                        const spanClass = isLarge 
+                          ? 'md:col-span-2 md:row-span-2' 
+                          : isMedium 
+                          ? 'md:col-span-1 md:row-span-2'
+                          : 'md:col-span-1 md:row-span-1';
+                        
+                        return (
+                          <div key={post.id} className={spanClass}>
+                            {renderPost(post)}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                ) : null}
-              </>
-            )}
-          </div>
+                )
+              ) : privatePosts.length > 0 ? (
+                <div className="relative rounded-lg border-2 border-dashed border-gray-600 p-8 text-center my-8">
+                  <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+                  <div className="relative">
+                    <h3 className="text-2xl font-bold text-white mb-4">You are missing out!</h3>
+                    <p className="text-white/80 mb-6">
+                      Join the {communityData?.name || handle} community to view all private posts and engage with the creator.
+                    </p>
+                    <Button onClick={() => setIsJoinDialogOpen(true)} size="lg">
+                      Join to View All Content
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
         </main>
 
         <footer className="bg-black/30 backdrop-blur-sm border-t border-gray-800 py-6 mt-12">

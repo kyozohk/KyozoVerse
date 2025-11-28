@@ -59,7 +59,7 @@ export default function CommunityFeedPage() {
     }
 
     const postsCollection = collection(db, 'blogs');
-    const constraints = [where('communityHandle', '==', handle), orderBy('createdAt', 'desc')];
+    const constraints = [where('communityHandle', '==', handle)];
     const q = query(postsCollection, ...constraints);
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
@@ -88,6 +88,13 @@ export default function CommunityFeedPage() {
           createdAt: postData.createdAt?.toDate(),
         });
       }
+      
+      // Sort posts by createdAt in memory
+      postsData.sort((a, b) => {
+        const aTime = a.createdAt?.getTime() || 0;
+        const bTime = b.createdAt?.getTime() || 0;
+        return bTime - aTime;
+      });
 
       let visiblePosts = postsData;
       if (!user) {
@@ -131,6 +138,21 @@ export default function CommunityFeedPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         loading={loading}
+        headerAction={
+          <a
+            href={`/c/${handle}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline flex items-center gap-1"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Public View
+          </a>
+        }
       >
         {filteredPosts.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">

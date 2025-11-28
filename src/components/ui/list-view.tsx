@@ -22,6 +22,7 @@ interface ListViewProps {
   loading?: boolean;
   actions?: React.ReactNode;
   onAddAction?: () => void;
+  headerAction?: React.ReactNode;
 }
 
 export function ListView({
@@ -34,7 +35,8 @@ export function ListView({
   children,
   loading = false,
   actions,
-  onAddAction
+  onAddAction,
+  headerAction
 }: ListViewProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
@@ -52,10 +54,13 @@ export function ListView({
   return (
     <div className="p-8">
       <div className="bg-card text-foreground p-8 rounded-xl border" style={{ borderColor: activeColor }}>
-        {(title || subtitle) && (
-          <div className="mb-6">
-            {title && <h1 className="text-2xl font-semibold mb-1">{title}</h1>}
-            {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+        {(title || subtitle || headerAction) && (
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              {title && <h1 className="text-2xl font-semibold mb-1">{title}</h1>}
+              {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+            </div>
+            {headerAction && <div className="ml-4">{headerAction}</div>}
           </div>
         )}
         <div className="flex items-center justify-between gap-4 mb-6">

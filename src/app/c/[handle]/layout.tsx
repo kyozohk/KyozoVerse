@@ -66,7 +66,7 @@ export default function PublicLayout({
         <div 
           className="min-h-screen flex flex-col" 
           style={{
-            backgroundImage: `url('/bg/feed_bg.png')`,
+            backgroundImage: `url('/bg/feed_bg.jpeg')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',
