@@ -1,14 +1,17 @@
 import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { Community, CommunityMember, UserRole } from "./types";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 /**
  * Get a community by its handle
  */
 export async function getCommunityByHandle(handle: string): Promise<Community | null> {
+  const communitiesRef = collection(db, "communities");
+  const q = query(communitiesRef, where("handle", "==", handle));
+  
   try {
-    const communitiesRef = collection(db, "communities");
-    const q = query(communitiesRef, where("handle", "==", handle));
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
@@ -19,6 +22,10 @@ export async function getCommunityByHandle(handle: string): Promise<Community | 
     return { communityId: communityDoc.id, ...communityDoc.data() } as Community;
   } catch (error) {
     console.error("Error fetching community by handle:", error);
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: `communities`, // Path for a query
+        operation: 'list', // list for queries
+    }));
     return null;
   }
 }
@@ -40,15 +47,23 @@ export async function getUserRoleInCommunity(
     if (communitySnap.exists() && communitySnap.data().ownerId === userId) {
       return 'owner';
     }
+  } catch(error) {
+     errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: `communities/${communityId}`,
+        operation: 'get',
+    }));
+    return 'guest';
+  }
     
-    // Then check membership collection
-    const membersRef = collection(db, "communityMembers");
-    const q = query(
-      membersRef, 
-      where("userId", "==", userId),
-      where("communityId", "==", communityId)
-    );
-    
+  // Then check membership collection
+  const membersRef = collection(db, "communityMembers");
+  const q = query(
+    membersRef, 
+    where("userId", "==", userId),
+    where("communityId", "==", communityId)
+  );
+  
+  try {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
@@ -61,6 +76,10 @@ export async function getUserRoleInCommunity(
     return memberData.role;
   } catch (error) {
     console.error("Error getting user role:", error);
+     errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: `communityMembers`,
+        operation: 'list',
+    }));
     return 'guest';
   }
 }
@@ -85,9 +104,10 @@ export async function getCommunityMembers(
   communityId: string,
   searchTerm: string = ''
 ): Promise<CommunityMember[]> {
+  const membersRef = collection(db, "communityMembers");
+  const q = query(membersRef, where("communityId", "==", communityId));
+
   try {
-    const membersRef = collection(db, "communityMembers");
-    const q = query(membersRef, where("communityId", "==", communityId));
     const querySnapshot = await getDocs(q);
     
     let members = querySnapshot.docs.map(doc => {
@@ -116,6 +136,10 @@ export async function getCommunityMembers(
     return members;
   } catch (error) {
     console.error("Error fetching community members:", error);
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: `communityMembers`,
+        operation: 'list',
+    }));
     return [];
   }
 }
@@ -132,28 +156,40 @@ export async function joinCommunity(
     email?: string;
   }
 ): Promise<boolean> {
+  const membersRef = collection(db, "communityMembers");
+  const communityRef = doc(db, "communities", communityId);
+  
+  const newMemberData = {
+    userId,
+    communityId,
+    role: 'member',
+    joinedAt: serverTimestamp(),
+    status: 'active',
+    userDetails
+  };
+    
   try {
-    const membersRef = collection(db, "communityMembers");
-    
     // Create new member document
-    await addDoc(membersRef, {
-      userId,
-      communityId,
-      role: 'member',
-      joinedAt: serverTimestamp(),
-      status: 'active',
-      userDetails
-    });
-    
+    await addDoc(membersRef, newMemberData);
+  } catch (error) {
+    console.error("Error creating member document:", error);
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: 'communityMembers',
+        operation: 'create',
+        requestResourceData: newMemberData,
+    }));
+    return false;
+  }
+  
+  try {
     // Update member count in community
-    const communityRef = doc(db, "communities", communityId);
     await updateDoc(communityRef, {
       memberCount: increment(1)
     });
-    
-    return true;
   } catch (error) {
-    console.error("Error joining community:", error);
-    return false;
+     console.error("Error updating member count:", error);
+    // Don't emit another error here as the member was already created.
   }
+    
+  return true;
 }
