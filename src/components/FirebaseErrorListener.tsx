@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect } from 'react';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -14,10 +14,13 @@ export function FirebaseErrorListener() {
   useEffect(() => {
     const handler = (error: FirestorePermissionError) => {
       if (process.env.NODE_ENV === 'development') {
-        // You can enrich the error with user data here
+        // Enrich the error with user data before throwing
         error.enrichWithAuth(user);
-        // Throw the error to be caught by the Next.js development error overlay
-        throw error;
+        
+        // Use a timeout to ensure the error is thrown in a separate task
+        setTimeout(() => {
+          throw error;
+        }, 0);
       }
     };
 
@@ -31,5 +34,3 @@ export function FirebaseErrorListener() {
   // This component does not render anything
   return null;
 }
-
-    

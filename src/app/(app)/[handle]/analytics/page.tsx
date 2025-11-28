@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart, LineChart, PieChart, Download, Calendar, ChevronDown, BarChart2, Users, Eye, ThumbsUp } from "lucide-react";
 import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 // Mock data for analytics
 const mockMemberGrowth = [
@@ -58,8 +60,12 @@ export default function CommunityAnalyticsPage() {
   
   useEffect(() => {
     async function fetchCommunityAndRole() {
-      if (!handle) return;
+      if (!handle || !user) {
+        setLoading(false);
+        return;
+      }
       
+      setLoading(true);
       try {
         const communityData = await getCommunityByHandle(handle);
         
@@ -67,13 +73,14 @@ export default function CommunityAnalyticsPage() {
           setCommunityId(communityData.communityId);
           setCommunityName(communityData.name);
           
-          if (user) {
-            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-            setUserRole(role);
-          }
+          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+          setUserRole(role);
+        } else {
+          setUserRole('guest'); // No community found, treat as guest
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
+        setUserRole('guest');
       } finally {
         setLoading(false);
       }
@@ -86,19 +93,15 @@ export default function CommunityAnalyticsPage() {
   
   if (loading) {
     return (
-      <div className="container mx-auto max-w-4xl">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">Loading...</div>
-          </CardContent>
-        </Card>
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
   
   if (!canAccessAnalytics) {
     return (
-      <div className="container mx-auto max-w-4xl">
+      <div className="container mx-auto max-w-4xl p-4 md:p-8">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Community Analytics</CardTitle>
