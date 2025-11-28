@@ -40,7 +40,6 @@ export async function getUserRoleInCommunity(
   if (!userId) return 'guest';
   
   try {
-    // First check if user is the owner
     const communityRef = doc(db, "communities", communityId);
     const communitySnap = await getDoc(communityRef);
     
@@ -55,7 +54,6 @@ export async function getUserRoleInCommunity(
     return 'guest';
   }
     
-  // Then check membership collection
   const membersRef = collection(db, "communityMembers");
   const q = query(
     membersRef, 
@@ -169,8 +167,12 @@ export async function joinCommunity(
   };
     
   try {
-    // Create new member document
-    await addDoc(membersRef, newMemberData);
+    // Use a composite key for the document ID to ensure uniqueness and allow for efficient lookups
+    const docId = `${userId}_${communityId}`;
+    await addDoc(collection(db, "communityMembers"), {
+        ...newMemberData,
+        id: docId
+    });
   } catch (error) {
     console.error("Error creating member document:", error);
     errorEmitter.emit('permission-error', new FirestorePermissionError({
