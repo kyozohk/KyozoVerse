@@ -15,6 +15,8 @@ import { TextPostCard } from '@/components/community/feed/text-post-card';
 import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
 import { ListView } from '@/components/ui/list-view';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -109,7 +111,10 @@ export default function CommunityFeedPage() {
       setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
-      console.error('Error fetching posts:', error);
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: 'blogs',
+          operation: 'list',
+      }));
       setLoading(false);
     });
 
