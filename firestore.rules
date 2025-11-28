@@ -3,11 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for community membership
-    function isCommunityMember(communityId) {
-      return request.auth != null && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid));
-    }
-
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
@@ -19,14 +14,12 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == memberId;
     }
 
-    // Blogs (posts) have more granular rules
+    // Blogs (posts) - simplified rules
     match /blogs/{blogId} {
-      // Allow read access if...
+      // Allow read access if user is authenticated or post is public
       allow read: if 
-        // 1. The post is public
-        resource.data.visibility == 'public' ||
-        // 2. The user is a logged-in member of the community the post belongs to
-        (request.auth != null && isCommunityMember(resource.data.communityHandle));
+        resource.data.visibility == 'public' || 
+        request.auth != null;
 
       // Allow create/update/delete only for the author of the post
       allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
