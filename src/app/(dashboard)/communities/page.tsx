@@ -27,7 +27,8 @@ export default function CommunitiesDashboardPage() {
     setLoading(true);
 
     const communitiesRef = collection(db, 'communities');
-    const q = query(communitiesRef, where('ownerId', '==', user.uid));
+    // Temporarily show ALL communities (remove where clause to see imported communities)
+    const q = query(communitiesRef);
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userCommunities = querySnapshot.docs.map(doc => ({

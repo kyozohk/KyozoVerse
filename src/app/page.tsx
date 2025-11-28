@@ -91,7 +91,14 @@ export default function WillerBirthdayBash() {
         userId: newUserRef.id,
         communityId: communityId,
         role: 'member',
+        status: 'active',
         joinedAt: serverTimestamp(),
+        userDetails: {
+          displayName: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.phone,
+          avatarUrl: '',
+        },
         messageToWill: formData.message,
       });
 

@@ -22,7 +22,7 @@ import {
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { type Community, type User } from "@/lib/types";
-import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
+import { getUserRoleInCommunity, getCommunityByHandle, getCommunityMembers } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from '@/components/ui/list-view';
@@ -101,42 +101,8 @@ export default function CommunityMembersPage() {
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       setLoading(true);
       try {
-        const memberPromises = snapshot.docs.map(async (memberDoc) => {
-          const memberData = memberDoc.data();
-          
-          // Fetch user details
-          const userDoc = await getDoc(doc(db, 'users', memberData.userId));
-          const userData = userDoc.data();
-          
-          return {
-            userId: memberData.userId,
-            communityId: memberData.communityId,
-            role: memberData.role || 'member',
-            joinedAt: memberData.joinedAt,
-            status: memberData.status || 'active',
-            userDetails: {
-              displayName: userData?.displayName || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() || 'Unknown',
-              email: userData?.email || '',
-              phone: userData?.phone || userData?.phoneNumber || '',
-              avatarUrl: userData?.photoURL || userData?.avatarUrl || '',
-            },
-            messageToWill: memberData.messageToWill || '',
-          } as CommunityMember & { messageToWill?: string };
-        });
-
-        const membersData = await Promise.all(memberPromises);
-        
-        // Apply search filter if needed
-        if (debouncedSearchTerm) {
-          const filtered = membersData.filter(member => 
-            member.userDetails?.displayName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-            member.userDetails?.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-            member.userDetails?.phone?.includes(debouncedSearchTerm)
-          );
-          setMembers(filtered);
-        } else {
-          setMembers(membersData);
-        }
+        const membersData = await getCommunityMembers(community!.communityId, debouncedSearchTerm);
+        setMembers(membersData);
       } catch (error) {
         console.error("Error fetching members:", error);
       } finally {

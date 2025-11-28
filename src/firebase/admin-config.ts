@@ -25,6 +25,26 @@ class MockStorage {
             console.log(`[MockStorage] Generated URL: ${fakeSignedUrl.substring(0, 100)}...`);
             return [fakeSignedUrl];
           },
+          exists: async () => {
+            console.log(`[MockStorage] Mock exists check for: ${path}`);
+            return [false];
+          },
+          download: async () => {
+            console.log(`[MockStorage] Mock download for: ${path}`);
+            return [Buffer.from('')];
+          },
+          getMetadata: async () => {
+            console.log(`[MockStorage] Mock getMetadata for: ${path}`);
+            return [{ contentType: 'image/jpeg' }];
+          },
+          save: async (buffer: Buffer, options: any) => {
+            console.log(`[MockStorage] Mock save for: ${path}`);
+            return;
+          },
+          makePublic: async () => {
+            console.log(`[MockStorage] Mock makePublic for: ${path}`);
+            return;
+          },
         };
       },
       name: bucketName,
@@ -112,6 +132,40 @@ const actuallyUsingMock = useMockAdmin || adminApp.options.credential === undefi
 export const adminAuth: Auth = actuallyUsingMock ? new MockAuth() as unknown as Auth : getAuth(adminApp);
 export const adminFirestore: Firestore = actuallyUsingMock ? new MockFirestore() as unknown as Firestore : getFirestore(adminApp);
 export const adminStorage: Storage = actuallyUsingMock ? new MockStorage() as unknown as Storage : getStorage(adminApp);
+
+// Initialize Import Firebase Admin SDK (for kyozo-prod source project)
+function initImportAdmin(): App | null {
+  const importServiceAccountKey = process.env.FIREBASE_IMPORT_SERVICE_ACCOUNT_KEY;
+  
+  if (!importServiceAccountKey) {
+    console.log('[ImportAdmin] FIREBASE_IMPORT_SERVICE_ACCOUNT_KEY not set, import Firebase app will not be initialized.');
+    return null;
+  }
+
+  try {
+    const serviceAccount = JSON.parse(importServiceAccountKey);
+    const existingImportApp = getApps().find(app => app.name === 'import');
+    
+    if (existingImportApp) {
+      return existingImportApp;
+    }
+
+    return initializeApp({
+      credential: cert(serviceAccount),
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_IMPORT_STORAGE_BUCKET,
+    }, 'import'); // Named app instance
+  } catch (error) {
+    console.error("[ImportAdmin] Failed to parse FIREBASE_IMPORT_SERVICE_ACCOUNT_KEY:", error);
+    return null;
+  }
+}
+
+const importAdminApp = initImportAdmin();
+
+// Export the import services (may be null if not configured)
+export const importAdminAuth: Auth | null = importAdminApp ? getAuth(importAdminApp) : null;
+export const importAdminFirestore: Firestore | null = importAdminApp ? getFirestore(importAdminApp) : null;
+export const importAdminStorage: Storage | null = importAdminApp ? getStorage(importAdminApp) : null;
 
 export { initAdmin };
 export default adminApp;
