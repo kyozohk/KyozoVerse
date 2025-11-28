@@ -16,9 +16,9 @@ service cloud.firestore {
 
     // Blogs (posts) - simplified rules
     match /blogs/{blogId} {
-      // Allow read access if user is authenticated or post is public
-      allow read: if 
-        resource.data.visibility == 'public' || 
+      // Allow read access if the post is public or the user is authenticated.
+      allow read: if
+        resource.data.visibility == 'public' ||
         request.auth != null;
 
       // Allow create/update/delete only for the author of the post
