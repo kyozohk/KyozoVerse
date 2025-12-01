@@ -92,6 +92,7 @@ export default function PublicFeedPage() {
         return bTime - aTime;
       });
       console.log('[Public Feed] Fetched posts:', postsData.length, postsData);
+      console.log('[Public Feed] Post visibility values:', postsData.map(p => ({ id: p.id, visibility: p.visibility })));
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
@@ -101,8 +102,9 @@ export default function PublicFeedPage() {
     return () => unsubscribe();
   }, [handle]);
 
-  const publicPosts = posts.filter(p => p.visibility === 'public');
-  const privatePosts = posts.filter(p => p.visibility !== 'public');
+  // Temporarily show all posts for debugging - TODO: filter by visibility once posts have correct visibility field
+  const publicPosts = posts; // posts.filter(p => p.visibility === 'public');
+  const privatePosts: typeof posts = []; // posts.filter(p => p.visibility !== 'public');
   
   console.log('[Public Feed] Total posts:', posts.length, 'Public:', publicPosts.length, 'Private:', privatePosts.length);
 

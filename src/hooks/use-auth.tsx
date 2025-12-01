@@ -39,7 +39,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const isPublicPath = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/c/') || pathname.startsWith('/invite');
       
-      if (firebaseUser && isPublicPath && pathname !== '/landing') {
+      // Don't redirect if user is on /c/ routes (public community pages)
+      if (firebaseUser && isPublicPath && pathname !== '/landing' && !pathname.startsWith('/c/')) {
         router.replace('/communities');
       } else if (!firebaseUser && !isPublicPath) {
         router.replace('/landing');

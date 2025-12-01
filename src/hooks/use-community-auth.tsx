@@ -5,19 +5,22 @@ import { useState, useEffect, useContext, createContext, ReactNode } from 'react
 import { 
   onAuthStateChanged, 
   User, 
-  signOut as firebaseSignOut 
+  signOut as firebaseSignOut,
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 
 interface CommunityAuthContextType {
   user: User | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const CommunityAuthContext = createContext<CommunityAuthContextType>({
   user: null,
   loading: true,
+  signIn: () => Promise.reject('signIn function not implemented'),
   signOut: () => Promise.reject('signOut function not implemented'),
 });
 
@@ -34,12 +37,16 @@ export const CommunityAuthProvider = ({ children }: { children: ReactNode }) => 
     return () => unsubscribe();
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(communityAuth, email, password);
+  }
+
   const signOut = async () => {
     await firebaseSignOut(communityAuth);
   }
 
   return (
-    <CommunityAuthContext.Provider value={{ user, loading, signOut }}>
+    <CommunityAuthContext.Provider value={{ user, loading, signIn, signOut }}>
       {children}
     </CommunityAuthContext.Provider>
   );

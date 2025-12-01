@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { getCommunities, getMembers, getMessagesForMember, getRawDocument, getCommunityExportData, importCommunityToFirebase } from './actions';
-import { Copy, Upload } from 'lucide-react';
+import { Copy, Upload, CheckCircle2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ExportDialog } from '@/components/mongo/export-dialog';
 
@@ -28,6 +28,7 @@ interface Community {
   memberCount: number;
   communityProfileImage?: string;
   owner: string;
+  isExported?: boolean;
 }
 
 interface Member {
@@ -61,9 +62,21 @@ const CommunityListMongo = ({ communities, onSelect, selectedCommunity, onCopyJs
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-                <img src={community.communityProfileImage || 'https://static.productionready.io/images/smiley-cyrus.jpg'} alt={community.name} className="w-10 h-10 rounded-full" />
+                <div className="relative">
+                  <img src={community.communityProfileImage || 'https://static.productionready.io/images/smiley-cyrus.jpg'} alt={community.name} className="w-10 h-10 rounded-full" />
+                  {community.isExported && (
+                    <div className="absolute -top-1 -right-1 bg-white rounded-full">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    </div>
+                  )}
+                </div>
                 <div>
-                    <p className="font-semibold">{community.name}</p>
+                    <p className="font-semibold flex items-center gap-2">
+                      {community.name}
+                      {community.isExported && (
+                        <span className="text-xs text-green-600 font-normal">(Exported)</span>
+                      )}
+                    </p>
                     <p className="text-sm text-gray-500">{community.memberCount} members</p>
                     <p className="text-sm text-gray-500">Owner: {community.owner}</p>
                 </div>
@@ -199,6 +212,10 @@ export default function MongoDashboard() {
       const result = await importCommunityToFirebase(exportData);
       alert(result.message);
       setIsExportDialogOpen(false);
+      
+      // Refresh the communities list to show the green tick
+      const fetchedCommunities = await getCommunities(debouncedCommunitySearch);
+      setCommunities(fetchedCommunities);
     } catch (error: any) {
       console.error('Import failed', error);
       alert(`Import failed: ${error.message}`);

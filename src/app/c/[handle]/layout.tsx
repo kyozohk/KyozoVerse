@@ -9,9 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CommunityAuthProviderWrapper } from '@/components/auth/community-auth-provider';
 import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
-import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
-import { useRouter } from 'next/navigation';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
 
@@ -20,21 +18,19 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
-  const { user: communityUser, signOut: communitySignOut } = useCommunityAuth();
+  const { user: communityUser, signIn: communitySignIn, signOut: communitySignOut } = useCommunityAuth();
 
   const handleSignIn = async () => {
     setError(null);
     try {
-      await signIn(email, password);
+      await communitySignIn(email, password);
       setIsSignInOpen(false);
-      // Main auth provider will redirect to dashboard
+      // Stay on the public feed page after sign in
     } catch (error: any) {
         let description = "An unexpected error occurred. Please try again.";
         if (error instanceof FirebaseError) {

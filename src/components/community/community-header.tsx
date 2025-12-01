@@ -2,7 +2,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,12 +13,15 @@ import {
   Mail,
   Bell,
   Trash2,
+  Crown,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Community, UserRole } from '@/lib/types';
 import { getThemeForPath } from '@/lib/theme-utils';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase/firestore';
 
 interface CommunityHeaderProps {
   community: Community;
@@ -26,12 +29,35 @@ interface CommunityHeaderProps {
   onEdit: () => void;
   onDelete?: () => void;
   onAddMember?: () => void;
+  memberCount?: number; // Actual member count excluding owner
 }
 
-export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember }: CommunityHeaderProps) {
+export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember, memberCount }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
   const pathname = usePathname();
   const { activeBgColor } = getThemeForPath(pathname);
+  const [ownerInfo, setOwnerInfo] = useState<{ displayName: string; email: string; avatarUrl?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchOwnerInfo = async () => {
+      if (community.ownerId) {
+        try {
+          const ownerDoc = await getDoc(doc(db, 'users', community.ownerId));
+          if (ownerDoc.exists()) {
+            const ownerData = ownerDoc.data();
+            setOwnerInfo({
+              displayName: ownerData.displayName || 'Unknown',
+              email: ownerData.email || '',
+              avatarUrl: ownerData.avatarUrl || '',
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching owner info:', error);
+        }
+      }
+    };
+    fetchOwnerInfo();
+  }, [community.ownerId]);
 
   return (
     <div className="relative p-6 md:p-8 text-white">
@@ -48,6 +74,23 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
 
       <div className="relative z-10">
         <div className="flex justify-between items-start">
+            {/* Owner Info - Top Right */}
+            {ownerInfo && (
+              <div className="absolute top-0 right-0 flex items-center gap-3 bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2">
+                <Avatar className="h-10 w-10 border-2 border-white/20">
+                  <AvatarImage src={ownerInfo.avatarUrl} />
+                  <AvatarFallback>{ownerInfo.displayName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <Crown className="h-4 w-4 text-yellow-400" />
+                    <span className="text-sm font-semibold text-white">{ownerInfo.displayName}</span>
+                  </div>
+                  <span className="text-xs text-white/60">{ownerInfo.email}</span>
+                </div>
+              </div>
+            )}
+            
             <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-shrink-0 relative">
                   <div 
@@ -67,11 +110,11 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                     <div className="flex flex-wrap gap-2 mt-4">
                         <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
                         <Globe className="h-3 w-3 mr-1.5" />
-                        {community.communityPrivacy || 'Public'}
+                        {community.isPrivate ? 'Private' : 'Public'}
                         </Badge>
                         <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
                         <Users className="h-3 w-3 mr-1.5" />
-                        {community.memberCount || 0} members
+                        {memberCount !== undefined ? memberCount : community.memberCount || 0} members
                         </Badge>
                     </div>
                 </div>
