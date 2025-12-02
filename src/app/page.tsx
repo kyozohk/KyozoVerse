@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -13,6 +12,7 @@ import { Hero } from '@/components/landing/hero';
 import FeatureCard from '@/components/ui/feature-card';
 import VideoWall from '@/components/landing/video-wall';
 import { IphoneMockup } from '@/components/landing/iphone-mockup';
+import BubbleMarquee from '@/components/landing/bubble-marquee';
 
 export default function Home() {
   const router = useRouter();
@@ -167,6 +167,67 @@ export default function Home() {
               RightComponent={<IphoneMockup src="/laptop.png" />}
             />
           </section>
+
+          <BubbleMarquee 
+            categories={[
+              {
+                category: 'inbox', // Mapped to 'music' -> 'inbox' color
+                items: [
+                  { text: 'Rock' },
+                  { text: 'Jazz' },
+                  { text: 'R&B' },
+                  { text: 'Trance' },
+                  { text: 'Techno' },
+                  { text: 'Hip Hop' },
+                  { text: 'Classical' },
+                ]
+              },
+              {
+                category: 'overview', // Mapped to 'classicism' -> 'overview' color
+                items: [
+                  { text: 'Expressionism' },
+                  { text: 'Futurism' },
+                  { text: 'Classicism' },
+                  { text: 'Cubism' },
+                  { text: 'Surrealism' },
+                  { text: 'Dadaism' },
+                ]
+              },
+              {
+                category: 'broadcast', // Mapped to 'jewelry' -> 'broadcast' color
+                items: [
+                  { text: 'Wood Burning' },
+                  { text: 'Candle-making' },
+                  { text: 'Crochet' },
+                  { text: 'Jewelry' },
+                  { text: 'Pottery' },
+                  { text: 'Weaving' },
+                ]
+              },
+              {
+                category: 'members', // Mapped to 'vintage' -> 'members' color
+                items: [
+                  { text: 'Chic' },
+                  { text: 'Grunge' },
+                  { text: 'Vintage' },
+                  { text: 'Boho' },
+                  { text: 'Preppy' },
+                  { text: 'Streetwear' },
+                ]
+              },
+              {
+                category: 'feed', // Mapped to 'minimal' -> 'feed' color
+                items: [
+                  { text: 'Stand-ups' },
+                  { text: 'Musical' },
+                  { text: 'Digital' },
+                  { text: 'Theatre' },
+                  { text: 'Dance' },
+                  { text: 'Opera' },
+                ]
+              }
+            ]}
+          />
         </div>
       </main>
 
