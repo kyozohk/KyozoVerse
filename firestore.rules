@@ -1,16 +1,14 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-<<<<<<< HEAD
-=======
     // Helper function to check for community membership in the top-level collection
     function isCommunityMember(communityId) {
       return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
     }
 
->>>>>>> a0c3d00 (page.tsx:105 Error fetching posts: FirebaseError: Missing or insufficien)
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
@@ -22,14 +20,15 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == memberId;
     }
 
-    // Blogs (posts) - simplified rules
+    // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow read access if the post is public or the user is authenticated.
-      allow read: if
-        resource.data.visibility == 'public' ||
-        request.auth != null;
-
-      // Allow create/update/delete only for the author of the post
+      // Anyone can read public posts.
+      allow get: if resource.data.visibility == 'public';
+      // Queries for public posts are allowed.
+      allow list: if request.query.get('where', [['visibility', '==', 'public']]);
+      // Authenticated users can read non-public posts they authored.
+      allow read: if request.auth != null && request.auth.uid == resource.data.authorId;
+      // Allow create/update/delete only for the author of the post.
       allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
     }
 

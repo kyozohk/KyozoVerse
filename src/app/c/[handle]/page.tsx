@@ -7,33 +7,29 @@ import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'fire
 import { db } from '@/firebase/firestore';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getCommunityByHandle } from '@/lib/community-utils';
-import { type Post, type User } from '@/lib/types';
+import { type Post, type User, type Community } from '@/lib/types';
 import { TextPostCard } from '@/components/community/feed/text-post-card';
 import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
-import Link from 'next/link';
 import Image from 'next/image';
-import { useCommunityAuth } from '@/hooks/use-community-auth';
-import { Button } from '@/components/ui/button';
 import { JoinCommunityDialog } from '@/components/community/join-community-dialog';
 
 export default function PublicFeedPage() {
   const params = useParams();
   const handle = params.handle as string;
 
-  const { user: communityUser, loading: communityAuthLoading } = useCommunityAuth();
-
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [communityData, setCommunityData] = useState<any>(null);
+  const [communityData, setCommunityData] = useState<Community | null>(null);
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
 
-  // Fetch community data and handle membership
   useEffect(() => {
     async function fetchCommunityData() {
       if (!handle) return;
+      setLoading(true);
       try {
         const data = await getCommunityByHandle(handle);
+        setCommunityData(data);
         if (data) {
           setCommunityData(data);
           // If a user is logged in, add them to the community members
@@ -55,18 +51,22 @@ export default function PublicFeedPage() {
       }
     }
     fetchCommunityData();
-  }, [handle, communityUser]);
+  }, [handle]);
 
-  // Fetch posts
   useEffect(() => {
-    if (!handle) return;
+    if (!handle) {
+      setLoading(false);
+      return;
+    }
+
     const postsCollection = collection(db, 'blogs');
     const q = query(
       postsCollection,
       where('communityHandle', '==', handle),
-      where('visibility', '==', 'public'), // Only fetch public posts
+      where('visibility', '==', 'public'), // Explicitly query for public posts
       orderBy('createdAt', 'desc')
     );
+
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
       for (const postDoc of querySnapshot.docs) {
@@ -79,7 +79,9 @@ export default function PublicFeedPage() {
             if (userSnap.exists()) {
               authorData = userSnap.data() as User;
             }
-          } catch (error) {}
+          } catch (error) {
+             // If we can't fetch author, proceed without it
+          }
         }
         postsData.push({
           id: postDoc.id,
@@ -125,8 +127,8 @@ export default function PublicFeedPage() {
       <JoinCommunityDialog 
         open={isJoinDialogOpen} 
         onOpenChange={setIsJoinDialogOpen} 
-        communityId={communityData?.id} 
-        communityName={communityData?.name} 
+        communityId={communityData?.communityId || ''} 
+        communityName={communityData?.name || ''} 
       />
       <div className="min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 pt-16 pb-8">
@@ -144,11 +146,7 @@ export default function PublicFeedPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-semibold text-[#4D5F71]">@{handle}</h2>
-                  {communityData?.description ? (
-                    <p className="text-[#4D5F71]">{communityData.description}</p>
-                  ) : (
-                    <p className="text-[#4D5F71] italic opacity-70">Community feed</p>
-                  )}
+                  {(communityData as any)?.lore && <p className="text-[#4D5F71]">{(communityData as any).lore}</p>}
                 </div>
               </div>
             </div>
@@ -162,11 +160,24 @@ export default function PublicFeedPage() {
                   paddingBottom: '0.2em',
                   lineHeight: '1.3'
                 }}>{communityData.name}</h1>
+                {(communityData as any)?.mantras && <p className="text-xl text-gray-400 mt-2">{(communityData as any).mantras}</p>}
               </div>
             )}
           </div>
         </div>
 
+        <main className="container mx-auto max-w-4xl px-4 py-8">
+          <div className="space-y-6">
+            {loading ? (
+              <FeedSkeletons />
+            ) : posts.length === 0 ? (
+              <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
+                <div className="text-center py-16 px-4">
+                  <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
+                  <p className="text-white/70 max-w-md mx-auto">
+                    There are no public posts in this community yet.
+                  </p>
+                </div>
         <main className="container mx-auto max-w-7xl px-4 py-8">
           {loading || communityAuthLoading ? (
             <FeedSkeletons />
