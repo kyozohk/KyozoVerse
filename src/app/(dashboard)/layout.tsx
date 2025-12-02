@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/landing');
+      router.replace('/');
     } else if (pathname === '/dashboard') {
       // Redirect from old path to new path
       router.replace('/communities');

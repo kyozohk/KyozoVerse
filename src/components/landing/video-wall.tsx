@@ -1,6 +1,7 @@
 
 'use client';
 import React, { useMemo, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 // Video sources should be in the /public folder
 const VIDEO_SOURCES = [
