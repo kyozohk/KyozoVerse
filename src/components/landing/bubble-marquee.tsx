@@ -38,10 +38,10 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
   }, [items]);
   
   return (
-    <div className="relative w-full overflow-hidden h-[10rem] md:h-[6.3rem] lg:h-[10rem] py-4">
+    <div className="relative w-full overflow-hidden h-[11rem] md:h-[7rem] lg:h-[11rem] py-4">
       <div 
         className={cn(
-          "absolute flex whitespace-nowrap will-change-transform w-max",
+          "absolute flex items-center whitespace-nowrap will-change-transform w-max",
           direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'
         )}
         style={{ '--scroll-duration': `${speed}s` } as React.CSSProperties}
@@ -49,7 +49,7 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
         {repeatedItems.map((item, index) => (
           <div 
             key={`item-${index}`} 
-            className="flex items-center justify-center px-16 md:px-14 lg:px-32 py-12 md:py-8 lg:py-12 rounded-full font-normal text-4xl md:text-2xl lg:text-5xl border-[1.5px] transition-all duration-300 cursor-default -mr-px text-foreground hover:text-white"
+            className="flex items-center justify-center px-8 md:px-10 lg:px-12 py-6 md:py-8 lg:py-10 rounded-full font-normal text-4xl md:text-2xl lg:text-5xl border-[1.5px] transition-all duration-300 cursor-default mx-2 text-foreground hover:text-white"
             style={{ 
               borderColor: activeColor,
               '--hover-bg': activeColor,

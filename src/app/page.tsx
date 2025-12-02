@@ -139,7 +139,7 @@ export default function Home() {
               description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color="#CC583F"
+              color="#C170CF"
               RightComponent={<VideoWall />}
             />
              <FeatureCard
@@ -172,60 +172,24 @@ export default function Home() {
           <BubbleMarquee 
             categories={[
               {
-                category: 'inbox',
-                items: [
-                  { text: 'Rock' },
-                  { text: 'Jazz' },
-                  { text: 'R&B' },
-                  { text: 'Trance' },
-                  { text: 'Techno' },
-                  { text: 'Hip Hop' },
-                  { text: 'Classical' },
-                ]
+                category: 'inbox', // Blue
+                items: [ { text: 'Dance' }, { text: 'Music' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
               },
               {
-                category: 'overview',
-                items: [
-                  { text: 'Expressionism' },
-                  { text: 'Futurism' },
-                  { text: 'Classicism' },
-                  { text: 'Cubism' },
-                  { text: 'Surrealism' },
-                  { text: 'Dadaism' },
-                ]
+                category: 'overview', // Purple
+                items: [ { text: 'Contemporary' }, { text: 'Surrealism' }, { text: 'Impressionism' }, { text: 'Art' }, { text: 'Cubism' }]
               },
               {
-                category: 'broadcast',
-                items: [
-                  { text: 'Wood Burning' },
-                  { text: 'Candle-making' },
-                  { text: 'Crochet' },
-                  { text: 'Jewelry' },
-                  { text: 'Pottery' },
-                  { text: 'Weaving' },
-                ]
+                category: 'broadcast', // Yellow
+                items: [ { text: 'Craft' }, { text: 'Pottery' }, { text: 'Drawing' }, { text: 'Painting' }, { text: 'Jewelry' }]
               },
               {
-                category: 'members',
-                items: [
-                  { text: 'Chic' },
-                  { text: 'Grunge' },
-                  { text: 'Vintage' },
-                  { text: 'Boho' },
-                  { text: 'Preppy' },
-                  { text: 'Streetwear' },
-                ]
+                category: 'members', // Red
+                items: [ { text: 'Haute Couture' }, { text: 'Fashion' }, { text: 'Streetwear' }, { text: 'Boho' }, { text: 'Avant Garde' }]
               },
               {
-                category: 'feed',
-                items: [
-                  { text: 'Stand-ups' },
-                  { text: 'Musical' },
-                  { text: 'Digital' },
-                  { text: 'Theatre' },
-                  { text: 'Dance' },
-                  { text: 'Opera' },
-                ]
+                category: 'feed', // Green/Teal
+                items: [ { text: 'Electronic' }, { text: 'Dance' }, { text: 'Performance' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
               }
             ]}
           />
