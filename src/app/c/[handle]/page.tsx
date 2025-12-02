@@ -13,10 +13,12 @@ import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
 import Image from 'next/image';
 import { JoinCommunityDialog } from '@/components/community/join-community-dialog';
+import { useCommunityAuth } from '@/hooks/use-community-auth'; // Import the hook
 
 export default function PublicFeedPage() {
   const params = useParams();
   const handle = params.handle as string;
+  const { user: communityUser, loading: communityAuthLoading } = useCommunityAuth();
 
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,22 +32,6 @@ export default function PublicFeedPage() {
       try {
         const data = await getCommunityByHandle(handle);
         setCommunityData(data);
-        if (data) {
-          setCommunityData(data);
-          // If a user is logged in, add them to the community members
-          if (communityUser?.email && data.communityId) {
-            const memberRef = doc(db, 'communities', data.communityId, 'members', communityUser.uid);
-            getDoc(memberRef).then(docSnap => {
-              if (!docSnap.exists()) {
-                setDoc(memberRef, { 
-                  email: communityUser.email,
-                  uid: communityUser.uid,
-                  joinedAt: new Date(),
-                });
-              }
-            });
-          }
-        }
       } catch (error) {
         console.error('Error fetching community data:', error);
       }
@@ -90,14 +76,6 @@ export default function PublicFeedPage() {
           createdAt: postData.createdAt?.toDate(),
         });
       }
-      // Sort posts by createdAt in memory
-      postsData.sort((a, b) => {
-        const aTime = a.createdAt?.getTime() || 0;
-        const bTime = b.createdAt?.getTime() || 0;
-        return bTime - aTime;
-      });
-      console.log('[Public Feed] Fetched posts:', postsData.length, postsData);
-      console.log('[Public Feed] Post visibility values:', postsData.map(p => ({ id: p.id, visibility: p.visibility })));
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
@@ -168,48 +146,16 @@ export default function PublicFeedPage() {
 
         <main className="container mx-auto max-w-4xl px-4 py-8">
           <div className="space-y-6">
-            {loading ? (
+            {loading || communityAuthLoading ? (
               <FeedSkeletons />
             ) : posts.length === 0 ? (
               <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
                 <div className="text-center py-16 px-4">
                   <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
                   <p className="text-white/70 max-w-md mx-auto">
-                    There are no public posts in this community yet.
+                    There are no posts in this community yet.
                   </p>
                 </div>
-        <main className="container mx-auto max-w-7xl px-4 py-8">
-          {loading || communityAuthLoading ? (
-            <FeedSkeletons />
-          ) : posts.length === 0 ? (
-            <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
-              <div className="text-center py-16 px-4">
-                <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
-                <p className="text-white/70 max-w-md mx-auto">
-                  There are no posts in this community yet.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Bento Box Grid Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-auto">
-                {publicPosts.map((post, index) => {
-                  // Determine card size based on index for bento box effect
-                  const isLarge = index % 5 === 0;
-                  const isMedium = index % 3 === 0 && !isLarge;
-                  const spanClass = isLarge 
-                    ? 'md:col-span-2 md:row-span-2' 
-                    : isMedium 
-                    ? 'md:col-span-1 md:row-span-2'
-                    : 'md:col-span-1 md:row-span-1';
-                  
-                  return (
-                    <div key={post.id} className={spanClass}>
-                      {renderPost(post)}
-                    </div>
-                  );
-                })}
               </div>
             ) : (
               posts.map(renderPost)

@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for community membership
+    // Helper function to check for community membership in the top-level collection
     function isCommunityMember(communityId) {
       return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
     }
@@ -22,36 +22,63 @@ service cloud.firestore {
 
     // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow GET requests for public documents.
+      // Anyone can read public posts. This is crucial for the public feed.
       allow get: if resource.data.visibility == 'public';
-
-      // Allow LIST requests for public documents.
-      // This is crucial for queries from unauthenticated users.
-      allow list: if resource.data.visibility == 'public';
-
-      // Authenticated users can read their own non-public posts.
-      allow read: if request.auth != null && request.auth.uid == resource.data.authorId;
+      // Queries for public posts are allowed.
+      allow list: if request.query.get('where', [['visibility', '==', 'public']]);
       
+      // Authenticated users can read non-public posts they authored or are members of the community
+      allow read: if request.auth != null && 
+                     (resource.data.authorId == request.auth.uid || isCommunityMember(resource.data.communityId));
+
       // Allow create/update/delete only for the author of the post.
       allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
     }
 
     // Users collection can be read by anyone
+    // Allow write if: user is writing to their own document OR user is authenticated (for managing members)
     match /users/{userId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null; // Allow authenticated users to create new user documents
+      allow update: if request.auth != null; // Allow authenticated users to update user documents (for community owners managing members)
+      allow delete: if request.auth != null && request.auth.uid == userId; // Only user can delete their own
     }
 
-    // Messages collections
+    // Messages collections - organized by service
+    // WhatsApp messages
     match /messages_whatsapp/{messageId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if true; // Allow webhook to write messages
     }
     
+    // Email messages (future)
+    match /messages_email/{messageId} {
+      allow read: if request.auth != null;
+      allow write: if true;
+    }
+    
+    // SMS messages (future)
+    match /messages_sms/{messageId} {
+      allow read: if request.auth != null;
+      allow write: if true;
+    }
+    
+    // Telegram messages (future)
+    match /messages_telegram/{messageId} {
+      allow read: if request.auth != null;
+      allow write: if true;
+    }
+    
+    // In-app messages (future)
+    match /messages_app/{messageId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
     // Community members collection
     match /communityMembers/{memberId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
   }
 }
