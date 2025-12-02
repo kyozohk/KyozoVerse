@@ -13,17 +13,17 @@ import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
 import Image from 'next/image';
 import { JoinCommunityDialog } from '@/components/community/join-community-dialog';
-import { useCommunityAuth } from '@/hooks/use-community-auth'; // Import the hook
+import { useCommunityAuth } from '@/hooks/use-community-auth';
 
 export default function PublicFeedPage() {
   const params = useParams();
   const handle = params.handle as string;
-  const { user: communityUser, loading: communityAuthLoading } = useCommunityAuth();
 
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
+  const { user: communityUser } = useCommunityAuth();
 
   useEffect(() => {
     async function fetchCommunityData() {
@@ -34,6 +34,8 @@ export default function PublicFeedPage() {
         setCommunityData(data);
       } catch (error) {
         console.error('Error fetching community data:', error);
+      } finally {
+        // Post fetching will set loading to false
       }
     }
     fetchCommunityData();
@@ -49,7 +51,7 @@ export default function PublicFeedPage() {
     const q = query(
       postsCollection,
       where('communityHandle', '==', handle),
-      where('visibility', '==', 'public'), // Explicitly query for public posts
+      where('visibility', '==', 'public'),
       orderBy('createdAt', 'desc')
     );
 
@@ -98,8 +100,8 @@ export default function PublicFeedPage() {
       default:
         return null;
     }
-  }
-
+  };
+  
   return (
     <>
       <JoinCommunityDialog 
@@ -123,8 +125,8 @@ export default function PublicFeedPage() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-semibold text-[#4D5F71]">@{handle}</h2>
-                  {(communityData as any)?.lore && <p className="text-[#4D5F71]">{(communityData as any).lore}</p>}
+                  <h2 className="text-2xl font-semibold text-gray-400">@{handle}</h2>
+                  {communityData?.lore && <p className="text-gray-400">{communityData.lore}</p>}
                 </div>
               </div>
             </div>
@@ -138,7 +140,7 @@ export default function PublicFeedPage() {
                   paddingBottom: '0.2em',
                   lineHeight: '1.3'
                 }}>{communityData.name}</h1>
-                {(communityData as any)?.mantras && <p className="text-xl text-gray-400 mt-2">{(communityData as any).mantras}</p>}
+                {communityData.mantras && <p className="text-xl text-gray-400 mt-2">{communityData.mantras}</p>}
               </div>
             )}
           </div>
@@ -146,14 +148,14 @@ export default function PublicFeedPage() {
 
         <main className="container mx-auto max-w-4xl px-4 py-8">
           <div className="space-y-6">
-            {loading || communityAuthLoading ? (
+            {loading ? (
               <FeedSkeletons />
             ) : posts.length === 0 ? (
               <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
                 <div className="text-center py-16 px-4">
                   <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
                   <p className="text-white/70 max-w-md mx-auto">
-                    There are no posts in this community yet.
+                    There are no public posts in this community yet.
                   </p>
                 </div>
               </div>
