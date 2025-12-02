@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -171,7 +172,7 @@ export default function Home() {
           <BubbleMarquee 
             categories={[
               {
-                category: 'inbox', // Mapped to 'music' -> 'inbox' color
+                category: 'inbox',
                 items: [
                   { text: 'Rock' },
                   { text: 'Jazz' },
@@ -183,7 +184,7 @@ export default function Home() {
                 ]
               },
               {
-                category: 'overview', // Mapped to 'classicism' -> 'overview' color
+                category: 'overview',
                 items: [
                   { text: 'Expressionism' },
                   { text: 'Futurism' },
@@ -194,7 +195,7 @@ export default function Home() {
                 ]
               },
               {
-                category: 'broadcast', // Mapped to 'jewelry' -> 'broadcast' color
+                category: 'broadcast',
                 items: [
                   { text: 'Wood Burning' },
                   { text: 'Candle-making' },
@@ -205,7 +206,7 @@ export default function Home() {
                 ]
               },
               {
-                category: 'members', // Mapped to 'vintage' -> 'members' color
+                category: 'members',
                 items: [
                   { text: 'Chic' },
                   { text: 'Grunge' },
@@ -216,7 +217,7 @@ export default function Home() {
                 ]
               },
               {
-                category: 'feed', // Mapped to 'minimal' -> 'feed' color
+                category: 'feed',
                 items: [
                   { text: 'Stand-ups' },
                   { text: 'Musical' },
