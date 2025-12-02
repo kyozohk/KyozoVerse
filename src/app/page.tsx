@@ -172,7 +172,7 @@ export default function Home() {
           <BubbleMarquee 
             categories={[
               {
-                category: 'inbox', // Blue
+                category: 'feed', // Blue
                 items: [ { text: 'Dance' }, { text: 'Music' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
               },
               {
@@ -188,7 +188,7 @@ export default function Home() {
                 items: [ { text: 'Haute Couture' }, { text: 'Fashion' }, { text: 'Streetwear' }, { text: 'Boho' }, { text: 'Avant Garde' }]
               },
               {
-                category: 'feed', // Green/Teal
+                category: 'inbox', // Teal/Green
                 items: [ { text: 'Electronic' }, { text: 'Dance' }, { text: 'Performance' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
               }
             ]}
