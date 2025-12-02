@@ -10,23 +10,24 @@ interface FeatureCardProps {
   title: string;
   description: string;
   buttonText: string;
-  buttonHref: string;
+  buttonAction: () => void;
   color: string;
   RightComponent: React.ReactNode;
   className?: string;
+  reverse?: boolean;
 }
 
 export function FeatureCard({
   title,
   description,
   buttonText,
-  buttonHref,
+  buttonAction,
   color,
   RightComponent,
   className,
+  reverse = false,
 }: FeatureCardProps) {
   
-  // Helper function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
     const r = parseInt(hex.slice(1, 3), 16);
@@ -59,7 +60,7 @@ export function FeatureCard({
       <div className="absolute inset-0 z-0" style={overlayStyle}></div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col md:flex-row w-full">
+      <div className={cn("relative z-10 flex flex-col w-full", reverse ? "md:flex-row-reverse" : "md:flex-row")}>
         {/* Left content */}
         <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-1/2 justify-center">
           <h2 className="text-5xl md:text-6xl mb-4" style={{...textStyle, fontFamily: '"Playfair Display", "Gloock", serif' }}>
@@ -67,20 +68,19 @@ export function FeatureCard({
           </h2>
           <p className="text-lg text-white mb-8 max-w-md">{description}</p>
           <div className="mt-auto">
-            <Link href={buttonHref}>
-              <CustomButton
-                variant="outline"
-                className="bg-transparent border-2 hover:bg-white"
-                style={{ borderColor: color, color: color }}
-              >
-                {buttonText}
-              </CustomButton>
-            </Link>
+            <CustomButton
+              onClick={buttonAction}
+              variant="outline"
+              className="bg-transparent border-2 hover:bg-white"
+              style={{ borderColor: color, color: color }}
+            >
+              {buttonText}
+            </CustomButton>
           </div>
         </div>
         
-        {/* Right component (VideoWall) */}
-        <div className="relative w-full md:w-1/2 min-h-[400px] md:min-h-0">
+        {/* Right component */}
+        <div className="relative w-full md:w-1/2 min-h-[400px] md:min-h-0 flex items-center justify-center">
           {RightComponent}
         </div>
       </div>

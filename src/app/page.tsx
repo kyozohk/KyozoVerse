@@ -12,6 +12,7 @@ import { FirebaseError } from 'firebase/app';
 import { Hero } from '@/components/landing/hero';
 import FeatureCard from '@/components/ui/feature-card';
 import VideoWall from '@/components/landing/video-wall';
+import { IphoneMockup } from '@/components/landing/iphone-mockup';
 
 export default function Home() {
   const router = useRouter();
@@ -131,14 +132,39 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center text-center p-4">
         <div className="py-24 px-4 md:py-32" style={{ backgroundColor: 'rgba(0, 0, 0, 0.08)' }}>
           <Hero />
-          <section className="mt-24">
+          <section className="mt-24 space-y-12">
             <FeatureCard
-              title="Exclusive access and insights"
-              description="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
+              title="Engage with visionary communities"
+              description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
               buttonText="Join the waitlist"
-              buttonHref="/request-access"
+              buttonAction={openWaitlist}
               color="#CC583F"
               RightComponent={<VideoWall />}
+            />
+             <FeatureCard
+              title="Connect. Explore. Engage."
+              description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
+              buttonText="Join the waitlist"
+              buttonAction={openWaitlist}
+              color="#06C4B5"
+              RightComponent={<IphoneMockup src="/iphone.png" />}
+            />
+             <FeatureCard
+              title="Curate Your Content Feed"
+              description="Personalize your discovery experience by following topics and creators that inspire you. Our AI-powered feed brings you the most relevant content."
+              buttonText="Learn More"
+              buttonAction={() => {}}
+              color="#843484"
+              RightComponent={<IphoneMockup src="/ipad.png" />}
+              reverse
+            />
+            <FeatureCard
+              title="Monetize Your Passion"
+              description="Kyozo provides the tools for creators to monetize their work through subscriptions, exclusive content, and digital products, turning passion into a sustainable career."
+              buttonText="Get Started"
+              buttonAction={openSignUp}
+              color="#E1B327"
+              RightComponent={<IphoneMockup src="/laptop.png" />}
             />
           </section>
         </div>
