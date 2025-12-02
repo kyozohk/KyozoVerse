@@ -1,75 +1,87 @@
+
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { CustomButton } from './CustomButton';
 
 interface FeatureCardProps {
   title: string;
-  subtitle: string;
   description: string;
   buttonText: string;
   buttonHref: string;
+  color: string;
+  RightComponent: React.ReactNode;
   className?: string;
-  imageUrl?: string;
-  color?: 'blue' | 'purple' | 'teal' | 'yellow' | 'red';
 }
 
 export function FeatureCard({
   title,
-  subtitle,
   description,
   buttonText,
   buttonHref,
+  color,
+  RightComponent,
   className,
-  imageUrl = '/Mobile-white.png',
-  color = 'blue',
 }: FeatureCardProps) {
-  // Map color names to CSS variables from theme
-  const colorMap = {
-    blue: 'rgba(105, 159, 229, 0.5)', // feed color with 50% opacity
-    purple: 'rgba(132, 52, 132, 0.5)', // communities color with 50% opacity
-    teal: 'rgba(6, 196, 181, 0.5)', // settings color with 50% opacity
-    yellow: 'rgba(225, 179, 39, 0.5)', // broadcast color with 50% opacity
-    red: 'rgba(207, 119, 112, 0.5)', // inbox color with 50% opacity
+  
+  // Helper function to convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+  
+  const overlayStyle = {
+    backgroundColor: hexToRgba(color, 0.3)
   };
 
-  const bgColor = colorMap[color];
+  const textStyle = {
+    color: color
+  };
 
   return (
-    <div 
+    <div
       className={cn(
-        "relative flex flex-row rounded-2xl overflow-hidden shadow-lg",
+        "relative flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg w-full",
         className
       )}
-      style={{ backgroundColor: bgColor }}
+      style={{
+        backgroundImage: `url('/bg/light_app_bg.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
     >
-      {/* Left content */}
-      <div className="flex flex-col p-8 w-3/5">
-        <h2 className="text-4xl font-bold text-white mb-2">{title}</h2>
-        <h3 className="text-2xl font-medium text-white mb-4">{subtitle}</h3>
-        <p className="text-white/90 mb-8">{description}</p>
-        <div className="mt-auto">
-          <Link 
-            href={buttonHref}
-            className="inline-flex items-center justify-center px-6 py-3 bg-white text-primary-purple font-medium rounded-full hover:bg-white/90 transition-colors"
-          >
-            {buttonText}
-          </Link>
+      {/* Color Overlay */}
+      <div className="absolute inset-0 z-0" style={overlayStyle}></div>
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col md:flex-row w-full">
+        {/* Left content */}
+        <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-1/2 justify-center">
+          <h2 className="text-5xl md:text-6xl mb-4" style={{...textStyle, fontFamily: '"Playfair Display", "Gloock", serif' }}>
+            {title}
+          </h2>
+          <p className="text-lg text-white mb-8 max-w-md">{description}</p>
+          <div className="mt-auto">
+            <Link href={buttonHref}>
+              <CustomButton
+                variant="outline"
+                className="bg-transparent border-2 hover:bg-white"
+                style={{ borderColor: color, color: color }}
+              >
+                {buttonText}
+              </CustomButton>
+            </Link>
+          </div>
         </div>
-      </div>
-      
-      {/* Right image */}
-      <div className="relative w-2/5">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Image
-            src={imageUrl}
-            alt="Feature illustration"
-            width={300}
-            height={600}
-            className="object-contain h-full"
-          />
+        
+        {/* Right component (VideoWall) */}
+        <div className="relative w-full md:w-1/2 min-h-[400px] md:min-h-0">
+          {RightComponent}
         </div>
       </div>
     </div>
