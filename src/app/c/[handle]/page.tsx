@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getCommunityByHandle } from '@/lib/community-utils';
@@ -62,7 +63,9 @@ export default function PublicFeedPage() {
     const postsCollection = collection(db, 'blogs');
     const q = query(
       postsCollection,
-      where('communityHandle', '==', handle)
+      where('communityHandle', '==', handle),
+      where('visibility', '==', 'public'), // Only fetch public posts
+      orderBy('createdAt', 'desc')
     );
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
@@ -102,12 +105,6 @@ export default function PublicFeedPage() {
     return () => unsubscribe();
   }, [handle]);
 
-  // Temporarily show all posts for debugging - TODO: filter by visibility once posts have correct visibility field
-  const publicPosts = posts; // posts.filter(p => p.visibility === 'public');
-  const privatePosts: typeof posts = []; // posts.filter(p => p.visibility !== 'public');
-  
-  console.log('[Public Feed] Total posts:', posts.length, 'Public:', publicPosts.length, 'Private:', privatePosts.length);
-
   const renderPost = (post: Post & { id: string }) => {
     const postProps = { ...post, _isPublicView: true };
     switch (post.type) {
@@ -127,9 +124,9 @@ export default function PublicFeedPage() {
     <>
       <JoinCommunityDialog 
         open={isJoinDialogOpen} 
-        onOpenChange={setIsJoinDialogOpen}
-        communityId={communityData?.communityId || ''}
-        communityName={communityData?.name || handle}
+        onOpenChange={setIsJoinDialogOpen} 
+        communityId={communityData?.id} 
+        communityName={communityData?.name} 
       />
       <div className="min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 pt-16 pb-8">
@@ -203,46 +200,10 @@ export default function PublicFeedPage() {
                   );
                 })}
               </div>
-
-              {communityUser ? (
-                privatePosts.length > 0 && (
-                  <div className="mt-8">
-                    <h2 className="text-2xl font-bold text-white mb-4">Members Only Content</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-auto">
-                      {privatePosts.map((post, index) => {
-                        const isLarge = index % 5 === 0;
-                        const isMedium = index % 3 === 0 && !isLarge;
-                        const spanClass = isLarge 
-                          ? 'md:col-span-2 md:row-span-2' 
-                          : isMedium 
-                          ? 'md:col-span-1 md:row-span-2'
-                          : 'md:col-span-1 md:row-span-1';
-                        
-                        return (
-                          <div key={post.id} className={spanClass}>
-                            {renderPost(post)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )
-              ) : privatePosts.length > 0 ? (
-                <div className="relative rounded-lg border-2 border-dashed border-gray-600 p-8 text-center my-8">
-                  <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-                  <div className="relative">
-                    <h3 className="text-2xl font-bold text-white mb-4">You are missing out!</h3>
-                    <p className="text-white/80 mb-6">
-                      Join the {communityData?.name || handle} community to view all private posts and engage with the creator.
-                    </p>
-                    <Button onClick={() => setIsJoinDialogOpen(true)} size="lg">
-                      Join to View All Content
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-            </>
-          )}
+            ) : (
+              posts.map(renderPost)
+            )}
+          </div>
         </main>
 
         <footer className="bg-black/30 backdrop-blur-sm border-t border-gray-800 py-6 mt-12">
