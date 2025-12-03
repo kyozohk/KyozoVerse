@@ -18,6 +18,8 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
   const [whatsapp, setWhatsapp] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -46,21 +48,8 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
       const result = await response.json();
       
       if (response.ok) {
-        const testInviteLink = result.testInviteLink || `${window.location.origin}/invite/${btoa(data.email)}`;
-        
-        toast({
-          title: 'Request Submitted',
-          description: result.message || 'Your request has been submitted successfully!',
-        });
-        
-        // Show alert with invite link and email info for testing
-        const emailInfo = result.emailSent ? 
-          `\n\nEmails sent to:\n- Admin: ${result.emailDetails?.adminEmail}\n- User: ${result.emailDetails?.userEmail}` : 
-          '\n\nNo emails were sent.';
-        
-        alert(`Test Invite Link: ${testInviteLink}${emailInfo}\n\nThis is a test link for development purposes.`);
-        
-        onOpenChange(false); // Close dialog on success
+        setUserEmail(data.email);
+        setIsSuccess(true);
       } else {
         toast({
           title: 'Error',
@@ -79,17 +68,81 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
       setIsSubmitting(false);
     }
   };
+
+  const handleOpenEmail = () => {
+    window.open('https://mail.google.com', '_blank');
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    // Reset state after dialog closes
+    setTimeout(() => {
+      setIsSuccess(false);
+      setUserEmail('');
+      setNewsletter(false);
+      setWhatsapp(false);
+    }, 300);
+  };
   
   return (
     <CustomFormDialog
         open={open}
-        onClose={() => onOpenChange(false)}
-        title="Join the Waitlist"
-        description="Join the exclusive club of creators, fill up the form and we will get back to you."
+        onClose={handleClose}
+        title={isSuccess ? "Check Your Email! 📧" : "Join the Waitlist"}
+        description={isSuccess ? "We've sent you a login link to get started." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
         backgroundImage="/bg/light_app_bg.png"
         color="#843484"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {isSuccess ? (
+        // Success View
+        <div className="flex flex-col h-full">
+          <div className="flex-grow space-y-6">
+            <div className="text-center py-8">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold mb-3 text-gray-900">Welcome to KyozoVerse! 🎉</h3>
+              <p className="text-gray-600 mb-2">
+                We've sent a login link to:
+              </p>
+              <p className="text-lg font-medium text-purple-600 mb-6">
+                {userEmail}
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Next steps:</strong>
+                </p>
+                <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                  <li>Check your email inbox</li>
+                  <li>Click the login link in the email</li>
+                  <li>Setup your community and start creating!</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto space-y-3">
+            <CustomButton 
+              onClick={handleOpenEmail}
+              variant="waitlist" 
+              className="w-full"
+            >
+              Open Gmail
+            </CustomButton>
+            <CustomButton 
+              onClick={handleClose}
+              variant="outline" 
+              className="w-full"
+            >
+              Close
+            </CustomButton>
+          </div>
+        </div>
+      ) : (
+        // Form View
+        <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <Input
             name="firstName"
@@ -145,6 +198,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
           </CustomButton>
         </div>
       </form>
+      )}
     </CustomFormDialog>
   );
 }

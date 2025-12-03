@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { getThemeForPath } from '@/lib/theme-utils';
+import { Check } from 'lucide-react';
 
 interface BubbleItem {
   text: string;
@@ -24,24 +24,51 @@ interface BubbleRowProps {
 const BubbleRow: React.FC<BubbleRowProps> = ({ 
   items, 
   direction, 
-  speed = 100, 
+  speed = 80, 
   category 
 }) => {
-  const { activeColor } = getThemeForPath(`/${category}`);
-  
   const repeatedItems = useMemo(() => {
     const repeated = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 4; i++) {
       repeated.push(...items);
     }
     return repeated;
   }, [items]);
   
+  // Get background color based on category
+  const getCategoryColors = () => {
+    const colorMap: Record<string, { bg: string; border: string }> = {
+      'feed': { 
+        bg: 'rgba(173, 216, 230, 0.3)',  // Light blue
+        border: 'rgba(0, 112, 243, 0.4)'
+      },
+      'overview': { 
+        bg: 'rgba(221, 160, 221, 0.3)',  // Light purple
+        border: 'rgba(138, 43, 226, 0.4)'
+      },
+      'broadcast': { 
+        bg: 'rgba(255, 228, 181, 0.3)',  // Light orange/yellow
+        border: 'rgba(255, 140, 0, 0.4)'
+      },
+      'members': { 
+        bg: 'rgba(255, 182, 193, 0.3)',  // Light pink
+        border: 'rgba(255, 105, 180, 0.4)'
+      },
+      'inbox': { 
+        bg: 'rgba(175, 238, 238, 0.3)',  // Light teal
+        border: 'rgba(64, 224, 208, 0.4)'
+      },
+    };
+    return colorMap[category] || { bg: 'rgba(200, 200, 200, 0.3)', border: 'rgba(100, 100, 100, 0.4)' };
+  };
+
+  const colors = getCategoryColors();
+  
   return (
-    <div className="relative w-full overflow-hidden h-[11rem] md:h-[7rem] lg:h-[11rem] py-4">
+    <div className="relative w-full overflow-hidden h-20 my-0 p-0">
       <div 
         className={cn(
-          "absolute flex items-center whitespace-nowrap will-change-transform w-max",
+          "absolute flex items-center whitespace-nowrap will-change-transform",
           direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'
         )}
         style={{ '--scroll-duration': `${speed}s` } as React.CSSProperties}
@@ -49,15 +76,14 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
         {repeatedItems.map((item, index) => (
           <div 
             key={`item-${index}`} 
-            className="flex items-center justify-center px-8 md:px-10 lg:px-12 py-6 md:py-8 lg:py-10 rounded-full font-normal text-4xl md:text-2xl lg:text-5xl border-[1.5px] transition-all duration-300 cursor-default mx-2 text-foreground hover:text-white"
+            className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default mr-6 hover:-translate-y-1 hover:shadow-lg"
             style={{ 
-              borderColor: activeColor,
-              '--hover-bg': activeColor,
+              backgroundColor: colors.bg,
+              border: `2px solid ${colors.border}`,
+              color: '#1a1a1a',
             } as React.CSSProperties}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = activeColor}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            {item.text}
+            <span className="whitespace-nowrap">{item.text}</span>
           </div>
         ))}
       </div>
@@ -77,6 +103,7 @@ const BubbleMarquee: React.FC<BubbleMarqueeProps> = ({ categories }) => {
           key={`row-${index}`}
           items={row.items}
           direction={index % 2 === 0 ? 'left' : 'right'}
+          speed={80}
           category={row.category}
         />
       ))}

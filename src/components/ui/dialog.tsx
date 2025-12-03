@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full h-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full h-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-lg",
         className
       )}
       {...props}
@@ -112,7 +112,7 @@ interface CustomFormDialogProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
   backgroundImage?: string;
   showVideo?: boolean;
@@ -126,53 +126,97 @@ export function CustomFormDialog({
   title,
   description,
   children,
-  backgroundImage,
+  backgroundImage = "/bg/light_app_bg.png",
   showVideo = true,
-  videoSrc = "/videos/form-right.mp4",
+  videoSrc = "/bg/form-right.mp4",
   color = "#843484",
 }: CustomFormDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent 
-        className="max-w-[90vw] max-h-[90vh] w-full h-[90vh] grid grid-cols-1 md:grid-cols-2 p-0 gap-0 border-0 rounded-lg overflow-hidden"
-        style={{
-            backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            '--input-border-color': color,
-        } as React.CSSProperties}
-      >
-        <div className="p-8 md:p-16 flex flex-col h-full overflow-y-auto">
-          <DialogHeader className="mb-8 flex-shrink-0">
-             <DialogTitle>
-                <div 
-                    className="text-5xl font-normal text-left mb-2 text-black" 
-                    style={{ fontFamily: 'Canicule Display, serif' }}
-                >
-                    {title}
-                </div>
-             </DialogTitle>
-            <DialogDescription className="text-left text-base">{description}</DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex-grow overflow-y-auto">
-            {children}
-          </div>
-        </div>
+  const [isAnimating, setIsAnimating] = React.useState(false);
 
-        {showVideo && (
-          <div className="relative hidden md:block overflow-hidden">
-            <video
-              className="absolute top-0 left-0 w-full h-full object-cover"
-              src={videoSrc}
-              autoPlay
-              loop
-              muted
-              playsInline
-            ></video>
+  React.useEffect(() => {
+    if (open) {
+      setIsAnimating(true);
+    }
+  }, [open]);
+
+  const handleClose = () => {
+    setIsAnimating(false);
+    // Wait for animation to complete before actually closing
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogPrimitive.Portal>
+        <DialogOverlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className="fixed left-[50%] top-[50%] z-50 w-full max-w-[90vw] h-[90vh] translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none"
+          style={{
+            '--input-border-color': color,
+          } as React.CSSProperties}
+        >
+          {/* Accessible title for screen readers */}
+          <DialogPrimitive.Title className="sr-only">
+            {title}
+          </DialogPrimitive.Title>
+          
+          {/* Curtain Animation Container */}
+          <div className={`relative w-full h-full grid grid-cols-1 ${showVideo ? 'md:grid-cols-2' : ''} ${isAnimating ? 'animate-curtain-open' : 'animate-curtain-close'}`}>
+            {/* Left Panel - Form */}
+            <div 
+              className="relative flex flex-col h-full overflow-hidden"
+              style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {/* Close Button - Top Right of Left Panel */}
+              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full p-2 bg-black/10 hover:bg-black/20 transition-colors z-50">
+                <X className="h-5 w-5 text-black" />
+                <span className="sr-only">Close</span>
+              </DialogPrimitive.Close>
+
+              <div className="p-8 md:p-12 lg:p-16 flex flex-col h-full overflow-y-auto">
+                {/* Header - Fixed at top */}
+                <div className="flex-shrink-0 mb-8">
+                  <h2 
+                    className="text-4xl md:text-5xl font-normal text-left mb-3 text-black" 
+                    style={{ fontFamily: 'Canicule Display, serif' }}
+                    aria-hidden="true"
+                  >
+                    {title}
+                  </h2>
+                  {description && (
+                    <p className="text-left text-base text-gray-600">{description}</p>
+                  )}
+                </div>
+                
+                {/* Form Content - Scrollable */}
+                <div className="flex-grow overflow-y-auto">
+                  {children}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel - Video */}
+            {showVideo && (
+              <div className="relative hidden md:block overflow-hidden">
+                <video
+                  className="absolute top-0 left-0 w-full h-full object-cover"
+                  src={videoSrc}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              </div>
+            )}
           </div>
-        )}
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 }

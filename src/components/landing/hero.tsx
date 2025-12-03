@@ -5,7 +5,7 @@ import { GradientText } from '@/components/ui/gradient-text';
 import { CustomButton } from '@/components/ui/custom-button';
 import { ArrowRight } from 'lucide-react';
 
-export function Hero() {
+export function Hero({text}: {text: string}) {
   return (
     <section className="relative w-full overflow-hidden">
        <h1
@@ -26,9 +26,7 @@ export function Hero() {
               MozTextFillColor: 'transparent',
             }}
           >
-            Discover your
-            <br />
-            creative universe
+            {text}
           </span>
         </h1>
     </section>

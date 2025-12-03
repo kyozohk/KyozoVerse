@@ -180,6 +180,8 @@ export function MemberDialog({
       title={title}
       description={description}
       backgroundImage="/bg/light_app_bg.png"
+      videoSrc="/bg/form-right.mp4"
+      showVideo={true}
       color="#843484" // Default Purple
     >
       <div className="flex flex-col h-full gap-2">

@@ -6,6 +6,13 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './CustomButton';
 
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 interface FeatureCardProps {
   title: string;
   description: string;
@@ -28,16 +35,9 @@ export function FeatureCard({
   reverse = false,
 }: FeatureCardProps) {
   
-  const hexToRgba = (hex: string, alpha: number) => {
-    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
   
   const overlayStyle = {
-    backgroundColor: hexToRgba(color, 0.3)
+    backgroundColor: hexToRgba(color, 0.1)
   };
 
   const textStyle = {
@@ -47,7 +47,7 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "relative flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg w-full",
+        "relative flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg w-full h-[600px]",
         className
       )}
       style={{
@@ -60,29 +60,49 @@ export function FeatureCard({
       <div className="absolute inset-0 z-0" style={overlayStyle}></div>
 
       {/* Content */}
-      <div className={cn("relative z-10 flex flex-col w-full", reverse ? "md:flex-row-reverse" : "md:flex-row")}>
+      <div className={cn("relative z-10 flex flex-col w-full h-full", reverse ? "md:flex-row-reverse" : "md:flex-row")}>
         {/* Left content */}
-        <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-1/2 justify-center">
-          <h2 className="text-5xl md:text-6xl mb-4" style={{...textStyle, fontFamily: '"Playfair Display", "Gloock", serif' }}>
-            {title}
-          </h2>
-          <p className="text-lg text-white mb-8 max-w-md">{description}</p>
-          <div className="mt-auto">
-            <CustomButton
-              onClick={buttonAction}
-              variant="outline"
-              className="bg-transparent border-2 hover:bg-white"
-              style={{ borderColor: color, color: color }}
-            >
-              {buttonText}
-            </CustomButton>
-          </div>
-        </div>
+       <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-[45%] justify-center h-full">
+  <h2
+    className="text-6xl md:text-6xl mb-4 text-left leading-relaxed"
+    style={{
+      ...textStyle,
+      fontFamily: '"Playfair Display", "Gloock", serif',
+      textAlign: 'left',
+    }}
+  >
+    {title}
+  </h2>
+
+  <p
+    className="text-base md:text-lg font-light mb-8" // thinner + wider
+    style={{ color: '#5A5A5A', textAlign: 'left' }}
+  >
+    {description}
+  </p>
+
+  <div className="mt-auto flex justify-start">
+    <CustomButton
+      onClick={buttonAction}
+      variant="outline"
+      className="border-2 hover:bg-white"
+      style={{
+        backgroundColor: hexToRgba(color, 0.2),
+        borderColor: color,
+        color: color,
+        backdropFilter: 'blur(10px)',
+      }}
+    >
+      {buttonText}
+    </CustomButton>
+  </div>
+</div>
+
         
         {/* Right component */}
-        <div className="relative w-full md:w-1/2 min-h-[400px] md:min-h-0 flex items-center justify-center">
-          {RightComponent}
-        </div>
+<div className="relative w-full md:w-[55%] h-full flex items-center justify-center overflow-hidden">
+  {RightComponent}
+</div>
       </div>
     </div>
   );

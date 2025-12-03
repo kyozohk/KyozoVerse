@@ -35,7 +35,7 @@ const Brick: React.FC<BrickProps> = ({ videoSrc }) => {
   }, []);
 
   return (
-    <div className="w-[19rem] h-[8rem] rounded-full shadow-md overflow-hidden relative">
+    <div className="w-[22rem] h-[8rem] rounded-full shadow-md overflow-hidden relative">
       <video
         ref={videoRef}
         src={videoSrc}
@@ -56,11 +56,11 @@ interface RowProps {
 
 const Row: React.FC<RowProps> = ({ layout, videos }) => {
   const layoutClasses = layout === 'A' 
-    ? 'space-x-[1.5rem]' 
-    : 'space-x-[1.5rem] ml-[9.5rem]'; // Offset for layout B (half brick width)
+    ? 'space-x-[2rem]' 
+    : 'space-x-[2rem] ml-[10rem]'; // Offset for layout B (half brick width)
 
   return (
-    <div className={cn("relative w-full max-w-[54rem] mb-[3rem] h-[7.5rem] flex", layoutClasses)}>
+    <div className={cn("relative w-full max-w-[70rem] h-[10rem] flex", layoutClasses)}>
       <Brick videoSrc={videos[0]} />
       <Brick videoSrc={videos[1]} />
     </div>

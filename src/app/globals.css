@@ -113,3 +113,34 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Curtain Animation for Dialog */
+@keyframes curtain-open {
+  0% {
+    clip-path: polygon(50% 0, 50% 0, 50% 100%, 50% 100%);
+    opacity: 0;
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 1;
+  }
+}
+
+@keyframes curtain-close {
+  0% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 1;
+  }
+  100% {
+    clip-path: polygon(50% 0, 50% 0, 50% 100%, 50% 100%);
+    opacity: 0;
+  }
+}
+
+.animate-curtain-open {
+  animation: curtain-open 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-curtain-close {
+  animation: curtain-close 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

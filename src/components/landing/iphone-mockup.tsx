@@ -8,14 +8,16 @@ interface IphoneMockupProps {
   src: string;
 }
 
+
+
 export const IphoneMockup: React.FC<IphoneMockupProps> = ({ src }) => {
   return (
-    <div className="relative w-64 h-[32rem] pointer-events-none">
+    <div className="relative w-[20rem] h-[32rem] pointer-events-none">
       <Image
         src={src}
         alt="App Mockup"
         fill
-        className="object-contain"
+        className="object-contain object-bottom"
       />
     </div>
   );
