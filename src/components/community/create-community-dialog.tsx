@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
-import { Progress } from '../ui/progress';
 import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon, PlusCircle } from 'lucide-react';
 import { CustomFormDialog, CustomButton, Dropzone, Switch } from '@/components/ui';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -254,8 +253,6 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
         setProfileImageUrl(src);
         setProfileImageFile(null); // Clear any uploaded file
     };
-    
-    const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
         <CustomFormDialog
@@ -266,7 +263,6 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
         >
             <div className="flex flex-col h-full">
                 <div className="flex-grow space-y-4">
-                    <Progress value={progress} className="w-full mb-8" />
                     
                     {currentStep === 0 && (
                         <div className="space-y-4">
