@@ -15,6 +15,10 @@ import VideoWall from '@/components/landing/video-wall';
 import { IphoneMockup } from '@/components/landing/iphone-mockup';
 import { ParallaxGrid } from '@/components/landing/parallax-grid';
 import BubbleMarquee from '@/components/landing/bubble-marquee';
+import ScrollRevealText from '@/components/landing/scroll-reveal-text';
+import AnimatedTitle from '@/components/landing/animated-title';
+import BottomText from '@/components/landing/bottom-text';
+
 
 export default function Home() {
   const router = useRouter();
@@ -134,6 +138,11 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center text-center">
         <div className="py-24 px-4 md:py-32 w-full">
           <Hero text={["Discover your", "creative universe"]} />
+
+          <AnimatedTitle text="Where creative minds converge" />
+          <ScrollRevealText text={["We are a", "human network"]} />
+          <BottomText text="Join the Kyozo creative universe" />
+
           <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
               title="No Likes No Followers Just Humans"
