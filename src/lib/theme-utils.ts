@@ -47,18 +47,18 @@ export const communityNavItems: CommunityNavItem[] = [
 ];
 
 const themeColors: Record<string, { active: string; bg: string }> = {
-    overview: { active: '#C170CF', bg: 'rgba(193, 112, 207, 0.3)' },
-    members: { active: '#CF7770', bg: 'rgba(207, 119, 112, 0.3)' }, // Swapped with inbox
-    broadcast: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.3)' },
-    inbox: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.3)' }, // Swapped with members
-    feed: { active: '#699FE5', bg: 'rgba(105, 159, 229, 0.3)' },
-    ticketing: { active: '#475569', bg: 'rgba(71, 85, 105, 0.1)' },
-    integrations: { active: '#0891B2', bg: 'rgba(8, 145, 178, 0.1)' },
-    analytics: { active: '#4F46E5', bg: 'rgba(79, 70, 229, 0.1)' },
-    communities: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' },
-    subscription: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.1)' },
-    settings: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.1)' },
-    default: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' }
+    overview: { active: 'var(--overview-color-active)', bg: 'var(--overview-color-border)' },
+    members: { active: 'var(--members-color-active)', bg: 'var(--members-color-border)' },
+    broadcast: { active: 'var(--broadcast-color-active)', bg: 'var(--broadcast-color-border)' },
+    inbox: { active: 'var(--inbox-color-active)', bg: 'var(--inbox-color-border)' },
+    feed: { active: 'var(--feed-color-active)', bg: 'var(--feed-color-border)' },
+    ticketing: { active: 'var(--ticketing-color-active)', bg: 'var(--ticketing-color-border)' },
+    integrations: { active: 'var(--integrations-color-active)', bg: 'var(--integrations-color-border)' },
+    analytics: { active: 'var(--analytics-color-active)', bg: 'var(--analytics-color-border)' },
+    communities: { active: 'var(--communities-color-active)', bg: 'var(--communities-color-border)' },
+    subscription: { active: 'var(--subscription-color-active)', bg: 'var(--subscription-color-border)' },
+    settings: { active: 'var(--settings-color-active)', bg: 'var(--settings-color-border)' },
+    default: { active: 'var(--default-color-active)', bg: 'var(--default-color-border)' }
 };
 
 export const getThemeForPath = (path: string) => {

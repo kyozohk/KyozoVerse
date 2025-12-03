@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 interface BubbleItem {
   text: string;
@@ -34,38 +34,7 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
     return repeated;
   }, [items]);
   
-  const getCategoryColors = () => {
-    const colorMap: Record<string, { bg: string; border: string }> = {
-      feed: { 
-        bg: 'rgba(173, 216, 230, 0.3)',
-        border: 'rgba(0, 112, 243, 0.4)',
-      },
-      overview: { 
-        bg: 'rgba(221, 160, 221, 0.3)',
-        border: 'rgba(138, 43, 226, 0.4)',
-      },
-      broadcast: { 
-        bg: 'rgba(255, 228, 181, 0.3)',
-        border: 'rgba(255, 140, 0, 0.4)',
-      },
-      members: { 
-        bg: 'rgba(255, 182, 193, 0.3)',
-        border: 'rgba(255, 105, 180, 0.4)',
-      },
-      inbox: { 
-        bg: 'rgba(175, 238, 238, 0.3)',
-        border: 'rgba(64, 224, 208, 0.4)',
-      },
-    };
-    return (
-      colorMap[category] || { 
-        bg: 'rgba(200, 200, 200, 0.3)', 
-        border: 'rgba(100, 100, 100, 0.4)' 
-      }
-    );
-  };
-
-  const colors = getCategoryColors();
+  const { activeColor, activeBgColor } = getThemeForPath(`/${category}`);
   
   return (
     <div className="relative w-full overflow-hidden h-20 mb-px p-0">
@@ -81,9 +50,9 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
             key={`item-${index}`} 
             className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default hover:brightness-70"
             style={{ 
-              backgroundColor: colors.bg,
-              border: `2px solid ${colors.border}`,
-              color: '#1a1a1a',
+              backgroundColor: activeBgColor,
+              border: `2px solid ${activeColor}`,
+              color: 'var(--text-color)',
             } as React.CSSProperties}
           >
             <span className="whitespace-nowrap">{item.text}</span>
@@ -106,7 +75,7 @@ const BubbleMarquee: React.FC<BubbleMarqueeProps> = ({ categories }) => {
           key={`row-${index}`}
           items={row.items}
           direction={index % 2 === 0 ? 'left' : 'right'}
-          speed={50}
+          speed={100}
           category={row.category}
         />
       ))}
