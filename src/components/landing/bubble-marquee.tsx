@@ -79,7 +79,7 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
         {repeatedItems.map((item, index) => (
           <div 
             key={`item-${index}`} 
-            className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default hover:-translate-y-1 hover:shadow-lg"
+            className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default hover:brightness-70"
             style={{ 
               backgroundColor: colors.bg,
               border: `2px solid ${colors.border}`,
