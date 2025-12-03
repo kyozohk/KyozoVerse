@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+import { getThemeForPath } from '@/lib/theme-utils';
 
 interface BubbleItem {
   text: string;
@@ -36,36 +36,10 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
   }, [items]);
   
   // Get background color based on category
-  const getCategoryColors = () => {
-    const colorMap: Record<string, { bg: string; border: string }> = {
-      'feed': { 
-        bg: 'rgba(173, 216, 230, 0.3)',  // Light blue
-        border: 'rgba(0, 112, 243, 0.4)'
-      },
-      'overview': { 
-        bg: 'rgba(221, 160, 221, 0.3)',  // Light purple
-        border: 'rgba(138, 43, 226, 0.4)'
-      },
-      'broadcast': { 
-        bg: 'rgba(255, 228, 181, 0.3)',  // Light orange/yellow
-        border: 'rgba(255, 140, 0, 0.4)'
-      },
-      'members': { 
-        bg: 'rgba(255, 182, 193, 0.3)',  // Light pink
-        border: 'rgba(255, 105, 180, 0.4)'
-      },
-      'inbox': { 
-        bg: 'rgba(175, 238, 238, 0.3)',  // Light teal
-        border: 'rgba(64, 224, 208, 0.4)'
-      },
-    };
-    return colorMap[category] || { bg: 'rgba(200, 200, 200, 0.3)', border: 'rgba(100, 100, 100, 0.4)' };
-  };
-
-  const colors = getCategoryColors();
+  const { activeColor: color, activeBgColor: bgColor } = getThemeForPath(`/${category}`);
   
   return (
-    <div className="relative w-full overflow-hidden h-20 my-0 p-0">
+    <div className="relative w-full overflow-hidden h-24 my-px p-0">
       <div 
         className={cn(
           "absolute flex items-center whitespace-nowrap will-change-transform",
@@ -76,10 +50,10 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
         {repeatedItems.map((item, index) => (
           <div 
             key={`item-${index}`} 
-            className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default mr-6 hover:-translate-y-1 hover:shadow-lg"
+            className="flex items-center justify-center px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default hover:-translate-y-1 hover:shadow-lg mr-[-1px]"
             style={{ 
-              backgroundColor: colors.bg,
-              border: `2px solid ${colors.border}`,
+              backgroundColor: bgColor,
+              border: `2px solid ${color}`,
               color: '#1a1a1a',
             } as React.CSSProperties}
           >
@@ -98,15 +72,17 @@ interface BubbleMarqueeProps {
 const BubbleMarquee: React.FC<BubbleMarqueeProps> = ({ categories }) => {
   return (
     <div className="w-full block overflow-hidden pt-32">
-      {categories.map((row, index) => (
-        <BubbleRow 
-          key={`row-${index}`}
-          items={row.items}
-          direction={index % 2 === 0 ? 'left' : 'right'}
-          speed={80}
-          category={row.category}
-        />
-      ))}
+      <div className="flex flex-col gap-px">
+        {categories.map((row, index) => (
+          <BubbleRow 
+            key={`row-${index}`}
+            items={row.items}
+            direction={index % 2 === 0 ? 'left' : 'right'}
+            speed={80}
+            category={row.category}
+          />
+        ))}
+      </div>
     </div>
   );
 };

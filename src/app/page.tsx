@@ -140,9 +140,7 @@ export default function Home() {
           <Hero text={["Discover your", "creative universe"]} />
 
           <AnimatedTitle text="Where creative minds converge" />
-          <ScrollRevealText text={["We are a", "human network"]} />
-          <BottomText text="Join the Kyozo creative universe" />
-
+          
           <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
               title="No Likes No Followers Just Humans"
@@ -158,7 +156,7 @@ export default function Home() {
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
               color="#B4582E"
-              RightComponent={<IphoneMockup src="/iphone.png" />}
+              RightComponent={<IphoneMockup src="/ipad.png" />}
             />
              <FeatureCard
               title="Engage with visionary communities"
@@ -166,7 +164,7 @@ export default function Home() {
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
               color="#8B5A9E"
-              RightComponent={<ParallaxGrid />}
+              RightComponent={<IphoneMockup src="/laptop.png" />}
             />            
           </section>
         </div>
@@ -196,6 +194,8 @@ export default function Home() {
             }
           ]}
         />
+        <ScrollRevealText text={["We are a", "human network"]} />
+        <BottomText text="Join the Kyozo creative universe" />
       </main>
 
       <RequestAccessDialog
