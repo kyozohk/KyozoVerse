@@ -4,9 +4,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { getThemeForPath } from "@/lib/theme-utils";
-
 
 // Import styles
 import "@/styles/components.css";
@@ -16,6 +13,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: "default" | "small" | "large";
   icon?: LucideIcon;
   isLoading?: boolean;
+  color?: string; // New color prop
 }
 
 const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -27,27 +25,20 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
     icon: Icon, 
     isLoading = false,
     disabled,
+    color, // Destructure new color prop
     style,
     ...props 
   }, ref) => {
-    const pathname = usePathname();
-    const { activeColor } = getThemeForPath(pathname);
     
-    const variantStyles = {
-        primary: {
-            backgroundColor: "var(--primary-purple)",
-            color: 'white',
-            border: 'none',
-        },
-        default: {},
-        outline: {},
-        waitlist: {},
-        'rounded-rect': {},
-        'semi-rounded': {},
-        white: {},
+    // Define the style object, including the custom color if provided
+    const buttonStyle: React.CSSProperties = {
+      ...style,
     };
-    
-    const buttonStyle = variant === 'primary' ? {...style, ...variantStyles.primary} : style;
+
+    if (color) {
+      buttonStyle['--button-border-color'] = color;
+      buttonStyle['--button-bg-color'] = color;
+    }
     
     return (
       <button
