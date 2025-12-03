@@ -35,7 +35,7 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
     
     const variantStyles = {
         primary: {
-            backgroundColor: activeColor,
+            backgroundColor: "var(--primary-purple)",
             color: 'white',
             border: 'none',
         },
