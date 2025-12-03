@@ -40,6 +40,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
         tagline: '',
         lore: '',
         mantras: '',
+        tags: '',
+        location: '',
         communityPrivacy: 'public',
     });
     
@@ -60,13 +62,15 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                 tagline: existingCommunity.tagline || '',
                 lore: (existingCommunity as any).lore || '',
                 mantras: (existingCommunity as any).mantras || '',
+                tags: (existingCommunity.tags || []).join(', '),
+                location: (existingCommunity as any).location || '',
                 communityPrivacy: (existingCommunity as any).communityPrivacy || 'public',
             });
             setProfileImageUrl(existingCommunity.communityProfileImage || null);
             setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
         } else {
             // Reset form when creating a new community
-            setFormData({ name: '', tagline: '', lore: '', mantras: '', communityPrivacy: 'public' });
+            setFormData({ name: '', tagline: '', lore: '', mantras: '', tags: '', location: '', communityPrivacy: 'public' });
             setProfileImageFile(null);
             setBackgroundImageFile(null);
             setProfileImageUrl(null);
@@ -136,6 +140,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
             const communityRef = doc(db, 'communities', existingCommunity.communityId);
             await updateDoc(communityRef, {
                 ...formData,
+                tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
                 handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
                 communityProfileImage: updatedProfileImageUrl,
                 communityBackgroundImage: updatedBackgroundImageUrl,
@@ -165,8 +170,9 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
 
         setIsSubmitting(true);
         
-        const communityData = {
+        const communityData: any = {
             ...formData,
+            tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
             handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
             ownerId: user.uid,
             createdAt: serverTimestamp(),
@@ -270,6 +276,8 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                             <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} rows={2} />
                             <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={4} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
+                            <Input label="Tags" placeholder="e.g. Deep House, Funky House" value={formData.tags} onChange={(e) => handleValueChange('tags', e.target.value)} />
+                            <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} />
                             <div className="flex items-center space-x-2 pt-2">
                                 <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'private' : 'public')} />
                                 <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
