@@ -46,13 +46,12 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
     };
 
     return (
-        <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Tags</label>
-            <div className="flex flex-wrap items-center gap-2 p-2 border rounded-lg">
+        <div className="inputWrapper relative">
+            <div className="flex flex-wrap items-center gap-2 p-2 border rounded-lg input" style={{ borderColor: 'var(--input-border-color, var(--button-border))' }}>
                 {tags.map((tag, index) => (
-                    <div key={index} className="flex items-center gap-1 bg-muted text-muted-foreground rounded-full px-3 py-1 text-sm">
-                        <span>{tag}</span>
-                        <button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-foreground">
+                    <div key={index} className="flex items-center gap-1 bg-muted rounded-full px-3 py-1 text-sm" style={{ color: 'var(--primary-purple)' }}>
+                        <span className="font-medium">{tag}</span>
+                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-foreground" style={{ color: 'var(--primary-purple)' }}>
                             <X className="h-3 w-3" />
                         </button>
                     </div>
@@ -62,10 +61,13 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={tags.length === 0 ? "e.g. Deep House, DJs" : "Add another..."}
-                    className="flex-grow bg-transparent focus:outline-none p-1 text-foreground placeholder:text-muted-foreground/80"
+                    placeholder=" "
+                    className="flex-grow bg-transparent focus:outline-none p-1 text-foreground"
                 />
             </div>
+            <label className="floatingLabel" style={{ top: tags.length > 0 ? '-0.5rem' : '0.7rem', fontSize: tags.length > 0 ? '0.75rem' : '1rem', backgroundColor: tags.length > 0 ? '#EDEDED' : 'transparent', color: tags.length > 0 ? 'var(--input-border-color, #C170CF)' : 'var(--text-secondary)' }}>
+                Tags
+            </label>
         </div>
     );
 };
@@ -337,14 +339,13 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                                 <label className="text-sm text-muted-foreground mb-1 block">Profile Image</label>
                                 <div className="flex items-center gap-4">
                                     {profileImageOptions.map(src => (
-                                        <Image key={src} src={src} alt="profile option" width={48} height={48} 
-                                        className={`rounded-full border-2 cursor-pointer hover:border-primary ${profileImageUrl === src ? 'border-primary' : 'border-transparent'}`} 
-                                        onClick={() => handlePresetImageClick(src)}
-                                        />
+                                        <div key={src} className="w-12 h-12 rounded-full overflow-hidden border-2 cursor-pointer hover:border-primary" style={{ borderColor: profileImageUrl === src ? 'var(--input-border-color, #C170CF)' : 'transparent' }} onClick={() => handlePresetImageClick(src)}>
+                                            <Image src={src} alt="profile option" width={48} height={48} className="w-full h-full object-cover" />
+                                        </div>
                                     ))}
-                                    <div onClick={handleBrowseClick} className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
+                                    <div onClick={handleBrowseClick} className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary overflow-hidden">
                                         {profileImageFile || (profileImageUrl && !profileImageOptions.includes(profileImageUrl)) ? (
-                                            <Image src={profileImageUrl!} alt="profile preview" width={48} height={48} className="rounded-full object-cover" />
+                                            <Image src={profileImageUrl!} alt="profile preview" width={48} height={48} className="w-full h-full object-cover" />
                                         ) : (
                                             <PlusCircle className="h-6 w-6 text-muted-foreground" />
                                         )}
