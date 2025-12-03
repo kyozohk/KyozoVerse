@@ -37,7 +37,7 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (color) {
       buttonStyle['--button-border-color'] = color;
-      buttonStyle['--button-bg-color'] = color;
+      buttonStyle['--button-bg-color'] = color.startsWith('#') ? `${color}33` : color; // Add 20% opacity (0x33)
     }
     
     return (
