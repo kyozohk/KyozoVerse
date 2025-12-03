@@ -195,7 +195,7 @@ export function CustomFormDialog({
                 </div>
                 
                 {/* Form Content - Scrollable */}
-                <div className="flex-grow overflow-y-auto">
+                <div className="flex-grow overflow-y-auto pt-4 -mt-4">
                   {children}
                 </div>
               </div>

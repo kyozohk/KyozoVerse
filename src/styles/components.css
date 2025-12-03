@@ -374,3 +374,12 @@ input::placeholder {
 .phone-dropdown + input:not(:placeholder-shown) ~ label.floatingLabel {
   left: 0.75rem;
 }
+
+.button-outline {
+  --button-border-color: var(--color-override, var(--primary-purple));
+  --button-bg-color: var(--color-override-bg, rgba(132, 52, 132, 0.2));
+}
+
+.button-outline:hover {
+  --button-bg-color: var(--color-override-bg-hover, rgba(132, 52, 132, 0.3));
+}
