@@ -145,58 +145,60 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
         </div>
       ) : (
         // Form View
-        <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            name="firstName"
-            label="Firstname"
-            required
-          />
-          <Input
-            name="lastName"
-            label="Lastname"
-            required
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="flex-grow space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                name="firstName"
+                label="Firstname"
+                required
+              />
+              <Input
+                name="lastName"
+                label="Lastname"
+                required
+              />
+            </div>
+            
+            <PhoneInput
+              name="phone"
+              label="Phone"
+              required
+            />
+            
+            <Input
+              name="email"
+              type="email"
+              label="Email"
+              required
+            />
+            
+            <div className="space-y-2 pt-2">
+              <Checkbox
+                checked={newsletter}
+                onCheckedChange={(checked) => setNewsletter(checked === true)}
+                label="Sign me up to the CreativeLab newsletter"
+              />
+              
+              <Checkbox
+                checked={whatsapp}
+                onCheckedChange={(checked) => setWhatsapp(checked === true)}
+                label="By submitting this form I agree to be contacted via WhatsApp"
+              />
+            </div>
+          </div>
         
-        <PhoneInput
-          name="phone"
-          label="Phone"
-          required
-        />
-        
-        <Input
-          name="email"
-          type="email"
-          label="Email"
-          required
-        />
-        
-        <div className="space-y-2 pt-2">
-          <Checkbox
-            checked={newsletter}
-            onCheckedChange={(checked) => setNewsletter(checked === true)}
-            label="Sign me up to the CreativeLab newsletter"
-          />
-          
-          <Checkbox
-            checked={whatsapp}
-            onCheckedChange={(checked) => setWhatsapp(checked === true)}
-            label="By submitting this form I agree to be contacted via WhatsApp"
-          />
-        </div>
-        
-        <div className="pt-4">
-          <CustomButton 
-            type="submit" 
-            variant="waitlist" 
-            disabled={isSubmitting}
-            className="w-full"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </CustomButton>
-        </div>
-      </form>
+          <div className="mt-8">
+            <CustomButton 
+              type="submit" 
+              variant="waitlist" 
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </CustomButton>
+          </div>
+        </form>
       )}
     </CustomFormDialog>
   );

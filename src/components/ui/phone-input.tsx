@@ -27,6 +27,7 @@ interface PhoneInputProps {
 const COUNTRIES: Country[] = [
   { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
   { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧' },
+  { code: 'HK', name: 'Hong Kong', dialCode: '+852', flag: '🇭🇰' },
   { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦' },
   { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺' },
   { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪' },
@@ -43,7 +44,6 @@ const COUNTRIES: Country[] = [
   { code: 'ID', name: 'Indonesia', dialCode: '+62', flag: '🇮🇩' },
   { code: 'VN', name: 'Vietnam', dialCode: '+84', flag: '🇻🇳' },
   { code: 'KR', name: 'South Korea', dialCode: '+82', flag: '🇰🇷' },
-  { code: 'HK', name: 'Hong Kong', dialCode: '+852', flag: '🇭🇰' },
   { code: 'TW', name: 'Taiwan', dialCode: '+886', flag: '🇹🇼' },
 ];
 
@@ -59,7 +59,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   className,
   label = 'Phone'
 }) => {
-  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
+  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES.find(c => c.code === 'HK') || COUNTRIES[0]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,11 +68,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
   useEffect(() => {
     if (value) {
-      // Find the country that best matches the prefix
-      const matchingCountry = COUNTRIES.sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => value.startsWith(c.dialCode));
+      const matchingCountry = COUNTRIES.sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => value.startsWith(c.dialCode.replace('+', '')));
       if (matchingCountry) {
         setSelectedCountry(matchingCountry);
-        setPhoneNumber(value.substring(matchingCountry.dialCode.length).trim());
+        setPhoneNumber(value.substring(matchingCountry.dialCode.length -1).trim());
       } else {
         setPhoneNumber(value);
       }
@@ -80,7 +79,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   }, [value]);
 
   useEffect(() => {
-    // Return the number in wa_id format (digits only)
     const fullNumber = phoneNumber ? `${selectedCountry.dialCode.replace('+', '')}${phoneNumber.replace(/\D/g, '')}` : '';
     if (onChange && fullNumber !== value) {
       onChange(fullNumber);
@@ -136,6 +134,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           disabled={disabled}
         >
           <span className="text-lg leading-none">{selectedCountry.flag}</span>
+          <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
           <span className="text-xs text-muted-foreground">▼</span>
         </button>
 
@@ -183,7 +182,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           placeholder=" "
           disabled={disabled}
           required={required}
-          className="input pl-20"
+          className="input pl-28" 
         />
         <label htmlFor={inputId} className="floatingLabel phone-floating-label">
           {label}

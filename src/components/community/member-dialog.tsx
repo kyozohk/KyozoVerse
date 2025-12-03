@@ -185,8 +185,8 @@ export function MemberDialog({
       showVideo={true}
       color={THEME_COLORS.members.primary}
     >
-      <div className="flex flex-col h-full gap-2">
-        <div className="space-y-4">
+      <div className="flex flex-col h-full">
+        <div className="flex-grow space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <Input
                     label="First Name"
@@ -229,7 +229,7 @@ export function MemberDialog({
           
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
         </div>
-        <div className="mt-auto flex flex-row justify-end gap-3 pt-4">
+        <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
           <CustomButton
             variant="outline"
             onClick={onClose}

@@ -1,5 +1,6 @@
 
 
+
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -13,7 +14,7 @@
   font-size: 1rem;
   font-weight: 400;
   border-radius: var(--button-radius);
-  color: var(--button-border-color, var(--primary-purple));
+  color: var(--button-text-color, var(--primary-purple));
   border: 1px solid var(--button-border-color, var(--button-border));
   cursor: pointer;
   transition: all 0.2s ease;
@@ -368,12 +369,19 @@ input::placeholder {
 
 /* Fix for phone input label */
 .phone-floating-label {
-    left: 5.25rem !important;
+    left: 0.75rem !important; /* Reset to default */
 }
 .phone-input-container .input:focus ~ .phone-floating-label,
 .phone-input-container .input:not(:placeholder-shown) ~ .phone-floating-label {
-  left: 0.75rem !important;
+  /* No special override needed now */
 }
+.phone-input-container .input:focus ~ .floatingLabel,
+.phone-input-container .input:not(:placeholder-shown) ~ .floatingLabel {
+  left: 0.75rem;
+  transform: translateY(-110%);
+  font-size: 0.75rem;
+}
+
 
 .button-outline {
   --button-border-color: var(--color-override, var(--primary-purple));
