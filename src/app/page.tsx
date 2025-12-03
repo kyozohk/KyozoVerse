@@ -133,7 +133,7 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center justify-center text-center">
         <div className="py-24 px-4 md:py-32 w-full">
-          <Hero text={"Discover your", "creative universe"} />
+          <Hero text={["Discover your", "creative universe"]} />
           <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
               title="No Likes No Followers Just Humans"
@@ -141,7 +141,7 @@ export default function Home() {
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
               color="#0A5D72"              
-              RightComponent={<IphoneMockup src="/Mobile-white.png" />}
+              RightComponent={<VideoWall />}
             />
             <FeatureCard
               title="Exclusive access and insights"
@@ -149,7 +149,7 @@ export default function Home() {
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
               color="#B4582E"
-              RightComponent={<VideoWall />}
+              RightComponent={<IphoneMockup src="/iphone.png" />}
             />
              <FeatureCard
               title="Engage with visionary communities"
@@ -163,30 +163,30 @@ export default function Home() {
         </div>
 
         {/* Edge-to-edge marquee */}
-        <BubbleMarquee 
-            categories={[
-              {
-                category: 'feed', // Blue
-                items: [ { text: 'Dance' }, { text: 'Music' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
-              },
-              {
-                category: 'overview', // Purple
-                items: [ { text: 'Contemporary' }, { text: 'Surrealism' }, { text: 'Impressionism' }, { text: 'Art' }, { text: 'Cubism' }]
-              },
-              {
-                category: 'broadcast', // Yellow
-                items: [ { text: 'Craft' }, { text: 'Pottery' }, { text: 'Drawing' }, { text: 'Painting' }, { text: 'Jewelry' }]
-              },
-              {
-                category: 'members', // Red
-                items: [ { text: 'Haute Couture' }, { text: 'Fashion' }, { text: 'Streetwear' }, { text: 'Boho' }, { text: 'Avant Garde' }]
-              },
-              {
-                category: 'inbox', // Teal/Green
-                items: [ { text: 'Electronic' }, { text: 'Dance' }, { text: 'Performance' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
-              }
-            ]}
-          />
+        <BubbleMarquee
+          categories={[
+            {
+              category: 'inbox',
+              items: [ { text: 'Dance' }, { text: 'Music' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
+            },
+            {
+              category: 'overview',
+              items: [ { text: 'Contemporary' }, { text: 'Surrealism' }, { text: 'Impressionism' }, { text: 'Art' }, { text: 'Cubism' }]
+            },
+            {
+              category: 'broadcast',
+              items: [ { text: 'Craft' }, { text: 'Pottery' }, { text: 'Drawing' }, { text: 'Painting' }, { text: 'Jewelry' }]
+            },
+            {
+              category: 'members',
+              items: [ { text: 'Haute Couture' }, { text: 'Fashion' }, { text: 'Streetwear' }, { text: 'Boho' }, { text: 'Avant Garde' }]
+            },
+            {
+              category: 'feed',
+              items: [ { text: 'Electronic' }, { text: 'Dance' }, { text: 'Performance' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
+            }
+          ]}
+        />
       </main>
 
       <RequestAccessDialog
