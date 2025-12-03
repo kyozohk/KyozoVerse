@@ -31,8 +31,9 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-color: rgba(132, 52, 132, 0.65);
+  background-color: rgba(132, 52, 132, 0.2); /* Reduced opacity for more subtlety */
   z-index: 0;
+  transition: background-color 0.2s ease;
 }
 
 .button > * {
@@ -41,7 +42,7 @@
 }
 
 .button:hover::before {
-  background-color: rgba(132, 52, 132, 0.8);
+  background-color: rgba(132, 52, 132, 0.3); /* Slightly darker on hover */
 }
 
 .button:hover {
