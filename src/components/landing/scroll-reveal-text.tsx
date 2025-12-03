@@ -59,9 +59,17 @@ const ScrollRevealText: React.FC<ScrollRevealTextProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [revealSpeed]);
 
+  const gradientStyle: React.CSSProperties = {
+    backgroundImage: 'linear-gradient(90deg, #7c3aed, #4f46e5 35%, #0ea5e9 60%, #10b981 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    color: 'transparent',
+  };
+
   return (
     <div ref={containerRef} className="relative flex items-center justify-center min-h-[80vh] w-full overflow-hidden z-5 p-8">
-      <h1 className="text-center leading-tight m-0 p-0 text-foreground" style={{ fontSize, fontWeight }}>
+      <h1 className="text-center leading-tight m-0 p-0 text-transparent bg-clip-text" style={{ fontSize, fontWeight, ...gradientStyle }}>
         {lines.map((line, lineIndex) => (
           <React.Fragment key={lineIndex}>
             <span className="block">

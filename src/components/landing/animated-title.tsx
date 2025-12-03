@@ -37,9 +37,17 @@ const AnimatedTitle: React.FC<AnimatedTitleProps> = ({
     large: 'text-2xl',
   };
 
+  const gradientStyle: React.CSSProperties = {
+    backgroundImage: 'linear-gradient(90deg, #7c3aed, #4f46e5 35%, #0ea5e9 60%, #10b981 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    color: 'transparent',
+  };
+
   return (
     <div className={cn("text-center py-16", className)}>
-      <h1 className={cn("font-bold", sizeClasses[size])}>
+      <h1 className={cn("font-bold text-transparent bg-clip-text", sizeClasses[size])} style={gradientStyle}>
         {words.map((word, wordIndex) => (
           <span key={wordIndex} className="inline-block mr-4 last:mr-0">
             {word.split('').map((letter, letterIndex) => (

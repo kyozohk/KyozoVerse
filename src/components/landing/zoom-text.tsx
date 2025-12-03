@@ -44,18 +44,27 @@ const ZoomText: React.FC<ZoomTextProps> = ({
     };
   }, []);
 
+  const gradientStyle: React.CSSProperties = {
+    backgroundImage: 'linear-gradient(90deg, #7c3aed, #4f46e5 35%, #0ea5e9 60%, #10b981 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    color: 'transparent',
+  };
+
   return (
     <h2
       ref={ref}
       className={cn(
-        "text-center font-bold transition-all ease-out",
+        "text-center font-bold transition-all ease-out text-transparent bg-clip-text",
         isVisible ? "scale-100 opacity-100" : "scale-90 opacity-0"
       )}
       style={{
         fontSize,
         fontWeight,
         transitionDuration: duration,
-        transitionDelay: delay
+        transitionDelay: delay,
+        ...gradientStyle
       }}
     >
       {text}
