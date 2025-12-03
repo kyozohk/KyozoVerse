@@ -18,6 +18,7 @@ import BubbleMarquee from '@/components/landing/bubble-marquee';
 import ScrollRevealText from '@/components/landing/scroll-reveal-text';
 import AnimatedTitle from '@/components/landing/animated-title';
 import BottomText from '@/components/landing/bottom-text';
+import { THEME_COLORS } from '@/lib/theme-colors';
 
 
 export default function Home() {
@@ -135,11 +136,16 @@ export default function Home() {
         )}
       </header>
 
+      {/* Floating Join Waitlist Button */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+        <CustomButton onClick={openWaitlist}>
+          Join the waitlist
+        </CustomButton>
+      </div>
+
       <main className="flex-1 flex flex-col items-center justify-center text-center">
         <div className="py-24 px-4 md:py-32 w-full">
-          <Hero text={["Discover your", "creative universe"]} />
-
-          <AnimatedTitle text="Where creative minds converge" />
+          <Hero text={["Discover your", "creative universe"]} />    
           
           <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
@@ -147,28 +153,32 @@ export default function Home() {
               description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color="#0A5D72"              
-              RightComponent={<VideoWall />}
+              color={THEME_COLORS.feed.primary}
+              RightComponent={<IphoneMockup src="/Mobile-white.png" />}
+              
             />
+          </section>
+          <Hero text={["Where creative", "minds converge"]} />                  
+          <section className="mt-24 space-y-12 mx-40">            
             <FeatureCard
               title="Exclusive access and insights"
               description="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color="#B4582E"
-              RightComponent={<IphoneMockup src="/ipad.png" />}
+              color={THEME_COLORS.broadcast.primary}
+              RightComponent={<VideoWall />}
             />
              <FeatureCard
               title="Engage with visionary communities"
               description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color="#8B5A9E"
-              RightComponent={<IphoneMockup src="/laptop.png" />}
+              color={THEME_COLORS.overview.primary}
+              RightComponent={<ParallaxGrid />}
             />            
           </section>
         </div>
-
+        <Hero text={["We are", "human network"]} />    
         {/* Edge-to-edge marquee */}
         <BubbleMarquee
           categories={[
@@ -194,8 +204,7 @@ export default function Home() {
             }
           ]}
         />
-        <ScrollRevealText text={["We are a", "human network"]} />
-        <BottomText text="Join the Kyozo creative universe" />
+        <Hero text={["Join the Kyozo", "creative universe"]} />    
       </main>
 
       <RequestAccessDialog
@@ -209,7 +218,7 @@ export default function Home() {
         title="Welcome Back"
         description="Sign in to access your Kyozo dashboard and community."
         backgroundImage="/bg/light_app_bg.png"
-        color="#C170CF"
+        color={THEME_COLORS.overview.primary}
       >
         <div className="flex flex-col h-full">
           <div className="flex-grow">
@@ -256,48 +265,36 @@ export default function Home() {
         title="Create Your Account"
         description="Sign up to create and manage your own communities on Kyozo."
         backgroundImage="/bg/light_app_bg.png"
-        color="#C170CF"
+        color={THEME_COLORS.overview.primary}
       >
         <div className="space-y-6">
           <div className="space-y-4">
-            <div>
-              <label htmlFor="signup-name" className="block text-sm font-medium mb-2">Full Name</label>
-              <Input
-                id="signup-name"
-                type="text"
-                placeholder="Enter your full name"
-                value={signUpName}
-                onChange={(e) => setSignUpName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-              />
-            </div>
-            <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium mb-2">Email</label>
-              <Input
-                id="signup-email"
-                type="email"
-                placeholder="Enter your email"
-                value={signUpEmail}
-                onChange={(e) => setSignUpEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-              />
-            </div>
-            <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium mb-2">Password</label>
-              <PasswordInput
-                id="signup-password"
-                placeholder="Create a password (min 6 characters)"
-                value={signUpPassword}
-                onChange={(e) => setSignUpPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-              />
-            </div>
-            {signUpError && (
-              <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
-                {signUpError}
-              </div>
-            )}
+            <Input
+              label="Full Name"
+              type="text"
+              value={signUpName}
+              onChange={(e) => setSignUpName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={signUpEmail}
+              onChange={(e) => setSignUpEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+            />
+            <PasswordInput
+              label="Password"
+              value={signUpPassword}
+              onChange={(e) => setSignUpPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+            />
           </div>
+          {signUpError && (
+            <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
+              {signUpError}
+            </div>
+          )}
           
           <div className="mt-6">
             <div className="mb-4">

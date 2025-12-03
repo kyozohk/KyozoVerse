@@ -1,9 +1,10 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { CustomFormDialog } from '@/components/ui/dialog';
-import { CustomButton } from '@/components/ui';
+import { CustomFormDialog, Input, CustomButton, Textarea, Label } from '@/components/ui';
+import { useToast } from '@/hooks/use-toast';
+import { TemplateSelector } from './template-selector';
+import { THEME_COLORS } from '@/lib/theme-colors';
 import { BroadcastStep, BroadcastModalProps, Template, TemplateVariable, BroadcastResult, Member } from './broadcast-types';
 import { StepIndicator, RecipientsStep, TemplateStep, PreviewStep, ConfirmStep } from './broadcast-components';
 import { processTemplate, processVariablesForMember, autoFillVariables, templateHasImageHeader } from './broadcast-utils';
@@ -553,9 +554,9 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       title={title}
       description={subtitle}
       backgroundImage="/bg/light_app_bg.png"
-      videoSrc="/bg/form-right.mp4"
+      videoSrc="/videos/form-right.mp4"
       showVideo={true}
-      color="#C170CF" // Purple color for broadcast
+      color={THEME_COLORS.broadcast.primary}
     >
       <div className="flex flex-col h-full">
         <div className="flex-grow overflow-y-auto mb-6">

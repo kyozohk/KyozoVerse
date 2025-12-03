@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { getThemeForPath } from '@/lib/theme-utils';
+import { getCategoryColors, type CategoryKey } from '@/lib/theme-colors';
 
 interface BubbleItem {
   text: string;
@@ -34,7 +34,8 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
     return repeated;
   }, [items]);
   
-  const { activeColor, activeBgColor } = getThemeForPath(`/${category}`);
+  // Get colors from centralized theme
+  const colors = getCategoryColors(category as CategoryKey);
   
   return (
     <div className="relative w-full overflow-hidden h-20 mb-px p-0">
@@ -48,11 +49,11 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
         {repeatedItems.map((item, index) => (
           <div 
             key={`item-${index}`} 
-            className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-medium text-lg transition-all duration-300 cursor-default hover:brightness-70"
+            className="flex items-center justify-center gap-1 px-14 py-6 rounded-full font-light text-lg transition-all duration-300 cursor-default hover:brightness-70"
             style={{ 
-              backgroundColor: activeBgColor,
-              border: `2px solid ${activeColor}`,
-              color: 'var(--text-color)',
+              backgroundColor: colors.bg,
+              border: `2px solid ${colors.border}`,
+              color: '#222222',
             } as React.CSSProperties}
           >
             <span className="whitespace-nowrap">{item.text}</span>

@@ -9,7 +9,7 @@ interface HeroProps {
 
 export function Hero({ text }: HeroProps) {
   return (
-    <section className="relative w-full overflow-hidden">
+    <section className="relative w-full overflow-hidden mt-40 mb-60">
       <h1
         className="text-6xl md:text-8xl font-serif font-medium tracking-tight text-center"
         style={{

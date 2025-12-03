@@ -24,7 +24,7 @@ interface CustomFormDialogProps {
   children: React.ReactNode;        // Form content
   backgroundImage?: string;         // Left panel background (default: "/bg/light_app_bg.png")
   showVideo?: boolean;              // Show/hide video (default: true)
-  videoSrc?: string;                // Video source (default: "/bg/form-right.mp4")
+  videoSrc?: string;                // Video source (default: "/videos/form-right.mp4")
   color?: string;                   // Theme color for inputs (default: "#843484")
 }
 ```
@@ -61,7 +61,7 @@ function MyDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
       title="My Dialog Title"
       description="Optional description text"
       backgroundImage="/bg/light_app_bg.png"
-      videoSrc="/bg/form-right.mp4"
+      videoSrc="/videos/form-right.mp4"
       color="#C170CF"
     >
       {/* Form Content - Scrollable Area */}

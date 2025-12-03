@@ -1,9 +1,9 @@
-
 "use client";
 
 import { useState } from 'react';
 import { CustomFormDialog, Input, CustomButton } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
+import { THEME_COLORS } from '@/lib/theme-colors';
 
 export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean, onClose: () => void, onGoBack: () => void }) {
   const [email, setEmail] = useState('');
@@ -44,7 +44,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
       title={isSubmitted ? "Check your inbox" : "Reset your password"}
       description={isSubmitted ? `We've sent a password reset link to ${email}.` : "Enter the email address associated with your account and we'll send you a link to reset your password."}
       backgroundImage="/bg/light_app_bg.png"
-      color="#C170CF"
+      color={THEME_COLORS.overview.primary}
     >
       <div className="flex flex-col h-full">
         {!isSubmitted ? (

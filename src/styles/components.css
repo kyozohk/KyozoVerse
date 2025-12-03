@@ -14,12 +14,34 @@
   font-weight: 400;
   border-radius: var(--button-radius);
   color: var(--button-text-color);
-  background-color: rgba(132, 52, 132, 0.2);
   border: 1px solid var(--button-border);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
+  overflow: hidden;
+  background-color: #EDEDED;
+  background-image: url('/bg/light_app_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(132, 52, 132, 0.65);
+  z-index: 0;
+}
+
+.button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.button:hover::before {
+  background-color: rgba(132, 52, 132, 0.8);
 }
 
 .button:hover {
@@ -172,7 +194,7 @@ input::placeholder {
 
 .floatingLabel {
   position: absolute;
-  top: 0.9rem;
+  top: 0.7rem;
   left: 0.75rem;
   font-size: 1rem;
   color: var(--text-secondary);
@@ -188,7 +210,7 @@ input::placeholder {
 
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -0.2rem;
+  top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
@@ -210,7 +232,7 @@ input::placeholder {
 /* Floating label behaviour for select trigger */
 .selectTrigger:focus ~ .floatingLabel,
 .selectTrigger.select-has-value ~ .floatingLabel {
-  top: -0.2rem;
+  top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF);

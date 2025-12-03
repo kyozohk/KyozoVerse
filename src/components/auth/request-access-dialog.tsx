@@ -6,7 +6,10 @@ import { CustomFormDialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CustomButton } from '@/components/ui/CustomButton';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { X } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { THEME_COLORS } from '@/lib/theme-colors';
 import { useToast } from '@/hooks/use-toast';
 
 interface RequestAccessDialogProps {
@@ -91,7 +94,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
         title={isSuccess ? "Check Your Email! 📧" : "Join the Waitlist"}
         description={isSuccess ? "We've sent you a login link to get started." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
         backgroundImage="/bg/light_app_bg.png"
-        color="#843484"
+        color={THEME_COLORS.overview.primary}
     >
       {isSuccess ? (
         // Success View
@@ -147,29 +150,25 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
           <Input
             name="firstName"
             label="Firstname"
-            placeholder="Firstname"
             required
           />
           <Input
             name="lastName"
             label="Lastname"
-            placeholder="Lastname"
             required
           />
         </div>
         
-        <Input
+        <PhoneInput
           name="phone"
           label="Phone"
-          placeholder="Phone"
           required
         />
         
         <Input
           name="email"
-          label="Email"
-          placeholder="Email"
           type="email"
+          label="Email"
           required
         />
         

@@ -13,6 +13,7 @@ import {
   Plug 
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { THEME_COLORS, type CategoryKey } from './theme-colors';
 
 interface NavItem {
   href: string;
@@ -46,12 +47,13 @@ export const communityNavItems: CommunityNavItem[] = [
     { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
 ];
 
+// Map sections to centralized theme colors
 const themeColors: Record<string, { active: string; bg: string }> = {
-    overview: { active: 'var(--overview-color-active)', bg: 'var(--overview-color-border)' },
-    members: { active: 'var(--members-color-active)', bg: 'var(--members-color-border)' },
-    broadcast: { active: 'var(--broadcast-color-active)', bg: 'var(--broadcast-color-border)' },
-    inbox: { active: 'var(--inbox-color-active)', bg: 'var(--inbox-color-border)' },
-    feed: { active: 'var(--feed-color-active)', bg: 'var(--feed-color-border)' },
+    overview: { active: THEME_COLORS.overview.borderSolid, bg: THEME_COLORS.overview.bg },
+    members: { active: THEME_COLORS.members.borderSolid, bg: THEME_COLORS.members.bg },
+    broadcast: { active: THEME_COLORS.broadcast.borderSolid, bg: THEME_COLORS.broadcast.bg },
+    inbox: { active: THEME_COLORS.inbox.borderSolid, bg: THEME_COLORS.inbox.bg },
+    feed: { active: THEME_COLORS.feed.borderSolid, bg: THEME_COLORS.feed.bg },
     ticketing: { active: 'var(--ticketing-color-active)', bg: 'var(--ticketing-color-border)' },
     integrations: { active: 'var(--integrations-color-active)', bg: 'var(--integrations-color-border)' },
     analytics: { active: 'var(--analytics-color-active)', bg: 'var(--analytics-color-border)' },

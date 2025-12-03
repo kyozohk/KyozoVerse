@@ -5,14 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './CustomButton';
-
-const hexToRgba = (hex: string, alpha: number) => {
-  if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
+import { hexToRgba } from '@/lib/theme-colors';
 
 interface FeatureCardProps {
   title: string;
@@ -65,11 +58,12 @@ export function FeatureCard({
         {/* Left content */}
        <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-[45%] justify-center h-auto md:h-full">
           <h2
-            className="text-5xl md:text-6xl mb-4 text-left leading-tight md:leading-relaxed"
+            className="text-5xl md:text-6xl mb-4 text-left leading-tight"
             style={{
               ...textStyle,
               fontFamily: '"Playfair Display", "Gloock", serif',
               textAlign: 'left',
+              lineHeight: '1',
             }}
           >
             {title}

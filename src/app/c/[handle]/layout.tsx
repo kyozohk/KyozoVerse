@@ -12,6 +12,7 @@ import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/componen
 import { FirebaseError } from 'firebase/app';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { THEME_COLORS } from '@/lib/theme-colors';
 
 export default function PublicLayout({
   children,
@@ -71,7 +72,7 @@ export default function PublicLayout({
         >
           {/* Global header for all public pages */}
           <header className=" backdrop-blur-sm shadow-sm sticky top-0 z-10">
-            <div className="container mx-auto py-3 px-4 flex justify-between items-center">
+            <div className="container mx-auto py-3 px-40 flex justify-between items-center">
               <Link href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2">
                 <Image src="/logo.png" alt="KyozoVerse" width={120} height={35} className="brightness-150" />
               </Link>
@@ -106,8 +107,8 @@ export default function PublicLayout({
           title="Welcome Back"
           description="Sign in to access your Kyozo dashboard and community."
           backgroundImage="/bg/light_app_bg.png"
-          videoSrc="/bg/form-right.mp4"
-          color="#C170CF"
+          videoSrc="/videos/form-right.mp4"
+          color={THEME_COLORS.overview.primary}
         >
           <div className="flex flex-col h-full">
             <div className="flex-grow">
