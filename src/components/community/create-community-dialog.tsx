@@ -63,7 +63,7 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={tags.length === 0 ? "e.g. Deep House, DJs" : "Add another..."}
-                    className="flex-grow bg-transparent focus:outline-none p-1"
+                    className="flex-grow bg-transparent focus:outline-none p-1 text-foreground placeholder:text-muted-foreground/80"
                 />
             </div>
         </div>
