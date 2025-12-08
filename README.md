@@ -35,3 +35,15 @@ curl -X POST 'https://waba.360dialog.io/v1/configs/webhook' \
   -H 'D360-API-Key: aZ7WxT0jyL2oQlzkHHIbD4zvAK' \
   -H 'Content-Type: application/json' \
   -d '{"url": "https://4edf439c13a8.ngrok-free.app/api/whatsapp/webhook"}'
+
+
+curl -X POST 'https://api.resend.com/emails' \
+  -H 'Authorization: Bearer re_UScG81Gc_B3RxAM7JFxgDHczf5RUNLTQp' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "from": "Acme <onboarding@resend.dev>",
+    "to": ["ashok@kyozo.space"],
+    "subject": "hello world",
+    "html": "<p>it works!</p>",
+    "reply_to": "onboarding@resend.dev"
+  }'
