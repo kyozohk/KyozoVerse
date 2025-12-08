@@ -1,11 +1,12 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for community membership
+    // Helper function to check for community membership in the top-level collection
     function isCommunityMember(communityId) {
-      return request.auth != null && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid));
+      return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
     }
 
     // Communities can be read by anyone
@@ -19,16 +20,18 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == memberId;
     }
 
-    // Blogs (posts) have more granular rules
+    // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow read access if...
-      allow read: if 
-        // 1. The post is public
-        resource.data.visibility == 'public' ||
-        // 2. The user is a logged-in member of the community the post belongs to
-        (request.auth != null && isCommunityMember(resource.data.communityHandle));
+      // Allow public read for get requests
+      allow get: if resource.data.visibility == 'public';
 
-      // Allow create/update/delete only for the author of the post
+      // Allow list requests only for public posts
+      allow list: if request.query.get('where', [['visibility', '==', 'public']]);
+
+      // Allow authenticated users to read their own non-public posts.
+      allow read: if request.auth != null && request.auth.uid == resource.data.authorId;
+
+      // Allow create/update/delete only for the author of the post.
       allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
     }
 

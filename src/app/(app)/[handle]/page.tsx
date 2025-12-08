@@ -243,6 +243,10 @@ export default function CommunityPage() {
     return <div className="p-8 text-center text-foreground">Community not found.</div>;
   }
 
+  // Calculate member count excluding owner
+  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
+  const memberCountExcludingOwner = nonOwnerMembers.length;
+
   return (
     <div className="space-y-8">
       <CommunityHeader 
@@ -251,6 +255,7 @@ export default function CommunityPage() {
         onEdit={() => setIsEditDialogOpen(true)}
         onDelete={() => setIsDeleteConfirmOpen(true)}
         onAddMember={() => setIsAddMemberDialogOpen(true)}
+        memberCount={memberCountExcludingOwner}
       />
       <div className="px-4 md:px-8">
         <CommunityStats community={community} />

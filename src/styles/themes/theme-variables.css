@@ -38,14 +38,14 @@
   --overview-color-active: #C170CF;
   --overview-color-border: rgba(193, 112, 207, 0.3);
 
-  --members-color-active: #06C4B5;
-  --members-color-border: rgba(6, 196, 181, 0.3);
+  --members-color-active: #CF7770;
+  --members-color-border: rgba(207, 119, 112, 0.3);
 
   --broadcast-color-active: #E1B327;
   --broadcast-color-border: rgba(225, 179, 39, 0.3);
 
-  --inbox-color-active: #CF7770;
-  --inbox-color-border: rgba(207, 119, 112, 0.3);
+  --inbox-color-active: #06C4B5;
+  --inbox-color-border: rgba(6, 196, 181, 0.3);
 
   --feed-color-active: #699FE5;
   --feed-color-border: rgba(105, 159, 229, 0.3);

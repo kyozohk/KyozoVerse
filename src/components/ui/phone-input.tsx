@@ -27,6 +27,7 @@ interface PhoneInputProps {
 const COUNTRIES: Country[] = [
   { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
   { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧' },
+  { code: 'HK', name: 'Hong Kong', dialCode: '+852', flag: '🇭🇰' },
   { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦' },
   { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺' },
   { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪' },
@@ -43,7 +44,6 @@ const COUNTRIES: Country[] = [
   { code: 'ID', name: 'Indonesia', dialCode: '+62', flag: '🇮🇩' },
   { code: 'VN', name: 'Vietnam', dialCode: '+84', flag: '🇻🇳' },
   { code: 'KR', name: 'South Korea', dialCode: '+82', flag: '🇰🇷' },
-  { code: 'HK', name: 'Hong Kong', dialCode: '+852', flag: '🇭🇰' },
   { code: 'TW', name: 'Taiwan', dialCode: '+886', flag: '🇹🇼' },
 ];
 
@@ -59,7 +59,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   className,
   label = 'Phone'
 }) => {
-  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
+  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES.find(c => c.code === 'HK') || COUNTRIES[0]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,10 +68,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
   useEffect(() => {
     if (value) {
-      const country = COUNTRIES.find(c => value.startsWith(c.dialCode + ' '));
-      if (country) {
-        setSelectedCountry(country);
-        setPhoneNumber(value.substring(country.dialCode.length + 1));
+      const matchingCountry = COUNTRIES.sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => value.startsWith(c.dialCode.replace('+', '')));
+      if (matchingCountry) {
+        setSelectedCountry(matchingCountry);
+        setPhoneNumber(value.substring(matchingCountry.dialCode.length -1).trim());
       } else {
         setPhoneNumber(value);
       }
@@ -79,7 +79,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   }, [value]);
 
   useEffect(() => {
-    const fullNumber = phoneNumber ? `${selectedCountry.dialCode} ${phoneNumber}` : '';
+    const fullNumber = phoneNumber ? `${selectedCountry.dialCode.replace('+', '')}${phoneNumber.replace(/\D/g, '')}` : '';
     if (onChange && fullNumber !== value) {
       onChange(fullNumber);
     }
@@ -112,7 +112,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   };
 
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
+    const newValue = e.target.value.replace(/[^\d]/g, '');
     setPhoneNumber(newValue);
   };
 
@@ -123,11 +123,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   );
 
   const inputId = id || React.useId();
-  const hasValue = phoneNumber.length > 0;
 
   return (
     <div className={cn("inputWrapper", className)} ref={containerRef}>
-      <div className={cn("inputContainer relative flex items-center", error ? "hasError" : "")}>
+      <div className={cn("inputContainer phone-input-container relative flex items-center", error ? "hasError" : "")}>
         <button
           type="button"
           className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-between gap-1.5 px-2 py-1 bg-transparent z-10 rounded hover:bg-muted/50"
@@ -135,6 +134,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           disabled={disabled}
         >
           <span className="text-lg leading-none">{selectedCountry.flag}</span>
+          <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
           <span className="text-xs text-muted-foreground">▼</span>
         </button>
 
@@ -144,10 +144,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search..."
+                placeholder="Search country..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-2 text-sm border rounded-md"
+                className="w-full p-2 text-sm border rounded-md text-foreground bg-background"
               />
             </div>
             <div className="py-1">
@@ -156,7 +156,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
                   key={country.code}
                   type="button"
                   className={cn(
-                    "flex items-center w-full px-3 py-2 text-left hover:bg-muted/50",
+                    "flex items-center w-full px-3 py-2 text-left hover:bg-muted/50 text-foreground",
                     selectedCountry.code === country.code ? "bg-muted" : ""
                   )}
                   onClick={(e) => {
@@ -182,11 +182,9 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           placeholder=" "
           disabled={disabled}
           required={required}
-          className="input pl-20"
+          className="input pl-28" 
         />
-        <label htmlFor={inputId} className={cn(
-          "floatingLabel transition-all"
-        )}>
+        <label htmlFor={inputId} className="floatingLabel phone-floating-label">
           {label}
         </label>
       </div>

@@ -8,8 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
-import { Progress } from '../ui/progress';
-import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon, PlusCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
 import { CustomFormDialog, CustomButton, Dropzone, Switch } from '@/components/ui';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -29,6 +28,50 @@ interface CreateCommunityDialogProps {
     onCommunityUpdated?: () => void;
 }
 
+const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[]) => void }) => {
+    const [inputValue, setInputValue] = useState('');
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && inputValue.trim() !== '') {
+            e.preventDefault();
+            if (!tags.includes(inputValue.trim())) {
+                setTags([...tags, inputValue.trim()]);
+            }
+            setInputValue('');
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setTags(tags.filter(tag => tag !== tagToRemove));
+    };
+
+    return (
+        <div className="inputWrapper relative">
+            <div className="flex flex-wrap items-center gap-2 p-2 border rounded-lg input" style={{ borderColor: 'var(--input-border-color, var(--button-border))' }}>
+                {tags.map((tag, index) => (
+                    <div key={index} className="flex items-center gap-1 bg-muted rounded-full px-3 py-1 text-sm" style={{ color: 'var(--primary-purple)' }}>
+                        <span className="font-medium">{tag}</span>
+                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-foreground" style={{ color: 'var(--primary-purple)' }}>
+                            <X className="h-3 w-3" />
+                        </button>
+                    </div>
+                ))}
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder=" "
+                    className="flex-grow bg-transparent focus:outline-none p-1 text-foreground"
+                />
+            </div>
+            <label className="floatingLabel" style={{ top: tags.length > 0 ? '-0.5rem' : '0.7rem', fontSize: tags.length > 0 ? '0.75rem' : '1rem', backgroundColor: tags.length > 0 ? '#EDEDED' : 'transparent', color: tags.length > 0 ? 'var(--input-border-color, #C170CF)' : 'var(--text-secondary)' }}>
+                Tags
+            </label>
+        </div>
+    );
+};
+
 
 export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, onCommunityUpdated }: CreateCommunityDialogProps) {
     const { user } = useAuth();
@@ -38,11 +81,13 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
 
     const [formData, setFormData] = useState({
         name: '',
-        tagline: '',
         lore: '',
         mantras: '',
+        location: '',
         communityPrivacy: 'public',
     });
+    
+    const [tags, setTags] = useState<string[]>([]);
     
     // States for images
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
@@ -58,16 +103,18 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
         if (existingCommunity) {
             setFormData({
                 name: existingCommunity.name || '',
-                tagline: existingCommunity.tagline || '',
                 lore: (existingCommunity as any).lore || '',
                 mantras: (existingCommunity as any).mantras || '',
+                location: (existingCommunity as any).location || '',
                 communityPrivacy: (existingCommunity as any).communityPrivacy || 'public',
             });
+            setTags(existingCommunity.tags || []);
             setProfileImageUrl(existingCommunity.communityProfileImage || null);
             setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
         } else {
             // Reset form when creating a new community
-            setFormData({ name: '', tagline: '', lore: '', mantras: '', communityPrivacy: 'public' });
+            setFormData({ name: '', lore: '', mantras: '', location: '', communityPrivacy: 'public' });
+            setTags([]);
             setProfileImageFile(null);
             setBackgroundImageFile(null);
             setProfileImageUrl(null);
@@ -137,6 +184,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
             const communityRef = doc(db, 'communities', existingCommunity.communityId);
             await updateDoc(communityRef, {
                 ...formData,
+                tags,
                 handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
                 communityProfileImage: updatedProfileImageUrl,
                 communityBackgroundImage: updatedBackgroundImageUrl,
@@ -166,8 +214,9 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
 
         setIsSubmitting(true);
         
-        const communityData = {
+        const communityData: any = {
             ...formData,
+            tags,
             handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
             ownerId: user.uid,
             createdAt: serverTimestamp(),
@@ -254,8 +303,6 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
         setProfileImageUrl(src);
         setProfileImageFile(null); // Clear any uploaded file
     };
-    
-    const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
         <CustomFormDialog
@@ -265,15 +312,15 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
         >
             <div className="flex flex-col h-full">
-                <div className="flex-grow space-y-4">
-                    <Progress value={progress} className="w-full mb-8" />
+                <div className="flex-grow space-y-4 pt-4">
                     
                     {currentStep === 0 && (
                         <div className="space-y-4">
                             <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
-                            <Textarea label="Tagline" value={formData.tagline} onChange={(e) => handleValueChange('tagline', e.target.value)} rows={2} />
                             <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={4} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
+                            <TagInput tags={tags} setTags={setTags} />
+                            <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} />
                             <div className="flex items-center space-x-2 pt-2">
                                 <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'private' : 'public')} />
                                 <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
@@ -292,14 +339,13 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                                 <label className="text-sm text-muted-foreground mb-1 block">Profile Image</label>
                                 <div className="flex items-center gap-4">
                                     {profileImageOptions.map(src => (
-                                        <Image key={src} src={src} alt="profile option" width={48} height={48} 
-                                        className={`rounded-full border-2 cursor-pointer hover:border-primary ${profileImageUrl === src ? 'border-primary' : 'border-transparent'}`} 
-                                        onClick={() => handlePresetImageClick(src)}
-                                        />
+                                        <div key={src} className="w-12 h-12 rounded-full overflow-hidden border-2 cursor-pointer hover:border-primary" style={{ borderColor: profileImageUrl === src ? 'var(--input-border-color, #C170CF)' : 'transparent' }} onClick={() => handlePresetImageClick(src)}>
+                                            <Image src={src} alt="profile option" width={48} height={48} className="w-full h-full object-cover" />
+                                        </div>
                                     ))}
-                                    <div onClick={handleBrowseClick} className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
+                                    <div onClick={handleBrowseClick} className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary overflow-hidden">
                                         {profileImageFile || (profileImageUrl && !profileImageOptions.includes(profileImageUrl)) ? (
-                                            <Image src={profileImageUrl!} alt="profile preview" width={48} height={48} className="rounded-full object-cover" />
+                                            <Image src={profileImageUrl!} alt="profile preview" width={48} height={48} className="w-full h-full object-cover" />
                                         ) : (
                                             <PlusCircle className="h-6 w-6 text-muted-foreground" />
                                         )}
@@ -359,3 +405,4 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
         </CustomFormDialog>
     );
 }
+    

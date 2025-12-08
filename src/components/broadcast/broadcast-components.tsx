@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Check, Image as ImageIcon } from 'lucide-react';
 import { CommunityMember } from '@/lib/types';
-import { MembersList } from './members-list';
+import { MembersList } from '../community/members-list';
 import { usePathname } from 'next/navigation';
 import { getThemeForPath } from '@/lib/theme-utils';
 
@@ -74,11 +74,6 @@ export const RecipientsStep = ({ members, onMemberClick, selectedMembers }: { me
                   selectedMembers={selectedMembers}
                   selectable={true}
                   viewMode="list"
-                  showEmail={false}
-                  showPhone={true}
-                  showStatus={false}
-                  showJoinDate={false}
-                  activeColor={activeColor || '#C170CF'} // Default to purple if no theme
               />
           </div>
       </div>

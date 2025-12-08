@@ -1,5 +1,6 @@
 
 
+
 /* Import theme variables */
 @import './themes/theme-variables.css';
 
@@ -13,13 +14,36 @@
   font-size: 1rem;
   font-weight: 400;
   border-radius: var(--button-radius);
-  color: var(--button-text-color);
-  background-color: rgba(132, 52, 132, 0.2);
-  border: 1px solid var(--button-border);
+  color: var(--button-text-color, var(--primary-purple));
+  border: 1px solid var(--button-border-color, var(--button-border));
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
+  overflow: hidden;
+  background-color: #EDEDED;
+  background-image: url('/bg/light_app_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--button-bg-color, rgba(132, 52, 132, 0.2)); /* Reduced opacity for more subtlety */
+  z-index: 0;
+  transition: background-color 0.2s ease;
+}
+
+.button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.button:hover::before {
+  background-color: var(--button-bg-color-hover, rgba(132, 52, 132, 0.3)); /* Slightly darker on hover */
 }
 
 .button:hover {
@@ -172,7 +196,7 @@ input::placeholder {
 
 .floatingLabel {
   position: absolute;
-  top: 0.9rem;
+  top: 0.7rem;
   left: 0.75rem;
   font-size: 1rem;
   color: var(--text-secondary);
@@ -188,7 +212,7 @@ input::placeholder {
 
 .input:focus ~ .floatingLabel,
 .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -0.2rem;
+  top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
@@ -210,7 +234,7 @@ input::placeholder {
 /* Floating label behaviour for select trigger */
 .selectTrigger:focus ~ .floatingLabel,
 .selectTrigger.select-has-value ~ .floatingLabel {
-  top: -0.2rem;
+  top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
   color: var(--input-border-color, #C170CF);
@@ -344,10 +368,23 @@ input::placeholder {
 }
 
 /* Fix for phone input label */
-.phone-dropdown + input + label.floatingLabel {
-  left: 5.25rem;
+.phone-floating-label {
+    left: 0.75rem !important; /* Reset to default */
 }
-.phone-dropdown + input:focus ~ label.floatingLabel,
-.phone-dropdown + input:not(:placeholder-shown) ~ label.floatingLabel {
+.phone-input-container .input:focus ~ .phone-floating-label,
+.phone-input-container .input:not(:placeholder-shown) ~ .phone-floating-label {
+  /* No special override needed now */
+}
+.phone-input-container .input:focus ~ .floatingLabel,
+.phone-input-container .input:not(:placeholder-shown) ~ .floatingLabel {
   left: 0.75rem;
+  transform: translateY(-110%);
+  font-size: 0.75rem;
+}
+
+
+.button-outline {
+  --button-border-color: var(--color-override, var(--primary-purple));
+  --button-bg-color: var(--color-override-bg, rgba(132, 52, 132, 0.2));
+  --button-bg-color-hover: var(--color-override-bg-hover, rgba(132, 52, 132, 0.3));
 }

@@ -37,13 +37,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(firebaseUser);
       setLoading(false);
       
-      const isPublicPath = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/c/') || pathname.startsWith('/invite');
+      const isPublicPath = pathname === '/' || pathname.startsWith('/c/') || pathname.startsWith('/invite');
       
-      // TEMP: Disable redirect from root path for Willer birthday campaign
-      if (firebaseUser && isPublicPath && pathname !== '/landing' && pathname !== '/') {
+      // Don't redirect if user is on /c/ routes (public community pages)
+      if (firebaseUser && isPublicPath && !pathname.startsWith('/c/')) {
         router.replace('/communities');
       } else if (!firebaseUser && !isPublicPath) {
-        // router.replace('/landing');
         router.replace('/');
       }
     });
@@ -65,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await firebaseSignOut();
-    router.push('/landing');
+    router.push('/');
   }
 
   return (

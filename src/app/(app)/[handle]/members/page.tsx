@@ -157,21 +157,34 @@ export default function CommunityMembersPage() {
         getDocs(phoneQuery2)
       ]);
       
-      // Check if user exists by email or phone
+      // Check if user exists by email or phone - reuse if found
       const existingByEmail = !emailSnap.empty;
       const existingByPhone = !phoneSnap.empty || !phoneSnap2.empty;
       
-      if (existingByEmail || existingByPhone) {
-        const existingUser = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
-        const userData = existingUser.data();
-        throw new Error(
-          `A user with this ${existingByEmail ? 'email' : 'phone number'} already exists (${userData.displayName || userData.email}). Please use a different ${existingByEmail ? 'email' : 'phone number'} or ask them to login.`
-        );
-      }
+      let snap = emailSnap;
       
-      const snap = emailSnap;
-  
-      if (snap.empty) {
+      if (existingByEmail || existingByPhone) {
+        // User exists - reuse them
+        const existingUser = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
+        userId = existingUser.id;
+        userDetails = existingUser.data() as User;
+        
+        console.log(`Found existing user: ${userDetails.displayName || userDetails.email} (${userId}). Reusing for community.`);
+        
+        // Update phone if needed
+        const updateData: any = {};
+        if (normalizedPhone && (userDetails as any).phone !== normalizedPhone) {
+          updateData.phone = normalizedPhone;
+          updateData.phoneNumber = normalizedPhone;
+          updateData.wa_id = wa_id;
+          (userDetails as any).phone = normalizedPhone;
+        } else if (!(userDetails as any).wa_id) {
+          updateData.wa_id = wa_id;
+        }
+        if (Object.keys(updateData).length > 0) {
+          await updateDoc(doc(db, "users", userId), updateData);
+        }
+      } else {
         // User does not exist, create a new one
         console.log(`No user found with email ${data.email}. Creating a new user.`);
         
@@ -200,27 +213,6 @@ export default function CommunityMembersPage() {
             }
             throw authError;
         }
-  
-      } else {
-        // User exists, use their data
-        const userDoc = snap.docs[0];
-        userId = userDoc.id;
-        userDetails = userDoc.data() as User;
-        // Ensure phone number and wa_id are updated if needed
-        const updateData: any = {};
-        if (normalizedPhone && (userDetails as any).phone !== normalizedPhone) {
-          updateData.phone = normalizedPhone;
-          updateData.phoneNumber = normalizedPhone;
-          updateData.wa_id = wa_id;
-          (userDetails as any).phone = normalizedPhone;
-        } else if (!(userDetails as any).wa_id) {
-          // Add wa_id if it doesn't exist
-          updateData.wa_id = wa_id;
-        }
-        if (Object.keys(updateData).length > 0) {
-          await updateDoc(doc(db, "users", userId), updateData);
-        }
-        console.log(`Found existing user with UID: ${userId}, phone: ${normalizedPhone}, wa_id: ${wa_id}`);
       }
   
       // Add user to the community members subcollection

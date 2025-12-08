@@ -32,7 +32,7 @@ const GradientText = ({
     <Component
       className={cn('gradient-text', className)}
       style={{
-        background: `linear-gradient(${gradientDirection}, var(--gradient-purple), var(--gradient-teal))`,
+        background: `linear-gradient(${gradientDirection}, var(--gradient-start), var(--gradient-end))`,
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text',

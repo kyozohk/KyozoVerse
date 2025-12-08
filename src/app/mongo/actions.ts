@@ -108,18 +108,37 @@ export async function getRawDocument(collectionName: string, id: string): Promis
 }
 
 // Server Action to get all communities with search
-export async function getCommunities(search: string = ''): Promise<Community[]> {
+export async function getCommunities(searchQuery: string = '') {
   const { db } = await connectToDatabase();
-  const query = search ? { name: { $regex: search, $options: 'i' } } : {};
-  const communities = await db.collection('communities').find(query).sort({ name: 1 }).toArray();
-
-  return communities.map((community) => ({
-    id: community._id.toString(),
-    name: community.name,
-    memberCount: community.usersList?.length || 0,
-    communityProfileImage: community.communityProfileImage,
-    owner: community.owner.toString(),
-  }));
+  const query = searchQuery ? { name: { $regex: searchQuery, $options: 'i' } } : {};
+  const communities = await db.collection('communities').find(query).toArray();
+  
+  // Get all Firestore community handles in one query for efficiency
+  const firestoreCommunities = await adminFirestore
+    .collection('communities')
+    .select('handle')
+    .get();
+  
+  const exportedHandles = new Set(
+    firestoreCommunities.docs.map(doc => doc.data().handle)
+  );
+  
+  // Map MongoDB communities and check if they're exported
+  const communityData = communities.map((c: any) => {
+    const mongoId = c._id.toString();
+    const isExported = exportedHandles.has(c.slug);
+    
+    return {
+      id: mongoId,
+      name: c.name,
+      memberCount: c.memberCount || c.usersList?.length || 0,
+      communityProfileImage: c.communityProfileImage,
+      owner: c.owner?.toString() || 'Unknown',
+      isExported,
+    };
+  });
+  
+  return communityData;
 }
 
 // Server Action to get members of a specific community with search
@@ -348,51 +367,93 @@ export async function importCommunityToFirebase(data: any): Promise<{ success: b
       const mongoId = member._id.toString();
       const memberEmail = member.email || `${mongoId}@example.com`;
       let firebaseUid: string;
+      let userAlreadyExists = false;
       
       console.log(`[Importer] - Processing member: ${member.fullName} (${memberEmail})`);
 
-      try {
-        const userRecord = await adminAuth.createUser({
-          email: memberEmail,
-          password: randomBytes(16).toString('hex'),
-          displayName: member.fullName || `${member.firstName} ${member.lastName}`,
-          photoURL: member.profileImage || member.communityProfileImage,
-        });
-        firebaseUid = userRecord.uid;
-        console.log(`[Importer]   - Created new Firebase Auth user with UID: ${firebaseUid}`);
-      } catch (error: any) {
-        if (error.code === 'auth/email-already-exists') {
-          const userRecord = await adminAuth.getUserByEmail(memberEmail);
-          firebaseUid = userRecord.uid;
-          console.log(`[Importer]   - Found existing Firebase Auth user with UID: ${firebaseUid}`);
+      // First, check if user already exists in Firestore by mongoId
+      const existingUserByMongoId = await adminFirestore.collection('users')
+        .where('mongoId', '==', mongoId)
+        .limit(1)
+        .get();
+      
+      if (!existingUserByMongoId.empty) {
+        // User already exists with this mongoId
+        const existingUserDoc = existingUserByMongoId.docs[0];
+        firebaseUid = existingUserDoc.data().userId;
+        userAlreadyExists = true;
+        console.log(`[Importer]   - Found existing user in Firestore by mongoId with UID: ${firebaseUid}`);
+      } else {
+        // Check if user exists by email
+        const existingUserByEmail = await adminFirestore.collection('users')
+          .where('email', '==', memberEmail)
+          .limit(1)
+          .get();
+        
+        if (!existingUserByEmail.empty) {
+          // User already exists with this email
+          const existingUserDoc = existingUserByEmail.docs[0];
+          firebaseUid = existingUserDoc.data().userId;
+          userAlreadyExists = true;
+          console.log(`[Importer]   - Found existing user in Firestore by email with UID: ${firebaseUid}`);
+          
+          // Update the existing user document to add mongoId if missing
+          await adminFirestore.collection('users').doc(firebaseUid).update({
+            mongoId: mongoId,
+            updatedAt: new Date(),
+          });
+          console.log(`[Importer]   - Added mongoId to existing user document`);
         } else {
-          throw new Error(`Failed to create auth user for ${memberEmail}: ${error.message}`);
+          // User doesn't exist in Firestore, create new Firebase Auth user
+          try {
+            const userRecord = await adminAuth.createUser({
+              email: memberEmail,
+              password: randomBytes(16).toString('hex'),
+              displayName: member.fullName || `${member.firstName} ${member.lastName}`,
+              photoURL: member.profileImage || member.communityProfileImage,
+            });
+            firebaseUid = userRecord.uid;
+            console.log(`[Importer]   - Created new Firebase Auth user with UID: ${firebaseUid}`);
+          } catch (error: any) {
+            if (error.code === 'auth/email-already-exists') {
+              const userRecord = await adminAuth.getUserByEmail(memberEmail);
+              firebaseUid = userRecord.uid;
+              console.log(`[Importer]   - Found existing Firebase Auth user with UID: ${firebaseUid}`);
+            } else {
+              throw new Error(`Failed to create auth user for ${memberEmail}: ${error.message}`);
+            }
+          }
         }
       }
 
       userMap.set(mongoId, firebaseUid);
 
-      // Migrate user images from source Firebase Storage to target
-      console.log(`[Importer]   - Migrating user images...`);
-      const migratedAvatarUrl = await migrateFirebaseStorageImage(member.profileImage);
-      const migratedCoverUrl = await migrateFirebaseStorageImage(member.coverUrl);
+      // Only migrate images and create/update user document if user is new or needs updating
+      if (!userAlreadyExists) {
+        // Migrate user images from source Firebase Storage to target
+        console.log(`[Importer]   - Migrating user images...`);
+        const migratedAvatarUrl = await migrateFirebaseStorageImage(member.profileImage);
+        const migratedCoverUrl = await migrateFirebaseStorageImage(member.coverUrl);
 
-      const userDocRef = adminFirestore.collection('users').doc(firebaseUid);
-      await userDocRef.set({
-        userId: firebaseUid,
-        mongoId: mongoId,
-        email: memberEmail,
-        displayName: member.fullName,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        avatarUrl: migratedAvatarUrl || '',
-        coverUrl: migratedCoverUrl || '',
-        bio: member.bio || '',
-        phone: member.phoneNumber || '',
-        createdAt: new Date(member.createdAt),
-        updatedAt: new Date(member.updatedAt),
-      }, { merge: true });
-      console.log(`[Importer]   - Upserted Firestore user document with enriched data and migrated images.`);
+        const userDocRef = adminFirestore.collection('users').doc(firebaseUid);
+        await userDocRef.set({
+          userId: firebaseUid,
+          mongoId: mongoId,
+          email: memberEmail,
+          displayName: member.fullName,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          avatarUrl: migratedAvatarUrl || '',
+          coverUrl: migratedCoverUrl || '',
+          bio: member.bio || '',
+          phone: member.phoneNumber || '',
+          createdAt: new Date(member.createdAt),
+          updatedAt: new Date(member.updatedAt),
+        }, { merge: true });
+        console.log(`[Importer]   - Created Firestore user document with enriched data and migrated images.`);
+      } else {
+        console.log(`[Importer]   - Reusing existing user, skipping image migration and document creation.`);
+      }
     }
     console.log('[Importer] Step 1 Complete: All members processed.');
 

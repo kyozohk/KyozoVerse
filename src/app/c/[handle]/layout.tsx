@@ -9,32 +9,29 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CommunityAuthProviderWrapper } from '@/components/auth/community-auth-provider';
 import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
-import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
-import { useRouter } from 'next/navigation';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { THEME_COLORS } from '@/lib/theme-colors';
 
 export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
-  const { user: communityUser, signOut: communitySignOut } = useCommunityAuth();
+  const { user: communityUser, signIn: communitySignIn, signOut: communitySignOut } = useCommunityAuth();
 
   const handleSignIn = async () => {
     setError(null);
     try {
-      await signIn(email, password);
+      await communitySignIn(email, password);
       setIsSignInOpen(false);
-      // Main auth provider will redirect to dashboard
+      // Stay on the public feed page after sign in
     } catch (error: any) {
         let description = "An unexpected error occurred. Please try again.";
         if (error instanceof FirebaseError) {
@@ -66,7 +63,7 @@ export default function PublicLayout({
         <div 
           className="min-h-screen flex flex-col" 
           style={{
-            backgroundImage: `url('/bg/feed_bg.png')`,
+            backgroundImage: `url('/bg/feed_bg.jpeg')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',
@@ -75,7 +72,7 @@ export default function PublicLayout({
         >
           {/* Global header for all public pages */}
           <header className=" backdrop-blur-sm shadow-sm sticky top-0 z-10">
-            <div className="container mx-auto py-3 px-4 flex justify-between items-center">
+            <div className="container mx-auto py-3 px-40 flex justify-between items-center">
               <Link href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2">
                 <Image src="/logo.png" alt="KyozoVerse" width={120} height={35} className="brightness-150" />
               </Link>
@@ -110,8 +107,8 @@ export default function PublicLayout({
           title="Welcome Back"
           description="Sign in to access your Kyozo dashboard and community."
           backgroundImage="/bg/light_app_bg.png"
-          videoSrc="/bg/form-right.mp4"
-          color="#C170CF"
+          videoSrc="/videos/form-right.mp4"
+          color={THEME_COLORS.overview.primary}
         >
           <div className="flex flex-col h-full">
             <div className="flex-grow">

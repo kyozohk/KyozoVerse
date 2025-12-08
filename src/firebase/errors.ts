@@ -1,4 +1,4 @@
-import { User } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 
 export type SecurityRuleContext = {
   path: string;
@@ -11,7 +11,12 @@ export type SecurityRuleContext = {
 export class FirestorePermissionError extends Error {
   public readonly context: SecurityRuleContext;
   public auth: User | null = null;
-  public request: { auth: User | null, method: SecurityRuleContext['operation'], path: string, resource?: { data: any } };
+  public request: {
+    auth: User | null;
+    method: SecurityRuleContext['operation'];
+    path: string;
+    resource?: { data: any };
+  };
 
   constructor(context: SecurityRuleContext) {
     const message = `FirestoreError: Missing or insufficient permissions.`;
@@ -44,7 +49,9 @@ export class FirestorePermissionError extends Error {
   // Allow enriching the error with auth state after it's created.
   enrichWithAuth(user: User | null) {
     this.auth = user;
-    this.request.auth = user;
+    if (this.request) {
+      this.request.auth = user;
+    }
   }
 
   // Override toJSON to control the output in the Next.js error overlay.
@@ -57,5 +64,3 @@ export class FirestorePermissionError extends Error {
     };
   }
 }
-
-    

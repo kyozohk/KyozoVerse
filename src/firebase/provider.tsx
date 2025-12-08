@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { FirebaseApp } from 'firebase/app';
@@ -15,7 +15,10 @@ export interface FirebaseServices {
 
 const FirebaseContext = createContext<FirebaseServices | undefined>(undefined);
 
-export function FirebaseProvider({ children, ...services }: { children: ReactNode } & FirebaseServices) {
+export function FirebaseProvider({
+  children,
+  ...services
+}: { children: ReactNode } & FirebaseServices) {
   return (
     <FirebaseContext.Provider value={services}>
       <AuthContextProvider>

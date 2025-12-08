@@ -13,6 +13,7 @@ import {
   Plug 
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { THEME_COLORS, type CategoryKey } from './theme-colors';
 
 interface NavItem {
   href: string;
@@ -46,19 +47,20 @@ export const communityNavItems: CommunityNavItem[] = [
     { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
 ];
 
+// Map sections to centralized theme colors
 const themeColors: Record<string, { active: string; bg: string }> = {
-    overview: { active: '#C170CF', bg: 'rgba(193, 112, 207, 0.3)' },
-    members: { active: '#CF7770', bg: 'rgba(207, 119, 112, 0.3)' }, // Swapped with inbox
-    broadcast: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.3)' },
-    inbox: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.3)' }, // Swapped with members
-    feed: { active: '#699FE5', bg: 'rgba(105, 159, 229, 0.3)' },
-    ticketing: { active: '#475569', bg: 'rgba(71, 85, 105, 0.1)' },
-    integrations: { active: '#0891B2', bg: 'rgba(8, 145, 178, 0.1)' },
-    analytics: { active: '#4F46E5', bg: 'rgba(79, 70, 229, 0.1)' },
-    communities: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' },
-    subscription: { active: '#E1B327', bg: 'rgba(225, 179, 39, 0.1)' },
-    settings: { active: '#06C4B5', bg: 'rgba(6, 196, 181, 0.1)' },
-    default: { active: '#843484', bg: 'rgba(132, 52, 132, 0.1)' }
+    overview: { active: THEME_COLORS.overview.borderSolid, bg: THEME_COLORS.overview.bg },
+    members: { active: THEME_COLORS.members.borderSolid, bg: THEME_COLORS.members.bg },
+    broadcast: { active: THEME_COLORS.broadcast.borderSolid, bg: THEME_COLORS.broadcast.bg },
+    inbox: { active: THEME_COLORS.inbox.borderSolid, bg: THEME_COLORS.inbox.bg },
+    feed: { active: THEME_COLORS.feed.borderSolid, bg: THEME_COLORS.feed.bg },
+    ticketing: { active: 'var(--ticketing-color-active)', bg: 'var(--ticketing-color-border)' },
+    integrations: { active: 'var(--integrations-color-active)', bg: 'var(--integrations-color-border)' },
+    analytics: { active: 'var(--analytics-color-active)', bg: 'var(--analytics-color-border)' },
+    communities: { active: 'var(--communities-color-active)', bg: 'var(--communities-color-border)' },
+    subscription: { active: 'var(--subscription-color-active)', bg: 'var(--subscription-color-border)' },
+    settings: { active: 'var(--settings-color-active)', bg: 'var(--settings-color-border)' },
+    default: { active: 'var(--default-color-active)', bg: 'var(--default-color-border)' }
 };
 
 export const getThemeForPath = (path: string) => {

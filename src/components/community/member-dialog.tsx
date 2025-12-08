@@ -8,6 +8,7 @@ import { ProfileImageSelector } from './profile-image-selector';
 import { uploadFile } from "@/lib/upload-helper";
 import { useToast } from "@/hooks/use-toast";
 import { PhoneInput } from "../ui/phone-input";
+import { THEME_COLORS } from "@/lib/theme-colors";
 
 interface MemberDialogProps {
   open: boolean;
@@ -180,10 +181,12 @@ export function MemberDialog({
       title={title}
       description={description}
       backgroundImage="/bg/light_app_bg.png"
-      color="#843484" // Default Purple
+      videoSrc="/videos/form-right.mp4"
+      showVideo={true}
+      color={THEME_COLORS.members.primary}
     >
-      <div className="flex flex-col h-full gap-2">
-        <div className="space-y-4">
+      <div className="flex flex-col h-full">
+        <div className="flex-grow space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <Input
                     label="First Name"
@@ -226,7 +229,7 @@ export function MemberDialog({
           
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
         </div>
-        <div className="mt-auto flex flex-row justify-end gap-3 pt-4">
+        <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
           <CustomButton
             variant="outline"
             onClick={onClose}

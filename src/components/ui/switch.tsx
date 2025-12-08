@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -11,9 +12,13 @@ const Switch = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
+      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
       className
     )}
+    style={{
+      backgroundColor: props.checked ? 'var(--button-bg-color, rgba(132, 52, 132, 0.2))' : 'transparent',
+      borderColor: props.checked ? 'var(--input-border-color, #C170CF)' : 'var(--button-border, #ccc)',
+    }}
     {...props}
     ref={ref}
   >
@@ -27,3 +32,5 @@ const Switch = React.forwardRef<
 Switch.displayName = SwitchPrimitives.Root.displayName
 
 export { Switch }
+
+    

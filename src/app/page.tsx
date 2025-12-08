@@ -1,263 +1,321 @@
-// import { LandingPage } from '@/components/landing/landing-page';
 
-// export default function Home() {
-//   return <LandingPage />;
-// }
-
-// import React from 'react';
-// import { Hero } from '@/components/landing/hero';
-
-// export default function LandingPage() {
-//   return (
-//     <main className="py-24 px-4 md:py-32" style={{ backgroundColor: 'rgba(0, 0, 0, 0.08)' }}>
-//       <Hero />
-//       {/* Add more landing page sections here */}
-//     </main>
-//   );
-// }
-
-
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/firebase/auth';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
+import { RequestAccessDialog } from '@/components/auth/request-access-dialog';
+import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { FirebaseError } from 'firebase/app';
+import { Hero } from '@/components/landing/hero';
+import FeatureCard from '@/components/ui/feature-card';
+import VideoWall from '@/components/landing/video-wall';
+import { IphoneMockup } from '@/components/landing/iphone-mockup';
+import { ParallaxGrid } from '@/components/landing/parallax-grid';
+import BubbleMarquee from '@/components/landing/bubble-marquee';
+import ScrollRevealText from '@/components/landing/scroll-reveal-text';
+import AnimatedTitle from '@/components/landing/animated-title';
+import BottomText from '@/components/landing/bottom-text';
+import { THEME_COLORS } from '@/lib/theme-colors';
 
-export default function WillerBirthdayBash() {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    message: '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  // Auto-login with dev account on mount
+export default function Home() {
+  const router = useRouter();
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpName, setSignUpName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [signUpError, setSignUpError] = useState<string | null>(null);
+  const { user, signIn, signOut, signUp } = useAuth();
+
   useEffect(() => {
-    const autoLogin = async () => {
-      try {
-        await signInWithEmailAndPassword(auth, 'dev@kyozo.com', '123123123');
-        setIsAuthReady(true);
-      } catch (error) {
-        console.error('Auto-login failed:', error);
-        setIsAuthReady(true); // Continue anyway
-      }
-    };
-    autoLogin();
-  }, []);
+    // If the user is logged in, redirect them to the dashboard
+    if (user) {
+      router.replace('/communities');
+    }
+  }, [user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
 
+  const openWaitlist = () => {
+    setIsSignInOpen(false);
+    setIsSignUpOpen(false);
+    setIsResetPasswordOpen(false);
+    setIsWaitlistOpen(true);
+  };
+
+  const openSignIn = () => {
+    setIsWaitlistOpen(false);
+    setIsSignUpOpen(false);
+    setIsResetPasswordOpen(false);
+    setIsSignInOpen(true);
+  };
+
+  const openSignUp = () => {
+    setIsWaitlistOpen(false);
+    setIsSignInOpen(false);
+    setIsResetPasswordOpen(false);
+    setIsSignUpOpen(true);
+  };
+
+  const openResetPassword = () => {
+    setIsSignInOpen(false);
+    setIsSignUpOpen(false);
+    setIsWaitlistOpen(false);
+    setIsResetPasswordOpen(true);
+  };
+
+  const handleSignIn = async () => {
+    setError(null);
     try {
-      // Find the community by handle
-      const communitiesRef = collection(db, 'communities');
-      const q = query(communitiesRef, where('handle', '==', 'willers-birthday-bash'));
-      const communitySnapshot = await getDocs(q);
-
-      if (communitySnapshot.empty) {
-        throw new Error('Community not found');
-      }
-
-      const communityDoc = communitySnapshot.docs[0];
-      const communityId = communityDoc.id;
-
-      // Create a new user document
-      const usersRef = collection(db, 'users');
-      const newUserRef = await addDoc(usersRef, {
-        displayName: `${formData.firstName} ${formData.lastName}`,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        phoneNumber: formData.phone,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      // Add as community member
-      const memberRef = collection(db, 'communityMembers');
-      await addDoc(memberRef, {
-        userId: newUserRef.id,
-        communityId: communityId,
-        role: 'member',
-        status: 'active',
-        joinedAt: serverTimestamp(),
-        userDetails: {
-          displayName: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          phone: formData.phone,
-          avatarUrl: '',
-        },
-        messageToWill: formData.message,
-      });
-
-      // Update community member count
-      const communityDocRef = doc(db, 'communities', communityId);
-      await updateDoc(communityDocRef, {
-        memberCount: increment(1),
-      });
-
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error('Error submitting RSVP:', error);
-      alert('Failed to submit RSVP. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      await signIn(email, password);
+      setIsSignInOpen(false);
+      // The auth provider will handle the redirect
+    } catch (error: any) {
+        let description = "An unexpected error occurred. Please try again.";
+        if (error instanceof FirebaseError) {
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                description = "Invalid credentials. Please check your email and password and try again.";
+            }
+        }
+        setError(description);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleSignUp = async () => {
+    setSignUpError(null);
+    try {
+      if (!signUpName || !signUpEmail || !signUpPassword) {
+        setSignUpError("Please fill in all fields.");
+        return;
+      }
+      if (signUpPassword.length < 6) {
+        setSignUpError("Password must be at least 6 characters.");
+        return;
+      }
+      await signUp(signUpEmail, signUpPassword, { displayName: signUpName });
+      setIsSignUpOpen(false);
+      // The auth provider will handle the redirect
+    } catch (error: any) {
+        let description = "An unexpected error occurred. Please try again.";
+        if (error instanceof FirebaseError) {
+            if (error.code === 'auth/email-already-in-use') {
+                description = "This email is already registered. Please sign in instead.";
+            } else if (error.code === 'auth/invalid-email') {
+                description = "Invalid email address.";
+            } else if (error.code === 'auth/weak-password') {
+                description = "Password is too weak. Please use a stronger password.";
+            }
+        }
+        setSignUpError(description);
+    }
   };
-
-  if (isSubmitted) {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{
-          backgroundImage: 'url(/willer-bg.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div className="absolute inset-0 bg-black/10" />
-        <Card className="relative z-10 w-full max-w-md bg-black/20 border-white/20 backdrop-blur-sm">
-          <CardContent className="p-8 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Thank You! 🎉</h2>
-            <p className="text-white/90 text-lg mb-2">
-              We can't wait to see you at the party!
-            </p>
-            <p className="text-white/70 text-sm">
-              Yume at On Lok House<br />
-              39-43 Hollywood Rd<br />
-              9:30 PM
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  
+    // If the user is logged in, we render null while the useEffect redirects
+    if (user) {
+        return null;
+    }
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 bg-black"
-      style={{
-        backgroundImage: 'url(/willer-bg.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/60" />
+    <div className="flex flex-col min-h-screen bg-transparent">
+      <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-20">
+        <Image src="/logo.png" alt="Kyozo Logo" width={100} height={28} />
+        {user ? (
+          <CustomButton onClick={() => {
+            signOut();
+          }}>Sign Out</CustomButton>
+        ) : (
+          <CustomButton onClick={openSignIn}>Sign In</CustomButton>
+        )}
+      </header>
+
+      {/* Floating Join Waitlist Button */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+        <CustomButton onClick={openWaitlist}>
+          Join the waitlist
+        </CustomButton>
+      </div>
+
+      <main className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="py-24 px-4 md:py-32 w-full">
+          <Hero text={["Discover your", "creative universe"]} />    
+          
+          <section className="mt-24 space-y-12 mx-40">
+            <FeatureCard
+              title="No Likes No Followers Just Humans"
+              description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
+              buttonText="Join the waitlist"
+              buttonAction={openWaitlist}
+              color={THEME_COLORS.feed.primary}
+              RightComponent={<IphoneMockup src="/Mobile-white.png" />}
+              
+            />
+          </section>
+          <Hero text={["Where creative", "minds converge"]} />                  
+          <section className="mt-24 space-y-12 mx-40">            
+            <FeatureCard
+              title="Exclusive access and insights"
+              description="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
+              buttonText="Join the waitlist"
+              buttonAction={openWaitlist}
+              color={THEME_COLORS.broadcast.primary}
+              RightComponent={<VideoWall />}
+            />
+             <FeatureCard
+              title="Engage with visionary communities"
+              description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
+              buttonText="Join the waitlist"
+              buttonAction={openWaitlist}
+              color={THEME_COLORS.overview.primary}
+              RightComponent={<ParallaxGrid />}
+            />            
+          </section>
+        </div>
+        <Hero text={["We are", "human network"]} />    
+        {/* Edge-to-edge marquee */}
+        <BubbleMarquee
+          categories={[
+            {
+              category: 'inbox',
+              items: [ { text: 'Dance' }, { text: 'Music' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
+            },
+            {
+              category: 'overview',
+              items: [ { text: 'Contemporary' }, { text: 'Surrealism' }, { text: 'Impressionism' }, { text: 'Art' }, { text: 'Cubism' }]
+            },
+            {
+              category: 'broadcast',
+              items: [ { text: 'Craft' }, { text: 'Pottery' }, { text: 'Drawing' }, { text: 'Painting' }, { text: 'Jewelry' }]
+            },
+            {
+              category: 'members',
+              items: [ { text: 'Haute Couture' }, { text: 'Fashion' }, { text: 'Streetwear' }, { text: 'Boho' }, { text: 'Avant Garde' }]
+            },
+            {
+              category: 'feed',
+              items: [ { text: 'Electronic' }, { text: 'Dance' }, { text: 'Performance' }, { text: 'House' }, { text: 'Techno' }, { text: 'Trance' }]
+            }
+          ]}
+        />
+        <Hero text={["Join the Kyozo", "creative universe"]} />    
+      </main>
+
+      <RequestAccessDialog
+        open={isWaitlistOpen}
+        onOpenChange={setIsWaitlistOpen}
+      />
       
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-            Join Willer Birthday Bash
-          </h1>
-          <div className="text-white/90 text-lg space-y-1">
-            <p className="font-semibold">Yume at On Lok House</p>
-            <p>39-43 Hollywood Rd</p>
-            <p className="text-xl font-bold text-white">9:30 PM</p>
+      <CustomFormDialog 
+        open={isSignInOpen} 
+        onClose={() => setIsSignInOpen(false)}
+        title="Welcome Back"
+        description="Sign in to access your Kyozo dashboard and community."
+        backgroundImage="/bg/light_app_bg.png"
+        color={THEME_COLORS.overview.primary}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-grow">
+            <div className="space-y-4">
+              <Input 
+                label="Email" 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <div>
+                <PasswordInput 
+                  label="Password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                {error && (
+                  <p className="text-red-500 text-sm mt-2">
+                    {error} <button type="button" className="text-primary hover:underline" onClick={openResetPassword}>Forgot password?</button>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div className="mb-4">
+              <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
+            </div>
+
+            <div className="text-center text-sm text-secondary mt-4">
+              Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button>
+            </div>
+            <div className="text-center text-sm text-secondary mt-2">
+              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+            </div>
           </div>
         </div>
+      </CustomFormDialog>
 
-        {/* Form */}
-        <Card className="bg-black/60 border-white/20 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Input
-                    name="firstName"
-                    placeholder="First Name"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                    className="bg-white/80 border-white/20 text-white placeholder:text-white/80"
-                    style={{ color: 'white' }}
-                  />
-                </div>
-                <div>
-                  <Input
-                    name="lastName"
-                    placeholder="Last Name"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    style={{ color: 'white' }}
-                  />
-                </div>
-              </div>
+      <CustomFormDialog 
+        open={isSignUpOpen} 
+        onClose={() => setIsSignUpOpen(false)}
+        title="Create Your Account"
+        description="Sign up to create and manage your own communities on Kyozo."
+        backgroundImage="/bg/light_app_bg.png"
+        color={THEME_COLORS.overview.primary}
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <Input
+              label="Full Name"
+              type="text"
+              value={signUpName}
+              onChange={(e) => setSignUpName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={signUpEmail}
+              onChange={(e) => setSignUpEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+            />
+            <PasswordInput
+              label="Password"
+              value={signUpPassword}
+              onChange={(e) => setSignUpPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+            />
+          </div>
+          {signUpError && (
+            <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
+              {signUpError}
+            </div>
+          )}
+          
+          <div className="mt-6">
+            <div className="mb-4">
+              <CustomButton onClick={handleSignUp} className="w-full">Create Account</CustomButton>
+            </div>
 
-              <div>
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                  style={{ color: 'white' }}
-                />
-              </div>
+            <div className="text-center text-sm text-secondary mt-4">
+              Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button>
+            </div>
+            <div className="text-center text-sm text-secondary mt-2">
+              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+            </div>
+          </div>
+        </div>
+      </CustomFormDialog>
 
-              <div>
-                <Input
-                  name="phone"
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                  style={{ color: 'white' }}
-                />
-              </div>
-
-              <div>
-                <Textarea
-                  name="message"
-                  placeholder="Message to Will"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows={4}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 resize-none"
-                  style={{ color: 'white' }}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-white text-black hover:bg-white/90 font-semibold text-lg py-6"
-              >
-                {isSubmitting ? 'Submitting...' : 'RSVP Now'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+      <ResetPasswordDialog
+        open={isResetPasswordOpen}
+        onClose={() => setIsResetPasswordOpen(false)}
+        onGoBack={openSignIn}
+      />
     </div>
   );
 }

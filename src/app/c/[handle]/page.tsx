@@ -1,70 +1,60 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getCommunityByHandle } from '@/lib/community-utils';
-import { type Post, type User } from '@/lib/types';
+import { type Post, type User, type Community } from '@/lib/types';
 import { TextPostCard } from '@/components/community/feed/text-post-card';
 import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
-import Link from 'next/link';
 import Image from 'next/image';
-import { useCommunityAuth } from '@/hooks/use-community-auth';
-import { Button } from '@/components/ui/button';
 import { JoinCommunityDialog } from '@/components/community/join-community-dialog';
+import { useCommunityAuth } from '@/hooks/use-community-auth';
 
 export default function PublicFeedPage() {
   const params = useParams();
   const handle = params.handle as string;
 
-  const { user: communityUser, loading: communityAuthLoading } = useCommunityAuth();
-
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [communityData, setCommunityData] = useState<any>(null);
+  const [communityData, setCommunityData] = useState<Community | null>(null);
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
+  const { user: communityUser } = useCommunityAuth();
 
-  // Fetch community data and handle membership
   useEffect(() => {
     async function fetchCommunityData() {
       if (!handle) return;
+      setLoading(true);
       try {
         const data = await getCommunityByHandle(handle);
-        if (data) {
-          setCommunityData(data);
-          // If a user is logged in, add them to the community members
-          if (communityUser?.email && data.id) {
-            const memberRef = doc(db, 'communities', data.id, 'members', communityUser.uid);
-            getDoc(memberRef).then(docSnap => {
-              if (!docSnap.exists()) {
-                setDoc(memberRef, { 
-                  email: communityUser.email,
-                  uid: communityUser.uid,
-                  joinedAt: new Date(),
-                });
-              }
-            });
-          }
-        }
+        setCommunityData(data);
       } catch (error) {
         console.error('Error fetching community data:', error);
+      } finally {
+        // Post fetching will set loading to false
       }
     }
     fetchCommunityData();
-  }, [handle, communityUser]);
+  }, [handle]);
 
-  // Fetch posts
   useEffect(() => {
-    if (!handle) return;
+    if (!handle) {
+      setLoading(false);
+      return;
+    }
+
     const postsCollection = collection(db, 'blogs');
     const q = query(
       postsCollection,
       where('communityHandle', '==', handle),
+      where('visibility', '==', 'public'),
       orderBy('createdAt', 'desc')
     );
+
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const postsData: (Post & { id: string })[] = [];
       for (const postDoc of querySnapshot.docs) {
@@ -77,7 +67,9 @@ export default function PublicFeedPage() {
             if (userSnap.exists()) {
               authorData = userSnap.data() as User;
             }
-          } catch (error) {}
+          } catch (error) {
+             // If we can't fetch author, proceed without it
+          }
         }
         postsData.push({
           id: postDoc.id,
@@ -95,9 +87,6 @@ export default function PublicFeedPage() {
     return () => unsubscribe();
   }, [handle]);
 
-  const publicPosts = posts.filter(p => p.visibility === 'public');
-  const privatePosts = posts.filter(p => p.visibility !== 'public');
-
   const renderPost = (post: Post & { id: string }) => {
     const postProps = { ...post, _isPublicView: true };
     switch (post.type) {
@@ -111,11 +100,16 @@ export default function PublicFeedPage() {
       default:
         return null;
     }
-  }
-
+  };
+  
   return (
     <>
-      <JoinCommunityDialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen} />
+      <JoinCommunityDialog 
+        open={isJoinDialogOpen} 
+        onOpenChange={setIsJoinDialogOpen} 
+        communityId={communityData?.communityId || ''} 
+        communityName={communityData?.name || ''} 
+      />
       <div className="min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 pt-16 pb-8">
           <div className="overflow-hidden rounded-lg p-8">
@@ -131,12 +125,8 @@ export default function PublicFeedPage() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-semibold text-[#4D5F71]">@{handle}</h2>
-                  {communityData?.description ? (
-                    <p className="text-[#4D5F71]">{communityData.description}</p>
-                  ) : (
-                    <p className="text-[#4D5F71] italic opacity-70">Community feed</p>
-                  )}
+                  <h2 className="text-2xl font-semibold text-gray-400">@{handle}</h2>
+                  {communityData?.lore && <p className="text-gray-400">{communityData.lore}</p>}
                 </div>
               </div>
             </div>
@@ -150,6 +140,7 @@ export default function PublicFeedPage() {
                   paddingBottom: '0.2em',
                   lineHeight: '1.3'
                 }}>{communityData.name}</h1>
+                {communityData.mantras && <p className="text-xl text-gray-400 mt-2">{communityData.mantras}</p>}
               </div>
             )}
           </div>
@@ -157,38 +148,19 @@ export default function PublicFeedPage() {
 
         <main className="container mx-auto max-w-4xl px-4 py-8">
           <div className="space-y-6">
-            {loading || communityAuthLoading ? (
+            {loading ? (
               <FeedSkeletons />
             ) : posts.length === 0 ? (
               <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
                 <div className="text-center py-16 px-4">
                   <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
                   <p className="text-white/70 max-w-md mx-auto">
-                    There are no posts in this community yet.
+                    There are no public posts in this community yet.
                   </p>
                 </div>
               </div>
             ) : (
-              <>
-                {publicPosts.map(renderPost)}
-
-                {communityUser ? (
-                  privatePosts.map(renderPost)
-                ) : privatePosts.length > 0 ? (
-                  <div className="relative rounded-lg border-2 border-dashed border-gray-600 p-8 text-center my-8">
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-                    <div className="relative">
-                      <h3 className="text-2xl font-bold text-white mb-4">You are missing out!</h3>
-                      <p className="text-white/80 mb-6">
-                        Join the {communityData?.name || handle} community to view all private posts and engage with the creator.
-                      </p>
-                      <Button onClick={() => setIsJoinDialogOpen(true)} size="lg">
-                        Join to View All Content
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-              </>
+              posts.map(renderPost)
             )}
           </div>
         </main>

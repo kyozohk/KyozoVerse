@@ -1,75 +1,101 @@
+
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { CustomButton } from './CustomButton';
+import { hexToRgba } from '@/lib/theme-colors';
 
 interface FeatureCardProps {
   title: string;
-  subtitle: string;
   description: string;
   buttonText: string;
-  buttonHref: string;
+  buttonAction: () => void;
+  color: string;
+  RightComponent: React.ReactNode;
   className?: string;
-  imageUrl?: string;
-  color?: 'blue' | 'purple' | 'teal' | 'yellow' | 'red';
+  reverse?: boolean;
 }
 
 export function FeatureCard({
   title,
-  subtitle,
   description,
   buttonText,
-  buttonHref,
+  buttonAction,
+  color,
+  RightComponent,
   className,
-  imageUrl = '/Mobile-white.png',
-  color = 'blue',
+  reverse = false,
 }: FeatureCardProps) {
-  // Map color names to CSS variables from theme
-  const colorMap = {
-    blue: 'rgba(105, 159, 229, 0.5)', // feed color with 50% opacity
-    purple: 'rgba(132, 52, 132, 0.5)', // communities color with 50% opacity
-    teal: 'rgba(6, 196, 181, 0.5)', // settings color with 50% opacity
-    yellow: 'rgba(225, 179, 39, 0.5)', // broadcast color with 50% opacity
-    red: 'rgba(207, 119, 112, 0.5)', // inbox color with 50% opacity
+  
+  
+  const overlayStyle = {
+    backgroundColor: hexToRgba(color, 0.1)
   };
 
-  const bgColor = colorMap[color];
+  const textStyle = {
+    color: color
+  };
 
   return (
-    <div 
+    <div
       className={cn(
-        "relative flex flex-row rounded-2xl overflow-hidden shadow-lg",
+        "relative flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg w-full min-h-[600px] md:h-[600px]",
+        reverse ? "md:flex-row-reverse" : "md:flex-row",
         className
       )}
-      style={{ backgroundColor: bgColor }}
+      style={{
+        backgroundImage: `url('/bg/light_app_bg.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
     >
-      {/* Left content */}
-      <div className="flex flex-col p-8 w-3/5">
-        <h2 className="text-4xl font-bold text-white mb-2">{title}</h2>
-        <h3 className="text-2xl font-medium text-white mb-4">{subtitle}</h3>
-        <p className="text-white/90 mb-8">{description}</p>
-        <div className="mt-auto">
-          <Link 
-            href={buttonHref}
-            className="inline-flex items-center justify-center px-6 py-3 bg-white text-primary-purple font-medium rounded-full hover:bg-white/90 transition-colors"
+      {/* Color Overlay */}
+      <div className="absolute inset-0 z-0" style={overlayStyle}></div>
+
+      {/* Content */}
+      <div className={cn("relative z-10 flex flex-col md:flex-row flex-grow w-full h-full")}>
+        {/* Left content */}
+       <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-[45%] justify-center h-auto md:h-full order-2 md:order-1">
+          <h2
+            className="text-5xl md:text-6xl mb-4 text-left leading-tight"
+            style={{
+              ...textStyle,
+              fontFamily: '"Playfair Display", "Gloock", serif',
+              textAlign: 'left',
+              lineHeight: '1',
+            }}
           >
-            {buttonText}
-          </Link>
+            {title}
+          </h2>
+
+          <p
+            className="text-base md:text-lg font-light mb-8" // thinner + wider
+            style={{ color: '#5A5A5A', textAlign: 'left' }}
+          >
+            {description}
+          </p>
+
+          <div className="mt-auto flex justify-start">
+            <CustomButton
+              onClick={buttonAction}
+              variant="outline"
+              className="border-2 hover:bg-white"
+              color={color}
+              style={{
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              {buttonText}
+            </CustomButton>
+          </div>
         </div>
-      </div>
-      
-      {/* Right image */}
-      <div className="relative w-2/5">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Image
-            src={imageUrl}
-            alt="Feature illustration"
-            width={300}
-            height={600}
-            className="object-contain h-full"
-          />
+
+        
+        {/* Right component */}
+        <div className="relative w-full md:w-[55%] h-64 md:h-full flex items-center justify-center overflow-hidden flex-grow order-1 md:order-2 p-4 md:p-0">
+          {RightComponent}
         </div>
       </div>
     </div>
