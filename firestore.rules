@@ -22,13 +22,15 @@ service cloud.firestore {
 
     // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow public read for get requests
-      allow get: if resource.data.visibility == 'public';
+      // Allow anyone to read public posts
+      allow read: if resource.data.visibility == 'public';
+      
+      // Allow community members to read private posts from their community
+      allow read: if request.auth != null && 
+                     resource.data.visibility == 'private' &&
+                     isCommunityMember(resource.data.communityId);
 
-      // Allow list requests only for public posts
-      allow list: if request.query.get('where', [['visibility', '==', 'public']]);
-
-      // Allow authenticated users to read their own non-public posts.
+      // Allow authenticated users to read their own posts
       allow read: if request.auth != null && request.auth.uid == resource.data.authorId;
 
       // Allow create/update/delete only for the author of the post.

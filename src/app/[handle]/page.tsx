@@ -73,21 +73,31 @@ export default function PublicFeedPage() {
 
     const postsCollection = collection(db, 'blogs');
     
-    // If user is logged in as a member, show both public and private posts
-    // Otherwise, only show public posts
-    const visibilityConstraint = communityUser 
-      ? where('visibility', 'in', ['public', 'private'])
-      : where('visibility', '==', 'public');
-
-    const q = query(
+    // Create separate queries for public and private posts
+    // Then merge the results client-side
+    const publicQuery = query(
       postsCollection,
       where('communityHandle', '==', handle),
-      visibilityConstraint,
+      where('visibility', '==', 'public'),
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const postsData: (Post & { id: string })[] = [];
+    let unsubscribePublic: (() => void) | null = null;
+    let unsubscribePrivate: (() => void) | null = null;
+    
+    const allPosts = new Map<string, Post & { id: string }>();
+    
+    const updatePosts = () => {
+      const sortedPosts = Array.from(allPosts.values()).sort((a, b) => {
+        const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+        const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+        return bTime - aTime;
+      });
+      setPosts(sortedPosts);
+      setLoading(false);
+    };
+
+    const processSnapshot = async (querySnapshot: any) => {
       for (const postDoc of querySnapshot.docs) {
         const postData = postDoc.data() as Post;
         let authorData: User | null = null;
@@ -102,20 +112,41 @@ export default function PublicFeedPage() {
             // If we can't fetch author, proceed without it
           }
         }
-        postsData.push({
+        allPosts.set(postDoc.id, {
           id: postDoc.id,
           ...postData,
           author: authorData || { userId: 'unknown', displayName: 'Unknown User' },
           createdAt: postData.createdAt?.toDate(),
         });
       }
-      setPosts(postsData);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching posts:', error);
+      updatePosts();
+    };
+
+    // Subscribe to public posts
+    unsubscribePublic = onSnapshot(publicQuery, processSnapshot, (error) => {
+      console.error('Error fetching public posts:', error);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    // If user is logged in, also subscribe to private posts
+    if (communityUser && communityData.communityId) {
+      const privateQuery = query(
+        postsCollection,
+        where('communityHandle', '==', handle),
+        where('visibility', '==', 'private'),
+        orderBy('createdAt', 'desc')
+      );
+      
+      unsubscribePrivate = onSnapshot(privateQuery, processSnapshot, (error) => {
+        console.error('Error fetching private posts:', error);
+        // Don't set loading to false here, as public posts might still be loading
+      });
+    }
+
+    return () => {
+      unsubscribePublic?.();
+      unsubscribePrivate?.();
+    };
   }, [handle, communityData, communityUser]);
 
   const handleSignIn = async () => {
@@ -157,9 +188,50 @@ export default function PublicFeedPage() {
       // Clean phone number: remove + and spaces
       const cleanPhone = phone.replace(/[\s+]/g, '');
       
-      // For now, just sign in - you may want to add createUserWithEmailAndPassword
-      // TODO: Store firstName, lastName, cleanPhone in user profile
-      await signIn(email, password);
+      // Create new user account with Firebase Auth
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      const userCredential = await createUserWithEmailAndPassword(communityAuth, email, password);
+      
+      // Update user profile with display name
+      await updateProfile(userCredential.user, {
+        displayName: `${firstName} ${lastName}`
+      });
+      
+      // Store user profile in Firestore
+      const { setDoc } = await import('firebase/firestore');
+      const userRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userRef, {
+        userId: userCredential.user.uid,
+        displayName: `${firstName} ${lastName}`,
+        email: email,
+        phone: cleanPhone,
+        firstName: firstName,
+        lastName: lastName,
+        createdAt: new Date(),
+      }, { merge: true });
+      
+      // Add user as a member of this community
+      if (communityData?.communityId) {
+        const { addDoc } = await import('firebase/firestore');
+        const membersRef = collection(db, 'communityMembers');
+        const docId = `${userCredential.user.uid}_${communityData.communityId}`;
+        await setDoc(doc(db, 'communityMembers', docId), {
+          id: docId,
+          userId: userCredential.user.uid,
+          communityId: communityData.communityId,
+          role: 'member',
+          joinedAt: new Date(),
+          userDetails: {
+            displayName: `${firstName} ${lastName}`,
+            email: email,
+            phone: cleanPhone,
+          }
+        });
+        console.log('User added to community:', { userId: userCredential.user.uid, communityId: communityData.communityId });
+      }
+      
+      console.log('User created:', { firstName, lastName, cleanPhone, email });
+      
       setIsDialogOpen(false);
       router.replace(`/${handle}`);
       toast({
@@ -167,16 +239,29 @@ export default function PublicFeedPage() {
         description: "You're now signed up and signed in.",
       });
     } catch (error: any) {
+      console.error('Signup error:', error);
       let description = "An unexpected error occurred. Please try again.";
-      if (error instanceof FirebaseError) {
-        if (error.code === 'auth/email-already-in-use') {
-          description = "This email is already registered. Please sign in instead.";
-        } else if (error.code === 'auth/invalid-email') {
-          description = "Invalid email address.";
-        } else if (error.code === 'auth/weak-password') {
-          description = "Password is too weak. Please use a stronger password.";
-        }
+      
+      // Check for Firebase error code (works for both FirebaseError instances and plain error objects)
+      const errorCode = error?.code || '';
+      
+      if (errorCode.includes('auth/email-already-in-use')) {
+        description = "This email is already registered. Please sign in instead.";
+      } else if (errorCode.includes('auth/invalid-email')) {
+        description = "Invalid email address.";
+      } else if (errorCode.includes('auth/weak-password')) {
+        description = "Password is too weak. Please use a stronger password.";
+      } else if (errorCode.includes('auth/operation-not-allowed')) {
+        description = "Email/password sign up is not enabled. Please contact support.";
+      } else if (errorCode.includes('auth/missing-password')) {
+        description = "Please enter a password.";
+      } else if (errorCode) {
+        // Show the actual error code for debugging
+        description = `Error: ${errorCode}`;
+      } else if (error?.message) {
+        description = `Error: ${error.message}`;
       }
+      
       setError(description);
     }
   };
@@ -193,14 +278,25 @@ export default function PublicFeedPage() {
         description: "You're now signed in with Google.",
       });
     } catch (error: any) {
+      console.error('Google sign-in error:', error);
       let description = "An unexpected error occurred. Please try again.";
-      if (error instanceof FirebaseError) {
-        if (error.code === 'auth/popup-closed-by-user') {
-          description = "Sign-in was cancelled.";
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-          description = "An account already exists with this email using a different sign-in method.";
-        }
+      
+      // Check for Firebase error code
+      const errorCode = error?.code || '';
+      
+      if (errorCode.includes('auth/popup-closed-by-user')) {
+        description = "Sign-in was cancelled.";
+      } else if (errorCode.includes('auth/account-exists-with-different-credential')) {
+        description = "An account already exists with this email using a different sign-in method.";
+      } else if (errorCode.includes('auth/unauthorized-domain')) {
+        description = "This domain is not authorized for Google sign-in. Please contact support.";
+      } else if (errorCode) {
+        // Show the actual error code for debugging
+        description = `Error: ${errorCode}`;
+      } else if (error?.message) {
+        description = `Error: ${error.message}`;
       }
+      
       setError(description);
     }
   };
