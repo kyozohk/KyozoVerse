@@ -646,7 +646,7 @@ export default function PublicFeedPage() {
         </div>
 
         {/* Feed */}
-        <main className="container mx-auto max-w-4xl px-4 py-8">
+        <main className="container mx-auto max-w-6xl px-4 py-8">
           {communityUser && (
             <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
               <p className="text-sm text-green-400">
@@ -655,24 +655,29 @@ export default function PublicFeedPage() {
             </div>
           )}
           
-          <div className="space-y-6">
-            {loading ? (
-              <FeedSkeletons />
-            ) : posts.length === 0 ? (
-              <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
-                <div className="text-center py-16 px-4">
-                  <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
-                  <p className="text-white/70 max-w-md mx-auto">
-                    {communityUser 
-                      ? "There are no posts in this community yet."
-                      : "There are no public posts in this community yet. Sign in to see more content."}
-                  </p>
-                </div>
+          {/* Masonry Grid Layout */}
+          {loading ? (
+            <FeedSkeletons />
+          ) : posts.length === 0 ? (
+            <div className="rounded-lg bg-black/20 backdrop-blur-sm overflow-hidden">
+              <div className="text-center py-16 px-4">
+                <h2 className="text-2xl font-bold text-white mb-4">No posts to display</h2>
+                <p className="text-white/70 max-w-md mx-auto">
+                  {communityUser 
+                    ? "There are no posts in this community yet."
+                    : "There are no public posts in this community yet. Sign in to see more content."}
+                </p>
               </div>
-            ) : (
-              posts.map(renderPost)
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
+              {posts.map((post) => (
+                <div key={post.id} className="break-inside-avoid mb-4">
+                  {renderPost(post)}
+                </div>
+              ))}
+            </div>
+          )}
         </main>
 
         {/* Footer */}

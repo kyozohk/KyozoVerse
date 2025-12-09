@@ -9,8 +9,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-utils';
 import { type Post, type User } from '@/lib/types';
-import { CreatePostButtons, PostType } from '@/components/community/feed/create-post-buttons';
+import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
+import { Pencil, Mic, Video } from 'lucide-react';
 import { TextPostCard } from '@/components/community/feed/text-post-card';
 import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
@@ -160,17 +161,36 @@ export default function CommunityFeedPage() {
 
   const canEditContent = userRole === 'admin' || userRole === 'owner';
   
+  const buttonConfig = [
+    {
+      type: 'text' as PostType,
+      icon: Pencil,
+      color: '#C170CF',
+      label: 'Text',
+    },
+    {
+      type: 'audio' as PostType,
+      icon: Mic,
+      color: '#699FE5',
+      label: 'Audio',
+    },
+    {
+      type: 'video' as PostType,
+      icon: Video,
+      color: '#CF7770',
+      label: 'Video',
+    },
+  ];
+  
   return (
     <>
-      <ListView
-        title="Feed"
-        subtitle="Latest posts from the community."
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        loading={loading}
-        headerAction={
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Feed</h1>
+            <p className="text-sm text-muted-foreground">Latest posts from the community.</p>
+          </div>
           <a
             href={`/c/${handle}`}
             target="_blank"
@@ -184,35 +204,81 @@ export default function CommunityFeedPage() {
             </svg>
             Public View
           </a>
-        }
-      >
-        {filteredPosts.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-muted-foreground">
-              <h2 className="text-xl font-semibold">No posts to display</h2>
-              <p className="mt-2">
-                There are no posts in this community yet that match your search.
-              </p>
-            </div>
-        ) : (
-          filteredPosts.map((post) => {
-            switch (post.type) {
-              case 'text':
-              case 'image':
-                return <TextPostCard key={post.id} post={post} />;
-              case 'audio':
-                return <AudioPostCard key={post.id} post={post} />;
-              case 'video':
-                return <VideoPostCard key={post.id} post={post} />;
-              default:
-                return null;
-            }
-          })
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        {/* Create Post Buttons */}
+        {canEditContent && (
+          <div className="mb-6 flex gap-3 w-full">
+            {buttonConfig.map((config) => (
+              <button
+                key={config.type}
+                className="rounded h-10 flex items-center justify-center cursor-pointer border-0 outline-none hover:opacity-80 transition-opacity flex-1"
+                style={{
+                  backgroundColor: `${config.color}90`,
+                  color: 'white',
+                  border: `1px solid ${config.color}`,
+                }}
+                onClick={() => handleSelectPostType(config.type)}
+                title={`Post ${config.label}`}
+              >
+                <config.icon className="w-4 h-4 mr-2" />
+                {config.label}
+              </button>
+            ))}
+          </div>
         )}
-      </ListView>
-      {canEditContent && (
-        <CreatePostButtons onSelectPostType={handleSelectPostType} />
-      )}
-       <CreatePostDialog 
+
+        {/* Masonry Grid Layout */}
+        {loading ? (
+          <FeedSkeletons />
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <h2 className="text-xl font-semibold">No posts to display</h2>
+            <p className="mt-2">
+              There are no posts in this community yet that match your search.
+            </p>
+          </div>
+        ) : (
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
+            {filteredPosts.map((post) => {
+              // Enable edit/delete for all posts in owner dashboard
+              const postWithEditAccess = { ...post, _isPublicView: false };
+              
+              const PostCard = (() => {
+                switch (post.type) {
+                  case 'text':
+                  case 'image':
+                    return TextPostCard;
+                  case 'audio':
+                    return AudioPostCard;
+                  case 'video':
+                    return VideoPostCard;
+                  default:
+                    return null;
+                }
+              })();
+              
+              return PostCard ? (
+                <div key={post.id} className="break-inside-avoid mb-4">
+                  <PostCard post={postWithEditAccess} />
+                </div>
+              ) : null;
+            })}
+          </div>
+        )}
+      </div>
+      <CreatePostDialog 
         isOpen={isCreatePostOpen} 
         setIsOpen={setCreatePostOpen} 
         postType={postType} 
