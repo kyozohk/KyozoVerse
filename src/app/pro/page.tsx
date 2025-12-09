@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { CustomButton, CustomFormDialog, Input, PasswordInput, PhoneInput } from '@/components/ui';
+import { CustomButton, CustomFormDialog, Input, PasswordInput, PhoneInput, Checkbox } from '@/components/ui';
 import { RequestAccessDialog } from '@/components/auth/request-access-dialog';
+import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
@@ -34,6 +35,8 @@ export default function Home() {
   const [signUpFirstName, setSignUpFirstName] = useState('');
   const [signUpLastName, setSignUpLastName] = useState('');
   const [signUpPhone, setSignUpPhone] = useState('');
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const { user, signIn, signOut, signUp } = useAuth();
@@ -96,6 +99,10 @@ export default function Home() {
     try {
       if (!signUpFirstName || !signUpLastName || !signUpPhone || !signUpEmail || !signUpPassword) {
         setSignUpError("Please fill in all fields.");
+        return;
+      }
+      if (!agreedToPrivacy) {
+        setSignUpError("Please agree to the Privacy Policy to continue.");
         return;
       }
       if (signUpPassword.length < 6) {
@@ -310,6 +317,27 @@ export default function Home() {
               onChange={(e) => setSignUpPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
             />
+            <div className="mt-3">
+              <Checkbox
+                checked={agreedToPrivacy}
+                onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                label={
+                  <span className="text-sm text-gray-700">
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowPrivacyDialog(true);
+                      }}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Privacy Policy
+                    </button>
+                  </span>
+                }
+              />
+            </div>
           </div>
           {signUpError && (
             <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
@@ -336,6 +364,11 @@ export default function Home() {
         open={isResetPasswordOpen}
         onClose={() => setIsResetPasswordOpen(false)}
         onGoBack={openSignIn}
+      />
+
+      <PrivacyPolicyDialog 
+        open={showPrivacyDialog} 
+        onOpenChange={setShowPrivacyDialog}
       />
     </div>
   );

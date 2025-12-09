@@ -12,7 +12,8 @@ import { AudioPostCard } from '@/components/community/feed/audio-post-card';
 import { VideoPostCard } from '@/components/community/feed/video-post-card';
 import Image from 'next/image';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
-import { CustomButton, CustomFormDialog, Input, PasswordInput, PhoneInput } from '@/components/ui';
+import { CustomButton, CustomFormDialog, Input, PasswordInput, PhoneInput, Checkbox } from '@/components/ui';
+import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
 import { THEME_COLORS } from '@/lib/theme-colors';
 import { FirebaseError } from 'firebase/app';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +41,8 @@ export default function PublicFeedPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   
   const { user: communityUser, signIn, signOut } = useCommunityAuth();
 
@@ -143,6 +146,10 @@ export default function PublicFeedPage() {
         setError("Please fill in all fields.");
         return;
       }
+      if (!agreedToPrivacy) {
+        setError("Please agree to the Privacy Policy to continue.");
+        return;
+      }
       if (password.length < 6) {
         setError("Password must be at least 6 characters.");
         return;
@@ -206,6 +213,7 @@ export default function PublicFeedPage() {
     setPhone('');
     setEmail('');
     setPassword('');
+    setAgreedToPrivacy(false);
   };
 
   const handleSignOut = async () => {
@@ -286,6 +294,29 @@ export default function PublicFeedPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (isSignup ? handleSignUp() : handleSignIn())}
                 />
+                {isSignup && (
+                  <div className="mt-3">
+                    <Checkbox
+                      checked={agreedToPrivacy}
+                      onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                      label={
+                        <span className="text-sm text-gray-700">
+                          I agree to the{' '}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setShowPrivacyDialog(true);
+                            }}
+                            className="text-primary hover:underline font-medium"
+                          >
+                            Privacy Policy
+                          </button>
+                        </span>
+                      }
+                    />
+                  </div>
+                )}
                 {error && (
                   <p className="text-red-500 text-sm mt-2">{error}</p>
                 )}
@@ -346,7 +377,10 @@ export default function PublicFeedPage() {
         </div>
       </CustomFormDialog>
 
-      <div className="min-h-screen">
+      <div 
+        className="min-h-screen bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/bg/feed_bg.png)' }}
+      >
         {/* Header */}
         <header className="sticky top-0 z-10 bg-black/30 backdrop-blur-sm border-b border-gray-800">
           <div className="container mx-auto max-w-4xl px-4 py-4 flex justify-between items-center">
@@ -448,6 +482,12 @@ export default function PublicFeedPage() {
           </div>
         </footer>
       </div>
+
+      {/* Privacy Policy Dialog */}
+      <PrivacyPolicyDialog 
+        open={showPrivacyDialog} 
+        onOpenChange={setShowPrivacyDialog}
+      />
     </>
   );
 }
