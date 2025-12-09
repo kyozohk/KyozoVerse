@@ -114,6 +114,14 @@ export default function JoinCommunityPage() {
       router.push(`/${handle}`);
     } catch (error: any) {
       console.error('Signup error:', error);
+      
+      // Check if email already exists
+      if (error.code === 'auth/email-already-in-use') {
+        setError("This email is already registered. Please sign in instead.");
+        setIsSignup(false); // Switch to sign-in mode
+        return;
+      }
+      
       setError(error.message || "An error occurred. Please try again.");
     }
   };
@@ -126,7 +134,25 @@ export default function JoinCommunityPage() {
         return;
       }
 
-      await signIn(email, password);
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      const userCredential = await signInWithEmailAndPassword(communityAuth, email, password);
+      
+      // Add to community if not already a member
+      if (communityData?.communityId) {
+        const docId = `${userCredential.user.uid}_${communityData.communityId}`;
+        await setDoc(doc(db, 'communityMembers', docId), {
+          id: docId,
+          userId: userCredential.user.uid,
+          communityId: communityData.communityId,
+          role: 'member',
+          joinedAt: new Date(),
+          userDetails: {
+            displayName: userCredential.user.displayName || `${firstName} ${lastName}` || email,
+            email: userCredential.user.email || email,
+            phone: phone || '',
+          }
+        }, { merge: true }); // Use merge to not overwrite existing data
+      }
       
       toast({
         title: "Welcome back!",
