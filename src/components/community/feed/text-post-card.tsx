@@ -16,15 +16,17 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface TextPostCardProps {
-  post: Post & { id: string; _isPublicView?: boolean };
+  post: Post & { id: string; _isPublicView?: boolean; _onEdit?: () => void; _canEdit?: boolean };
 }
 
 export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
     const { user } = useAuth();
     const { toast } = useToast();
-    // Show edit/delete options only if user is logged in and is the post creator
-    // In public view (_isPublicView flag), never show edit/delete options
-    const isPostCreator = user && post.authorId === user.uid && !post._isPublicView;
+    // Show edit/delete options if:
+    // 1. User is logged in AND is the post creator, OR
+    // 2. _canEdit flag is explicitly set (for owners/admins)
+    // Never show in public view (_isPublicView flag)
+    const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     
@@ -71,7 +73,7 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
                 {/* Edit/Delete buttons for post creator */}
                 {isPostCreator && (
                     <div className="absolute top-2 right-2 flex gap-1 z-20">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => console.log('Edit post')}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => post._onEdit?.()}>
                             <Edit className="h-4 w-4 text-gray-700" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => setShowDeleteDialog(true)}>

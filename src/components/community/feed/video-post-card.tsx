@@ -14,13 +14,13 @@ import { cn } from "@/lib/utils";
 import { recordInteraction } from '@/lib/interaction-utils';
 
 interface VideoPostCardProps {
-  post: Post & { id: string; _isPublicView?: boolean };
+  post: Post & { id: string; _isPublicView?: boolean; _onEdit?: () => void; _canEdit?: boolean };
 }
 
 export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
   const { user } = useCommunityAuth();
   const { toast } = useToast();
-  const isPostCreator = user && post.authorId === user.uid && !post._isPublicView;
+  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -104,7 +104,7 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
         
         {isPostCreator && (
           <div className="absolute top-2 right-2 flex gap-1 z-30">
-            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => post._onEdit?.()}>
               <Edit className="h-4 w-4 text-gray-700" />
             </Button>
             <Button 

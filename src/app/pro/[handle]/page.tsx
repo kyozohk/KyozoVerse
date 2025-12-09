@@ -12,6 +12,7 @@ import { MembersList } from '@/components/community/members-list';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
+import { DeleteCommunityDialog } from '@/components/community/delete-community-dialog';
 import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, addDoc, setDoc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -162,36 +163,14 @@ export default function CommunityPage() {
     });
   };
 
-  const handleDeleteCommunity = async () => {
-    if (!community) return;
+  const handleDeleteSuccess = () => {
+    toast({
+      title: "Community Deleted",
+      description: "The community and all its data have been permanently removed.",
+    });
     
-    try {
-      // Delete all community members
-      const membersRef = collection(db, 'communityMembers');
-      const membersQuery = query(membersRef, where('communityId', '==', community.communityId));
-      const membersSnapshot = await getDocs(membersQuery);
-      
-      const deletePromises = membersSnapshot.docs.map(memberDoc => deleteDoc(memberDoc.ref));
-      await Promise.all(deletePromises);
-      
-      // Delete the community document
-      await deleteDoc(doc(db, 'communities', community.communityId));
-      
-      toast({
-        title: "Community Deleted",
-        description: "The community and all its members have been removed.",
-      });
-      
-      // Redirect to home or communities list
-      router.push('/');
-    } catch (error) {
-      console.error('Error deleting community:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete community. Please try again.",
-        variant: "destructive",
-      });
-    }
+    // Redirect to home
+    router.push('/pro');
   };
 
   const filteredMembers = members.filter(member =>
@@ -284,34 +263,13 @@ export default function CommunityPage() {
         />
       )}
 
-      {isDeleteConfirmOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-md w-full">
-            <CardHeader>
-              <CardTitle>Delete Community</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Are you sure you want to delete <strong>{community.name}</strong>? 
-                This will remove all {members.length} members and cannot be undone.
-              </p>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={async () => {
-                    setIsDeleteConfirmOpen(false);
-                    await handleDeleteCommunity();
-                  }}
-                >
-                  Delete Community
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {community && (
+        <DeleteCommunityDialog
+          community={community}
+          isOpen={isDeleteConfirmOpen}
+          onClose={() => setIsDeleteConfirmOpen(false)}
+          onSuccess={handleDeleteSuccess}
+        />
       )}
     </div>
   );

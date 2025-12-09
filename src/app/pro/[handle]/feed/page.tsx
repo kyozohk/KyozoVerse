@@ -32,6 +32,7 @@ export default function CommunityFeedPage() {
   const [postType, setPostType] = useState<PostType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [editingPost, setEditingPost] = useState<(Post & { id: string }) | null>(null);
 
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -151,6 +152,13 @@ export default function CommunityFeedPage() {
 
   const handleSelectPostType = (type: PostType) => {
     setPostType(type);
+    setEditingPost(null); // Clear editing post when creating new
+    setCreatePostOpen(true);
+  };
+
+  const handleEditPost = (post: Post & { id: string }) => {
+    setEditingPost(post);
+    setPostType(post.type as PostType);
     setCreatePostOpen(true);
   };
 
@@ -160,6 +168,7 @@ export default function CommunityFeedPage() {
   );
 
   const canEditContent = userRole === 'admin' || userRole === 'owner';
+  const canEditAllPosts = canEditContent; // Only owners/admins can edit all posts
   
   const buttonConfig = [
     {
@@ -252,8 +261,8 @@ export default function CommunityFeedPage() {
         ) : (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
             {filteredPosts.map((post) => {
-              // Enable edit/delete for all posts in owner dashboard
-              const postWithEditAccess = { ...post, _isPublicView: false };
+              // Enable edit/delete only for owners/admins in owner dashboard
+              const postWithEditAccess = { ...post, _isPublicView: false, _canEdit: canEditAllPosts, _onEdit: () => handleEditPost(post) };
               
               const PostCard = (() => {
                 switch (post.type) {
@@ -283,7 +292,8 @@ export default function CommunityFeedPage() {
         setIsOpen={setCreatePostOpen} 
         postType={postType} 
         communityId={communityId}
-        communityHandle={handle} />
+        communityHandle={handle}
+        editPost={editingPost} />
     </>
   );
 }

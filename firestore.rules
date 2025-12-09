@@ -9,10 +9,19 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
     }
 
+    // Helper function to check if user is community owner/admin
+    function isCommunityOwner(communityId) {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
+    }
+
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to update communities
+      allow create, update: if request.auth != null;
+      // Allow delete only for community owner
+      allow delete: if request.auth != null && 
+                       get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
     }
 
     // Community members can be read by other members of that same community
@@ -24,6 +33,11 @@ service cloud.firestore {
     match /blogs/{blogId} {
       // Allow anyone to read public posts
       allow read: if resource.data.visibility == 'public';
+      
+      // Allow community owners to read all posts in their community
+      allow read: if request.auth != null && 
+                     resource.data.communityId != null && 
+                     isCommunityOwner(resource.data.communityId);
       
       // Allow community members to read private posts from their community
       // Check both communityId (new posts) and communityHandle (legacy posts)
@@ -37,8 +51,15 @@ service cloud.firestore {
       // Allow authenticated users to read their own posts
       allow read: if request.auth != null && request.auth.uid == resource.data.authorId;
 
-      // Allow create/update/delete only for the author of the post.
-      allow write: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+      // Allow create for authenticated users (author must match)
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+      
+      // Allow update/delete for:
+      // 1. The post author, OR
+      // 2. The community owner (if communityId exists)
+      allow update, delete: if request.auth != null && 
+                               (request.auth.uid == resource.data.authorId || 
+                                (resource.data.communityId != null && isCommunityOwner(resource.data.communityId)));
     }
 
     // Users collection can be read by anyone
@@ -83,8 +104,18 @@ service cloud.firestore {
 
     // Community members collection
     match /communityMembers/{memberId} {
+      // Allow authenticated users to read
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      
+      // Allow create/update for authenticated users
+      allow create, update: if request.auth != null;
+      
+      // Allow delete for:
+      // 1. The member themselves, OR
+      // 2. The community owner
+      allow delete: if request.auth != null && 
+                       (request.auth.uid == resource.data.userId || 
+                        isCommunityOwner(resource.data.communityId));
     }
   }
 }

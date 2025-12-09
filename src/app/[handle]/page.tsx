@@ -440,7 +440,8 @@ export default function PublicFeedPage() {
   };
 
   const renderPost = (post: Post & { id: string }) => {
-    const postProps = { ...post, _isPublicView: !communityUser };
+    // Public feed is ALWAYS read-only, regardless of login status
+    const postProps = { ...post, _isPublicView: true };
     switch (post.type) {
       case 'text':
       case 'image':
