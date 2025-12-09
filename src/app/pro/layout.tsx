@@ -1,83 +1,89 @@
-
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import { 
   LogOut, 
-  Loader2,
+  Loader2
 } from 'lucide-react';
 import { 
   Sidebar, 
   SidebarContent, 
   SidebarHeader, 
-  SidebarMenu, 
+  SidebarMenu,
   SidebarFooter, 
   SidebarInset, 
-  SidebarProvider,
-  useSidebar
+  SidebarProvider 
 } from '@/components/ui/enhanced-sidebar';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-// Import signOut from the auth hook instead of directly from firebase
 import Link from 'next/link';
 import Image from 'next/image';
-import CommunitySidebar from '@/components/layout/community-sidebar';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
+import CommunitySidebar from '@/components/layout/community-sidebar';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function ProLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   
+  // Check if we're on a community-specific page
   const isCommunityPage = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
-    // It's a community page if the first segment is not a main nav item, and it's not a main nav item itself
-    return segments.length > 0 && !mainNavItems.some(item => item.href === `/${segments[0]}`);
+    // /pro/[handle]/... routes are community pages
+    return segments.length >= 2 && segments[0] === 'pro' && segments[1] !== 'communities' && segments[1] !== 'analytics' && segments[1] !== 'subscription' && segments[1] !== 'settings' && segments[1] !== 'account';
   }, [pathname]);
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
+  useEffect(() => {
+    // Require auth for all /pro routes except /pro landing page
+    if (!loading && !user && pathname !== '/pro' && pathname.startsWith('/pro')) {
+      router.replace('/pro');
+    }
+  }, [user, loading, router, pathname]);
+
   const handleLogout = async () => {
     await signOut();
-    router.push('/');
+    router.push('/pro');
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (isCommunityPage) {
-        router.push('/communities');
+      router.push('/pro/communities');
     } else {
-        setSidebarOpen(prev => !prev);
+      setSidebarOpen(prev => !prev);
     }
   }, [isCommunityPage, router]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/');
-    }
-  }, [user, loading, router]);
-  
-  useEffect(() => {
-    // When on a community page, the main sidebar should be collapsed
-    // to make room for the community sidebar.
+    // When on a community page, collapse the main sidebar
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
-  
-  if (loading || !user) {
+
+  // If on landing page (/pro), render without sidebar
+  if (pathname === '/pro') {
+    return <>{children}</>;
+  }
+
+  // For protected routes, show loading or require auth
+  if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   const { activeColor, activeBgColor } = getThemeForPath(pathname);
-  
-  const isCommunitiesActive = isCommunityPage || pathname.startsWith('/communities');
 
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -85,7 +91,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor, '--sidebar-active-border': activeColor} as React.CSSProperties}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
-              <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
+              <Link href="/pro/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
                 <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
@@ -95,20 +101,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenu>
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = item.href === '/communities' ? isCommunitiesActive : pathname.startsWith(item.href);
-
+                  const href = item.href.replace('/communities', '/pro/communities');
                   return (
-                      <SidebarNavItem 
-                          key={item.label} 
-                          href={item.href} 
-                          icon={<Icon />}
-                          isActive={isActive}
-                          activeColor={activeColor}
-                          activeBgColor={activeBgColor}
-                      >
+                    <SidebarNavItem
+                        key={item.href}
+                        href={href}
+                        icon={<Icon />}
+                        isActive={pathname.startsWith(href)}
+                        activeColor={activeColor}
+                        activeBgColor={activeBgColor}
+                    >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                      </SidebarNavItem>
-                  )
+                    </SidebarNavItem>
+                  );
               })}
             </SidebarMenu>
           </SidebarContent>
@@ -125,14 +130,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">
-                 <SidebarNavItem 
+                <SidebarNavItem
                     href="#"
                     icon={<LogOut />}
                     onClick={handleLogout}
                     activeColor={activeColor}
                     activeBgColor={activeBgColor}
-                  >
-                   <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
+                >
+                    <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
                 </SidebarNavItem>
               </SidebarMenu>
             </div>
@@ -146,7 +151,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             backgroundImage: `url('/bg/light_app_bg.png')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
+            backgroundRepeat: 'no-repeat'
           }}
         >
           {children}

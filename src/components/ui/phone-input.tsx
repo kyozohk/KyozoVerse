@@ -68,13 +68,21 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
   useEffect(() => {
     if (value) {
-      const matchingCountry = COUNTRIES.sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => value.startsWith(c.dialCode.replace('+', '')));
+      // Find matching country by checking if value starts with the dial code (without +)
+      const matchingCountry = COUNTRIES.sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => {
+        const dialCodeWithoutPlus = c.dialCode.replace('+', '');
+        return value.startsWith(dialCodeWithoutPlus);
+      });
+      
       if (matchingCountry) {
         setSelectedCountry(matchingCountry);
-        setPhoneNumber(value.substring(matchingCountry.dialCode.length -1).trim());
+        const dialCodeWithoutPlus = matchingCountry.dialCode.replace('+', '');
+        setPhoneNumber(value.substring(dialCodeWithoutPlus.length));
       } else {
         setPhoneNumber(value);
       }
+    } else {
+      setPhoneNumber('');
     }
   }, [value]);
 
@@ -129,35 +137,36 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       <div className={cn("inputContainer phone-input-container relative flex items-center", error ? "hasError" : "")}>
         <button
           type="button"
-          className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-between gap-1.5 px-2 py-1 bg-transparent z-10 rounded hover:bg-muted/50"
+          className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-1 bg-transparent z-20 rounded hover:bg-muted/50 border-r border-gray-300"
           onClick={handleCountryButtonClick}
           disabled={disabled}
+          style={{ minWidth: '85px' }}
         >
-          <span className="text-lg leading-none">{selectedCountry.flag}</span>
-          <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
-          <span className="text-xs text-muted-foreground">▼</span>
+          <span className="text-base leading-none">{selectedCountry.flag}</span>
+          <span className="text-sm font-medium whitespace-nowrap text-gray-900">{selectedCountry.dialCode}</span>
+          <span className="text-xs text-gray-600 ml-0.5">▼</span>
         </button>
 
         {isDropdownOpen && !disabled && (
-          <div className="phone-dropdown absolute top-full left-0 z-50 mt-1 w-72 max-h-60 overflow-y-auto bg-card border rounded-md shadow-lg">
-            <div className="p-2 border-b">
+          <div className="phone-dropdown absolute top-full left-0 z-50 mt-1 w-72 max-h-60 overflow-y-auto bg-white border rounded-md shadow-lg">
+            <div className="p-2 border-b bg-white">
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder="Search country..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-2 text-sm border rounded-md text-foreground bg-background"
+                className="w-full p-2 text-sm border rounded-md text-gray-900 bg-white"
               />
             </div>
-            <div className="py-1">
+            <div className="py-1 bg-white">
               {filteredCountries.map((country) => (
                 <button
                   key={country.code}
                   type="button"
                   className={cn(
-                    "flex items-center w-full px-3 py-2 text-left hover:bg-muted/50 text-foreground",
-                    selectedCountry.code === country.code ? "bg-muted" : ""
+                    "flex items-center w-full px-3 py-2 text-left hover:bg-gray-100 text-gray-900",
+                    selectedCountry.code === country.code ? "bg-gray-100" : ""
                   )}
                   onClick={(e) => {
                     e.preventDefault();
@@ -166,7 +175,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
                 >
                   <span className="mr-2">{country.flag}</span>
                   <span className="text-sm flex-grow truncate">{country.name}</span>
-                  <span className="text-sm text-muted-foreground">{country.dialCode}</span>
+                  <span className="text-sm text-gray-600">{country.dialCode}</span>
                 </button>
               ))}
             </div>
@@ -182,9 +191,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           placeholder=" "
           disabled={disabled}
           required={required}
-          className="input pl-28" 
+          className="input pl-[100px]" 
+          style={{ paddingLeft: '100px' }}
         />
-        <label htmlFor={inputId} className="floatingLabel phone-floating-label">
+        <label htmlFor={inputId} className="floatingLabel" style={{ left: '100px' }}>
           {label}
         </label>
       </div>

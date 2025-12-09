@@ -30,21 +30,21 @@ interface CommunityNavItem {
 }
 
 export const mainNavItems: NavItem[] = [
-    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
+    { href: '/pro/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/pro/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: '/pro/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
+    { href: '/pro/settings', icon: Settings, label: 'Settings', section: 'settings' },
 ];
 
 export const communityNavItems: CommunityNavItem[] = [
-    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
-    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'broadcast' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
-    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: (handle: string) => `/pro/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
+    { href: (handle: string) => `/pro/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
+    { href: (handle: string) => `/pro/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'broadcast' },
+    { href: (handle: string) => `/pro/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
+    { href: (handle: string) => `/pro/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
+    { href: (handle: string) => `/pro/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
+    { href: (handle: string) => `/pro/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
+    { href: (handle: string) => `/pro/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
 ];
 
 // Map sections to centralized theme colors

@@ -158,7 +158,6 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={handleAudioEnded}
-                onError={(e) => console.error('Audio error:', e)}
               />
               
               <div className="w-full bg-[#5B91D7]/20 h-2 rounded-full mb-2 overflow-hidden">

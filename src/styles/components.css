@@ -368,17 +368,17 @@ input::placeholder {
 }
 
 /* Fix for phone input label */
-.phone-floating-label {
-    left: 0.75rem !important; /* Reset to default */
+.phone-input-container .floatingLabel {
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.2s ease;
 }
-.phone-input-container .input:focus ~ .phone-floating-label,
-.phone-input-container .input:not(:placeholder-shown) ~ .phone-floating-label {
-  /* No special override needed now */
-}
+
 .phone-input-container .input:focus ~ .floatingLabel,
 .phone-input-container .input:not(:placeholder-shown) ~ .floatingLabel {
+  top: -0.5rem;
   left: 0.75rem;
-  transform: translateY(-110%);
+  transform: translateY(0);
   font-size: 0.75rem;
 }
 
