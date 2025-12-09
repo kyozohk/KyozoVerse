@@ -47,3 +47,14 @@ curl -X POST 'https://api.resend.com/emails' \
     "html": "<p>it works!</p>",
     "reply_to": "onboarding@resend.dev"
   }'
+
+
+right now, root soute checks for the community owner/leader login/auth, if not logged in, shows the landing page and if logged in, navates the user http://localhost:9003/communities route
+
+on the other hand, public feed of this community is in http://localhost:9003/c/willer i.e. in the /c route
+
+we want to change this behaviour, we want to have pro.kyozo.com to have the current landing page and check the auth here for community owner and if logged in then redirect the user to pro.kyozo.com/communities 
+
+and then on www.kyozo.com/[handle] is where we want show the community leader's feed directly and on www.kyozo.com/[handle]/signup is where we want to show community member to be able to sign up as member of this community feed with their first/last name, mobile number, avatar icon, email and password (or continue with google, pull the icon from there and then ask for mobile number to complete the membership registration), we use the dialog styling we used in Join the waitlist dialog
+
+without starting to implment above, tell me how can we do above? how do we organize our current nextjs project to achieve above?
