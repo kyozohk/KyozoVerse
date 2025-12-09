@@ -29,10 +29,11 @@ interface CommunityHeaderProps {
   onEdit: () => void;
   onDelete?: () => void;
   onAddMember?: () => void;
+  onInvite?: () => void;
   memberCount?: number; // Actual member count excluding owner
 }
 
-export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember, memberCount }: CommunityHeaderProps) {
+export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember, onInvite, memberCount }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
   const pathname = usePathname();
   const { activeBgColor } = getThemeForPath(pathname);
@@ -152,7 +153,11 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                   Add Members
                 </CustomButton>
               )}
-              <CustomButton variant="rounded-rect" className="text-white/80 hover:text-white hover:bg-white/10">
+              <CustomButton 
+                variant="rounded-rect" 
+                className="text-white/80 hover:text-white hover:bg-white/10"
+                onClick={onInvite}
+              >
                 <Mail className="h-4 w-4 mr-2" />
                 Invite
               </CustomButton>

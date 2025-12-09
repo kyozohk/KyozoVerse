@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { DeleteCommunityDialog } from '@/components/community/delete-community-dialog';
+import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
 import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, addDoc, setDoc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -34,6 +35,7 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -211,6 +213,7 @@ export default function CommunityPage() {
         onEdit={() => setIsEditDialogOpen(true)}
         onDelete={() => setIsDeleteConfirmOpen(true)}
         onAddMember={() => setIsAddMemberDialogOpen(true)}
+        onInvite={() => setIsInviteDialogOpen(true)}
         memberCount={memberCountExcludingOwner}
       />
       <div className="px-4 md:px-8">
@@ -264,12 +267,20 @@ export default function CommunityPage() {
       )}
 
       {community && (
-        <DeleteCommunityDialog
-          community={community}
-          isOpen={isDeleteConfirmOpen}
-          onClose={() => setIsDeleteConfirmOpen(false)}
-          onSuccess={handleDeleteSuccess}
-        />
+        <>
+          <InviteMemberDialog
+            isOpen={isInviteDialogOpen}
+            onClose={() => setIsInviteDialogOpen(false)}
+            community={community}
+          />
+          
+          <DeleteCommunityDialog
+            community={community}
+            isOpen={isDeleteConfirmOpen}
+            onClose={() => setIsDeleteConfirmOpen(false)}
+            onSuccess={handleDeleteSuccess}
+          />
+        </>
       )}
     </div>
   );
