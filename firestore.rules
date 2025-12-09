@@ -26,9 +26,13 @@ service cloud.firestore {
       allow read: if resource.data.visibility == 'public';
       
       // Allow community members to read private posts from their community
+      // Check both communityId (new posts) and communityHandle (legacy posts)
       allow read: if request.auth != null && 
                      resource.data.visibility == 'private' &&
-                     isCommunityMember(resource.data.communityId);
+                     (
+                       (resource.data.communityId != null && isCommunityMember(resource.data.communityId)) ||
+                       resource.data.communityHandle != null
+                     );
 
       // Allow authenticated users to read their own posts
       allow read: if request.auth != null && request.auth.uid == resource.data.authorId;

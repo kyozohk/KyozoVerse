@@ -61,12 +61,26 @@ export default function CommunityFeedPage() {
     }
 
     const postsCollection = collection(db, 'blogs');
-    const constraints = [where('communityHandle', '==', handle)];
-    const q = query(postsCollection, ...constraints);
+    
+    // Query public and private posts separately to work with security rules
+    // Query by communityHandle since that's what posts have
+    const publicQuery = query(
+      postsCollection,
+      where('communityHandle', '==', handle),
+      where('visibility', '==', 'public'),
+      orderBy('createdAt', 'desc')
+    );
 
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const postsData: (Post & { id: string })[] = [];
+    const privateQuery = query(
+      postsCollection,
+      where('communityHandle', '==', handle),
+      where('visibility', '==', 'private'),
+      orderBy('createdAt', 'desc')
+    );
 
+    const allPosts = new Map<string, Post & { id: string }>();
+
+    const processSnapshot = async (querySnapshot: any) => {
       for (const postDoc of querySnapshot.docs) {
         const postData = postDoc.data() as Post;
 
@@ -83,42 +97,55 @@ export default function CommunityFeedPage() {
           }
         }
 
-        postsData.push({
+        allPosts.set(postDoc.id, {
           id: postDoc.id,
           ...postData,
           author: authorData || { userId: 'unknown', displayName: 'Unknown User' },
           createdAt: postData.createdAt?.toDate(),
         });
       }
-      
-      // Sort posts by createdAt in memory
-      postsData.sort((a, b) => {
+
+      // Sort all posts by createdAt
+      const sortedPosts = Array.from(allPosts.values()).sort((a, b) => {
         const aTime = a.createdAt?.getTime() || 0;
         const bTime = b.createdAt?.getTime() || 0;
         return bTime - aTime;
       });
 
-      let visiblePosts = postsData;
+      // Apply visibility filtering based on user role
+      let visiblePosts = sortedPosts;
       if (!user) {
-        visiblePosts = postsData.filter((p) => p.visibility === 'public');
-      } 
-      else if (userRole !== 'admin' && userRole !== 'owner') {
-        visiblePosts = postsData.filter((p) => 
+        visiblePosts = sortedPosts.filter((p) => p.visibility === 'public');
+      } else if (userRole !== 'admin' && userRole !== 'owner') {
+        visiblePosts = sortedPosts.filter((p) => 
           p.visibility === 'public' || (p.visibility === 'private' && p.authorId === user.uid)
         );
       }
       
       setPosts(visiblePosts);
       setLoading(false);
-    }, (error) => {
+    };
+
+    // Subscribe to public posts
+    const unsubscribePublic = onSnapshot(publicQuery, processSnapshot, (error) => {
+      console.error('Error fetching public posts:', error);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: 'blogs',
-          operation: 'list',
+        path: 'blogs',
+        operation: 'list',
       }));
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Subscribe to private posts
+    const unsubscribePrivate = onSnapshot(privateQuery, processSnapshot, (error) => {
+      console.error('Error fetching private posts:', error);
+      // Don't emit error for private posts as user might not have permission
+    });
+
+    return () => {
+      unsubscribePublic();
+      unsubscribePrivate();
+    };
   }, [handle, user, communityId, userRole]);
 
   const handleSelectPostType = (type: PostType) => {

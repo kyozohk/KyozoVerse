@@ -68,13 +68,22 @@ export default function PublicFeedPage() {
 
   useEffect(() => {
     if (!handle || !communityData) {
+      console.log('[Feed] Missing handle or communityData:', { handle, communityData });
       return;
     }
+
+    console.log('[Feed] Setting up queries for:', {
+      handle,
+      communityId: communityData.communityId,
+      communityName: communityData.name,
+      isUserLoggedIn: !!communityUser,
+      userId: communityUser?.uid
+    });
 
     const postsCollection = collection(db, 'blogs');
     
     // Create separate queries for public and private posts
-    // Then merge the results client-side
+    // Query by communityHandle since that's what posts have
     const publicQuery = query(
       postsCollection,
       where('communityHandle', '==', handle),
@@ -93,11 +102,32 @@ export default function PublicFeedPage() {
         const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
         return bTime - aTime;
       });
+      console.log('[Feed] Updated posts:', {
+        totalPosts: sortedPosts.length,
+        publicPosts: sortedPosts.filter(p => p.visibility === 'public').length,
+        privatePosts: sortedPosts.filter(p => p.visibility === 'private').length,
+        posts: sortedPosts.map(p => ({ id: p.id, title: p.title, visibility: p.visibility }))
+      });
       setPosts(sortedPosts);
       setLoading(false);
     };
 
-    const processSnapshot = async (querySnapshot: any) => {
+    const processSnapshot = async (querySnapshot: any, type: 'public' | 'private') => {
+      console.log(`[Feed] Processing ${type} snapshot:`, {
+        docsCount: querySnapshot.docs.length,
+        docs: querySnapshot.docs.map((d: any) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: data.title,
+            visibility: data.visibility,
+            communityId: data.communityId,
+            communityHandle: data.communityHandle,
+            authorId: data.authorId
+          };
+        })
+      });
+      
       for (const postDoc of querySnapshot.docs) {
         const postData = postDoc.data() as Post;
         let authorData: User | null = null;
@@ -109,7 +139,7 @@ export default function PublicFeedPage() {
               authorData = userSnap.data() as User;
             }
           } catch (error) {
-            // If we can't fetch author, proceed without it
+            console.error('[Feed] Error fetching author:', error);
           }
         }
         allPosts.set(postDoc.id, {
@@ -123,13 +153,39 @@ export default function PublicFeedPage() {
     };
 
     // Subscribe to public posts
-    unsubscribePublic = onSnapshot(publicQuery, processSnapshot, (error) => {
-      console.error('Error fetching public posts:', error);
-      setLoading(false);
-    });
+    console.log('[Feed] Subscribing to public posts...');
+    unsubscribePublic = onSnapshot(publicQuery, 
+      (snapshot) => processSnapshot(snapshot, 'public'), 
+      (error) => {
+        console.error('[Feed] Error fetching public posts:', error);
+        setLoading(false);
+      }
+    );
 
     // If user is logged in, also subscribe to private posts
     if (communityUser && communityData.communityId) {
+      console.log('[Feed] User is logged in, subscribing to private posts...', {
+        userId: communityUser.uid,
+        communityId: communityData.communityId
+      });
+      
+      // Check if user is a member
+      const checkMembership = async () => {
+        try {
+          const memberDocId = `${communityUser.uid}_${communityData.communityId}`;
+          const memberRef = doc(db, 'communityMembers', memberDocId);
+          const memberSnap = await getDoc(memberRef);
+          console.log('[Feed] Membership check:', {
+            memberDocId,
+            exists: memberSnap.exists(),
+            data: memberSnap.exists() ? memberSnap.data() : null
+          });
+        } catch (error) {
+          console.error('[Feed] Error checking membership:', error);
+        }
+      };
+      checkMembership();
+      
       const privateQuery = query(
         postsCollection,
         where('communityHandle', '==', handle),
@@ -137,13 +193,19 @@ export default function PublicFeedPage() {
         orderBy('createdAt', 'desc')
       );
       
-      unsubscribePrivate = onSnapshot(privateQuery, processSnapshot, (error) => {
-        console.error('Error fetching private posts:', error);
-        // Don't set loading to false here, as public posts might still be loading
-      });
+      unsubscribePrivate = onSnapshot(privateQuery, 
+        (snapshot) => processSnapshot(snapshot, 'private'),
+        (error) => {
+          console.error('[Feed] Error fetching private posts:', error);
+          // Don't set loading to false here, as public posts might still be loading
+        }
+      );
+    } else {
+      console.log('[Feed] User not logged in or no communityId, skipping private posts');
     }
 
     return () => {
+      console.log('[Feed] Cleaning up subscriptions');
       unsubscribePublic?.();
       unsubscribePrivate?.();
     };
@@ -151,27 +213,65 @@ export default function PublicFeedPage() {
 
   const handleSignIn = async () => {
     setError(null);
+    console.log('[SignIn] Starting sign-in process...', { email, communityData: communityData?.communityId });
+    
     try {
-      await signIn(email, password);
+      const user = await signIn(email, password);
+      console.log('[SignIn] User signed in:', user?.uid);
+      
+      // Check if user is a member of this community, if not, add them
+      if (communityData?.communityId && user) {
+        const memberDocId = `${user.uid}_${communityData.communityId}`;
+        const memberRef = doc(db, 'communityMembers', memberDocId);
+        const memberSnap = await getDoc(memberRef);
+        
+        console.log('[SignIn] Checking membership...', { memberDocId, exists: memberSnap.exists() });
+        
+        if (!memberSnap.exists()) {
+          console.log('[SignIn] User not a member, adding to community...');
+          const { setDoc } = await import('firebase/firestore');
+          await setDoc(memberRef, {
+            id: memberDocId,
+            userId: user.uid,
+            communityId: communityData.communityId,
+            role: 'member',
+            joinedAt: new Date(),
+            userDetails: {
+              displayName: user.displayName || email.split('@')[0],
+              email: user.email || email,
+            }
+          });
+          console.log('[SignIn] ✅ User added to community successfully');
+          
+          // Verify
+          const verifySnap = await getDoc(memberRef);
+          console.log('[SignIn] Verification - Member exists:', verifySnap.exists(), verifySnap.data());
+        } else {
+          console.log('[SignIn] User is already a member');
+        }
+      }
+      
       setIsDialogOpen(false);
       router.replace(`/${handle}`);
       toast({
         title: "Welcome back!",
-        description: "You're now signed in as a member.",
+        description: "You're now signed in.",
       });
     } catch (error: any) {
-      let description = "An unexpected error occurred. Please try again.";
-      if (error instanceof FirebaseError) {
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          description = "Invalid credentials. Please check your email and password and try again.";
-        }
-      }
-      setError(description);
+      console.error('[SignIn] Error:', error);
+      setError(error.message || "Failed to sign in. Please check your credentials.");
     }
   };
 
   const handleSignUp = async () => {
     setError(null);
+    console.log('[SignUp] Starting signup process...', { 
+      firstName, 
+      lastName, 
+      email, 
+      communityData: communityData?.communityId 
+    });
+    
     try {
       if (!firstName || !lastName || !phone || !email || !password) {
         setError("Please fill in all fields.");
@@ -185,17 +285,27 @@ export default function PublicFeedPage() {
         setError("Password must be at least 6 characters.");
         return;
       }
+      
+      if (!communityData?.communityId) {
+        setError("Community data not loaded. Please refresh and try again.");
+        console.error('[SignUp] Missing communityData:', communityData);
+        return;
+      }
+      
       // Clean phone number: remove + and spaces
       const cleanPhone = phone.replace(/[\s+]/g, '');
       
+      console.log('[SignUp] Creating Firebase Auth user...');
       // Create new user account with Firebase Auth
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
       const userCredential = await createUserWithEmailAndPassword(communityAuth, email, password);
+      console.log('[SignUp] User created in Auth:', userCredential.user.uid);
       
       // Update user profile with display name
       await updateProfile(userCredential.user, {
         displayName: `${firstName} ${lastName}`
       });
+      console.log('[SignUp] Profile updated');
       
       // Store user profile in Firestore
       const { setDoc } = await import('firebase/firestore');
@@ -209,28 +319,37 @@ export default function PublicFeedPage() {
         lastName: lastName,
         createdAt: new Date(),
       }, { merge: true });
+      console.log('[SignUp] User document created in Firestore');
       
       // Add user as a member of this community
-      if (communityData?.communityId) {
-        const { addDoc } = await import('firebase/firestore');
-        const membersRef = collection(db, 'communityMembers');
-        const docId = `${userCredential.user.uid}_${communityData.communityId}`;
-        await setDoc(doc(db, 'communityMembers', docId), {
-          id: docId,
-          userId: userCredential.user.uid,
-          communityId: communityData.communityId,
-          role: 'member',
-          joinedAt: new Date(),
-          userDetails: {
-            displayName: `${firstName} ${lastName}`,
-            email: email,
-            phone: cleanPhone,
-          }
-        });
-        console.log('User added to community:', { userId: userCredential.user.uid, communityId: communityData.communityId });
-      }
+      const docId = `${userCredential.user.uid}_${communityData.communityId}`;
+      const memberRef = doc(db, 'communityMembers', docId);
       
-      console.log('User created:', { firstName, lastName, cleanPhone, email });
+      console.log('[SignUp] Adding user to community...', {
+        docId,
+        userId: userCredential.user.uid,
+        communityId: communityData.communityId,
+        communityHandle: handle
+      });
+      
+      await setDoc(memberRef, {
+        id: docId,
+        userId: userCredential.user.uid,
+        communityId: communityData.communityId,
+        role: 'member',
+        joinedAt: new Date(),
+        userDetails: {
+          displayName: `${firstName} ${lastName}`,
+          email: email,
+          phone: cleanPhone,
+        }
+      });
+      
+      console.log('[SignUp] ✅ User successfully added to community!');
+      
+      // Verify the member was added
+      const verifySnap = await getDoc(memberRef);
+      console.log('[SignUp] Verification - Member exists:', verifySnap.exists(), verifySnap.data());
       
       setIsDialogOpen(false);
       router.replace(`/${handle}`);
