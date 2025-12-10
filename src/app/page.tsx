@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 
-export default function MemberHome() {
+function MemberHomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -259,5 +259,13 @@ export default function MemberHome() {
         onGoBack={openSignIn}
       />
     </div>
+  );
+}
+
+export default function MemberHome() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center">Loading...</div>}>
+      <MemberHomeContent />
+    </Suspense>
   );
 }
