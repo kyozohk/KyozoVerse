@@ -125,17 +125,35 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           updatedAt: serverTimestamp()
         };
         
+        // Check community membership for debugging
+        const memberDocId = `${user.uid}_${editPost.communityId}`;
         console.log('Editing post:', {
           postId: editPost.id,
           currentAuthorId: editPost.authorId,
           currentUserId: user?.uid,
+          userEmail: user?.email,
           isAuthor: editPost.authorId === user?.uid,
           currentCommunityId: editPost.communityId,
           currentCommunityHandle: editPost.communityHandle,
           currentVisibility: editPost.visibility,
           newVisibility: isPublic ? 'public' : 'private',
+          memberDocId: memberDocId,
           updateData
         });
+        
+        // Check if user is member/admin
+        try {
+          const { doc: firestoreDoc, getDoc } = await import('firebase/firestore');
+          const memberRef = firestoreDoc(db, 'communityMembers', memberDocId);
+          const memberSnap = await getDoc(memberRef);
+          if (memberSnap.exists()) {
+            console.log('User membership data:', memberSnap.data());
+          } else {
+            console.warn('User is NOT a member of this community!', memberDocId);
+          }
+        } catch (err) {
+          console.error('Failed to check membership:', err);
+        }
         
         await updateDoc(postRef, updateData);
         console.log('Post updated successfully');

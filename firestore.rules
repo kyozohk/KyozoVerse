@@ -9,10 +9,17 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
     }
 
-    // Helper function to check if user is community owner/admin
+    // Helper function to check if user is community owner
     function isCommunityOwner(communityId) {
       return request.auth != null && 
              get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
+    }
+    
+    // Helper function to check if user is community admin or owner
+    function isCommunityAdmin(communityId) {
+      let memberDoc = get(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
+      return request.auth != null && 
+             (memberDoc.data.role == 'owner' || memberDoc.data.role == 'admin');
     }
 
     // Communities can be read by anyone
@@ -56,10 +63,10 @@ service cloud.firestore {
       
       // Allow update/delete for:
       // 1. The post author, OR
-      // 2. The community owner (if communityId exists)
+      // 2. The community owner/admin (if communityId exists)
       allow update, delete: if request.auth != null && 
                                (request.auth.uid == resource.data.authorId || 
-                                (resource.data.communityId != null && isCommunityOwner(resource.data.communityId)));
+                                (resource.data.communityId != null && (isCommunityOwner(resource.data.communityId) || isCommunityAdmin(resource.data.communityId))));
     }
 
     // Users collection can be read by anyone
@@ -106,13 +113,12 @@ service cloud.firestore {
     match /communityMembers/{memberId} {
       // Allow authenticated users to read
       allow read: if request.auth != null;
-<<<<<<< HEAD
-      allow create: if true; // Allow anyone to create community members (for RSVP forms, etc.)
-      allow update, delete: if request.auth != null;
-=======
       
-      // Allow create/update for authenticated users
-      allow create, update: if request.auth != null;
+      // Allow create for anyone (for RSVP forms, signup, etc.)
+      allow create: if true;
+      
+      // Allow update for authenticated users
+      allow update: if request.auth != null;
       
       // Allow delete for:
       // 1. The member themselves, OR
@@ -120,7 +126,6 @@ service cloud.firestore {
       allow delete: if request.auth != null && 
                        (request.auth.uid == resource.data.userId || 
                         isCommunityOwner(resource.data.communityId));
->>>>>>> wip
     }
   }
 }
