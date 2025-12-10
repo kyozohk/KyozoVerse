@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { getFirebase } from '@/firebase';
+import { CommunityAuthProvider } from '@/hooks/use-community-auth';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -32,7 +33,9 @@ export default function RootLayout({
         }}
       >
         <FirebaseClientProvider firebase={getFirebase()}>
-          {children}
+          <CommunityAuthProvider>
+            {children}
+          </CommunityAuthProvider>
         </FirebaseClientProvider>
         <Toaster />
       </body>

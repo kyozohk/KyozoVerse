@@ -13,7 +13,7 @@ import { communityAuth } from '@/firebase/community-auth';
 interface CommunityAuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
 }
 
@@ -38,7 +38,8 @@ export const CommunityAuthProvider = ({ children }: { children: ReactNode }) => 
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(communityAuth, email, password);
+    const userCredential = await signInWithEmailAndPassword(communityAuth, email, password);
+    return userCredential.user;
   }
 
   const signOut = async () => {

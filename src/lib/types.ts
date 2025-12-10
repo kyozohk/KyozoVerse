@@ -28,6 +28,8 @@ export type Community = {
   ownerId: string;
   description?: string;
   isPrivate?: boolean;
+  mantras?: string;
+  lore?: string;
 };
 
 export type CommunityMember = {

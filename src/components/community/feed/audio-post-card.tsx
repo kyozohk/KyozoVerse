@@ -14,13 +14,13 @@ import { cn } from "@/lib/utils";
 import { recordInteraction } from '@/lib/interaction-utils';
 
 interface AudioPostCardProps {
-  post: Post & { id: string; _isPublicView?: boolean };
+  post: Post & { id: string; _isPublicView?: boolean; _onEdit?: () => void; _canEdit?: boolean };
 }
 
 export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
   const { user } = useCommunityAuth();
   const { toast } = useToast();
-  const isPostCreator = user && post.authorId === user.uid && !post._isPublicView;
+  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -117,7 +117,7 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
         
         {isPostCreator && (
           <div className="absolute top-2 right-2 flex gap-1 z-20">
-            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full">
+            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => post._onEdit?.()}>
               <Edit className="h-4 w-4 text-gray-700" />
             </Button>
             <Button 
@@ -158,7 +158,6 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={handleAudioEnded}
-                onError={(e) => console.error('Audio error:', e)}
               />
               
               <div className="w-full bg-[#5B91D7]/20 h-2 rounded-full mb-2 overflow-hidden">

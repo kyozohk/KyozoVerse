@@ -11,6 +11,7 @@ import { X } from 'lucide-react';
 import { Mail } from 'lucide-react';
 import { THEME_COLORS } from '@/lib/theme-colors';
 import { useToast } from '@/hooks/use-toast';
+import { PrivacyPolicyDialog } from './privacy-policy-dialog';
 
 interface RequestAccessDialogProps {
   open: boolean;
@@ -21,19 +22,35 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
   const [whatsapp, setWhatsapp] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!agreedToPrivacy) {
+      toast({
+        title: 'Privacy Policy Required',
+        description: 'Please agree to the Privacy Policy to continue.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     const formData = new FormData(e.currentTarget);
+    const rawPhone = formData.get('phone') as string;
+    // Clean phone number: remove + and spaces
+    const cleanPhone = rawPhone.replace(/[\s+]/g, '');
+    
     const data = {
       firstName: formData.get('firstName') as string,
       lastName: formData.get('lastName') as string,
-      phone: formData.get('phone') as string,
+      phone: cleanPhone,
       email: formData.get('email') as string,
       newsletter,
       whatsapp
@@ -88,13 +105,14 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
   };
   
   return (
+    <>
     <CustomFormDialog
         open={open}
         onClose={handleClose}
         title={isSuccess ? "Check Your Email! 📧" : "Join the Waitlist"}
         description={isSuccess ? "We've sent you a login link to get started." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
         backgroundImage="/bg/light_app_bg.png"
-        color={THEME_COLORS.overview.primary}
+        color="#843484"
     >
       {isSuccess ? (
         // Success View
@@ -175,6 +193,26 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
             
             <div className="space-y-2 pt-2">
               <Checkbox
+                checked={agreedToPrivacy}
+                onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                label={
+                  <span className="text-sm text-gray-700">
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowPrivacyDialog(true);
+                      }}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Privacy Policy
+                    </button>
+                  </span>
+                }
+              />
+              
+              <Checkbox
                 checked={newsletter}
                 onCheckedChange={(checked) => setNewsletter(checked === true)}
                 label="Sign me up to the CreativeLab newsletter"
@@ -201,5 +239,11 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
         </form>
       )}
     </CustomFormDialog>
+    
+    <PrivacyPolicyDialog 
+      open={showPrivacyDialog} 
+      onOpenChange={setShowPrivacyDialog}
+    />
+    </>
   );
 }

@@ -11,7 +11,7 @@ import { getThemeForPath } from '@/lib/theme-utils'
 import "@/styles/components.css"
 
 export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'checked' | 'onChange'> {
-  label?: string;
+  label?: string | React.ReactNode;
   error?: string;
   wrapperClassName?: string;
   checked?: boolean;

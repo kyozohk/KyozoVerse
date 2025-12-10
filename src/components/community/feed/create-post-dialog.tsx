@@ -3,12 +3,13 @@
 
 import { useState, useEffect } from 'react';
 import { CustomFormDialog, Input, Textarea, Button, Dropzone, Checkbox } from '@/components/ui';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { uploadFile } from '@/lib/upload-helper';
 import { PostType } from './create-post-buttons';
 import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
+import { type Post } from '@/lib/types';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface CreatePostDialogProps {
   postType: PostType | null;
   communityId: string;
   communityHandle: string;
+  editPost?: (Post & { id: string }) | null;
 }
 
 export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ 
@@ -23,7 +25,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setIsOpen, 
     postType, 
     communityId,
-    communityHandle
+    communityHandle,
+    editPost
 }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -31,6 +34,15 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editPost) {
+      setTitle(editPost.title || '');
+      setDescription(editPost.content.text || '');
+      setIsPublic(editPost.visibility === 'public');
+    }
+  }, [editPost]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,8 +63,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       return;
     }
 
-    // Validate file for media posts
-    if ((postType === 'audio' || postType === 'video') && !file) {
+    // Validate file for media posts (only if creating new post)
+    if (!editPost && (postType === 'audio' || postType === 'video') && !file) {
       alert(`Please upload a ${postType} file`);
       return;
     }
@@ -63,6 +75,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     let fileCategory = '';
     let fileType = '';
     
+    // Only upload new file if one was selected
     if (file) {
       try {
         console.log(`Uploading ${postType} file using server-side API:`, file.name, file.type);
@@ -98,41 +111,82 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
     }
 
-    const postData = {
-        title,
-        content: {
+    try {
+      if (editPost) {
+        // Update existing post
+        const postRef = doc(db, 'blogs', editPost.id);
+        const updateData: any = {
+          title,
+          content: {
+            text: description,
+            mediaUrls: file ? [mediaUrl] : editPost.content.mediaUrls || [],
+          },
+          visibility: isPublic ? 'public' : 'private',
+          updatedAt: serverTimestamp()
+        };
+        
+        console.log('Editing post:', {
+          postId: editPost.id,
+          currentAuthorId: editPost.authorId,
+          currentUserId: user?.uid,
+          isAuthor: editPost.authorId === user?.uid,
+          currentCommunityId: editPost.communityId,
+          currentCommunityHandle: editPost.communityHandle,
+          currentVisibility: editPost.visibility,
+          newVisibility: isPublic ? 'public' : 'private',
+          updateData
+        });
+        
+        await updateDoc(postRef, updateData);
+        console.log('Post updated successfully');
+      } else {
+        // Create new post
+        const postData = {
+          title,
+          content: {
             text: description,
             mediaUrls: file ? [mediaUrl] : [],
             fileType: file ? file.type : ''
-        },
-        authorId: user.uid,
-        communityId: communityId,
-        communityHandle: communityHandle,
-        type: finalPostType,
-        createdAt: serverTimestamp(),
-        likes: 0,
-        comments: 0,
-        visibility: isPublic ? 'public' : 'private'
-    };
-
-    try {
-      await addDoc(collection(db, 'blogs'), postData);
-      console.log('Post created successfully:', finalPostType);
+          },
+          authorId: user.uid,
+          communityId: communityId,
+          communityHandle: communityHandle,
+          type: finalPostType,
+          createdAt: serverTimestamp(),
+          likes: 0,
+          comments: 0,
+          visibility: isPublic ? 'public' : 'private'
+        };
+        
+        console.log('Creating post:', {
+          authorId: user.uid,
+          userEmail: user.email,
+          communityId,
+          communityHandle,
+          visibility: isPublic ? 'public' : 'private',
+          type: finalPostType
+        });
+        
+        await addDoc(collection(db, 'blogs'), postData);
+        console.log('Post created successfully:', finalPostType);
+      }
+      
       setIsSubmitting(false);
       setIsOpen(false);
     } catch (error) {
-      console.error('Failed to create post:', error);
-      alert('Failed to create post. Please try again.');
+      console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
+      alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
       setIsSubmitting(false);
     }
   };
 
   const getDialogTitle = () => {
+    const action = editPost ? 'Edit' : 'Create';
     switch (postType) {
-        case 'text': return 'Create a Text Post';
-        case 'image': return 'Create an Image Post';
-        case 'audio': return 'Create an Audio Post';
-        case 'video': return 'Create a Video Post';
+        case 'text': return `${action} a Text Post`;
+        case 'image': return `${action} an Image Post`;
+        case 'audio': return `${action} an Audio Post`;
+        case 'video': return `${action} a Video Post`;
         default: return 'Create a Post';
     }
   }

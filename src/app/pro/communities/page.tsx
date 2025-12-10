@@ -7,7 +7,7 @@ import { CommunityList } from '@/components/community/community-list';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { PlusCircle, Loader2 } from 'lucide-react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
@@ -26,16 +26,41 @@ export default function CommunitiesDashboardPage() {
     
     setLoading(true);
 
+    // Query for communities where user is the owner
     const communitiesRef = collection(db, 'communities');
-    // Temporarily show ALL communities (remove where clause to see imported communities)
-    const q = query(communitiesRef);
+    const ownedCommunitiesQuery = query(communitiesRef, where('ownerId', '==', user.uid));
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userCommunities = querySnapshot.docs.map(doc => ({
+    const unsubscribeOwned = onSnapshot(ownedCommunitiesQuery, async (querySnapshot) => {
+      const ownedCommunities = querySnapshot.docs.map(doc => ({
         communityId: doc.id,
         ...doc.data(),
       } as Community));
-      setCommunities(userCommunities);
+
+      // Query for communities where user is a member
+      const membersRef = collection(db, 'communityMembers');
+      const memberQuery = query(membersRef, where('userId', '==', user.uid));
+      
+      const memberSnapshot = await getDocs(memberQuery);
+      const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
+      
+      // Fetch member communities (excluding ones already in owned list)
+      const memberCommunities: Community[] = [];
+      for (const communityId of memberCommunityIds) {
+        if (!ownedCommunities.find(c => c.communityId === communityId)) {
+          const communityQuery = query(communitiesRef, where('communityId', '==', communityId));
+          const communitySnapshot = await getDocs(communityQuery);
+          communitySnapshot.docs.forEach(doc => {
+            memberCommunities.push({
+              communityId: doc.id,
+              ...doc.data(),
+            } as Community);
+          });
+        }
+      }
+      
+      // Combine owned and member communities
+      const allUserCommunities = [...ownedCommunities, ...memberCommunities];
+      setCommunities(allUserCommunities);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching communities:", error);
@@ -43,7 +68,7 @@ export default function CommunitiesDashboardPage() {
     });
 
     // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => unsubscribeOwned();
   }, [user]);
 
   return (

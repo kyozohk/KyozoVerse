@@ -18,7 +18,7 @@ import {
   CustomButton
 } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
@@ -52,61 +52,44 @@ export default function CommunitySidebar() {
     // Fetch communities where user is owner
     const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
     
-    // Fetch communities where user is a member
-    const memberQuery = query(collection(db, 'communityMembers'), where('userId', '==', user.uid));
-    
     const unsubscribeOwned = onSnapshot(ownedQuery, async (ownedSnapshot) => {
       const ownedCommunities = ownedSnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
       
-      // Get member communities
-      const memberSnapshot = await onSnapshot(memberQuery, async (memberSnap) => {
-        const memberCommunityIds = memberSnap.docs.map(doc => doc.data().communityId);
-        
-        // Fetch community details for member communities
-        let memberCommunities: Community[] = [];
-        if (memberCommunityIds.length > 0) {
-          const memberCommunitiesPromises = memberCommunityIds.map(async (id) => {
-            const communityDoc = await collection(db, 'communities');
-            const communitySnapshot = await onSnapshot(query(communityDoc, where('__name__', '==', id)), (snap) => {
-              return snap.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
-            });
-            return new Promise<Community[]>((resolve) => {
-              const unsubscribe = onSnapshot(query(collection(db, 'communities')), (snapshot) => {
-                const comm = snapshot.docs.find(d => d.id === id);
-                if (comm) {
-                  resolve([{ communityId: comm.id, ...comm.data() } as Community]);
-                } else {
-                  resolve([]);
-                }
-                unsubscribe();
-              });
-            });
+      // Fetch communities where user is a member
+      const memberQuery = query(collection(db, 'communityMembers'), where('userId', '==', user.uid));
+      const memberSnapshot = await getDocs(memberQuery);
+      const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
+      
+      // Fetch community details for member communities (excluding owned ones)
+      const memberCommunities: Community[] = [];
+      for (const communityId of memberCommunityIds) {
+        if (!ownedCommunities.find(c => c.communityId === communityId)) {
+          const communitiesRef = collection(db, 'communities');
+          const communitySnapshot = await getDocs(query(communitiesRef, where('__name__', '==', communityId)));
+          communitySnapshot.docs.forEach(doc => {
+            memberCommunities.push({
+              communityId: doc.id,
+              ...doc.data(),
+            } as Community);
           });
-          
-          const results = await Promise.all(memberCommunitiesPromises);
-          memberCommunities = results.flat();
         }
-        
-        // Combine and deduplicate
-        const allCommunities = [...ownedCommunities, ...memberCommunities];
-        const uniqueCommunities = Array.from(
-          new Map(allCommunities.map(item => [item.communityId, item])).values()
-        );
-        
-        setCommunities(uniqueCommunities);
+      }
+      
+      // Combine owned and member communities
+      const allCommunities = [...ownedCommunities, ...memberCommunities];
+      setCommunities(allCommunities);
 
-        const currentCommunity = uniqueCommunities.find(c => c.handle === handleFromPath);
-        if (currentCommunity) {
-          setSelectedCommunityHandle(currentCommunity.handle);
-        } else if (uniqueCommunities.length > 0 && handleFromPath) {
-          const communityExists = uniqueCommunities.some(c => c.handle === handleFromPath);
-          setSelectedCommunityHandle(communityExists ? handleFromPath : uniqueCommunities[0]?.handle);
-        } else {
-          setSelectedCommunityHandle(null);
-        }
+      const currentCommunity = allCommunities.find(c => c.handle === handleFromPath);
+      if (currentCommunity) {
+        setSelectedCommunityHandle(currentCommunity.handle);
+      } else if (allCommunities.length > 0 && handleFromPath) {
+        const communityExists = allCommunities.some(c => c.handle === handleFromPath);
+        setSelectedCommunityHandle(communityExists ? handleFromPath : allCommunities[0]?.handle);
+      } else {
+        setSelectedCommunityHandle(null);
+      }
 
-        setLoading(false);
-      });
+      setLoading(false);
     }, (error) => {
       console.error("Error fetching communities:", error);
       setLoading(false);
