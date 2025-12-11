@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -120,25 +119,6 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                     </div>
                 </div>
             </div>
-
-            {canManage && (
-                <div className="flex gap-2">
-                    <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
-                        <Pencil className="h-4 w-4" />
-                    </CustomButton>
-                    {onDelete && (
-                      <CustomButton 
-                        variant="rounded-rect" 
-                        size="small" 
-                        className="text-white/80 hover:text-white hover:bg-white/10"
-                        onClick={onDelete}
-                        title="Delete community"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </CustomButton>
-                    )}
-                </div>
-            )}
         </div>
 
         {canManage && (
@@ -165,6 +145,20 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                 <Bell className="h-4 w-4 mr-2" />
                 Broadcast
               </CustomButton>
+               <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
+                  <Pencil className="h-4 w-4" />
+              </CustomButton>
+              {onDelete && (
+                <CustomButton 
+                  variant="rounded-rect" 
+                  size="small" 
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  onClick={onDelete}
+                  title="Delete community"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </CustomButton>
+              )}
             </div>
           )}
       </div>
