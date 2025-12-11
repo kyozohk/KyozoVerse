@@ -112,8 +112,18 @@ export default function CommunityFeedPage() {
       setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
+      console.error('❌ Firestore query error in /pro feed:', {
+        error,
+        errorCode: error.code,
+        errorMessage: error.message,
+        user: user?.uid,
+        userEmail: user?.email,
+        handle,
+        communityId,
+        userRole
+      });
       const permissionError = new FirestorePermissionError({
-        path: postsQuery.path,
+        path: 'blogs',
         operation: 'list'
       });
       errorEmitter.emit('permission-error', permissionError);

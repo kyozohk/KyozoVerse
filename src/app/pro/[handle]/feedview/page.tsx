@@ -181,7 +181,7 @@ export default function FeedViewPage() {
       {/* Link to author view if needed */}
       <div className="mt-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Are you the community owner? <Link href={`/${handle}/feed`} className="text-primary hover:underline">Sign in to manage content</Link>
+          Are you the community owner? <Link href={`/pro/${handle}/feed`} className="text-primary hover:underline">Sign in to manage content</Link>
         </p>
       </div>
     </div>
