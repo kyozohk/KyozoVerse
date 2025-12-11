@@ -12,12 +12,12 @@ import { type Post, type User } from '@/lib/types';
 import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
 import { Pencil, Mic, Video } from 'lucide-react';
-import { TextPostCard } from '@/components/community/feed/text-post-card';
-import { AudioPostCard } from '@/components/community/feed/audio-post-card';
-import { VideoPostCard } from '@/components/community/feed/video-post-card';
-import { ListView } from '@/components/ui/list-view';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { ReadCard } from '@/components/content-cards/read-card';
+import { ListenCard } from '@/components/content-cards/listen-card';
+import { WatchCard } from '@/components/content-cards/watch-card';
+import Link from 'next/link';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -31,7 +31,6 @@ export default function CommunityFeedPage() {
   const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const [postType, setPostType] = useState<PostType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [editingPost, setEditingPost] = useState<(Post & { id: string }) | null>(null);
 
   useEffect(() => {
@@ -59,46 +58,24 @@ export default function CommunityFeedPage() {
 
   useEffect(() => {
     if (!handle || !communityId) {
+      if (handle) setLoading(false); // If handle exists but no communityId yet, stop loading to show empty state
       return;
     }
 
     const postsCollection = collection(db, 'blogs');
     
-    // Query public and private posts separately to work with security rules
-    // Query by communityHandle since that's what posts have
-    const publicQuery = query(
+    // We will query all posts for the community and filter on the client side
+    // This simplifies the logic and works better with security rules where a user
+    // might be able to see both public and private posts.
+    const postsQuery = query(
       postsCollection,
       where('communityHandle', '==', handle),
-      where('visibility', '==', 'public'),
       orderBy('createdAt', 'desc')
     );
 
-    const privateQuery = query(
-      postsCollection,
-      where('communityHandle', '==', handle),
-      where('visibility', '==', 'private'),
-      orderBy('createdAt', 'desc')
-    );
-
-    const allPosts = new Map<string, Post & { id: string }>();
-
-    const processSnapshot = async (querySnapshot: any) => {
-      console.log(`📥 Processing ${querySnapshot.docs.length} posts from Firestore`);
-      
-      for (const postDoc of querySnapshot.docs) {
+    const unsubscribe = onSnapshot(postsQuery, async (querySnapshot) => {
+      const allPostsData = await Promise.all(querySnapshot.docs.map(async (postDoc) => {
         const postData = postDoc.data() as Post;
-
-        console.log('📝 Post loaded:', {
-          id: postDoc.id,
-          title: postData.title,
-          type: postData.type,
-          visibility: postData.visibility,
-          authorId: postData.authorId,
-          communityId: postData.communityId,
-          communityHandle: postData.communityHandle,
-          createdAt: postData.createdAt
-        });
-
         let authorData: User | null = null;
         if (postData.authorId) {
           try {
@@ -106,53 +83,39 @@ export default function CommunityFeedPage() {
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
               authorData = userSnap.data() as User;
-              console.log(`👤 Author for post ${postDoc.id}:`, authorData.displayName || authorData.email);
             }
           } catch (error) {
-            console.warn(`⚠️ Could not fetch author for post ${postDoc.id}:`, error);
+            console.warn(`Could not fetch author for post ${postDoc.id}:`, error);
           }
         }
 
-        allPosts.set(postDoc.id, {
+        return {
           id: postDoc.id,
           ...postData,
           author: authorData || { userId: 'unknown', displayName: 'Unknown User' },
           createdAt: postData.createdAt?.toDate(),
-        });
+        } as Post & { id: string };
+      }));
+
+      // Client-side filtering based on user role
+      let visiblePosts: (Post & { id: string })[] = [];
+      if (user) {
+        if (userRole === 'admin' || userRole === 'owner') {
+          visiblePosts = allPostsData; // Admins/owners see all posts
+        } else {
+          visiblePosts = allPostsData.filter(p => 
+            p.visibility === 'public' || p.authorId === user.uid
+          );
+        }
+      } else {
+        // This case shouldn't be reached in /pro routes, but as a fallback
+        visiblePosts = allPostsData.filter(p => p.visibility === 'public');
       }
 
-      // Sort all posts by createdAt
-      const sortedPosts = Array.from(allPosts.values()).sort((a, b) => {
-        const aTime = a.createdAt?.getTime() || 0;
-        const bTime = b.createdAt?.getTime() || 0;
-        return bTime - aTime;
-      });
-
-      // Apply visibility filtering based on user role
-      let visiblePosts = sortedPosts;
-      if (!user) {
-        visiblePosts = sortedPosts.filter((p) => p.visibility === 'public');
-      } else if (userRole !== 'admin' && userRole !== 'owner') {
-        visiblePosts = sortedPosts.filter((p) => 
-          p.visibility === 'public' || (p.visibility === 'private' && p.authorId === user.uid)
-        );
-      }
-      
-      console.log(`✅ Final visible posts (${visiblePosts.length}):`, visiblePosts.map(p => ({
-        id: p.id,
-        title: p.title,
-        type: p.type,
-        visibility: p.visibility,
-        author: p.author?.displayName || p.author?.email || 'Unknown'
-      })));
-      
       setPosts(visiblePosts);
       setLoading(false);
-    };
-
-    // Subscribe to public posts
-    const unsubscribePublic = onSnapshot(publicQuery, processSnapshot, (error) => {
-      console.error('Error fetching public posts:', error);
+    }, (error) => {
+      console.error('Error fetching posts:', error);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: 'blogs',
         operation: 'list',
@@ -160,21 +123,12 @@ export default function CommunityFeedPage() {
       setLoading(false);
     });
 
-    // Subscribe to private posts
-    const unsubscribePrivate = onSnapshot(privateQuery, processSnapshot, (error) => {
-      console.error('Error fetching private posts:', error);
-      // Don't emit error for private posts as user might not have permission
-    });
-
-    return () => {
-      unsubscribePublic();
-      unsubscribePrivate();
-    };
+    return () => unsubscribe();
   }, [handle, user, communityId, userRole]);
 
   const handleSelectPostType = (type: PostType) => {
     setPostType(type);
-    setEditingPost(null); // Clear editing post when creating new
+    setEditingPost(null);
     setCreatePostOpen(true);
   };
 
@@ -190,28 +144,61 @@ export default function CommunityFeedPage() {
   );
 
   const canEditContent = userRole === 'admin' || userRole === 'owner';
-  const canEditAllPosts = canEditContent; // Only owners/admins can edit all posts
   
   const buttonConfig = [
-    {
-      type: 'text' as PostType,
-      icon: Pencil,
-      color: '#C170CF',
-      label: 'Text',
-    },
-    {
-      type: 'audio' as PostType,
-      icon: Mic,
-      color: '#699FE5',
-      label: 'Audio',
-    },
-    {
-      type: 'video' as PostType,
-      icon: Video,
-      color: '#CF7770',
-      label: 'Video',
-    },
+    { type: 'text' as PostType, icon: Pencil, color: '#C170CF', label: 'Text' },
+    { type: 'audio' as PostType, icon: Mic, color: '#699FE5', label: 'Audio' },
+    { type: 'video' as PostType, icon: Video, color: '#CF7770', label: 'Video' },
   ];
+
+  const renderPost = (post: Post & { id: string }) => {
+    const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
+    const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
+
+    const cardProps = {
+      key: post.id,
+      onClick: () => handleEditPost(post),
+      className: "cursor-pointer"
+    };
+
+    switch (post.type) {
+      case 'text':
+      case 'image':
+        return (
+            <ReadCard
+              key={post.id}
+              category={post.type === 'image' ? 'Image' : 'Text'}
+              readTime={readTime}
+              date={postDate}
+              title={post.title || 'Untitled'}
+              summary={post.content.text}
+            />
+        );
+      case 'audio':
+        return (
+            <ListenCard
+              key={post.id}
+              category="Audio"
+              episode="Listen"
+              duration="0:00"
+              title={post.title || 'Untitled Audio'}
+              summary={post.content.text}
+            />
+        );
+      case 'video':
+        return (
+            <WatchCard
+              key={post.id}
+              category="Video"
+              title={post.title || 'Untitled Video'}
+              imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
+              imageHint="video content"
+            />
+        );
+      default:
+        return null;
+    }
+  };
   
   return (
     <>
@@ -282,30 +269,11 @@ export default function CommunityFeedPage() {
           </div>
         ) : (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-            {filteredPosts.map((post) => {
-              // Enable edit/delete only for owners/admins in owner dashboard
-              const postWithEditAccess = { ...post, _isPublicView: false, _canEdit: canEditAllPosts, _onEdit: () => handleEditPost(post) };
-              
-              const PostCard = (() => {
-                switch (post.type) {
-                  case 'text':
-                  case 'image':
-                    return TextPostCard;
-                  case 'audio':
-                    return AudioPostCard;
-                  case 'video':
-                    return VideoPostCard;
-                  default:
-                    return null;
-                }
-              })();
-              
-              return PostCard ? (
-                <div key={post.id} className="break-inside-avoid mb-4">
-                  <PostCard post={postWithEditAccess} />
-                </div>
-              ) : null;
-            })}
+            {filteredPosts.map((post) => (
+              <div key={post.id} className="break-inside-avoid mb-4 cursor-pointer" onClick={() => handleEditPost(post)}>
+                {renderPost(post)}
+              </div>
+            ))}
           </div>
         )}
       </div>
