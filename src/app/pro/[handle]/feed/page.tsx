@@ -83,8 +83,21 @@ export default function CommunityFeedPage() {
     const allPosts = new Map<string, Post & { id: string }>();
 
     const processSnapshot = async (querySnapshot: any) => {
+      console.log(`📥 Processing ${querySnapshot.docs.length} posts from Firestore`);
+      
       for (const postDoc of querySnapshot.docs) {
         const postData = postDoc.data() as Post;
+
+        console.log('📝 Post loaded:', {
+          id: postDoc.id,
+          title: postData.title,
+          type: postData.type,
+          visibility: postData.visibility,
+          authorId: postData.authorId,
+          communityId: postData.communityId,
+          communityHandle: postData.communityHandle,
+          createdAt: postData.createdAt
+        });
 
         let authorData: User | null = null;
         if (postData.authorId) {
@@ -93,9 +106,10 @@ export default function CommunityFeedPage() {
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
               authorData = userSnap.data() as User;
+              console.log(`👤 Author for post ${postDoc.id}:`, authorData.displayName || authorData.email);
             }
           } catch (error) {
-            // If we can't fetch author, proceed without it
+            console.warn(`⚠️ Could not fetch author for post ${postDoc.id}:`, error);
           }
         }
 
@@ -123,6 +137,14 @@ export default function CommunityFeedPage() {
           p.visibility === 'public' || (p.visibility === 'private' && p.authorId === user.uid)
         );
       }
+      
+      console.log(`✅ Final visible posts (${visiblePosts.length}):`, visiblePosts.map(p => ({
+        id: p.id,
+        title: p.title,
+        type: p.type,
+        visibility: p.visibility,
+        author: p.author?.displayName || p.author?.email || 'Unknown'
+      })));
       
       setPosts(visiblePosts);
       setLoading(false);
