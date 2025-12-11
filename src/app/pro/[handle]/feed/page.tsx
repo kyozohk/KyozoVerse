@@ -64,9 +64,6 @@ export default function CommunityFeedPage() {
 
     const postsCollection = collection(db, 'blogs');
     
-    // We will query all posts for the community and filter on the client side
-    // This simplifies the logic and works better with security rules where a user
-    // might be able to see both public and private posts.
     const postsQuery = query(
       postsCollection,
       where('communityHandle', '==', handle),
@@ -115,11 +112,11 @@ export default function CommunityFeedPage() {
       setPosts(visiblePosts);
       setLoading(false);
     }, (error) => {
-      console.error('Error fetching posts:', error);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: 'blogs',
-        operation: 'list',
-      }));
+      const permissionError = new FirestorePermissionError({
+        path: postsQuery.path,
+        operation: 'list'
+      });
+      errorEmitter.emit('permission-error', permissionError);
       setLoading(false);
     });
 
