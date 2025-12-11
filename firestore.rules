@@ -31,7 +31,7 @@ service cloud.firestore {
 
     // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow any authenticated user to perform LIST queries on the collection.
+      // Allow any authenticated user to perform LIST queries.
       // This is safe because the client-side code filters which posts are displayed.
       allow list: if request.auth != null;
 
