@@ -69,7 +69,7 @@ export default function WillerFeedPreviewPage() {
 
   const renderPost = (post: Post & { id: string }) => {
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
-    const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: '2024' }) : 'Dec 2024';
+    const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
 
     switch (post.type) {
       case 'text':
