@@ -223,7 +223,7 @@ export default function CommunityFeedPage() {
             <p className="text-sm text-muted-foreground">Latest posts from the community.</p>
           </div>
           <a
-            href={`/c/${handle}`}
+            href={`/${handle}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-primary hover:underline flex items-center gap-1"

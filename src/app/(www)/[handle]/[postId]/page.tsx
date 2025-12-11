@@ -83,7 +83,7 @@ export default function FullPostPage() {
       <div className="container mx-auto max-w-3xl p-4 md:p-8">
         <article>
           <header className="mb-8">
-            <Link href={`/previews/willer`} className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4">
+            <Link href={`/${handle}`} className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4">
               <ArrowLeft className="h-4 w-4" />
               Back to feed
             </Link>

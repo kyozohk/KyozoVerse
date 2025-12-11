@@ -62,38 +62,7 @@ export default function PublicLayout({
       <CommunityAuthProviderWrapper>
         <div 
           className="min-h-screen flex flex-col" 
-          style={{
-            backgroundImage: `url('/bg/feed_bg.jpeg')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-            backgroundColor: '#0f172a'
-          }}
         >
-          {/* Global header for all public pages */}
-          <header className=" backdrop-blur-sm shadow-sm sticky top-0 z-10">
-            <div className="container mx-auto py-3 px-40 flex justify-between items-center">
-              <Link href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2">
-                <Image src="/logo.png" alt="KyozoVerse" width={120} height={35} className="brightness-150" />
-              </Link>
-              {communityUser ? (
-                 <CustomButton
-                    onClick={handleSignOut}
-                    className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
-                >
-                    Sign Out
-                </CustomButton>
-              ) : (
-                <CustomButton
-                    onClick={openSignIn} 
-                    className="text-sm text-white/70 hover:text-white bg-primary/80 hover:bg-primary/90 px-4 py-2 rounded-full font-medium transition-colors"
-                >
-                    Sign In
-                </CustomButton>
-              )}
-            </div>
-          </header>
-          
           {/* Main content */}
           <main className="flex-grow">
             {children}
