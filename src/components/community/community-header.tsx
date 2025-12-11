@@ -10,9 +10,9 @@ import {
   Pencil,
   UserPlus,
   Mail,
-  Bell,
   Trash2,
   Crown,
+  Megaphone,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CustomButton } from '@/components/ui/CustomButton';
@@ -65,14 +65,14 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
         <Image
           src={community.communityBackgroundImage}
           alt={`${community.name} banner`}
-          layout="fill"
-          objectFit="cover"
-          className="absolute inset-0 z-0"
+          fill
+          className="object-cover absolute inset-0 z-0"
+          priority
         />
       )}
       <div className="absolute inset-0 bg-black/50 z-0"></div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col justify-between h-full">
         <div className="flex justify-between items-start">
             {/* Owner Info - Top Right */}
             {ownerInfo && (
@@ -122,43 +122,48 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
         </div>
 
         {canManage && (
-            <div className="mt-4 flex flex-wrap items-start gap-2 md:gap-4 self-start md:self-center">
-              {onAddMember && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 md:gap-4">
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                {onAddMember && (
+                  <CustomButton 
+                    variant="rounded-rect" 
+                    className="text-white/80 hover:text-white hover:bg-white/10"
+                    onClick={onAddMember}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Members
+                  </CustomButton>
+                )}
                 <CustomButton 
                   variant="rounded-rect" 
                   className="text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={onAddMember}
+                  onClick={onInvite}
                 >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add Members
+                  <Mail className="h-4 w-4 mr-2" />
+                  Invite
                 </CustomButton>
-              )}
-              <CustomButton 
-                variant="rounded-rect" 
-                className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={onInvite}
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Invite
-              </CustomButton>
-              <CustomButton variant="rounded-rect" className="text-white/80 hover:text-white hover:bg-white/10">
-                <Bell className="h-4 w-4 mr-2" />
-                Broadcast
-              </CustomButton>
-               <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
-                  <Pencil className="h-4 w-4" />
-              </CustomButton>
-              {onDelete && (
-                <CustomButton 
-                  variant="rounded-rect" 
-                  size="small" 
-                  className="text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={onDelete}
-                  title="Delete community"
-                >
-                  <Trash2 className="h-4 w-4" />
+                <CustomButton variant="rounded-rect" className="text-white/80 hover:text-white hover:bg-white/10">
+                  <Megaphone className="h-4 w-4 mr-2" />
+                  Broadcast
                 </CustomButton>
-              )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
+                    <Pencil className="h-4 w-4" />
+                </CustomButton>
+                {onDelete && (
+                  <CustomButton 
+                    variant="rounded-rect" 
+                    size="small" 
+                    className="text-white/80 hover:text-red-400 hover:bg-white/10"
+                    onClick={onDelete}
+                    title="Delete community"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </CustomButton>
+                )}
+              </div>
             </div>
           )}
       </div>
