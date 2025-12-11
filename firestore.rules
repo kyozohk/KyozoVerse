@@ -31,17 +31,9 @@ service cloud.firestore {
 
     // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow authenticated users to query the collection.
+      // Allow authenticated users to query and read documents.
       // Client-side code will handle filtering public/private posts.
-      allow list: if request.auth != null;
-
-      // Allow read access to any specific document if it's public,
-      // or if the user is an owner, member, or author.
-      allow get: if resource.data.visibility == 'public' || (request.auth != null && 
-                   (request.auth.uid == resource.data.authorId || 
-                    (resource.data.communityId != null && isCommunityOwner(resource.data.communityId)) ||
-                    (resource.data.communityId != null && isCommunityMember(resource.data.communityId))
-                   ));
+      allow read: if request.auth != null;
       
       // Allow create for authenticated users (author must match)
       allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
