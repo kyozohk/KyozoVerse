@@ -9,13 +9,13 @@
     {
       "id": "avatar2",
       "description": "User avatar 2",
-      "imageUrl": "https://images.unsplash.com/photo-1546961329-78bef0414d7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2MjgwMDA3M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1546961329-78bef0414d7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8fDE3NjI4MDAwNzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "woman portrait"
     },
     {
       "id": "avatar3",
       "description": "User avatar 3",
-      "imageUrl": "https://images.unsplash.com/photo-1619182597083-17bda72c1d56?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYW4lMjBmYWNlfGVufDB8fHx8MTc2MjgyNDU3MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1619182597083-17bda72c1d56?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYW4lMjBmYWNlfGVufDB8fHx8fDE3NjI4MjQ1NzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "man face"
     },
     {
@@ -35,6 +35,24 @@
       "description": "Post image 3",
       "imageUrl": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhYnN0cmFjdCUyMGFydHxlbnwwfHx8fDE3NjI3NTkzMjd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "abstract art"
+    },
+    {
+      "id": "content-card-1",
+      "description": "Live performance placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1669459902434-39a7f6b4ca48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxsaXZlJTIwcGVyZm9ybWFuY2UlMjBzdGFnZXxlbnwwfHx8fDE3NjU0MjQ3NzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "live performance stage"
+    },
+    {
+      "id": "content-card-2",
+      "description": "Art gallery placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1719400030798-af7ac5760172?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhcnQlMjBleGhpYml0aW9uJTIwZ2FsbGVyeXxlbnwwfHx8fDE3NjU0MjQ3NzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art exhibition gallery"
+    },
+    {
+      "id": "content-card-3",
+      "description": "Art process placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1764522770749-382821465bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhcnQlMjBwcm9jZXNzJTIwbWFraW5nfGVufDB8fHx8MTc2NTQyNDc3M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art process making"
     }
   ]
 }
