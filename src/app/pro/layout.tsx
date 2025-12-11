@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -5,7 +6,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useCallback, useState, useMemo } from 'react';
 import { 
   LogOut, 
-  Loader2
+  Loader2,
+  Megaphone
 } from 'lucide-react';
 import { 
   Sidebar, 

@@ -8,7 +8,7 @@ import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-utils';
-import { type Post, type User } from '@/lib/types';
+import { type Post, type User, type Community } from '@/lib/types';
 import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
 import { Pencil, Mic, Video } from 'lucide-react';
@@ -18,6 +18,7 @@ import { ReadCard } from '@/components/content-cards/read-card';
 import { ListenCard } from '@/components/content-cards/listen-card';
 import { WatchCard } from '@/components/content-cards/watch-card';
 import Link from 'next/link';
+import { CommunityStats } from '@/components/community/community-stats';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export default function CommunityFeedPage() {
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>('guest');
-  const [communityId, setCommunityId] = useState<string>('');
+  const [community, setCommunity] = useState<Community | null>(null);
   const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const [postType, setPostType] = useState<PostType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,10 +40,9 @@ export default function CommunityFeedPage() {
 
       try {
         const communityData = await getCommunityByHandle(handle);
+        setCommunity(communityData);
 
         if (communityData) {
-          setCommunityId(communityData.communityId);
-
           if (user) {
             const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
             setUserRole(role);
@@ -57,7 +57,7 @@ export default function CommunityFeedPage() {
   }, [handle, user]);
 
   useEffect(() => {
-    if (!handle || !communityId) {
+    if (!handle || !community?.communityId) {
       if (handle) setLoading(false); // If handle exists but no communityId yet, stop loading to show empty state
       return;
     }
@@ -131,7 +131,7 @@ export default function CommunityFeedPage() {
     });
 
     return () => unsubscribe();
-  }, [handle, user, communityId, userRole]);
+  }, [handle, user, community?.communityId, userRole]);
 
   const handleSelectPostType = (type: PostType) => {
     setPostType(type);
@@ -230,6 +230,12 @@ export default function CommunityFeedPage() {
             Public View
           </a>
         </div>
+        
+        {community && (
+          <div className="mb-6">
+            <CommunityStats community={community} />
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="mb-6">
@@ -288,7 +294,7 @@ export default function CommunityFeedPage() {
         isOpen={isCreatePostOpen} 
         setIsOpen={setCreatePostOpen} 
         postType={postType} 
-        communityId={communityId}
+        communityId={community?.communityId || ''}
         communityHandle={handle}
         editPost={editingPost} />
     </>

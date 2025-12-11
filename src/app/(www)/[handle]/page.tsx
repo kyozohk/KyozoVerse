@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { getCommunityByHandle } from '@/lib/community-utils';
@@ -15,28 +14,39 @@ import Link from 'next/link';
 import '@/components/content-cards/content-cards.css';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { Button } from '@/components/ui/button';
+import { UserMenu } from '@/components/layout/user-menu';
+import { useAuthAndDialog } from '@/hooks/use-auth-and-dialog';
+import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
+import { SignupDialog } from '@/components/community/signup-dialog';
 
 function PostList() {
   const params = useParams();
   const handle = params.handle as string;
+  const { user, loading: authLoading } = useCommunityAuth();
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!handle) {
-      setLoading(false);
+    if (!handle || authLoading) {
+      if (!authLoading) setLoading(false);
       return;
     }
 
     const postsRef = collection(db, 'blogs');
-    const publicQuery = query(
+    
+    // Define visibility based on user authentication state
+    const visibility = user ? ['public', 'private'] : ['public'];
+
+    const postsQuery = query(
       postsRef,
       where('communityHandle', '==', handle),
-      where('visibility', '==', 'public'),
+      where('visibility', 'in', visibility),
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(publicQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const postsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -54,7 +64,7 @@ function PostList() {
     });
 
     return () => unsubscribe();
-  }, [handle]);
+  }, [handle, user, authLoading]);
   
   const renderPost = (post: Post & { id: string }) => {
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
@@ -123,8 +133,35 @@ function PostList() {
 
 export default function PublicCommunityPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const handle = params.handle as string;
+  const { 
+    user, 
+    loading: authLoading, 
+    dialogState,
+    setDialogState,
+    formState,
+    handleFormChange,
+    handleCheckboxChange,
+    handleSignUp,
+    handleSignInWithGoogle,
+    handleToggleMode
+  } = useAuthAndDialog();
+
   const [communityData, setCommunityData] = useState<Community | null>(null);
+
+  const openSignInDialog = () => setDialogState({ ...dialogState, isSignInOpen: true });
+
+  const openSignUpDialog = useCallback(() => {
+    setDialogState({ isSignInOpen: false, isSignUpOpen: true, isResetPasswordOpen: false, showPrivacyPolicy: false });
+  }, [setDialogState]);
+  
+  useEffect(() => {
+    // If the signup param is present, open the signup dialog
+    if (searchParams.get('signup') === 'true') {
+      openSignUpDialog();
+    }
+  }, [searchParams, openSignUpDialog]);
 
   useEffect(() => {
     async function fetchCommunityData() {
@@ -143,6 +180,18 @@ export default function PublicCommunityPage() {
             <p className="font-['DM_Sans',sans-serif] font-bold leading-tight md:leading-[30px] lg:leading-[36.029px] relative shrink-0 text-[#93adae] text-[24px] md:text-[30px] lg:text-[36.696px] tracking-[-1px] md:tracking-[-1.2px] lg:tracking-[-1.3344px]">
               {communityData?.name || 'Community'}
             </p>
+            <div className="flex items-center gap-4">
+              {!authLoading && (
+                user ? (
+                  <UserMenu />
+                ) : (
+                  <>
+                    <Button variant="ghost" onClick={openSignInDialog}>Sign In</Button>
+                    <Button onClick={openSignUpDialog}>Join Community</Button>
+                  </>
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -151,6 +200,35 @@ export default function PublicCommunityPage() {
           <PostList />
         </Suspense>
       </div>
+
+      <SignupDialog
+        isOpen={dialogState.isSignUpOpen || dialogState.isSignInOpen}
+        onClose={() => setDialogState({ ...dialogState, isSignUpOpen: false, isSignInOpen: false })}
+        isSignup={dialogState.isSignUpOpen}
+        communityName={communityData?.name}
+        firstName={formState.firstName}
+        lastName={formState.lastName}
+        email={formState.email}
+        phone={formState.phone}
+        password={formState.password}
+        agreedToPrivacy={formState.agreedToPrivacy}
+        error={formState.error}
+        onFirstNameChange={(value) => handleFormChange('firstName', value)}
+        onLastNameChange={(value) => handleFormChange('lastName', value)}
+        onEmailChange={(value) => handleFormChange('email', value)}
+        onPhoneChange={(value) => handleFormChange('phone', value)}
+        onPasswordChange={(value) => handleFormChange('password', value)}
+        onAgreedToPrivacyChange={(value) => handleCheckboxChange('agreedToPrivacy', value)}
+        onSubmit={handleSignUp}
+        onGoogleSignIn={handleSignInWithGoogle}
+        onToggleMode={handleToggleMode}
+        onShowPrivacyPolicy={() => setDialogState({ ...dialogState, showPrivacyPolicy: true })}
+      />
+      
+      <PrivacyPolicyDialog
+        open={dialogState.showPrivacyPolicy}
+        onOpenChange={(open) => setDialogState({ ...dialogState, showPrivacyPolicy: open })}
+      />
     </div>
   );
 }
