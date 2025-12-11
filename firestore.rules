@@ -31,9 +31,9 @@ service cloud.firestore {
 
     // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow any authenticated user to perform LIST queries.
-      // This is safe because the client-side code filters which posts are displayed.
-      allow list: if request.auth != null;
+      // Allow LIST queries for public posts by anyone, and for all posts by authenticated users.
+      // This is safe because the client-side code filters which posts are displayed based on user auth state.
+      allow list: if request.auth != null || request.query.where.visibility.includes_any(['public']);
 
       // Allow GET requests for public documents, or for the author of a private document.
       allow get: if resource.data.visibility == 'public' || (request.auth != null && request.auth.uid == resource.data.authorId);

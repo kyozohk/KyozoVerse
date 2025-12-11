@@ -24,18 +24,19 @@ import { SignupDialog } from '@/components/community/signup-dialog';
 function PostList() {
   const params = useParams();
   const handle = params.handle as string;
-  const { user } = useCommunityAuth();
+  const { user, loading: authLoading } = useCommunityAuth();
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!handle) {
-      setLoading(false);
+    if (!handle || authLoading) {
+      if (!authLoading) setLoading(false);
       return;
     }
 
     const postsRef = collection(db, 'blogs');
-    // If user is logged in, show all posts, otherwise just public
+    
+    // Define visibility based on user authentication state
     const visibility = user ? ['public', 'private'] : ['public'];
 
     const postsQuery = query(
@@ -63,7 +64,7 @@ function PostList() {
     });
 
     return () => unsubscribe();
-  }, [handle, user]);
+  }, [handle, user, authLoading]);
   
   const renderPost = (post: Post & { id: string }) => {
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
