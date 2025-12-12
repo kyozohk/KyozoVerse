@@ -26,7 +26,7 @@ export default function JoinCommunityPage() {
     <div className="min-h-screen relative overflow-hidden bg-gray-100">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat "
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: 'url(/bg/light_app_bg.png)' }}
       />
       

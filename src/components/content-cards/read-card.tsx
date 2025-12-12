@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { Lock } from 'lucide-react';
 
 interface ReadCardProps {
   category: string;
@@ -12,9 +13,10 @@ interface ReadCardProps {
   fullText?: string;
   titleColor?: string;
   titleClassName?: string;
+  isPrivate?: boolean;
 }
 
-export function ReadCard({ category, readTime, date, title, summary, fullText, titleColor = '#504c4c' }: ReadCardProps) {
+export function ReadCard({ category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate }: ReadCardProps) {
   const cardStyle = {
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E\")",
     backgroundColor: 'rgb(245, 241, 232)'
@@ -25,6 +27,13 @@ export function ReadCard({ category, readTime, date, title, summary, fullText, t
 
   return (
     <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02]" style={cardStyle}>
+      {isPrivate && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="bg-red-500 rounded-full p-2 shadow-lg">
+            <Lock className="w-4 h-4 text-white" />
+          </div>
+        </div>
+      )}
       <div className="p-4 md:p-6 lg:p-8 flex flex-col justify-between" style={innerDivStyle}>
         <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
           <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">

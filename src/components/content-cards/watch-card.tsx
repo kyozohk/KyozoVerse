@@ -2,17 +2,18 @@
 'use client';
 
 import React from 'react';
-import { Play, Volume2, Heart, MessageCircle } from 'lucide-react';
+import { Play, Volume2, Heart, MessageCircle, Lock } from 'lucide-react';
 
 interface WatchCardProps {
   category: string;
   title: string;
   imageUrl: string;
   imageHint: string;
+  isPrivate?: boolean;
 }
 
-export function WatchCard({ category, title, imageUrl, imageHint }: WatchCardProps) {
-  console.log('🎬 WatchCard rendering:', { category, title, imageUrl: imageUrl?.substring(0, 100) });
+export function WatchCard({ category, title, imageUrl, imageHint, isPrivate }: WatchCardProps) {
+  // console.log('🎬 WatchCard rendering:', { category, title, imageUrl: imageUrl?.substring(0, 100) });
 
   const cardStyle = {
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E\")",
@@ -20,20 +21,30 @@ export function WatchCard({ category, title, imageUrl, imageHint }: WatchCardPro
   };
 
   return (
-    <div className="relative bg-neutral-900 overflow-hidden shadow-md border border-neutral-200 group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02]" style={cardStyle}>
+    <div className="relative bg-neutral-900 overflow-hidden shadow-md border border-neutral-200 group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] min-h-[400px]" style={cardStyle}>
       <video 
         src={imageUrl} 
         className="w-full h-full object-cover absolute inset-0"
         data-ai-hint={imageHint}
-        muted
-        loop
-        playsInline
-      />
+        controls
+        preload="metadata"
+        style={{ minHeight: '400px' }}
+      >
+        <source src={imageUrl} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
       <div className="absolute top-4 left-4 md:top-6 md:left-6">
         <span className="px-2 py-1 md:px-2.5 md:py-1.5 text-[10px] md:text-xs uppercase tracking-wide bg-[#FBBF24] text-neutral-900 rounded-full shadow-md opacity-50">
           {category}
         </span>
       </div>
+      {isPrivate && (
+        <div className="absolute top-4 right-4 md:top-6 md:right-6">
+          <div className="bg-red-500 rounded-full p-2 shadow-lg">
+            <Lock className="w-4 h-4 text-white" />
+          </div>
+        </div>
+      )}
       <div className="absolute bottom-0 left-0 right-0 pt-12 pb-3 px-4 md:px-6">
         <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-xl md:text-2xl" style={{ letterSpacing: '-0.5px', fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 600 }}>
           {title}

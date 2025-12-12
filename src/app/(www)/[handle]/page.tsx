@@ -20,13 +20,15 @@ import { UserMenu } from '@/components/layout/user-menu';
 import { useAuthAndDialog } from '@/hooks/use-auth-and-dialog';
 import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
 import { SignupDialog } from '@/components/community/signup-dialog';
+import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 
-function PostList() {
+function PostList({ filter }: { filter: string }) {
   const params = useParams();
   const handle = params.handle as string;
   const { user, loading: authLoading } = useCommunityAuth();
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<(Post & { id: string }) | null>(null);
 
   useEffect(() => {
     if (!handle || authLoading) {
@@ -77,13 +79,13 @@ function PostList() {
   }, [handle, user, authLoading]);
   
   const renderPost = (post: Post & { id: string }) => {
-    console.log('🌍 PUBLIC FEED - Rendering post:', {
-      id: post.id,
-      type: post.type,
-      title: post.title,
-      hasMediaUrls: !!post.content?.mediaUrls,
-      mediaUrl: post.content?.mediaUrls?.[0]
-    });
+    // console.log('🌍 PUBLIC FEED - Rendering post:', {
+    //   id: post.id,
+    //   type: post.type,
+    //   title: post.title,
+    //   hasMediaUrls: !!post.content?.mediaUrls,
+    //   mediaUrl: post.content?.mediaUrls?.[0]
+    // });
 
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
     const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
@@ -92,7 +94,7 @@ function PostList() {
       case 'text':
       case 'image':
         return (
-          <Link href={`/${handle}/${post.id}`} key={post.id}>
+          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <ReadCard
               category={post.type === 'image' ? 'Image' : 'Text'}
               readTime={readTime}
@@ -100,11 +102,11 @@ function PostList() {
               title={post.title || 'Untitled'}
               summary={post.content.text}
             />
-          </Link>
+          </div>
         );
       case 'audio':
         return (
-          <Link href={`/${handle}/${post.id}`} key={post.id}>
+          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <ListenCard
               category="Audio"
               episode="Listen"
@@ -112,18 +114,18 @@ function PostList() {
               title={post.title || 'Untitled Audio'}
               summary={post.content.text}
             />
-          </Link>
+          </div>
         );
       case 'video':
         return (
-          <Link href={`/${handle}/${post.id}`} key={post.id}>
+          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <WatchCard
               category="Video"
               title={post.title || 'Untitled Video'}
               imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
               imageHint="video content"
             />
-          </Link>
+          </div>
         );
       default:
         return null;
@@ -131,21 +133,47 @@ function PostList() {
   };
   
   if (loading) {
-    return <FeedSkeletons />;
+    return (
+      <div className="flex gap-4 md:gap-5 lg:gap-7 px-4 md:px-6 lg:px-8 h-full">
+        {[0, 1, 2].map(colIndex => (
+          <div key={colIndex} className="flex-1 flex flex-col gap-4 md:gap-5 lg:gap-7">
+            <FeedSkeletons />
+          </div>
+        ))}
+      </div>
+    );
   }
 
+  // Filter posts by type
+  const filteredPosts = posts.filter((post) => {
+    if (filter === 'all') return true;
+    if (filter === 'text') return post.type === 'text' || post.type === 'image';
+    if (filter === 'audio') return post.type === 'audio';
+    if (filter === 'video') return post.type === 'video';
+    return true;
+  });
+
   return (
-    <div className="flex gap-4 md:gap-5 lg:gap-7 px-4 md:px-6 lg:px-8 h-full">
-      {[0, 1, 2].map(colIndex => (
-        <div key={colIndex} className="flex-1 overflow-y-auto scrollbar-hide">
-          <div className="space-y-4 md:space-y-5 lg:space-y-7 py-4 md:py-6 lg:py-8 px-2">
-            {posts
-              .filter((_, index) => index % 3 === colIndex)
-              .map(renderPost)}
+    <>
+      <div className="flex gap-4 md:gap-5 lg:gap-7 px-4 md:px-6 lg:px-8 h-full">
+        {[0, 1, 2].map(colIndex => (
+          <div key={colIndex} className="flex-1 overflow-y-auto scrollbar-hide">
+            <div className="space-y-4 md:space-y-5 lg:space-y-7 py-4 md:py-6 lg:py-8 px-2">
+              {filteredPosts
+                .filter((_, index) => index % 3 === colIndex)
+                .map(renderPost)}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+      
+      {/* Post Detail Panel */}
+      <PostDetailPanel
+        post={selectedPost}
+        isOpen={!!selectedPost}
+        onClose={() => setSelectedPost(null)}
+      />
+    </>
   );
 }
 
@@ -171,6 +199,7 @@ export default function PublicCommunityPage() {
   const [isMember, setIsMember] = useState<boolean>(false);
   const [checkingMembership, setCheckingMembership] = useState<boolean>(true);
   const [joiningCommunity, setJoiningCommunity] = useState<boolean>(false);
+  const [filter, setFilter] = useState<string>('all');
 
   const openSignInDialog = () => setDialogState({ ...dialogState, isSignInOpen: true });
 
@@ -184,6 +213,31 @@ export default function PublicCommunityPage() {
       openSignUpDialog();
     }
   }, [searchParams, openSignUpDialog]);
+
+  // Pre-populate form fields from URL parameters
+  useEffect(() => {
+    const firstName = searchParams.get('firstName');
+    const lastName = searchParams.get('lastName');
+    const email = searchParams.get('email');
+    
+    // Only populate if dialog just opened and we have URL params
+    if (dialogState.isSignUpOpen && (firstName || lastName || email)) {
+      console.log('🔗 URL PARAMS - Pre-populating form:', { firstName, lastName, email });
+      
+      // Use a ref or check to prevent infinite loop
+      // Only set if values are different from current form state
+      if (firstName && formState.firstName !== firstName) {
+        handleFormChange('firstName', firstName);
+      }
+      if (lastName && formState.lastName !== lastName) {
+        handleFormChange('lastName', lastName);
+      }
+      if (email && formState.email !== email) {
+        handleFormChange('email', email);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogState.isSignUpOpen, searchParams]);
 
   useEffect(() => {
     async function fetchCommunityData() {
@@ -206,11 +260,24 @@ export default function PublicCommunityPage() {
       setCheckingMembership(true);
       try {
         const memberDocId = `${user.uid}_${communityData.communityId}`;
+        console.log('🔍 Checking membership:', {
+          userId: user.uid,
+          communityId: communityData.communityId,
+          memberDocId,
+          communityHandle: communityData.handle
+        });
+        
         const memberRef = doc(db, 'communityMembers', memberDocId);
         const memberSnap = await getDoc(memberRef);
+        
+        console.log('✅ Membership check result:', {
+          exists: memberSnap.exists(),
+          data: memberSnap.exists() ? memberSnap.data() : null
+        });
+        
         setIsMember(memberSnap.exists());
       } catch (error) {
-        console.error('Error checking membership:', error);
+        console.error('❌ Error checking membership:', error);
         setIsMember(false);
       }
       setCheckingMembership(false);
@@ -227,7 +294,7 @@ export default function PublicCommunityPage() {
       const memberDocId = `${user.uid}_${communityData.communityId}`;
       const memberRef = doc(db, 'communityMembers', memberDocId);
       
-      await setDoc(memberRef, {
+      const memberData = {
         userId: user.uid,
         communityId: communityData.communityId,
         role: 'member',
@@ -237,19 +304,29 @@ export default function PublicCommunityPage() {
           email: user.email,
           avatarUrl: user.photoURL || '',
         }
+      };
+      
+      console.log('💾 Creating membership document:', {
+        docId: memberDocId,
+        data: memberData
       });
+      
+      await setDoc(memberRef, memberData);
+      
+      console.log('✅ Membership document created successfully');
 
       // Update community member count
       const communityRef = doc(db, 'communities', communityData.communityId);
       await updateDoc(communityRef, {
         memberCount: increment(1)
       });
+      
+      console.log('✅ Community member count updated');
 
       setIsMember(true);
-      // Show success toast if available
-      console.log('Successfully joined community!');
+      alert('Successfully joined the community!');
     } catch (error) {
-      console.error('Error joining community:', error);
+      console.error('❌ Error joining community:', error);
       alert('Failed to join community. Please try again.');
     }
     setJoiningCommunity(false);
@@ -264,6 +341,50 @@ export default function PublicCommunityPage() {
               {communityData?.name || 'Community'}
             </p>
             <div className="flex items-center gap-4">
+              {/* Filter buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'all'
+                      ? 'bg-gray-700 text-white'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Feed
+                </button>
+                <button
+                  onClick={() => setFilter('text')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'text'
+                      ? 'bg-pink-100 text-pink-600'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-100 border-pink-500 border-2'
+                  }`}
+                >
+                  Read
+                </button>
+                <button
+                  onClick={() => setFilter('audio')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'audio'
+                      ? 'bg-blue-100 text-blue-600'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-100 border-blue-500 border-2'
+                  }`}
+                >
+                  Listen
+                </button>
+                <button
+                  onClick={() => setFilter('video')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'video'
+                      ? 'bg-yellow-100 text-yellow-600'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-100 border-yellow-500 border-2'
+                  }`}
+                >
+                  Watch
+                </button>
+              </div>
+              
               {!authLoading && (
                 user ? (
                   <>
@@ -291,7 +412,7 @@ export default function PublicCommunityPage() {
       </div>
       <div id="grid-container" className="h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] lg:h-[calc(100vh-120px)] overflow-hidden">
         <Suspense fallback={<FeedSkeletons />}>
-          <PostList />
+          <PostList filter={filter} />
         </Suspense>
       </div>
 

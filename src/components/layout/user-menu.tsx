@@ -33,15 +33,34 @@ export function UserMenu() {
 
     const fetchCommunities = async () => {
       setLoadingCommunities(true);
+      console.log('👤 UserMenu - Fetching communities for user:', user.uid, user.email);
+      
       const memberQuery = query(collection(db, 'communityMembers'), where('userId', '==', user.uid));
       const memberSnap = await getDocs(memberQuery);
+      
+      console.log('📄 UserMenu - Raw membership docs:', memberSnap.docs.map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      })));
+      
       const communityIds = memberSnap.docs.map(doc => doc.data().communityId);
+      
+      console.log('👥 UserMenu - User is member of', communityIds.length, 'communities:', communityIds);
 
       if (communityIds.length > 0) {
         const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', communityIds));
         const communitiesSnap = await getDocs(communitiesQuery);
         const userCommunities = communitiesSnap.docs.map(doc => doc.data() as Community);
+        
+        console.log('🏘️ UserMenu - Community details:', userCommunities.map(c => ({
+          id: c.communityId,
+          name: c.name,
+          handle: c.handle
+        })));
+        
         setCommunities(userCommunities);
+      } else {
+        console.log('⚠️ UserMenu - User is not a member of any communities');
       }
       setLoadingCommunities(false);
     };
@@ -62,10 +81,10 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:ring-2 hover:ring-[#843484] transition-all">
+          <Avatar className="h-10 w-10 ring-2 ring-[#843484] ring-offset-2">
             <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-            <AvatarFallback>{fallback}</AvatarFallback>
+            <AvatarFallback className="bg-[#843484] text-white font-semibold">{fallback}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

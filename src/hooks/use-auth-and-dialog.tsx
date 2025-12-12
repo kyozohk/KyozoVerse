@@ -109,16 +109,29 @@ export const AuthAndDialogProvider = ({ children }: { children: ReactNode }) => 
   const handleSignUp = async () => {
     setFormState(prev => ({ ...prev, error: null }));
 
+    console.log('🔐 SIGNUP - Starting signup process');
+    console.log('🔐 SIGNUP - Community handle:', handle);
+    console.log('🔐 SIGNUP - Form data:', {
+      firstName: formState.firstName,
+      lastName: formState.lastName,
+      email: formState.email,
+      phone: formState.phone
+    });
+
     if (!formState.agreedToPrivacy) {
         setFormState(prev => ({ ...prev, error: "You must agree to the privacy policy." }));
         return;
     }
     
     try {
+      console.log('🔐 SIGNUP - Creating user account...');
       const userCredential = await createUserWithEmailAndPassword(communityAuth, formState.email, formState.password);
       const user = userCredential.user;
+      console.log('✅ SIGNUP - User created:', user.uid);
+      
       await updateProfile(user, { displayName: `${formState.firstName} ${formState.lastName}` });
 
+      console.log('💾 SIGNUP - Creating user document in Firestore...');
       await setDoc(doc(db, "users", user.uid), {
         userId: user.uid,
         email: formState.email,
@@ -129,12 +142,27 @@ export const AuthAndDialogProvider = ({ children }: { children: ReactNode }) => 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      console.log('✅ SIGNUP - User document created');
 
       // Join the current community
-      await joinCommunity(user.uid, handle, {
+      console.log('🏘️ SIGNUP - Joining community with handle:', handle);
+      
+      // First, get the community ID from the handle
+      const { getCommunityByHandle } = await import('@/lib/community-utils');
+      const communityData = await getCommunityByHandle(handle);
+      
+      if (!communityData) {
+        console.error('❌ SIGNUP - Community not found for handle:', handle);
+        throw new Error('Community not found');
+      }
+      
+      console.log('🏘️ SIGNUP - Found community:', communityData.communityId, communityData.name);
+      
+      await joinCommunity(user.uid, communityData.communityId, {
         displayName: `${formState.firstName} ${formState.lastName}`,
         email: formState.email,
       });
+      console.log('✅ SIGNUP - Successfully joined community');
 
       toast({ title: "Welcome!", description: "Your account has been created." });
       setDialogState({ ...dialogState, isSignUpOpen: false });

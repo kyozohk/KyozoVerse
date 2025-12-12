@@ -17,6 +17,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { ReadCard } from '@/components/content-cards/read-card';
 import { ListenCard } from '@/components/content-cards/listen-card';
 import { WatchCard } from '@/components/content-cards/watch-card';
+import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 import Link from 'next/link';
 import { CommunityStats } from '@/components/community/community-stats';
 
@@ -27,12 +28,13 @@ export default function CommunityFeedPage() {
 
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>('guest');
-  const [community, setCommunity] = useState<Community | null>(null);
-  const [isCreatePostOpen, setCreatePostOpen] = useState(false);
-  const [postType, setPostType] = useState<PostType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [createPostOpen, setCreatePostOpen] = useState(false);
+  const [postType, setPostType] = useState<PostType>('text');
   const [editingPost, setEditingPost] = useState<(Post & { id: string }) | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [selectedPost, setSelectedPost] = useState<(Post & { id: string}) | null>(null);
 
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -170,6 +172,14 @@ export default function CommunityFeedPage() {
     if (!searchTerm.trim()) return true;
     
     const searchLower = searchTerm.toLowerCase();
+    
+    // Check if it's a filter button click (exact match with post type)
+    if (searchLower === 'text' || searchLower === 'audio' || searchLower === 'video') {
+      return post.type?.toLowerCase() === searchLower || 
+             (searchLower === 'text' && post.type === 'image'); // Include images in text filter
+    }
+    
+    // Otherwise, search in title, content, and type
     return (
       post.title?.toLowerCase().includes(searchLower) ||
       post.content?.text?.toLowerCase().includes(searchLower) ||
@@ -201,45 +211,45 @@ export default function CommunityFeedPage() {
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
     const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
 
-    const cardProps = {
-      key: post.id,
-      onClick: () => handleEditPost(post),
-      className: "cursor-pointer"
-    };
-
     switch (post.type) {
       case 'text':
       case 'image':
         return (
-            <ReadCard
-              key={post.id}
-              category={post.type === 'image' ? 'Image' : 'Text'}
-              readTime={readTime}
-              date={postDate}
-              title={post.title || 'Untitled'}
-              summary={post.content.text}
-            />
+            <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
+              <ReadCard
+                category={post.type === 'image' ? 'Image' : 'Text'}
+                readTime={readTime}
+                date={postDate}
+                title={post.title || 'Untitled'}
+                summary={post.content.text}
+                isPrivate={post.visibility === 'private'}
+              />
+            </div>
         );
       case 'audio':
         return (
-            <ListenCard
-              key={post.id}
-              category="Audio"
-              episode="Listen"
-              duration="0:00"
-              title={post.title || 'Untitled Audio'}
-              summary={post.content.text}
-            />
+            <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
+              <ListenCard
+                category="Audio"
+                episode="Listen"
+                duration="0:00"
+                title={post.title || 'Untitled Audio'}
+                summary={post.content.text}
+                isPrivate={post.visibility === 'private'}
+              />
+            </div>
         );
       case 'video':
         return (
-            <WatchCard
-              key={post.id}
-              category="Video"
-              title={post.title || 'Untitled Video'}
-              imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
-              imageHint="video content"
-            />
+            <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
+              <WatchCard
+                category="Video"
+                title={post.title || 'Untitled Video'}
+                imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
+                imageHint="video content"
+                isPrivate={post.visibility === 'private'}
+              />
+            </div>
         );
       default:
         return null;
@@ -264,6 +274,50 @@ export default function CommunityFeedPage() {
             </svg>
             Public View
           </a>
+          
+          {/* Filter buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSearchTerm('')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                searchTerm === ''
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-transparent text-gray-600 hover:bg-gray-100 border-gray-500 border-2'
+              }`}
+            >
+              Feed
+            </button>
+            <button
+              onClick={() => setSearchTerm('text')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                searchTerm === 'text'
+                  ? 'bg-pink-100 text-pink-600'
+                  : 'bg-transparent text-gray-600 hover:bg-gray-100 border-pink-500 border-2'
+              }`}
+            >
+              Read
+            </button>
+            <button
+              onClick={() => setSearchTerm('audio')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                searchTerm === 'audio'
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'bg-transparent text-gray-600 hover:bg-gray-100 border-blue-500 border-2'
+              }`}
+            >
+              Listen
+            </button>
+            <button
+              onClick={() => setSearchTerm('video')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                searchTerm === 'video'
+                  ? 'bg-yellow-100 text-yellow-600'
+                  : 'bg-transparent text-gray-600 hover:bg-gray-100 border-yellow-500 border-2'
+              }`}
+            >
+              Watch
+            </button>
+          </div>
         </div>
         
         {community && (
@@ -326,12 +380,19 @@ export default function CommunityFeedPage() {
         )}
       </div>
       <CreatePostDialog 
-        isOpen={isCreatePostOpen} 
+        isOpen={createPostOpen} 
         setIsOpen={setCreatePostOpen} 
         postType={postType} 
         communityId={community?.communityId || ''}
         communityHandle={handle}
         editPost={editingPost} />
+      
+      {/* Post Detail Panel */}
+      <PostDetailPanel
+        post={selectedPost}
+        isOpen={!!selectedPost}
+        onClose={() => setSelectedPost(null)}
+      />
     </>
   );
 }

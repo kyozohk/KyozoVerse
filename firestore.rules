@@ -18,10 +18,14 @@ service cloud.firestore {
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
-      allow create, update: if request.auth != null;
+      // Only allow create for authenticated users
+      allow create: if request.auth != null;
+      // Only allow update for community owner
+      allow update: if request.auth != null && 
+                       resource.data.ownerId == request.auth.uid;
       // Allow delete only for community owner
       allow delete: if request.auth != null && 
-                       get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
+                       resource.data.ownerId == request.auth.uid;
     }
 
     // Community members can be read by other members of that same community

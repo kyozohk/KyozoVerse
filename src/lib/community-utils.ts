@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, serverTimestamp, increment, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { Community, CommunityMember, UserRole } from "./types";
 import { errorEmitter } from "@/firebase/error-emitter";
@@ -169,12 +169,14 @@ export async function joinCommunity(
   try {
     // Use a composite key for the document ID to ensure uniqueness and allow for efficient lookups
     const docId = `${userId}_${communityId}`;
-    await addDoc(collection(db, "communityMembers"), {
-        ...newMemberData,
-        id: docId
-    });
+    console.log('💾 JOIN - Creating member document:', docId);
+    
+    // Use setDoc with the composite ID instead of addDoc
+    await setDoc(doc(db, "communityMembers", docId), newMemberData);
+    
+    console.log('✅ JOIN - Member document created successfully');
   } catch (error) {
-    console.error("Error creating member document:", error);
+    console.error("❌ JOIN - Error creating member document:", error);
     errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: 'communityMembers',
         operation: 'create',
@@ -183,15 +185,12 @@ export async function joinCommunity(
     return false;
   }
   
-  try {
-    // Update member count in community
-    await updateDoc(communityRef, {
-      memberCount: increment(1)
-    });
-  } catch (error) {
-     console.error("Error updating member count:", error);
-    // Don't emit another error here as the member was already created.
-  }
+  // NOTE: We don't update memberCount here because regular users shouldn't have
+  // permission to update community documents. The memberCount should be:
+  // 1. Calculated dynamically by counting communityMembers, OR
+  // 2. Updated via a Cloud Function (server-side), OR
+  // 3. Updated only by community owners/admins
+  console.log('ℹ️ JOIN - Skipping memberCount update (should be done server-side)');
     
   return true;
 }

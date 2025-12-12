@@ -96,27 +96,55 @@ export function AcceptInviteForm({ inviteData, token }: AcceptInviteFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    console.log('📧 INVITE - Starting invite acceptance process');
+    console.log('📧 INVITE - Token:', token);
+    console.log('📧 INVITE - Invite data:', inviteData);
+    
+    if (!validateForm()) {
+      console.log('❌ INVITE - Form validation failed:', errors);
+      return;
+    }
+    
+    console.log('✅ INVITE - Form validation passed');
     
     setIsSubmitting(true);
     
     try {
+      const requestData = {
+        token,
+        ...formData,
+      };
+      
+      console.log('📤 INVITE - Sending request to /api/accept-invite:', {
+        token,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        hasPassword: !!formData.password
+      });
+      
       const response = await fetch('/api/accept-invite', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          token,
-          ...formData,
-        }),
+        body: JSON.stringify(requestData),
       });
       
       const data = await response.json();
       
+      console.log('📥 INVITE - Response received:', {
+        ok: response.ok,
+        status: response.status,
+        data
+      });
+      
       if (!response.ok) {
         throw new Error(data.error || 'Failed to accept invite');
       }
+      
+      console.log('✅ INVITE - Successfully accepted invite!');
       
       toast({
         title: 'Success!',
@@ -126,7 +154,7 @@ export function AcceptInviteForm({ inviteData, token }: AcceptInviteFormProps) {
       // Redirect to login page or dashboard
       router.push('/');
     } catch (err: any) {
-      console.error('Error accepting invite:', err);
+      console.error('❌ INVITE - Error accepting invite:', err);
       toast({
         title: 'Error',
         description: err.message || 'Failed to complete registration',

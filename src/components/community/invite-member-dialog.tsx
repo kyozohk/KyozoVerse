@@ -56,12 +56,70 @@ Looking forward to seeing you there!`;
   }, [firstName, lastName, email, phone, community.name, community.lore, community.handle, baseUrl]);
 
   const handleCopyLink = async () => {
+    // Build the URL fresh to ensure we have the latest values
+    const params = new URLSearchParams();
+    if (firstName) params.append('firstName', firstName);
+    if (lastName) params.append('lastName', lastName);
+    if (email) params.append('email', email);
+    if (phone) params.append('phone', phone);
+    
+    const urlToCopy = `${baseUrl}/${community.handle}/join${params.toString() ? '?' + params.toString() : ''}`;
+    
+    console.log('📋 COPY - Attempting to copy invite URL:', urlToCopy);
+    console.log('📋 COPY - Form values:', { firstName, lastName, email, phone });
+    console.log('📋 COPY - Clipboard API available:', !!(navigator.clipboard && navigator.clipboard.writeText));
+    
     try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Check if clipboard API is available
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        console.log('📋 COPY - Using clipboard API');
+        await navigator.clipboard.writeText(urlToCopy);
+        console.log('✅ COPY - Successfully copied using clipboard API');
+        console.log('📋 COPY - Copied text:', urlToCopy);
+        
+        // Verify what's in clipboard
+        try {
+          const clipboardText = await navigator.clipboard.readText();
+          console.log('📋 COPY - Verified clipboard contents:', clipboardText);
+        } catch (e) {
+          console.log('📋 COPY - Cannot read clipboard (permission denied)');
+        }
+        
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        console.log('📋 COPY - Using fallback method (execCommand)');
+        const textArea = document.createElement('textarea');
+        textArea.value = urlToCopy;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        console.log('📋 COPY - TextArea value before copy:', textArea.value);
+        
+        try {
+          const successful = document.execCommand('copy');
+          console.log('📋 COPY - execCommand result:', successful);
+          if (successful) {
+            console.log('✅ COPY - Successfully copied using execCommand');
+            console.log('📋 COPY - Copied text:', textArea.value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } else {
+            throw new Error('Copy command failed');
+          }
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
     } catch (error) {
-      console.error('Failed to copy:', error);
+      console.error('❌ COPY - Failed to copy:', error);
+      // Show user-friendly error message
+      alert('Failed to copy link. Please copy it manually: ' + urlToCopy);
     }
   };
 
