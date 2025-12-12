@@ -94,20 +94,40 @@ export default function CommunityFeedPage() {
         } as Post & { id: string };
       }));
 
+      console.log('📊 All posts loaded from Firestore:', allPostsData.length);
+      console.log('📝 Posts details:', allPostsData.map(p => ({
+        id: p.id,
+        title: p.title,
+        type: p.type,
+        visibility: p.visibility,
+        authorId: p.authorId,
+        mediaUrls: p.content?.mediaUrls,
+        createdAt: p.createdAt
+      })));
+
       // Client-side filtering based on user role
       let visiblePosts: (Post & { id: string })[] = [];
       if (user) {
         if (userRole === 'admin' || userRole === 'owner') {
           visiblePosts = allPostsData; // Admins/owners see all posts
+          console.log('✅ User is admin/owner - showing all posts');
         } else {
           visiblePosts = allPostsData.filter(p => 
             p.visibility === 'public' || p.authorId === user.uid
           );
+          console.log('👤 User is member - filtered posts:', visiblePosts.length);
         }
       } else {
         // This case shouldn't be reached in /pro routes, but as a fallback
         visiblePosts = allPostsData.filter(p => p.visibility === 'public');
+        console.log('🌍 No user - showing public posts only');
       }
+
+      console.log('🎯 Final visible posts:', visiblePosts.length, visiblePosts.map(p => ({
+        id: p.id,
+        title: p.title,
+        type: p.type
+      })));
 
       setPosts(visiblePosts);
       setLoading(false);
@@ -145,10 +165,21 @@ export default function CommunityFeedPage() {
     setCreatePostOpen(true);
   };
 
-  const filteredPosts = posts.filter(post =>
-    post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.content.text?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPosts = posts.filter(post => {
+    // If no search term, show all posts
+    if (!searchTerm.trim()) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      post.title?.toLowerCase().includes(searchLower) ||
+      post.content?.text?.toLowerCase().includes(searchLower) ||
+      post.type?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  console.log('🔍 Search term:', searchTerm);
+  console.log('📋 Posts before filter:', posts.length);
+  console.log('📋 Posts after filter:', filteredPosts.length);
 
   const canEditContent = userRole === 'admin' || userRole === 'owner';
   
@@ -159,6 +190,14 @@ export default function CommunityFeedPage() {
   ];
 
   const renderPost = (post: Post & { id: string }) => {
+    console.log('🎨 Rendering post:', {
+      id: post.id,
+      type: post.type,
+      title: post.title,
+      hasMediaUrls: !!post.content?.mediaUrls,
+      mediaUrl: post.content?.mediaUrls?.[0]
+    });
+
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
     const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
 
@@ -212,10 +251,6 @@ export default function CommunityFeedPage() {
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Feed</h1>
-            <p className="text-sm text-muted-foreground">Latest posts from the community.</p>
-          </div>
           <a
             href={`/${handle}`}
             target="_blank"
@@ -238,7 +273,7 @@ export default function CommunityFeedPage() {
         )}
 
         {/* Search Bar */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <input
             type="text"
             placeholder="Search..."
@@ -246,7 +281,7 @@ export default function CommunityFeedPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
+        </div> */}
 
         {/* Create Post Buttons */}
         {canEditContent && (

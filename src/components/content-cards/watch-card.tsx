@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { Play, Volume2, Heart, MessageCircle } from 'lucide-react';
 
 interface WatchCardProps {
@@ -13,6 +12,8 @@ interface WatchCardProps {
 }
 
 export function WatchCard({ category, title, imageUrl, imageHint }: WatchCardProps) {
+  console.log('🎬 WatchCard rendering:', { category, title, imageUrl: imageUrl?.substring(0, 100) });
+
   const cardStyle = {
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E\")",
     backgroundColor: 'rgb(245, 241, 232)'
@@ -20,7 +21,14 @@ export function WatchCard({ category, title, imageUrl, imageHint }: WatchCardPro
 
   return (
     <div className="relative bg-neutral-900 overflow-hidden shadow-md border border-neutral-200 group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02]" style={cardStyle}>
-      <Image src={imageUrl} alt={title} fill className="w-full h-full object-cover" data-ai-hint={imageHint} />
+      <video 
+        src={imageUrl} 
+        className="w-full h-full object-cover absolute inset-0"
+        data-ai-hint={imageHint}
+        muted
+        loop
+        playsInline
+      />
       <div className="absolute top-4 left-4 md:top-6 md:left-6">
         <span className="px-2 py-1 md:px-2.5 md:py-1.5 text-[10px] md:text-xs uppercase tracking-wide bg-[#FBBF24] text-neutral-900 rounded-full shadow-md opacity-50">
           {category}

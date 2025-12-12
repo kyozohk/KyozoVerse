@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { getCommunityByHandle } from '@/lib/community-utils';
 import { type Post, type Community } from '@/lib/types';
@@ -52,6 +52,16 @@ function PostList() {
         ...doc.data()
       })) as (Post & { id: string })[];
       
+      console.log('🌍 PUBLIC FEED - Posts loaded:', postsData.length);
+      console.log('🌍 PUBLIC FEED - Post details:', postsData.map(p => ({
+        id: p.id,
+        type: p.type,
+        title: p.title,
+        visibility: p.visibility,
+        hasMediaUrls: !!p.content?.mediaUrls,
+        mediaUrl: p.content?.mediaUrls?.[0]
+      })));
+      
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
@@ -67,6 +77,14 @@ function PostList() {
   }, [handle, user, authLoading]);
   
   const renderPost = (post: Post & { id: string }) => {
+    console.log('🌍 PUBLIC FEED - Rendering post:', {
+      id: post.id,
+      type: post.type,
+      title: post.title,
+      hasMediaUrls: !!post.content?.mediaUrls,
+      mediaUrl: post.content?.mediaUrls?.[0]
+    });
+
     const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
     const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
 
@@ -144,11 +162,15 @@ export default function PublicCommunityPage() {
     handleFormChange,
     handleCheckboxChange,
     handleSignUp,
+    handleSignIn,
     handleSignInWithGoogle,
     handleToggleMode
   } = useAuthAndDialog();
 
   const [communityData, setCommunityData] = useState<Community | null>(null);
+  const [isMember, setIsMember] = useState<boolean>(false);
+  const [checkingMembership, setCheckingMembership] = useState<boolean>(true);
+  const [joiningCommunity, setJoiningCommunity] = useState<boolean>(false);
 
   const openSignInDialog = () => setDialogState({ ...dialogState, isSignInOpen: true });
 
@@ -171,6 +193,67 @@ export default function PublicCommunityPage() {
     }
     fetchCommunityData();
   }, [handle]);
+
+  // Check if user is a member of this community
+  useEffect(() => {
+    async function checkMembership() {
+      if (!user || !communityData) {
+        setCheckingMembership(false);
+        setIsMember(false);
+        return;
+      }
+
+      setCheckingMembership(true);
+      try {
+        const memberDocId = `${user.uid}_${communityData.communityId}`;
+        const memberRef = doc(db, 'communityMembers', memberDocId);
+        const memberSnap = await getDoc(memberRef);
+        setIsMember(memberSnap.exists());
+      } catch (error) {
+        console.error('Error checking membership:', error);
+        setIsMember(false);
+      }
+      setCheckingMembership(false);
+    }
+
+    checkMembership();
+  }, [user, communityData]);
+
+  const handleJoinCommunity = async () => {
+    if (!user || !communityData) return;
+
+    setJoiningCommunity(true);
+    try {
+      const memberDocId = `${user.uid}_${communityData.communityId}`;
+      const memberRef = doc(db, 'communityMembers', memberDocId);
+      
+      await setDoc(memberRef, {
+        userId: user.uid,
+        communityId: communityData.communityId,
+        role: 'member',
+        joinedAt: serverTimestamp(),
+        userDetails: {
+          displayName: user.displayName || user.email,
+          email: user.email,
+          avatarUrl: user.photoURL || '',
+        }
+      });
+
+      // Update community member count
+      const communityRef = doc(db, 'communities', communityData.communityId);
+      await updateDoc(communityRef, {
+        memberCount: increment(1)
+      });
+
+      setIsMember(true);
+      // Show success toast if available
+      console.log('Successfully joined community!');
+    } catch (error) {
+      console.error('Error joining community:', error);
+      alert('Failed to join community. Please try again.');
+    }
+    setJoiningCommunity(false);
+  };
   
   return (
     <div className="bg-neutral-50 min-h-screen">
@@ -183,7 +266,18 @@ export default function PublicCommunityPage() {
             <div className="flex items-center gap-4">
               {!authLoading && (
                 user ? (
-                  <UserMenu />
+                  <>
+                    {!checkingMembership && !isMember && (
+                      <Button 
+                        onClick={handleJoinCommunity}
+                        disabled={joiningCommunity}
+                        className="bg-[#843484] hover:bg-[#6b2a6b]"
+                      >
+                        {joiningCommunity ? 'Joining...' : 'Join Community'}
+                      </Button>
+                    )}
+                    <UserMenu />
+                  </>
                 ) : (
                   <>
                     <Button variant="ghost" onClick={openSignInDialog}>Sign In</Button>
@@ -219,7 +313,7 @@ export default function PublicCommunityPage() {
         onPhoneChange={(value) => handleFormChange('phone', value)}
         onPasswordChange={(value) => handleFormChange('password', value)}
         onAgreedToPrivacyChange={(value) => handleCheckboxChange('agreedToPrivacy', value)}
-        onSubmit={handleSignUp}
+        onSubmit={dialogState.isSignUpOpen ? handleSignUp : handleSignIn}
         onGoogleSignIn={handleSignInWithGoogle}
         onToggleMode={handleToggleMode}
         onShowPrivacyPolicy={() => setDialogState({ ...dialogState, showPrivacyPolicy: true })}
