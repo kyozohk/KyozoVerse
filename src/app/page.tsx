@@ -264,7 +264,7 @@ function MemberHomeContent() {
 
 export default function MemberHome() {
   return (
-    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <MemberHomeContent />
     </Suspense>
   );

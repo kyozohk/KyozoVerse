@@ -11,7 +11,20 @@ const auth = getAuth();
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔔 API /accept-invite - Request received');
+    
     const body = await request.json();
+    console.log('📦 API /accept-invite - Request body:', {
+      hasToken: !!body.token,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email,
+      hasPassword: !!body.password,
+      phone: body.phone,
+      agreeTerms: body.agreeTerms,
+      agreePrivacy: body.agreePrivacy
+    });
+    
     const { 
       token, 
       firstName, 
@@ -28,11 +41,14 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!token || !firstName || !lastName || !email || !password || !agreeTerms || !agreePrivacy) {
+      console.log('❌ API /accept-invite - Missing required fields');
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+    
+    console.log('✅ API /accept-invite - All required fields present');
 
     // Decode the token (in a real app, you'd verify a JWT or similar)
     let decodedEmail;
@@ -60,8 +76,10 @@ export async function POST(request: NextRequest) {
 
     // For development purposes, mock the user creation and return success
     // This avoids the Firebase credentials issue
-    console.log('Development mode: Simulating user registration for', email);
-    console.log('User details:', { firstName, lastName, email, phone, dateOfBirth, gender, location });
+    console.log('🔧 API /accept-invite - Development mode: Simulating user registration for', email);
+    console.log('👤 API /accept-invite - User details:', { firstName, lastName, email, phone, dateOfBirth, gender, location });
+    
+    console.log('✅ API /accept-invite - Returning success response (Development Mode)');
     
     // Return success response
     return NextResponse.json({

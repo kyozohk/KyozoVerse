@@ -59,9 +59,10 @@ export function MembersList({
     if (onMemberClick) {
       onMemberClick(member);
     } else {
-      // Default navigation behavior
-      const handle = pathname.split('/')[1];
-      router.push(`/${handle}/members/${member.userId}`);
+      // Default navigation behavior - extract handle from pathname
+      const pathParts = pathname.split('/');
+      const handle = pathParts[2]; // /pro/[handle]/members -> handle is at index 2
+      router.push(`/pro/${handle}/members/${member.userId}`);
     }
   };
 

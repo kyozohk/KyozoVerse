@@ -11,10 +11,22 @@ import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 
 export function FeedSkeletons() {
   return (
-    <div className="space-y-6">
-      <TextPostCardSkeleton hasImage={true} />
-      <AudioPostCardSkeleton />
-      <VideoPostCardSkeleton />
+    <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
+      <div className="break-inside-avoid mb-4">
+        <TextPostCardSkeleton hasImage={true} />
+      </div>
+      <div className="break-inside-avoid mb-4">
+        <AudioPostCardSkeleton />
+      </div>
+      <div className="break-inside-avoid mb-4">
+        <VideoPostCardSkeleton />
+      </div>
+      <div className="break-inside-avoid mb-4">
+        <TextPostCardSkeleton hasImage={false} />
+      </div>
+      <div className="break-inside-avoid mb-4">
+        <AudioPostCardSkeleton />
+      </div>
     </div>
   );
 }

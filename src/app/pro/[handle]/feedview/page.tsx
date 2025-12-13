@@ -118,26 +118,55 @@ export default function FeedViewPage() {
               className="rounded-full"
             />
           )}
-          <div>
-            <h1 className="text-2xl font-bold">{communityData?.name || handle}</h1>
-            <p className="text-sm text-muted-foreground">Community Feed</p>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-400">{communityData?.name || handle}</h1>
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Content Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="images">Images</SelectItem>
-              <SelectItem value="text">Text Only</SelectItem>
-              <SelectItem value="audio">Audio</SelectItem>
-              <SelectItem value="video">Video</SelectItem>
-            </SelectContent>
-          </Select>
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-gray-700 text-white'
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Feed
+          </button>
+          <button
+            onClick={() => setFilter('text')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              filter === 'text'
+                ? 'bg-pink-100 text-pink-600'
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Read
+          </button>
+          <button
+            onClick={() => setFilter('audio')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              filter === 'audio'
+                ? 'bg-blue-100 text-blue-600'
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Listen
+          </button>
+          <button
+            onClick={() => setFilter('video')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              filter === 'video'
+                ? 'bg-yellow-100 text-yellow-600'
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Watch
+          </button>
+          <Link href={`/pro/${handle}`}>
+            <button className="px-4 py-1.5 rounded-full text-sm font-medium bg-transparent text-gray-600 hover:bg-gray-100 transition-colors">
+              Profile
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -181,7 +210,7 @@ export default function FeedViewPage() {
       {/* Link to author view if needed */}
       <div className="mt-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Are you the community owner? <Link href={`/${handle}/feed`} className="text-primary hover:underline">Sign in to manage content</Link>
+          Are you the community owner? <Link href={`/pro/${handle}/feed`} className="text-primary hover:underline">Sign in to manage content</Link>
         </p>
       </div>
     </div>

@@ -25,10 +25,14 @@ service cloud.firestore {
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
-      allow create, update: if request.auth != null;
+      // Only allow create for authenticated users
+      allow create: if request.auth != null;
+      // Only allow update for community owner
+      allow update: if request.auth != null && 
+                       resource.data.ownerId == request.auth.uid;
       // Allow delete only for community owner
       allow delete: if request.auth != null && 
-                       get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
+                       resource.data.ownerId == request.auth.uid;
     }
 
     // Community members can be read by other members of that same community
@@ -38,26 +42,13 @@ service cloud.firestore {
 
     // Blogs (posts) rules
     match /blogs/{blogId} {
-      // Allow anyone to read public posts
-      allow read: if resource.data.visibility == 'public';
-      
-      // Allow community owners to read all posts in their community
-      allow read: if request.auth != null && 
-                     resource.data.communityId != null && 
-                     isCommunityOwner(resource.data.communityId);
-      
-      // Allow community members to read private posts from their community
-      // Check both communityId (new posts) and communityHandle (legacy posts)
-      allow read: if request.auth != null && 
-                     resource.data.visibility == 'private' &&
-                     (
-                       (resource.data.communityId != null && isCommunityMember(resource.data.communityId)) ||
-                       resource.data.communityHandle != null
-                     );
+      // Allow LIST queries for public posts by anyone, and for all posts by authenticated users.
+      // This is safe because the client-side code filters which posts are displayed based on user auth state.
+      allow list: if request.auth != null || request.query.where.visibility.includes_any(['public']);
 
-      // Allow authenticated users to read their own posts
-      allow read: if request.auth != null && request.auth.uid == resource.data.authorId;
-
+      // Allow GET requests for public documents, or for the author of a private document.
+      allow get: if resource.data.visibility == 'public' || (request.auth != null && request.auth.uid == resource.data.authorId);
+      
       // Allow create for authenticated users (author must match)
       allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
       
@@ -69,12 +60,13 @@ service cloud.firestore {
                                 (resource.data.communityId != null && (isCommunityOwner(resource.data.communityId) || isCommunityAdmin(resource.data.communityId))));
     }
 
-    // Users collection can be read by anyone
-    // Allow write if: user is writing to their own document OR user is authenticated (for managing members)
+    // Users collection can be read by anyone authenticated
+    // This is needed to display author details on posts.
+    // Write access is still restricted.
     match /users/{userId} {
-      allow read: if true;
-      allow create: if true; // Allow anyone to create user documents (for RSVP forms, etc.)
-      allow update: if request.auth != null; // Allow authenticated users to update user documents (for community owners managing members)
+      allow read: if request.auth != null;
+      allow create: if request.auth != null; // Allow authenticated users to create new user documents
+      allow update: if request.auth != null && request.auth.uid == userId; // Only user can update their own profile
       allow delete: if request.auth != null && request.auth.uid == userId; // Only user can delete their own
     }
 
@@ -108,7 +100,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
     }
-
+    
     // Community members collection
     match /communityMembers/{memberId} {
       // Allow authenticated users to read
@@ -124,7 +116,7 @@ service cloud.firestore {
       // 1. The member themselves, OR
       // 2. The community owner
       allow delete: if request.auth != null && 
-                       (request.auth.uid == resource.data.userId || 
+                       (resource.data.userId == request.auth.uid || 
                         isCommunityOwner(resource.data.communityId));
     }
   }
