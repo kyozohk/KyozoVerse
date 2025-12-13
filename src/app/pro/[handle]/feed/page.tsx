@@ -294,7 +294,7 @@ export default function CommunityFeedPage() {
               onClick={() => setSearchTerm('text')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 searchTerm === 'text'
-                  ? 'bg-pink-100 text-pink-600'
+                  ? 'bg-pink-100 text-pink-600 border-pink-500 border-2'
                   : 'bg-transparent text-gray-600 hover:bg-gray-100 border-pink-500 border-2'
               }`}
             >
@@ -304,7 +304,7 @@ export default function CommunityFeedPage() {
               onClick={() => setSearchTerm('audio')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 searchTerm === 'audio'
-                  ? 'bg-blue-100 text-blue-600'
+                  ? 'bg-blue-100 text-blue-600 border-blue-500 border-2'
                   : 'bg-transparent text-gray-600 hover:bg-gray-100 border-blue-500 border-2'
               }`}
             >
@@ -314,7 +314,7 @@ export default function CommunityFeedPage() {
               onClick={() => setSearchTerm('video')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 searchTerm === 'video'
-                  ? 'bg-yellow-100 text-yellow-600'
+                  ? 'bg-yellow-100 text-yellow-600 border-yellow-500 border-2'
                   : 'bg-transparent text-gray-600 hover:bg-gray-100 border-yellow-500 border-2'
               }`}
             >
@@ -370,12 +370,18 @@ export default function CommunityFeedPage() {
             </p>
           </div>
         ) : (
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-            {filteredPosts.map((post) => (
-              <div key={post.id} className="break-inside-avoid mb-4">
-                {renderPost(post)}
-              </div>
-            ))}
+          <div id="grid-container" className="h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] lg:h-[calc(100vh-120px)] overflow-hidden">
+            <div className="flex gap-4 md:gap-5 lg:gap-7 px-4 md:px-6 lg:px-8 h-full">
+              {[0, 1, 2].map(colIndex => (
+                <div key={colIndex} className="flex-1 overflow-y-auto scrollbar-hide">
+                  <div className="space-y-4 md:space-y-5 lg:space-y-7 py-4 md:py-6 lg:py-8 px-2">
+                    {filteredPosts
+                      .filter((_, index) => index % 3 === colIndex)
+                      .map(renderPost)}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

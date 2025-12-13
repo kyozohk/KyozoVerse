@@ -347,7 +347,7 @@ export default function PublicCommunityPage() {
                   onClick={() => setFilter('all')}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     filter === 'all'
-                      ? 'bg-gray-700 text-white'
+                      ? 'bg-gray-700 text-white border-gray-700 border-2'
                       : 'bg-transparent text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -357,7 +357,7 @@ export default function PublicCommunityPage() {
                   onClick={() => setFilter('text')}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     filter === 'text'
-                      ? 'bg-pink-100 text-pink-600'
+                      ? 'bg-pink-100 text-pink-600 border-pink-500 border-2'
                       : 'bg-transparent text-gray-600 hover:bg-gray-100 border-pink-500 border-2'
                   }`}
                 >
@@ -367,7 +367,7 @@ export default function PublicCommunityPage() {
                   onClick={() => setFilter('audio')}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     filter === 'audio'
-                      ? 'bg-blue-100 text-blue-600'
+                      ? 'bg-blue-100 text-blue-600 border-blue-500 border-2'
                       : 'bg-transparent text-gray-600 hover:bg-gray-100 border-blue-500 border-2'
                   }`}
                 >
@@ -377,7 +377,7 @@ export default function PublicCommunityPage() {
                   onClick={() => setFilter('video')}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     filter === 'video'
-                      ? 'bg-yellow-100 text-yellow-600'
+                      ? 'bg-yellow-100 text-yellow-600 border-yellow-500 border-2'
                       : 'bg-transparent text-gray-600 hover:bg-gray-100 border-yellow-500 border-2'
                   }`}
                 >
