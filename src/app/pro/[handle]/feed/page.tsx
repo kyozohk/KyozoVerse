@@ -18,8 +18,11 @@ import { ReadCard } from '@/components/content-cards/read-card';
 import { ListenCard } from '@/components/content-cards/listen-card';
 import { WatchCard } from '@/components/content-cards/watch-card';
 import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
+import { TextPostCard } from '@/components/community/feed/text-post-card';
+import { AudioPostCard } from '@/components/community/feed/audio-post-card';
+import { VideoPostCard } from '@/components/community/feed/video-post-card';
 import Link from 'next/link';
-import { CommunityStats } from '@/components/community/community-stats';
+import { FeedStats } from '@/components/community/feed-stats';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -215,41 +218,41 @@ export default function CommunityFeedPage() {
       case 'text':
       case 'image':
         return (
-            <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
-              <ReadCard
-                category={post.type === 'image' ? 'Image' : 'Text'}
-                readTime={readTime}
-                date={postDate}
-                title={post.title || 'Untitled'}
-                summary={post.content.text}
-                isPrivate={post.visibility === 'private'}
-              />
-            </div>
+          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
+            <ReadCard
+              category={post.type === 'image' ? 'Image' : 'Text'}
+              readTime={readTime}
+              date={postDate}
+              title={post.title || 'Untitled'}
+              summary={post.content.text}
+              isPrivate={post.visibility === 'private'}
+            />
+          </div>
         );
       case 'audio':
         return (
-            <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
-              <ListenCard
-                category="Audio"
-                episode="Listen"
-                duration="0:00"
-                title={post.title || 'Untitled Audio'}
-                summary={post.content.text}
-                isPrivate={post.visibility === 'private'}
-              />
-            </div>
+          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
+            <ListenCard
+              category="Audio"
+              episode="Listen"
+              duration="0:00"
+              title={post.title || 'Untitled Audio'}
+              summary={post.content.text}
+              isPrivate={post.visibility === 'private'}
+            />
+          </div>
         );
       case 'video':
         return (
-            <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
-              <WatchCard
-                category="Video"
-                title={post.title || 'Untitled Video'}
-                imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
-                imageHint="video content"
-                isPrivate={post.visibility === 'private'}
-              />
-            </div>
+          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
+            <WatchCard
+              category="Video"
+              title={post.title || 'Untitled Video'}
+              imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
+              imageHint="video content"
+              isPrivate={post.visibility === 'private'}
+            />
+          </div>
         );
       default:
         return null;
@@ -320,11 +323,8 @@ export default function CommunityFeedPage() {
           </div>
         </div>
         
-        {community && (
-          <div className="mb-6">
-            <CommunityStats community={community} />
-          </div>
-        )}
+        {/* Feed Analytics */}
+        <FeedStats posts={posts} />
 
         {/* Search Bar */}
         {/* <div className="mb-6">
@@ -372,7 +372,7 @@ export default function CommunityFeedPage() {
         ) : (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
             {filteredPosts.map((post) => (
-              <div key={post.id} className="break-inside-avoid mb-4 cursor-pointer" onClick={() => handleEditPost(post)}>
+              <div key={post.id} className="break-inside-avoid mb-4">
                 {renderPost(post)}
               </div>
             ))}

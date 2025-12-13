@@ -48,9 +48,22 @@ export function UserMenu() {
       console.log('👥 UserMenu - User is member of', communityIds.length, 'communities:', communityIds);
 
       if (communityIds.length > 0) {
-        const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', communityIds));
-        const communitiesSnap = await getDocs(communitiesQuery);
-        const userCommunities = communitiesSnap.docs.map(doc => doc.data() as Community);
+        // Firestore 'in' query has a limit of 10 items, so we need to batch the queries
+        const batchSize = 10;
+        const batches = [];
+        
+        for (let i = 0; i < communityIds.length; i += batchSize) {
+          const batch = communityIds.slice(i, i + batchSize);
+          const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
+          batches.push(getDocs(communitiesQuery));
+        }
+        
+        console.log('📦 UserMenu - Fetching communities in', batches.length, 'batches');
+        
+        const batchResults = await Promise.all(batches);
+        const userCommunities = batchResults.flatMap(snap => 
+          snap.docs.map(doc => doc.data() as Community)
+        );
         
         console.log('🏘️ UserMenu - Community details:', userCommunities.map(c => ({
           id: c.communityId,

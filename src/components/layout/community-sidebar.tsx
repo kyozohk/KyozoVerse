@@ -62,19 +62,33 @@ export default function CommunitySidebar() {
       const memberSnapshot = await getDocs(memberQuery);
       const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
       
+      // Filter out owned communities
+      const nonOwnedMemberIds = memberCommunityIds.filter(
+        id => !ownedCommunities.find(c => c.communityId === id)
+      );
+      
       // Fetch community details for member communities (excluding owned ones)
+      // Firestore 'in' query has a limit of 10 items, so batch the queries
       const memberCommunities: Community[] = [];
-      for (const communityId of memberCommunityIds) {
-        if (!ownedCommunities.find(c => c.communityId === communityId)) {
-          const communitiesRef = collection(db, 'communities');
-          const communitySnapshot = await getDocs(query(communitiesRef, where('__name__', '==', communityId)));
-          communitySnapshot.docs.forEach(doc => {
+      if (nonOwnedMemberIds.length > 0) {
+        const batchSize = 10;
+        const batches = [];
+        
+        for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
+          const batch = nonOwnedMemberIds.slice(i, i + batchSize);
+          const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
+          batches.push(getDocs(communitiesQuery));
+        }
+        
+        const batchResults = await Promise.all(batches);
+        batchResults.forEach(snap => {
+          snap.docs.forEach(doc => {
             memberCommunities.push({
               communityId: doc.id,
               ...doc.data(),
             } as Community);
           });
-        }
+        });
       }
       
       // Combine owned and member communities
