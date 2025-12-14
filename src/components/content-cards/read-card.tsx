@@ -1,15 +1,16 @@
 
 'use client';
 
-import React from 'react';
-import { Lock, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, ThumbsUp, MessageSquare, Share2, ArrowRight } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
 import { toggleLike } from '@/lib/interaction-utils';
-import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReadCardProps {
+  post: Post & { id: string };
   category: string;
   readTime: string;
   date?: string;
@@ -18,24 +19,45 @@ interface ReadCardProps {
   fullText?: string;
   titleColor?: string;
   isPrivate?: boolean;
-  post: Post & { id: string };
 }
 
-export function ReadCard({ category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate, post }: ReadCardProps) {
+export function ReadCard({ post, category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate }: ReadCardProps) {
   const { user } = useCommunityAuth();
+  const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false); // This should be fetched from user-specific data
   const [likes, setLikes] = useState(post.likes || 0);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     if (!user) {
-      // Or trigger sign-in dialog
-      alert("Please sign in to like posts.");
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like posts.",
+        variant: "destructive",
+      });
       return;
     }
-    const { liked, likesCount } = await toggleLike(post.id, user.uid);
-    setIsLiked(liked);
-    setLikes(likesCount);
+    try {
+      const { liked, likesCount } = await toggleLike(post.id, user.uid);
+      setIsLiked(liked);
+      setLikes(likesCount);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not update like status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({ title: "Coming Soon", description: "Commenting functionality will be available soon."});
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({ title: "Coming Soon", description: "Sharing functionality will be available soon."});
   };
   
   const cardStyle = {
@@ -55,7 +77,7 @@ export function ReadCard({ category, readTime, date, title, summary, fullText, t
           </div>
         </div>
       )}
-      <div className="p-4 md:p-6 lg:p-8 flex flex-col justify-between" style={innerDivStyle}>
+      <div className="p-4 md:p-6 lg:p-8 h-full flex flex-col justify-between" style={innerDivStyle}>
         <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
           <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
             <div className="flex items-center gap-2 md:gap-2.5">
@@ -80,11 +102,11 @@ export function ReadCard({ category, readTime, date, title, summary, fullText, t
                     <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-primary' : ''}`} />
                     <span>{likes}</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleComment}>
                     <MessageSquare className="h-4 w-4" />
                     <span>{post.comments || 0}</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleShare}>
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>

@@ -7,6 +7,7 @@ import { Button } from '../ui';
 import { Post } from '@/lib/types';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
 import { toggleLike } from '@/lib/interaction-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface WatchCardProps {
   category: string;
@@ -19,18 +20,41 @@ interface WatchCardProps {
 
 export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, post }: WatchCardProps) {
   const { user } = useCommunityAuth();
+  const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes || 0);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      alert("Please sign in to like posts.");
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like posts.",
+        variant: "destructive",
+      });
       return;
     }
-    const { liked, likesCount } = await toggleLike(post.id, user.uid);
-    setIsLiked(liked);
-    setLikes(likesCount);
+    try {
+      const { liked, likesCount } = await toggleLike(post.id, user.uid);
+      setIsLiked(liked);
+      setLikes(likesCount);
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Could not update like status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({ title: "Coming Soon", description: "Commenting functionality will be available soon."});
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({ title: "Coming Soon", description: "Sharing functionality will be available soon."});
   };
   
   const cardStyle = {
@@ -73,11 +97,11 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                     <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-yellow-400' : ''}`} />
                     <span>{likes}</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleComment}>
                     <MessageSquare className="h-4 w-4" />
                     <span>{post.comments || 0}</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleShare}>
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>

@@ -1,48 +1,42 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 
 export function TextPostCardSkeleton({ hasImage = true }: { hasImage?: boolean }) {
-  const backgroundStyle = { 
-    backgroundImage: `url('/bg/text_bg.png')`, 
-    backgroundSize: 'cover', 
-    backgroundPosition: 'center' 
+  const cardStyle = {
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E\")",
+    backgroundColor: 'rgb(245, 241, 232)'
+  };
+  const innerDivStyle = {
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E\")"
   };
 
   return (
-    <Card 
-      className="overflow-hidden shadow-lg transition-all relative"
-      style={backgroundStyle}
-    >
-      <div className="flex flex-col md:flex-row">
-        {hasImage && (
-          <div className="w-full md:w-1/3 h-48 md:h-auto overflow-hidden relative">
-            <Skeleton className="absolute inset-0" />
-          </div>
-        )}
-        <div className={`p-6 flex flex-col justify-between w-full ${hasImage ? 'md:w-2/3' : ''} text-black`}>
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+    <div className="bg-white overflow-hidden shadow-md border border-neutral-200" style={cardStyle}>
+      <div className="p-4 md:p-6 lg:p-8 flex flex-col justify-between" style={innerDivStyle}>
+        <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
+          <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
+            <div className="flex items-center gap-2 md:gap-2.5">
               <Skeleton className="h-6 w-16 rounded-full" />
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-24 rounded-full" />
             </div>
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-[90%]" />
-              <Skeleton className="h-4 w-[80%]" />
-            </div>
+            <Skeleton className="h-8 w-3/4 mb-2 rounded-md" />
           </div>
-          <div className="flex items-center justify-between text-sm mt-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full rounded-md" />
+            <Skeleton className="h-4 w-[90%] rounded-md" />
+          </div>
+        </div>
+        <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16 rounded-md" />
+              <Skeleton className="h-8 w-16 rounded-md" />
+              <Skeleton className="h-8 w-16 rounded-md" />
             </div>
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-4 w-24 rounded-md" />
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
