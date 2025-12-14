@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
@@ -31,22 +32,29 @@ function PostList({ filter }: { filter: string }) {
   const [selectedPost, setSelectedPost] = useState<(Post & { id: string }) | null>(null);
 
   useEffect(() => {
-    if (!handle || authLoading) {
-      if (!authLoading) setLoading(false);
+    if (!handle) {
+      setLoading(false);
       return;
     }
 
     const postsRef = collection(db, 'blogs');
-    
-    // Define visibility based on user authentication state
-    const visibility = user ? ['public', 'private'] : ['public'];
+    let postsQuery;
 
-    const postsQuery = query(
-      postsRef,
-      where('communityHandle', '==', handle),
-      where('visibility', 'in', visibility),
-      orderBy('createdAt', 'desc')
-    );
+    if (user) {
+        postsQuery = query(
+            postsRef,
+            where('communityHandle', '==', handle),
+            where('visibility', 'in', ['public', 'private']),
+            orderBy('createdAt', 'desc')
+        );
+    } else {
+        postsQuery = query(
+            postsRef,
+            where('communityHandle', '==', handle),
+            where('visibility', '==', 'public'),
+            orderBy('createdAt', 'desc')
+        );
+    }
 
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const postsData = snapshot.docs.map(doc => ({
@@ -79,15 +87,6 @@ function PostList({ filter }: { filter: string }) {
   }, [handle, user, authLoading]);
   
   const renderPost = (post: Post & { id: string }) => {
-    // console.log('🌍 PUBLIC FEED - Rendering post:', {
-    //   id: post.id,
-    //   type: post.type,
-    //   title: post.title,
-    //   hasMediaUrls: !!post.content?.mediaUrls,
-    //   mediaUrl: post.content?.mediaUrls?.[0]
-    // });
-
-    const readTime = post.content?.text ? `${Math.max(1, Math.ceil((post.content.text.length || 0) / 1000))} min read` : '1 min read';
     const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
 
     switch (post.type) {
@@ -96,8 +95,9 @@ function PostList({ filter }: { filter: string }) {
         return (
           <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <ReadCard
+              post={post}
               category={post.type === 'image' ? 'Image' : 'Text'}
-              readTime={readTime}
+              readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`}
               date={postDate}
               title={post.title || 'Untitled'}
               summary={post.content.text}
@@ -108,6 +108,7 @@ function PostList({ filter }: { filter: string }) {
         return (
           <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <ListenCard
+              post={post}
               category="Audio"
               episode="Listen"
               duration="0:00"
@@ -120,6 +121,7 @@ function PostList({ filter }: { filter: string }) {
         return (
           <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <WatchCard
+              post={post}
               category="Video"
               title={post.title || 'Untitled Video'}
               imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
@@ -144,7 +146,6 @@ function PostList({ filter }: { filter: string }) {
     );
   }
 
-  // Filter posts by type
   const filteredPosts = posts.filter((post) => {
     if (filter === 'all') return true;
     if (filter === 'text') return post.type === 'text' || post.type === 'image';
@@ -167,7 +168,6 @@ function PostList({ filter }: { filter: string }) {
         ))}
       </div>
       
-      {/* Post Detail Panel */}
       <PostDetailPanel
         post={selectedPost}
         isOpen={!!selectedPost}
@@ -208,24 +208,17 @@ export default function PublicCommunityPage() {
   }, [setDialogState]);
   
   useEffect(() => {
-    // If the signup param is present, open the signup dialog
     if (searchParams.get('signup') === 'true') {
       openSignUpDialog();
     }
   }, [searchParams, openSignUpDialog]);
 
-  // Pre-populate form fields from URL parameters
   useEffect(() => {
     const firstName = searchParams.get('firstName');
     const lastName = searchParams.get('lastName');
     const email = searchParams.get('email');
     
-    // Only populate if dialog just opened and we have URL params
     if (dialogState.isSignUpOpen && (firstName || lastName || email)) {
-      console.log('🔗 URL PARAMS - Pre-populating form:', { firstName, lastName, email });
-      
-      // Use a ref or check to prevent infinite loop
-      // Only set if values are different from current form state
       if (firstName && formState.firstName !== firstName) {
         handleFormChange('firstName', firstName);
       }
@@ -248,7 +241,6 @@ export default function PublicCommunityPage() {
     fetchCommunityData();
   }, [handle]);
 
-  // Check if user is a member of this community
   useEffect(() => {
     async function checkMembership() {
       if (!user || !communityData) {
@@ -260,20 +252,8 @@ export default function PublicCommunityPage() {
       setCheckingMembership(true);
       try {
         const memberDocId = `${user.uid}_${communityData.communityId}`;
-        console.log('🔍 Checking membership:', {
-          userId: user.uid,
-          communityId: communityData.communityId,
-          memberDocId,
-          communityHandle: communityData.handle
-        });
-        
         const memberRef = doc(db, 'communityMembers', memberDocId);
         const memberSnap = await getDoc(memberRef);
-        
-        console.log('✅ Membership check result:', {
-          exists: memberSnap.exists(),
-          data: memberSnap.exists() ? memberSnap.data() : null
-        });
         
         setIsMember(memberSnap.exists());
       } catch (error) {
@@ -306,23 +286,13 @@ export default function PublicCommunityPage() {
         }
       };
       
-      console.log('💾 Creating membership document:', {
-        docId: memberDocId,
-        data: memberData
-      });
-      
       await setDoc(memberRef, memberData);
       
-      console.log('✅ Membership document created successfully');
-
-      // Update community member count
       const communityRef = doc(db, 'communities', communityData.communityId);
       await updateDoc(communityRef, {
         memberCount: increment(1)
       });
       
-      console.log('✅ Community member count updated');
-
       setIsMember(true);
       alert('Successfully joined the community!');
     } catch (error) {
@@ -341,7 +311,6 @@ export default function PublicCommunityPage() {
               {communityData?.name || 'Community'}
             </p>
             <div className="flex items-center gap-4">
-              {/* Filter buttons */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setFilter('all')}

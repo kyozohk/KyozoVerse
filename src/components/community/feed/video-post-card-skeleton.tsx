@@ -1,8 +1,8 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
 export function VideoPostCardSkeleton() {
-  // Use a background style similar to video cards
   const backgroundStyle = { 
     backgroundImage: `url('/bg/video_bg.png')`, 
     backgroundSize: 'cover', 
@@ -11,7 +11,7 @@ export function VideoPostCardSkeleton() {
 
   return (
     <Card 
-      className="overflow-hidden shadow-lg transition-all hover:border-primary/50 relative"
+      className="overflow-hidden shadow-lg transition-all relative"
       style={backgroundStyle}
     >
       <div className="p-6">
@@ -27,7 +27,6 @@ export function VideoPostCardSkeleton() {
           <Skeleton className="h-4 w-[90%]" />
         </div>
         
-        {/* Video player skeleton */}
         <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-4">
           <Skeleton className="absolute inset-0" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -36,7 +35,11 @@ export function VideoPostCardSkeleton() {
         </div>
         
         <div className="flex items-center justify-between text-sm">
-          <Skeleton className="h-4 w-32" />
+          <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+          </div>
           <div className="flex gap-2">
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="h-8 w-8 rounded-full" />

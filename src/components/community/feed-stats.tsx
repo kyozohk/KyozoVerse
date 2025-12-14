@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FileText, Mic, Video, TrendingUp } from 'lucide-react';
+import { FileText, Mic, Video, TrendingUp, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { type Post } from '@/lib/types';
 
@@ -17,6 +18,9 @@ export function FeedStats({ posts }: FeedStatsProps) {
     videoPosts: 0,
     todayPosts: 0,
     monthlyGrowth: 0,
+    totalLikes: 0,
+    totalComments: 0,
+    totalShares: 0
   });
 
   useEffect(() => {
@@ -28,6 +32,9 @@ export function FeedStats({ posts }: FeedStatsProps) {
         videoPosts: 0,
         todayPosts: 0,
         monthlyGrowth: 0,
+        totalLikes: 0,
+        totalComments: 0,
+        totalShares: 0,
       });
       return;
     }
@@ -45,6 +52,9 @@ export function FeedStats({ posts }: FeedStatsProps) {
     let todayPosts = 0;
     let thisMonthPosts = 0;
     let lastMonthPosts = 0;
+    let totalLikes = 0;
+    let totalComments = 0;
+    let totalShares = 0;
 
     posts.forEach(post => {
       // Count by type
@@ -55,6 +65,10 @@ export function FeedStats({ posts }: FeedStatsProps) {
       } else if (post.type === 'video') {
         videoPosts++;
       }
+      
+      totalLikes += post.likes || 0;
+      totalComments += post.comments || 0;
+      totalShares += (post as any).shares || 0;
 
       // Count today's posts
       const postDate = post.createdAt?.toDate ? post.createdAt.toDate() : null;
@@ -85,6 +99,9 @@ export function FeedStats({ posts }: FeedStatsProps) {
       videoPosts,
       todayPosts,
       monthlyGrowth,
+      totalLikes,
+      totalComments,
+      totalShares,
     });
   }, [posts]);
 
@@ -104,69 +121,42 @@ export function FeedStats({ posts }: FeedStatsProps) {
         </CardContent>
       </Card>
 
-      {/* Text Posts */}
       <Card className="bg-white border-pink-200 hover:shadow-md transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-pink-600">Text Posts</CardTitle>
-          <div className="px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-xs font-medium">
-            Read
-          </div>
+          <CardTitle className="text-sm font-medium text-pink-600">Total Likes</CardTitle>
+          <ThumbsUp className="h-4 w-4 text-pink-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-900">{stats.textPosts}</div>
+          <div className="text-2xl font-bold text-gray-900">{stats.totalLikes}</div>
           <p className="text-xs text-gray-500">
-            {stats.totalPosts > 0 ? Math.round((stats.textPosts / stats.totalPosts) * 100) : 0}% of total
+            Across all posts
           </p>
         </CardContent>
       </Card>
 
-      {/* Audio Posts */}
       <Card className="bg-white border-blue-200 hover:shadow-md transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-blue-600">Audio Posts</CardTitle>
-          <div className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
-            Listen
-          </div>
+          <CardTitle className="text-sm font-medium text-blue-600">Total Comments</CardTitle>
+          <MessageSquare className="h-4 w-4 text-blue-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-900">{stats.audioPosts}</div>
-          <p className="text-xs text-gray-500">
-            {stats.totalPosts > 0 ? Math.round((stats.audioPosts / stats.totalPosts) * 100) : 0}% of total
+          <div className="text-2xl font-bold text-gray-900">{stats.totalComments}</div>
+           <p className="text-xs text-gray-500">
+            Fostering engagement
           </p>
         </CardContent>
       </Card>
 
-      {/* Video Posts */}
       <Card className="bg-white border-yellow-200 hover:shadow-md transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-yellow-600">Video Posts</CardTitle>
-          <div className="px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full text-xs font-medium">
-            Watch
-          </div>
+          <CardTitle className="text-sm font-medium text-yellow-600">Total Shares</CardTitle>
+          <Share2 className="h-4 w-4 text-yellow-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-900">{stats.videoPosts}</div>
-          <p className="text-xs text-gray-500">
-            {stats.totalPosts > 0 ? Math.round((stats.videoPosts / stats.totalPosts) * 100) : 0}% of total
+          <div className="text-2xl font-bold text-gray-900">{stats.totalShares}</div>
+           <p className="text-xs text-gray-500">
+            Extending your reach
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Monthly Growth - Full Width */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:shadow-md transition-shadow md:col-span-2 lg:col-span-4">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-purple-700">Monthly Growth</CardTitle>
-          <TrendingUp className={`h-4 w-4 ${stats.monthlyGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-baseline gap-2">
-            <div className={`text-2xl font-bold ${stats.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.monthlyGrowth >= 0 ? '+' : ''}{stats.monthlyGrowth}
-            </div>
-            <p className="text-xs text-gray-600">
-              posts this month compared to last month
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

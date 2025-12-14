@@ -1,8 +1,8 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
 export function AudioPostCardSkeleton() {
-  // Use a background style similar to audio cards
   const backgroundStyle = { 
     backgroundImage: `url('/bg/audio_bg.png')`, 
     backgroundSize: 'cover', 
@@ -11,7 +11,7 @@ export function AudioPostCardSkeleton() {
 
   return (
     <Card 
-      className="overflow-hidden shadow-lg transition-all hover:border-primary/50 relative"
+      className="overflow-hidden shadow-lg transition-all relative"
       style={backgroundStyle}
     >
       <div className="p-6">
@@ -27,7 +27,6 @@ export function AudioPostCardSkeleton() {
           <Skeleton className="h-4 w-[90%]" />
         </div>
         
-        {/* Audio player skeleton */}
         <div className="bg-black/10 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
@@ -42,7 +41,11 @@ export function AudioPostCardSkeleton() {
         </div>
         
         <div className="flex items-center justify-between text-sm">
-          <Skeleton className="h-4 w-32" />
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+            </div>
           <div className="flex gap-2">
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="h-8 w-8 rounded-full" />

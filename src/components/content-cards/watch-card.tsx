@@ -1,8 +1,12 @@
 
 'use client';
 
-import React from 'react';
-import { Play, Volume2, Heart, MessageCircle, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, Volume2, ThumbsUp, MessageSquare, Share2, Lock } from 'lucide-react';
+import { Button } from '../ui';
+import { Post } from '@/lib/types';
+import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { toggleLike } from '@/lib/interaction-utils';
 
 interface WatchCardProps {
   category: string;
@@ -10,11 +14,25 @@ interface WatchCardProps {
   imageUrl: string;
   imageHint: string;
   isPrivate?: boolean;
+  post: Post & { id: string };
 }
 
-export function WatchCard({ category, title, imageUrl, imageHint, isPrivate }: WatchCardProps) {
-  // console.log('🎬 WatchCard rendering:', { category, title, imageUrl: imageUrl?.substring(0, 100) });
+export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, post }: WatchCardProps) {
+  const { user } = useCommunityAuth();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(post.likes || 0);
 
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please sign in to like posts.");
+      return;
+    }
+    const { liked, likesCount } = await toggleLike(post.id, user.uid);
+    setIsLiked(liked);
+    setLikes(likesCount);
+  };
+  
   const cardStyle = {
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E\")",
     backgroundColor: 'rgb(245, 241, 232)'
@@ -49,32 +67,25 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate }: W
         <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-xl md:text-2xl" style={{ letterSpacing: '-0.5px', fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 600 }}>
           {title}
         </h2>
-        {/* Player controls */}
-        <div className="flex items-center gap-3 md:gap-4">
-            <button className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#FBBF24]/70 hover:bg-[#F59E0B]/70 flex items-center justify-center transition-all flex-shrink-0 shadow-lg">
-                <Play className="w-5 h-5 md:w-6 md:h-6 text-white ml-0.5" />
-            </button>
-            <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-white text-sm md:text-base font-medium drop-shadow-lg">0:38</span>
-                <span className="text-white/80 text-sm md:text-base drop-shadow-lg">/</span>
-                <span className="text-white/80 text-sm md:text-base drop-shadow-lg">3:01</span>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleLike}>
+                    <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-yellow-400' : ''}`} />
+                    <span>{likes}</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>{post.comments || 0}</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white">
+                    <Share2 className="h-4 w-4" />
+                </Button>
             </div>
-            <div className="flex-1 h-1.5 bg-white/20 rounded-full cursor-pointer relative group/progress backdrop-blur-sm">
-                <div className="h-full bg-[#FBBF24] rounded-full relative transition-all" style={{width: '21%'}}>
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"></div>
-                </div>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                <button className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-white hover:text-white/80 transition-colors drop-shadow-lg">
-                    <Volume2 className="w-5 h-5 md:w-5.5 md:h-5.5" />
-                </button>
-                <button className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-white hover:text-white/80 transition-colors drop-shadow-lg">
-                    <Heart className="w-5 h-5 md:w-5.5 md:h-5.5 transition-all" />
-                </button>
-                <button className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-white hover:text-white/80 transition-colors drop-shadow-lg">
-                    <MessageCircle className="w-5 h-5 md:w-5.5 md:h-5.5" />
-                </button>
-            </div>
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+              <button className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-white hover:text-white/80 transition-colors drop-shadow-lg">
+                  <Volume2 className="w-5 h-5 md:w-5.5 md:h-5.5" />
+              </button>
+          </div>
         </div>
       </div>
     </div>

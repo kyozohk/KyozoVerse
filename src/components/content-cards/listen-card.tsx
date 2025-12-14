@@ -1,7 +1,11 @@
 
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Lock } from 'lucide-react';
+import { Play, Lock, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
+import { Button } from '../ui';
+import { Post } from '@/lib/types';
+import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { toggleLike } from '@/lib/interaction-utils';
 
 interface ListenCardProps {
   category: string;
@@ -10,6 +14,7 @@ interface ListenCardProps {
   title: string;
   summary?: string;
   isPrivate?: boolean;
+  post: Post & { id: string };
 }
 
 // Waveform component
@@ -42,7 +47,22 @@ const Waveform = () => {
     );
 };
 
-export function ListenCard({ category, episode, duration, title, summary, isPrivate }: ListenCardProps) {
+export function ListenCard({ category, episode, duration, title, summary, isPrivate, post }: ListenCardProps) {
+  const { user } = useCommunityAuth();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(post.likes || 0);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please sign in to like posts.");
+      return;
+    }
+    const { liked, likesCount } = await toggleLike(post.id, user.uid);
+    setIsLiked(liked);
+    setLikes(likesCount);
+  };
+  
   const cardStyle = {
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E\")",
     backgroundColor: 'rgb(245, 241, 232)'
@@ -88,6 +108,19 @@ export function ListenCard({ category, episode, duration, title, summary, isPriv
                 </div>
               </div>
             </div>
+          </div>
+          <div className="flex items-center justify-start gap-2 pt-4">
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleLike}>
+                <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-primary' : ''}`} />
+                <span>{likes}</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
+                <MessageSquare className="h-4 w-4" />
+                <span>{post.comments || 0}</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
+                <Share2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

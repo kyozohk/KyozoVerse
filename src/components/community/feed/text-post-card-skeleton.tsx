@@ -1,8 +1,8 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
 export function TextPostCardSkeleton({ hasImage = true }: { hasImage?: boolean }) {
-  // Use the same background style as the text post card
   const backgroundStyle = { 
     backgroundImage: `url('/bg/text_bg.png')`, 
     backgroundSize: 'cover', 
@@ -11,7 +11,7 @@ export function TextPostCardSkeleton({ hasImage = true }: { hasImage?: boolean }
 
   return (
     <Card 
-      className="overflow-hidden shadow-lg transition-all hover:border-primary/50 relative"
+      className="overflow-hidden shadow-lg transition-all relative"
       style={backgroundStyle}
     >
       <div className="flex flex-col md:flex-row">
@@ -34,7 +34,11 @@ export function TextPostCardSkeleton({ hasImage = true }: { hasImage?: boolean }
             </div>
           </div>
           <div className="flex items-center justify-between text-sm mt-4">
-            <Skeleton className="h-4 w-32" />
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+            </div>
             <Skeleton className="h-8 w-20" />
           </div>
         </div>
