@@ -1,5 +1,5 @@
 
-"use client";
+'use client';
 
 import React from 'react';
 import { cn } from '@/lib/utils';
@@ -29,18 +29,20 @@ const GradientText = ({
 
   const gradientDirection = gradientDirections[direction];
   
+  const gradientStyle: React.CSSProperties = {
+    background: `linear-gradient(${gradientDirection}, black, red)`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    color: 'transparent', // Fallback for browsers that don't support background-clip: text
+    display: 'inline-block',
+    ...style,
+  };
+
   return (
     <Component
       className={cn('gradient-text', className)}
-      style={{
-        background: `linear-gradient(${gradientDirection}, var(--gradient-start), var(--gradient-end))`,
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-        color: 'transparent', // Fallback for browsers that don't support background-clip: text
-        display: 'inline-block',
-        ...style,
-      }}
+      style={gradientStyle}
     >
       {children}
     </Component>
