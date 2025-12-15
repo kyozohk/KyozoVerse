@@ -2,21 +2,43 @@
 "use client";
 
 import React from 'react';
-import ScrollRevealText from './scroll-reveal-text';
 
 interface HeroProps {
   text: string[];
+  gradientStart?: string;
+  gradientEnd?: string;
 }
 
-export function Hero({ text }: HeroProps) {
+export function Hero({ 
+  text, 
+  gradientStart = 'var(--gradient-start)', 
+  gradientEnd = 'var(--gradient-end)' 
+}: HeroProps) {
   return (
     <section className="relative w-full overflow-hidden mt-40 mb-60">
-      <ScrollRevealText 
-        textLines={text} 
-        fontSize="clamp(3rem, 10vw, 8rem)"
-        fontWeight={400}
-        className="font-canicule"
-      />
+      <h1
+        className="text-6xl md:text-8xl font-serif font-medium tracking-tight text-center"
+        style={{
+          lineHeight: 1.1,
+          fontFamily: '"Playfair Display", "Gloock", serif',
+        }}
+      >
+        {text.map((line, index) => (
+          <span
+            key={index}
+            className="text-transparent bg-clip-text block"
+            style={{
+              backgroundImage: `linear-gradient(90deg, ${gradientStart}, ${gradientEnd})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            {line}
+          </span>
+        ))}
+      </h1>
     </section>
   );
 }
