@@ -29,8 +29,8 @@
   /* New color palette */
   --primary-purple: #843484;
   --primary-purple-rgb: 132, 52, 132;
-  --gradient-start: #A07FBD;
-  --gradient-end: #23AF98;
+  --gradient-start: #7c3aed;
+  --gradient-end: #10b981;
 
   /* Button variables */
   --button-border: var(--primary-purple);

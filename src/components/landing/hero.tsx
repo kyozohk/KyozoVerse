@@ -14,7 +14,8 @@ export function Hero({ text }: HeroProps) {
       <ScrollRevealText 
         textLines={text} 
         fontSize="clamp(3rem, 10vw, 8rem)"
-        fontWeight={700}
+        fontWeight={400}
+        className="font-canicule"
       />
     </section>
   );
