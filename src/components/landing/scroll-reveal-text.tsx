@@ -60,7 +60,7 @@ const ScrollRevealText: React.FC<ScrollRevealTextProps> = ({
   }, [revealSpeed]);
 
   const gradientStyle: React.CSSProperties = {
-    backgroundImage: 'linear-gradient(90deg, #7c3aed, #4f46e5 35%, #0ea5e9 60%, #10b981 100%)',
+    backgroundImage: 'linear-gradient(90deg, var(--gradient-start), var(--gradient-end))',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
