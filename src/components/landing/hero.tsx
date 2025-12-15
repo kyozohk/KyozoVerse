@@ -12,7 +12,7 @@ export function Hero({ text }: HeroProps) {
   return (
     <section className="relative w-full overflow-hidden mt-40 mb-60">
       <ScrollRevealText 
-        text={text} 
+        textLines={text} 
         fontSize="clamp(3rem, 10vw, 8rem)"
         fontWeight={700}
       />
