@@ -130,32 +130,48 @@ export default function CommunityMembersPage() {
   const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
     const memberIds = selectedMembers.map(m => m.id);
     console.log(`🏷️ [Applying Tags] Updating ${memberIds.length} members.`);
+    console.log(`🏷️ [Applying Tags] Tags to add:`, tagsToAdd);
+    console.log(`🏷️ [Applying Tags] Tags to remove:`, tagsToRemove);
     
     const updates = memberIds.map(async (id) => {
       const memberRef = doc(db, 'communityMembers', id);
       console.log(`  - Updating member ${id}: ADD [${tagsToAdd.join(', ')}], REMOVE [${tagsToRemove.join(', ')}]`);
-      // Atomically add new tags and remove old ones
-      await updateDoc(memberRef, {
-        tags: arrayUnion(...tagsToAdd),
-      });
-      if(tagsToRemove.length > 0) {
-        await updateDoc(memberRef, {
+      
+      try {
+        // Add new tags if any
+        if (tagsToAdd.length > 0) {
+          await updateDoc(memberRef, {
+            tags: arrayUnion(...tagsToAdd),
+          });
+          console.log(`  ✅ Added tags to member ${id}`);
+        }
+        
+        // Remove tags if any
+        if (tagsToRemove.length > 0) {
+          await updateDoc(memberRef, {
             tags: arrayRemove(...tagsToRemove),
-        });
+          });
+          console.log(`  ✅ Removed tags from member ${id}`);
+        }
+      } catch (error) {
+        console.error(`  ❌ Error updating member ${id}:`, error);
+        throw error;
       }
     });
   
     try {
       await Promise.all(updates);
-      console.log('✅ [Applying Tags] - All members updated.');
+      console.log('✅ [Applying Tags] - All members updated in database.');
+      
       // Refresh members data
       if (community) {
         const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+        console.log('✅ [Applying Tags] - Refreshed members data:', membersData.map(m => ({ id: m.id, tags: m.tags })));
         setMembers(membersData);
       }
       setSelectedMembers([]); // Clear selection after applying
     } catch (error) {
-      console.error("Error applying tags:", error);
+      console.error("❌ [Applying Tags] Error:", error);
     }
   };
 

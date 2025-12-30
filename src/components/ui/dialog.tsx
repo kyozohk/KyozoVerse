@@ -128,7 +128,7 @@ export function CustomFormDialog({
   children,
   backgroundImage = "/bg/light_app_bg.png",
   showVideo = true,
-  videoSrc = "/videos/form-right.mp4",
+  videoSrc = "/videos/form-right-no.mp4",
   color = "var(--primary-purple)",
 }: CustomFormDialogProps) {
   const [isAnimating, setIsAnimating] = React.useState(false);

@@ -48,3 +48,8 @@ curl -X POST 'https://api.resend.com/emails' \
     "html": "<p>it works!</p>",
     "reply_to": "onboarding@resend.dev"
   }'
+
+
+1. Get rid off the mushroom animation
+2. E-mail working SMTP
+2. List of selected members should sh

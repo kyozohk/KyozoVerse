@@ -61,7 +61,7 @@ function MyDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
       title="My Dialog Title"
       description="Optional description text"
       backgroundImage="/bg/light_app_bg.png"
-      videoSrc="/videos/form-right.mp4"
+      videoSrc="/videos/form-right-no.mp4"
       color="#C170CF"
     >
       {/* Form Content - Scrollable Area */}

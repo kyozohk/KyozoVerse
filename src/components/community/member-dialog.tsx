@@ -181,7 +181,7 @@ export function MemberDialog({
       title={title}
       description={description}
       backgroundImage="/bg/light_app_bg.png"
-      videoSrc="/videos/form-right.mp4"
+      videoSrc="/videos/form-right-no.mp4"
       showVideo={true}
       color={THEME_COLORS.members.primary}
     >

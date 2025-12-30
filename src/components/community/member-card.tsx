@@ -79,7 +79,7 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
             {(member.tags || []).slice(0, 5).map(tag => (
               <Badge key={tag} variant="secondary" className="group text-xs">
                 {tag}
-                <button onClick={(e) => handleTagRemove(e, member.id, tag)} className="ml-1.5 opacity-50 group-hover:opacity-100">
+                <button onClick={(e) => handleTagRemove(e, tag)} className="ml-1.5 opacity-50 group-hover:opacity-100">
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
