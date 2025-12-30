@@ -39,6 +39,7 @@ export default function CommunityPage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchType, setSearchType] = useState<'name' | 'tag'>('name');
 
   useEffect(() => {
     if (authLoading) return;
@@ -223,6 +224,8 @@ export default function CommunityPage() {
       <ListView
           title="Members"
           subtitle={`Browse and manage ${community.name}'s members.`}
+          searchType={searchType}
+          onSearchTypeChange={setSearchType}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           viewMode={viewMode}
