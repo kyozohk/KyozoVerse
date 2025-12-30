@@ -12,7 +12,7 @@ import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui';
 
 
 interface MembersListProps {
@@ -92,6 +92,7 @@ export function MembersList({
             itemStyle.backgroundColor = hexToRgba(activeColor, 0.1);
             itemStyle.borderColor = activeColor;
           }
+          console.log(`🎨 [Members List] Rendering member: ${member.userDetails?.displayName}, Tags:`, member.tags);
 
           return (
             <div
