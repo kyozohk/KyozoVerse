@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
@@ -18,6 +18,8 @@ import {
   serverTimestamp,
   increment,
   setDoc,
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,6 +31,8 @@ import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
 import { CommunityMember } from "@/lib/types";
+import { TagMembersDialog } from "@/components/community/tag-members-dialog";
+import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
 
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -54,10 +58,17 @@ export default function CommunityMembersPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("guest");
   const [community, setCommunity] = useState<Community | null>(null);
+  const [searchType, setSearchType] = useState<'name' | 'tag'>('name');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
+  const [isTaggingOpen, setIsTaggingOpen] = useState(false);
+
+  // State for remove tag confirmation
+  const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
+  const [isRemoveTagDialogOpen, setIsRemoveTagDialogOpen] = useState(false);
   
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -93,7 +104,7 @@ export default function CommunityMembersPage() {
     async function fetchMembers() {
       setLoading(true);
       try {
-        const membersData = await getCommunityMembers(community!.communityId, debouncedSearchTerm);
+        const membersData = await getCommunityMembers(community!.communityId, { type: searchType, value: debouncedSearchTerm });
         setMembers(membersData);
       } catch (error) {
         console.error("Error fetching members:", error);
@@ -103,7 +114,73 @@ export default function CommunityMembersPage() {
     }
     
     fetchMembers();
-  }, [community?.communityId, debouncedSearchTerm]);
+  }, [community?.communityId, debouncedSearchTerm, searchType]);
+
+  const handleToggleMemberSelection = (member: CommunityMember) => {
+    setSelectedMembers((prevSelected) => {
+      if (prevSelected.some(m => m.id === member.id)) {
+        return prevSelected.filter(m => m.id !== member.id);
+      } else {
+        return [...prevSelected, member];
+      }
+    });
+  };
+
+  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
+    const memberIds = selectedMembers.map(m => m.id);
+    const updates = memberIds.map(id => {
+      const memberRef = doc(db, 'communityMembers', id);
+      return updateDoc(memberRef, {
+        tags: arrayUnion(...tagsToAdd),
+      }).then(() => {
+        if (tagsToRemove.length > 0) {
+          return updateDoc(memberRef, {
+            tags: arrayRemove(...tagsToRemove),
+          });
+        }
+      });
+    });
+  
+    try {
+      await Promise.all(updates);
+      // Refresh members data
+      if (community) {
+        const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+        setMembers(membersData);
+      }
+      setSelectedMembers([]); // Clear selection after applying
+    } catch (error) {
+      console.error("Error applying tags:", error);
+    }
+  };
+
+  const handleRemoveTag = async () => {
+    if (!tagToRemove) return;
+    try {
+      const memberRef = doc(db, 'communityMembers', tagToRemove.memberId);
+      await updateDoc(memberRef, {
+        tags: arrayRemove(tagToRemove.tag),
+      });
+
+      // Refresh local state
+      setMembers(prevMembers => prevMembers.map(m => {
+        if (m.id === tagToRemove.memberId) {
+          return { ...m, tags: m.tags?.filter(t => t !== tagToRemove.tag) };
+        }
+        return m;
+      }));
+    } catch (error) {
+      console.error("Error removing tag:", error);
+    } finally {
+      setIsRemoveTagDialogOpen(false);
+      setTagToRemove(null);
+    }
+  };
+
+  const openRemoveTagDialog = (memberId: string, tag: string) => {
+    setTagToRemove({ memberId, tag });
+    setIsRemoveTagDialogOpen(true);
+  };
   
   const handleAddMemberSubmit = async (data: {
     displayName: string;
@@ -284,18 +361,26 @@ export default function CommunityMembersPage() {
       <ListView
         title="Members"
         subtitle="Browse and manage community members."
+        searchType={searchType}
+        onSearchTypeChange={setSearchType}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         loading={loading}
         onAddAction={() => setIsAddMemberOpen(true)}
+        onAddTags={() => setIsTaggingOpen(true)}
+        selectedCount={selectedMembers.length}
       >
         <MembersList 
           members={members} 
           userRole={userRole as any}
           viewMode={viewMode}
+          onMemberClick={handleToggleMemberSelection}
+          selectedMembers={selectedMembers}
+          selectable={true}
           onEditMember={(member) => setEditingMember(member)}
+          onRemoveTag={openRemoveTagDialog}
         />
       </ListView>
       <MemberDialog
@@ -312,6 +397,18 @@ export default function CommunityMembersPage() {
         initialMember={editingMember}
         onClose={() => setEditingMember(null)}
         onSubmit={handleEditMemberSubmit}
+      />
+      <TagMembersDialog
+        isOpen={isTaggingOpen}
+        onClose={() => setIsTaggingOpen(false)}
+        members={selectedMembers}
+        onApplyTags={handleApplyTags}
+      />
+      <RemoveTagDialog
+        isOpen={isRemoveTagDialogOpen}
+        onClose={() => setIsRemoveTagDialogOpen(false)}
+        onConfirm={handleRemoveTag}
+        tagName={tagToRemove?.tag || ''}
       />
     </>
   );

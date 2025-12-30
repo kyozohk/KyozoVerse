@@ -9,7 +9,7 @@ import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Users, Edit, Phone, Mail, X } from 'lucide-react';
-import { MemberCard } from './member-card';
+import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from './badge';
