@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -11,7 +12,7 @@ import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
-import { Badge } from './badge';
+import { Badge } from '@/components/ui/badge';
 
 
 interface MembersListProps {
@@ -117,7 +118,7 @@ export function MembersList({
               </Avatar>
               <div className="flex-grow grid grid-cols-1 md:grid-cols-3 items-center gap-4">
                 <div className="font-semibold text-base truncate">{member.userDetails?.displayName}</div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
                     <Mail className="h-4 w-4 shrink-0" />
                     <span>{member.userDetails?.email || 'No email'}</span>
                 </div>
