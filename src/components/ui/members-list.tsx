@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -11,7 +12,7 @@ import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
-import { Badge } from './badge';
+import { Badge } from '@/components/ui';
 
 
 interface MembersListProps {
@@ -59,14 +60,12 @@ export function MembersList({
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   const handleNavigate = (member: CommunityMember) => {
-    // This function is now only for navigation
     const pathParts = pathname.split('/');
     const handle = pathParts[2];
     router.push(`/pro/${handle}/members/${member.userId}`);
   };
 
   const handleSelect = (e: React.MouseEvent | React.KeyboardEvent, member: CommunityMember) => {
-    // This function is for selection
     e.stopPropagation();
     if (onMemberClick) {
       onMemberClick(member);
@@ -91,6 +90,7 @@ export function MembersList({
             itemStyle.backgroundColor = hexToRgba(activeColor, 0.1);
             itemStyle.borderColor = activeColor;
           }
+          console.log(`🎨 [Members List] Rendering member: ${member.userDetails?.displayName}, Tags:`, member.tags);
 
           return (
             <div
@@ -103,9 +103,7 @@ export function MembersList({
                 <div className="mr-4 flex items-center h-full" onClick={(e) => handleSelect(e, member)}>
                   <Checkbox
                     checked={isSelected}
-                    onCheckedChange={() => {
-                        // The parent div's onClick handles the logic
-                    }}
+                    onCheckedChange={() => {}}
                   />
                 </div>
               )}

@@ -6,6 +6,7 @@ import { CustomFormDialog, CustomButton } from '@/components/ui';
 import { X, Tag } from 'lucide-react';
 import { CommunityMember } from '@/lib/types';
 import { THEME_COLORS } from '@/lib/theme-colors';
+import { useToast } from '@/hooks/use-toast';
 
 interface TagMembersDialogProps {
   isOpen: boolean;
@@ -23,9 +24,9 @@ export function TagMembersDialog({
   const [tags, setTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
-    // Get common tags from all selected members
     if (isOpen && members.length > 0) {
       const commonTags = members.reduce((acc, member) => {
         return acc.filter(tag => member.tags?.includes(tag));
@@ -39,8 +40,9 @@ export function TagMembersDialog({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && inputValue.trim() !== '') {
       e.preventDefault();
-      if (!tags.includes(inputValue.trim())) {
-        setTags([...tags, inputValue.trim()]);
+      const newTag = inputValue.trim();
+      if (!tags.includes(newTag)) {
+        setTags([...tags, newTag]);
       }
       setInputValue('');
     }
@@ -50,23 +52,44 @@ export function TagMembersDialog({
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    // Logic to determine which tags are new and which were removed
-    const initialTags = members.reduce((acc, member) => {
-      member.tags?.forEach(tag => acc.add(tag));
-      return acc;
-    }, new Set<string>());
-
-    const tagsToAdd = tags.filter(tag => !initialTags.has(tag));
     
-    // For removal, we need to consider tags present in any member but not in the final tags list.
-    const allInitialTags = Array.from(initialTags);
-    const tagsToRemove = allInitialTags.filter(tag => !tags.includes(tag));
+    const initialTags = new Set<string>();
+    members.forEach(member => {
+      member.tags?.forEach(tag => initialTags.add(tag));
+    });
 
-    onApplyTags(tagsToAdd, tagsToRemove);
-    setIsSubmitting(false);
-    onClose();
+    const tagsToAdd = tags.filter(tag => {
+      // Add tag if it's new for at least one member.
+      // This logic is a simplification; a more robust solution might track per-member changes.
+      // For now, we add all current tags to all members.
+      return true;
+    });
+
+    const tagsToRemove = Array.from(initialTags).filter(tag => !tags.includes(tag));
+    
+    console.log('🏷️ [Applying Tags] - Member IDs:', members.map(m => m.id));
+    console.log('🏷️ [Applying Tags] - Tags to ADD to all selected members:', tagsToAdd);
+    console.log('🏷️ [Applying Tags] - Tags to REMOVE from all selected members:', tagsToRemove);
+
+    try {
+      await onApplyTags(tags, tagsToRemove); // Simplified: send the final list of tags
+      toast({
+        title: "Tags Applied",
+        description: `Tags have been updated for ${members.length} members.`,
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error applying tags:", error);
+      toast({
+        title: "Error",
+        description: "Could not apply tags. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

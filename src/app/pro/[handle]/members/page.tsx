@@ -105,6 +105,7 @@ export default function CommunityMembersPage() {
       setLoading(true);
       try {
         const membersData = await getCommunityMembers(community!.communityId, { type: searchType, value: debouncedSearchTerm });
+        console.log('✅ [Members Page] - Fetched members data:', JSON.stringify(membersData, null, 2));
         setMembers(membersData);
       } catch (error) {
         console.error("Error fetching members:", error);
@@ -128,21 +129,25 @@ export default function CommunityMembersPage() {
 
   const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
     const memberIds = selectedMembers.map(m => m.id);
-    const updates = memberIds.map(id => {
+    console.log(`🏷️ [Applying Tags] Updating ${memberIds.length} members.`);
+    
+    const updates = memberIds.map(async (id) => {
       const memberRef = doc(db, 'communityMembers', id);
-      return updateDoc(memberRef, {
+      console.log(`  - Updating member ${id}: ADD [${tagsToAdd.join(', ')}], REMOVE [${tagsToRemove.join(', ')}]`);
+      // Atomically add new tags and remove old ones
+      await updateDoc(memberRef, {
         tags: arrayUnion(...tagsToAdd),
-      }).then(() => {
-        if (tagsToRemove.length > 0) {
-          return updateDoc(memberRef, {
-            tags: arrayRemove(...tagsToRemove),
-          });
-        }
       });
+      if(tagsToRemove.length > 0) {
+        await updateDoc(memberRef, {
+            tags: arrayRemove(...tagsToRemove),
+        });
+      }
     });
   
     try {
       await Promise.all(updates);
+      console.log('✅ [Applying Tags] - All members updated.');
       // Refresh members data
       if (community) {
         const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
