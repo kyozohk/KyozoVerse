@@ -3,6 +3,7 @@
 'use client';
 
 import React from 'react';
+import { Member } from '../broadcast/broadcast-types';
 import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
@@ -11,8 +12,8 @@ import { Users, Edit, Phone, Mail, X } from 'lucide-react';
 import { MemberCard } from './member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
-import { Member } from '../broadcast/broadcast-types';
-import { Badge } from '../ui/badge';
+import { Badge } from './badge';
+
 
 interface MembersListProps {
   members: CommunityMember[];
@@ -110,13 +111,13 @@ export function MembersList({
               </Avatar>
               <div className="flex-grow grid grid-cols-1 md:grid-cols-3 items-center gap-4">
                 <div className="font-semibold text-base truncate">{member.userDetails?.displayName}</div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
                     <Mail className="h-4 w-4 shrink-0" />
                     <span>{member.userDetails?.email || 'No email'}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
                   {(member.tags || []).slice(0, 3).map(tag => (
-                    <Badge key={tag} variant="secondary" className="group">
+                    <Badge key={tag} variant="secondary" className="group text-xs">
                       {tag}
                       <button onClick={(e) => handleTagRemove(e, member.id, tag)} className="ml-1.5 opacity-50 group-hover:opacity-100">
                         <X className="h-3 w-3" />
@@ -124,7 +125,7 @@ export function MembersList({
                     </Badge>
                   ))}
                   {(member.tags?.length || 0) > 3 && (
-                    <Badge variant="outline">+{member.tags!.length - 3}</Badge>
+                    <Badge variant="outline" className="text-xs">+{member.tags!.length - 3}</Badge>
                   )}
                 </div>
               </div>

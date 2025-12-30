@@ -1,6 +1,5 @@
 
 
-
 export type User = {
   userId: string;
   email?: string;
@@ -34,11 +33,13 @@ export type Community = {
 };
 
 export type CommunityMember = {
+  id: string; // Document ID from Firestore
   userId: string;
   communityId: string;
   role: UserRole;
   joinedAt: any; // Firestore Timestamp
   status: 'active' | 'pending' | 'banned';
+  tags?: string[]; // Added tags for members
   userDetails?: {
     displayName?: string;
     avatarUrl?: string;
@@ -66,5 +67,6 @@ export type Post = {
   createdAt: any; // Firestore Timestamp
   visibility: 'public' | 'private' | 'members-only';
 };
+
 
 

@@ -96,38 +96,38 @@ export async function isUserCommunityMember(
 }
 
 /**
- * Get members of a community from Firebase
+ * Get members of a community from Firebase, with filtering
  */
 export async function getCommunityMembers(
   communityId: string,
-  searchTerm: string = ''
+  search: { type: 'name' | 'tag'; value: string } = { type: 'name', value: '' }
 ): Promise<CommunityMember[]> {
   const membersRef = collection(db, "communityMembers");
-  const q = query(membersRef, where("communityId", "==", communityId));
+  let q;
+
+  if (search.type === 'tag' && search.value) {
+    q = query(membersRef, 
+      where("communityId", "==", communityId),
+      where("tags", "array-contains", search.value)
+    );
+  } else {
+    q = query(membersRef, where("communityId", "==", communityId));
+  }
 
   try {
     const querySnapshot = await getDocs(q);
     
-    let members = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        userId: data.userId,
-        communityId: data.communityId,
-        role: data.role,
-        joinedAt: data.joinedAt,
-        status: data.status,
-        userDetails: data.userDetails
-      } as CommunityMember;
-    });
+    let members = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    } as CommunityMember));
     
-    // Filter by search term if provided
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
+    // Client-side filtering for name search
+    if (search.type === 'name' && search.value) {
+      const lowerSearch = search.value.toLowerCase();
       members = members.filter(member => 
         member.userDetails?.displayName?.toLowerCase().includes(lowerSearch) ||
-        member.userDetails?.email?.toLowerCase().includes(lowerSearch) ||
-        member.userDetails?.phone?.toLowerCase().includes(lowerSearch)
+        member.userDetails?.email?.toLowerCase().includes(lowerSearch)
       );
     }
     

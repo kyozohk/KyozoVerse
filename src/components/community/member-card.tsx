@@ -1,7 +1,8 @@
 
+
 import { type CommunityMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, Edit, Trash2, MessageCircle, GripVertical } from 'lucide-react';
+import { Mail, Phone, Edit, Trash2, MessageCircle, GripVertical, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { format } from 'date-fns';
@@ -13,9 +14,10 @@ interface MemberCardProps {
   canManage: boolean;
   borderColor?: string;
   onClick?: () => void;
+  onRemoveTag?: (memberId: string, tag: string) => void;
 }
 
-export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))', onClick }: MemberCardProps) {
+export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))', onClick, onRemoveTag }: MemberCardProps) {
     
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
@@ -29,6 +31,11 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
     '--hover-bg-color': hexToRgba(borderColor, 0.1),
     borderColor: borderColor,
   } as any;
+
+  const handleTagRemove = (e: React.MouseEvent, tag: string) => {
+    e.stopPropagation();
+    onRemoveTag?.(member.id, tag);
+  }
 
   return (
     <Card 
@@ -64,6 +71,22 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
           </Badge>
           <span>Joined: {member.joinedAt ? format(member.joinedAt.toDate(), 'PP') : '-'}</span>
         </div>
+
+        {member.tags && member.tags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 pt-2">
+            {(member.tags || []).slice(0, 5).map(tag => (
+              <Badge key={tag} variant="secondary" className="group text-xs">
+                {tag}
+                <button onClick={(e) => handleTagRemove(e, tag)} className="ml-1.5 opacity-50 group-hover:opacity-100">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+            {member.tags.length > 5 && (
+              <Badge variant="outline" className="text-xs">+{member.tags.length - 5}</Badge>
+            )}
+          </div>
+        )}
         
         {canManage && (
           <div className="flex justify-end gap-1 pt-2">

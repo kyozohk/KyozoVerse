@@ -1,19 +1,24 @@
 
+
 'use client';
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, List, Search, UserPlus } from 'lucide-react';
+import { LayoutGrid, List, Search, UserPlus, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 type ViewMode = 'grid' | 'list';
+type SearchType = 'name' | 'tag';
 
 interface ListViewProps {
   title?: string;
   subtitle?: string;
+  searchType: SearchType;
+  onSearchTypeChange: (type: SearchType) => void;
   searchTerm: string;
   onSearchChange: (value: string) => void;
   viewMode: ViewMode;
@@ -23,11 +28,15 @@ interface ListViewProps {
   actions?: React.ReactNode;
   onAddAction?: () => void;
   headerAction?: React.ReactNode;
+  onAddTags?: () => void;
+  selectedCount?: number;
 }
 
 export function ListView({
   title,
   subtitle,
+  searchType,
+  onSearchTypeChange,
   searchTerm,
   onSearchChange,
   viewMode,
@@ -36,13 +45,15 @@ export function ListView({
   loading = false,
   actions,
   onAddAction,
-  headerAction
+  headerAction,
+  onAddTags,
+  selectedCount = 0
 }: ListViewProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
   
   const hexToRgba = (hex: string, alpha: number) => {
-    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return hex; // Return original if not a valid hex
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return hex;
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -72,11 +83,20 @@ export function ListView({
                             style={{ color: activeColor }} 
                         />
                     </div>
+                    <Select value={searchType} onValueChange={(value) => onSearchTypeChange(value as SearchType)}>
+                        <SelectTrigger className="w-[100px] border-none focus:ring-0 focus:ring-offset-0 h-full bg-transparent">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="name">Name</SelectItem>
+                            <SelectItem value="tag">Tag</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <input
-                        placeholder="Search..."
+                        placeholder={`Search by ${searchType}...`}
                         value={searchTerm}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="flex-grow h-full border-0 focus:outline-none bg-transparent px-0"
+                        className="flex-grow h-full border-0 focus:outline-none bg-transparent px-2"
                         style={{ 
                             color: activeColor,
                             '--placeholder-color': hexToRgba(activeColor, 0.7)
@@ -91,12 +111,20 @@ export function ListView({
                   type="button"
                   onClick={onAddAction}
                   className="h-9 w-9 flex items-center justify-center rounded-md border transition-colors"
-                  style={{
-                    borderColor: activeColor,
-                    color: activeColor,
-                  }}
+                  style={{ borderColor: activeColor, color: activeColor }}
                 >
                   <UserPlus className="h-5 w-5" />
+                </button>
+              )}
+               {onAddTags && selectedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={onAddTags}
+                  className="h-9 px-3 flex items-center justify-center rounded-md border transition-colors"
+                  style={{ borderColor: activeColor, color: activeColor }}
+                >
+                  <Tag className="h-4 w-4 mr-2" />
+                  Add Tags ({selectedCount})
                 </button>
               )}
               <div className="flex items-center gap-1 rounded-md bg-muted/10 p-1">
@@ -146,7 +174,7 @@ export function ListView({
             )}
           </div>
         ) : (
-          <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1')}>
+          <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1')}>
             {children}
           </div>
         )}
