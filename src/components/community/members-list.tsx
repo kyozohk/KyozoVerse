@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from 'react';
@@ -7,12 +6,13 @@ import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Users, Edit, Phone, Mail, X } from 'lucide-react';
-import { MemberCard } from './member-card';
+import { Users, Edit, Mail, X } from 'lucide-react';
+import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
-import { Badge } from '../ui/badge';
+import { Badge } from './badge';
+
 
 interface MembersListProps {
   members: CommunityMember[];
@@ -58,13 +58,18 @@ export function MembersList({
 
   const canManage = userRole === 'owner' || userRole === 'admin';
 
-  const handleItemClick = (member: CommunityMember) => {
+  const handleNavigate = (member: CommunityMember) => {
+    // This function is now only for navigation
+    const pathParts = pathname.split('/');
+    const handle = pathParts[2];
+    router.push(`/pro/${handle}/members/${member.userId}`);
+  };
+
+  const handleSelect = (e: React.MouseEvent | React.KeyboardEvent, member: CommunityMember) => {
+    // This function is for selection
+    e.stopPropagation();
     if (onMemberClick) {
       onMemberClick(member);
-    } else {
-      const pathParts = pathname.split('/');
-      const handle = pathParts[2];
-      router.push(`/pro/${handle}/members/${member.userId}`);
     }
   };
 
@@ -92,13 +97,15 @@ export function MembersList({
               key={member.id}
               className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
               style={itemStyle}
-              onClick={() => handleItemClick(member)}
+              onClick={() => handleNavigate(member)}
             >
               {selectable && (
-                <div className="mr-4">
+                <div className="mr-4 flex items-center h-full" onClick={(e) => handleSelect(e, member)}>
                   <Checkbox
                     checked={isSelected}
-                    onCheckedChange={() => onMemberClick && onMemberClick(member)}
+                    onCheckedChange={() => {
+                        // The parent div's onClick handles the logic
+                    }}
                   />
                 </div>
               )}
@@ -116,7 +123,7 @@ export function MembersList({
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
                   {(member.tags || []).slice(0, 3).map(tag => (
-                    <Badge key={tag} variant="secondary" className="group">
+                    <Badge key={tag} variant="secondary" className="group text-xs">
                       {tag}
                       <button onClick={(e) => handleTagRemove(e, member.id, tag)} className="ml-1.5 opacity-50 group-hover:opacity-100">
                         <X className="h-3 w-3" />
@@ -156,7 +163,7 @@ export function MembersList({
           member={member}
           canManage={canManage}
           borderColor={activeColor}
-          onClick={() => handleItemClick(member)}
+          onClick={() => handleNavigate(member)}
           onRemoveTag={onRemoveTag}
         />
       ))}
