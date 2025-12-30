@@ -34,8 +34,10 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
 
   const handleTagRemove = (e: React.MouseEvent, tag: string) => {
     e.stopPropagation();
-    onRemoveTag?.(member.id, tag);
-  }
+    if (member.id) {
+      onRemoveTag?.(member.id, tag);
+    }
+  };
 
   return (
     <Card 

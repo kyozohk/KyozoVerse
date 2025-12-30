@@ -3,15 +3,15 @@
 'use client';
 
 import React from 'react';
-import { Member } from '../broadcast/broadcast-types';
 import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Users, Edit, Phone, Mail, X } from 'lucide-react';
+import { Users, Edit, Mail, X } from 'lucide-react';
 import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
+import { Member } from '../broadcast/broadcast-types';
 import { Badge } from './badge';
 
 
