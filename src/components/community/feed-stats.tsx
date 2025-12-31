@@ -41,17 +41,12 @@ export function FeedStats({ posts }: FeedStatsProps) {
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-
+    
     let totalPosts = posts.length;
     let textPosts = 0;
     let audioPosts = 0;
     let videoPosts = 0;
     let todayPosts = 0;
-    let thisMonthPosts = 0;
-    let lastMonthPosts = 0;
     let totalLikes = 0;
     let totalComments = 0;
     let totalShares = 0;
@@ -72,25 +67,10 @@ export function FeedStats({ posts }: FeedStatsProps) {
 
       // Count today's posts
       const postDate = post.createdAt?.toDate ? post.createdAt.toDate() : null;
-      if (postDate) {
-        if (postDate >= todayStart) {
-          todayPosts++;
-        }
-        
-        // Count this month's posts
-        if (postDate >= monthStart) {
-          thisMonthPosts++;
-        }
-        
-        // Count last month's posts
-        if (postDate >= lastMonthStart && postDate <= lastMonthEnd) {
-          lastMonthPosts++;
-        }
+      if (postDate && postDate >= todayStart) {
+        todayPosts++;
       }
     });
-
-    // Calculate monthly growth
-    const monthlyGrowth = thisMonthPosts - lastMonthPosts;
 
     setStats({
       totalPosts,
@@ -98,7 +78,7 @@ export function FeedStats({ posts }: FeedStatsProps) {
       audioPosts,
       videoPosts,
       todayPosts,
-      monthlyGrowth,
+      monthlyGrowth: 0, // Placeholder
       totalLikes,
       totalComments,
       totalShares,
@@ -107,7 +87,6 @@ export function FeedStats({ posts }: FeedStatsProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-      {/* Total Posts */}
       <Card className="bg-white border-gray-200 hover:shadow-md transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">Total Posts</CardTitle>
