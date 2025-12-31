@@ -23,7 +23,7 @@ export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBa
         <div className="absolute inset-0 bg-white/10 transform -rotate-45 translate-x-1/3 translate-y-1/4 blur-sm"></div>
       </div>
       
-      <div className="relative z-10 flex items-center justify-between p-6 md:p-8">
+      <div className="relative z-10 flex items-start justify-between p-6 md:p-8">
         <div className="flex-1">
           <div className="flex items-center mb-2">
             <Sparkles className="h-6 w-6 mr-2 text-yellow-300 pulse-animation" />
@@ -38,6 +38,16 @@ export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBa
           <p className="text-white/90 max-w-md backdrop-blur-sm bg-black/5 p-3 rounded-lg">
             Create and manage your communities. Connect with members, share content, and grow your audience.
           </p>
+        </div>
+        <div className="flex-shrink-0">
+          <CustomButton 
+            variant="white"
+            onClick={onCreateClick}
+            className="bg-white/90 text-[#843484] hover:bg-white"
+          >
+            <PlusCircle className="h-5 w-5 mr-2" />
+            Create Community
+          </CustomButton>
         </div>
       </div>
       

@@ -3,13 +3,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
 import { CreateCommunityDialog } from './create-community-dialog';
 import { CommunityBanner } from './community-banner';
 import { ListView } from '@/components/ui/list-view';
-import { Card } from '../ui/card';
 
 interface CommunityListProps {
   communities: Community[];
@@ -40,16 +38,9 @@ export function CommunityList({ communities }: CommunityListProps) {
         onViewModeChange={setViewMode}
         searchType={searchType}
         onSearchTypeChange={setSearchType}
+        // Do not render the "add" action in the ListView for communities
+        onAddAction={undefined}
       >
-        <Card 
-            className="flex items-center justify-center border-dashed border-2 h-full min-h-[178px] cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
-            onClick={() => setIsCreateDialogOpen(true)}
-        >
-            <div className="text-center text-muted-foreground">
-                <PlusCircle className="mx-auto h-10 w-10 mb-2" />
-                <span className="font-medium">Add New Community</span>
-            </div>
-        </Card>
         {filteredCommunities.map((community) => (
           <Link key={community.communityId} href={`/pro/${community.handle}`} className="block h-full">
             <CommunityCard community={community} />

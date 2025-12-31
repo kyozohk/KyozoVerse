@@ -83,15 +83,17 @@ export function ListView({
                             style={{ color: activeColor }} 
                         />
                     </div>
-                    <Select value={searchType} onValueChange={(value) => onSearchTypeChange(value as SearchType)}>
-                        <SelectTrigger className="w-[100px] border-none focus:ring-0 focus:ring-offset-0 h-full bg-transparent">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="name">Name</SelectItem>
-                            <SelectItem value="tag">Tag</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {onSearchTypeChange && (
+                        <Select value={searchType} onValueChange={(value) => onSearchTypeChange(value as SearchType)}>
+                            <SelectTrigger className="w-[100px] border-none focus:ring-0 focus:ring-offset-0 h-full bg-transparent">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="name">Name</SelectItem>
+                                <SelectItem value="tag">Tag</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
                     <input
                         placeholder={`Search by ${searchType}...`}
                         value={searchTerm}
