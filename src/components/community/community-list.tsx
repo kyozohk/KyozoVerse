@@ -18,6 +18,7 @@ interface CommunityListProps {
 export function CommunityList({ communities }: CommunityListProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchType, setSearchType] = useState<'name' | 'tag'>('name');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const filteredCommunities = communities.filter(community => 
@@ -37,6 +38,8 @@ export function CommunityList({ communities }: CommunityListProps) {
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        searchType={searchType}
+        onSearchTypeChange={setSearchType}
       >
         <Card 
             className="flex items-center justify-center border-dashed border-2 h-full min-h-[178px] cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
