@@ -1,4 +1,5 @@
 
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -7,3 +8,25 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+.masonry-feed-columns {
+  column-count: 1;
+  column-gap: 1.25rem; /* Equivalent to gap-5 */
+}
+
+@media (min-width: 768px) {
+  .masonry-feed-columns {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-feed-columns {
+    column-count: 3;
+  }
+}
+
+.break-inside-avoid {
+  break-inside: avoid;
+}
+

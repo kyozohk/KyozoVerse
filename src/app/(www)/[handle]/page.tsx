@@ -63,14 +63,6 @@ function PostList({ filter }: { filter: string }) {
       })) as (Post & { id: string })[];
       
       console.log('🌍 PUBLIC FEED - Posts loaded:', postsData.length);
-      console.log('🌍 PUBLIC FEED - Post details:', postsData.map(p => ({
-        id: p.id,
-        type: p.type,
-        title: p.title,
-        visibility: p.visibility,
-        hasMediaUrls: !!p.content?.mediaUrls,
-        mediaUrl: p.content?.mediaUrls?.[0]
-      })));
       
       setPosts(postsData);
       setLoading(false);
@@ -87,85 +79,59 @@ function PostList({ filter }: { filter: string }) {
   }, [handle, user, authLoading]);
   
   const renderPost = (post: Post & { id: string }) => {
-    const postDate = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024';
-
-    switch (post.type) {
-      case 'text':
-      case 'image':
-        return (
-          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
-            <ReadCard
-              post={post}
-              category={post.type === 'image' ? 'Image' : 'Text'}
-              readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`}
-              date={postDate}
-              title={post.title || 'Untitled'}
-              summary={post.content.text}
-            />
-          </div>
-        );
-      case 'audio':
-        return (
-          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
-            <ListenCard
-              post={post}
-              category="Audio"
-              episode="Listen"
-              duration="0:00"
-              title={post.title || 'Untitled Audio'}
-              summary={post.content.text}
-            />
-          </div>
-        );
-      case 'video':
-        return (
-          <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
-            <WatchCard
-              post={post}
-              category="Video"
-              title={post.title || 'Untitled Video'}
-              imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
-              imageHint="video content"
-            />
-          </div>
-        );
-      default:
-        return null;
-    }
+    return (
+      <div key={post.id} onClick={() => setSelectedPost(post)} className="break-inside-avoid mb-6 cursor-pointer">
+        {post.type === 'audio' ? (
+          <ListenCard
+            post={post}
+            category="Audio"
+            episode="Listen"
+            duration="0:00"
+            title={post.title || 'Untitled Audio'}
+            summary={post.content.text}
+          />
+        ) : post.type === 'video' ? (
+          <WatchCard
+            post={post}
+            category="Video"
+            title={post.title || 'Untitled Video'}
+            imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
+            imageHint="video content"
+          />
+        ) : (
+          <ReadCard
+            post={post}
+            category={post.type === 'image' ? 'Image' : 'Text'}
+            readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`}
+            date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'}
+            title={post.title || 'Untitled'}
+            summary={post.content.text}
+          />
+        )}
+      </div>
+    );
   };
   
   if (loading) {
     return (
-      <div className="flex gap-4 md:gap-5 lg:gap-7 px-4 md:px-6 lg:px-8 h-full">
-        {[0, 1, 2].map(colIndex => (
-          <div key={colIndex} className="flex-1 flex flex-col gap-4 md:gap-5 lg:gap-7">
-            <FeedSkeletons />
-          </div>
-        ))}
+      <div className="masonry-feed-columns">
+        <FeedSkeletons />
       </div>
     );
   }
 
   const filteredPosts = posts.filter((post) => {
     if (filter === 'all') return true;
-    if (filter === 'text') return post.type === 'text' || post.type === 'image';
-    if (filter === 'audio') return post.type === 'audio';
-    if (filter === 'video') return post.type === 'video';
+    if (filter === 'read') return post.type === 'text' || post.type === 'image';
+    if (filter === 'listen') return post.type === 'audio';
+    if (filter === 'watch') return post.type === 'video';
     return true;
   });
 
   return (
     <>
-      <div className="flex gap-4 md:gap-5 lg:gap-7 px-4 md:px-6 lg:px-8 h-full">
-        {[0, 1, 2].map(colIndex => (
-          <div key={colIndex} className="flex-1 overflow-y-auto scrollbar-hide">
-            <div className="space-y-4 md:space-y-5 lg:space-y-7 py-4 md:py-6 lg:py-8 px-2">
-              {filteredPosts
-                .filter((_, index) => index % 3 === colIndex)
-                .map(renderPost)}
-            </div>
-          </div>
-        ))}
+      <div className="masonry-feed-columns">
+        {filteredPosts.map(renderPost)}
       </div>
       
       <PostDetailPanel
@@ -303,51 +269,51 @@ export default function PublicCommunityPage() {
   };
   
   return (
-    <div className="bg-neutral-50 min-h-screen">
-      <div className="sticky top-0 z-50 relative w-full bg-[rgba(245,241,232,0.15)] backdrop-blur-sm border-b border-[rgba(79,91,102,0.08)]">
+    <div className="min-h-screen bg-no-repeat bg-cover bg-center" style={{ backgroundImage: `url(/bg/light_app_bg.png)` }}>
+      <div className="sticky top-0 z-50 relative w-full bg-transparent">
         <div className="flex flex-row items-center w-full">
           <div className="content-stretch flex items-center justify-between px-4 md:px-8 lg:px-12 py-3 md:py-3.5 lg:py-4 relative w-full">
             <p className="font-['DM_Sans',sans-serif] font-bold leading-tight md:leading-[30px] lg:leading-[36.029px] relative shrink-0 text-[#93adae] text-[24px] md:text-[30px] lg:text-[36.696px] tracking-[-1px] md:tracking-[-1.2px] lg:tracking-[-1.3344px]">
               {communityData?.name || 'Community'}
             </p>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-1 bg-white/50 backdrop-blur-sm rounded-full p-1">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                     filter === 'all'
-                      ? 'bg-gray-700 text-white border-gray-700 border-2'
-                      : 'bg-transparent text-gray-600 hover:bg-gray-100'
+                      ? 'bg-white text-gray-800 shadow-sm'
+                      : 'bg-transparent text-gray-600 hover:bg-white/70'
                   }`}
                 >
-                  Feed
+                  All
                 </button>
                 <button
-                  onClick={() => setFilter('text')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'text'
-                      ? 'bg-pink-100 text-pink-600 border-pink-500 border-2'
-                      : 'bg-transparent text-gray-600 hover:bg-gray-100 border-pink-500 border-2'
+                  onClick={() => setFilter('read')}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'read'
+                       ? 'bg-white text-gray-800 shadow-sm'
+                      : 'bg-transparent text-gray-600 hover:bg-white/70'
                   }`}
                 >
                   Read
                 </button>
                 <button
-                  onClick={() => setFilter('audio')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'audio'
-                      ? 'bg-blue-100 text-blue-600 border-blue-500 border-2'
-                      : 'bg-transparent text-gray-600 hover:bg-gray-100 border-blue-500 border-2'
+                  onClick={() => setFilter('listen')}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'listen'
+                       ? 'bg-white text-gray-800 shadow-sm'
+                      : 'bg-transparent text-gray-600 hover:bg-white/70'
                   }`}
                 >
                   Listen
                 </button>
                 <button
-                  onClick={() => setFilter('video')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'video'
-                      ? 'bg-yellow-100 text-yellow-600 border-yellow-500 border-2'
-                      : 'bg-transparent text-gray-600 hover:bg-gray-100 border-yellow-500 border-2'
+                  onClick={() => setFilter('watch')}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    filter === 'watch'
+                       ? 'bg-white text-gray-800 shadow-sm'
+                      : 'bg-transparent text-gray-600 hover:bg-white/70'
                   }`}
                 >
                   Watch
@@ -379,7 +345,7 @@ export default function PublicCommunityPage() {
           </div>
         </div>
       </div>
-      <div id="grid-container" className="h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] lg:h-[calc(100vh-120px)] overflow-hidden">
+      <div id="grid-container" className="px-4 md:px-6 lg:px-8">
         <Suspense fallback={<FeedSkeletons />}>
           <PostList filter={filter} />
         </Suspense>

@@ -24,8 +24,8 @@ interface ReadCardProps {
 export function ReadCard({ post, category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate }: ReadCardProps) {
   const { user } = useCommunityAuth();
   const { toast } = useToast();
-  const [isLiked, setIsLiked] = useState(false); // This should be fetched from user-specific data
-  const [likes, setLikes] = useState(post?.likes ?? 0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(post.likes || 0);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -69,7 +69,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
   };
 
   return (
-    <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02]" style={cardStyle}>
+    <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] rounded-lg" style={cardStyle}>
       {isPrivate && (
         <div className="absolute top-4 right-4 z-10">
           <div className="bg-red-500 rounded-full p-2 shadow-lg">
