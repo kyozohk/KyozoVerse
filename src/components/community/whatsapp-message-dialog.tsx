@@ -56,7 +56,6 @@ export function WhatsAppMessageDialog({
       description={`Send a message to ${recipientName}`}
       backgroundImage="/bg/light_app_bg.png"
       color="#25D366" // WhatsApp green
-      showVideo={false}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="space-y-4 flex-grow">

@@ -219,7 +219,6 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       onClose={() => setIsOpen(false)}
       title={getDialogTitle()}
       description={getDialogDescription()}
-      showVideo={false}
     >
         {isSubmitting ? (
           <CreatePostDialogSkeleton />

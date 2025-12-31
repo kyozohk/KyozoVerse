@@ -215,13 +215,17 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
               <Checkbox
                 checked={newsletter}
                 onCheckedChange={(checked) => setNewsletter(checked === true)}
-                label="Sign me up to the CreativeLab newsletter"
+                label={
+                  <span className="text-sm text-gray-700">Sign me up to the CreativeLab newsletter</span>
+                }
               />
               
               <Checkbox
                 checked={whatsapp}
                 onCheckedChange={(checked) => setWhatsapp(checked === true)}
-                label="By submitting this form I agree to be contacted via WhatsApp"
+                label={
+                  <span className="text-sm text-gray-700">By submitting this form I agree to be contacted via WhatsApp</span>
+                }
               />
             </div>
           </div>
