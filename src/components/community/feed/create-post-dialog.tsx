@@ -10,6 +10,8 @@ import { uploadFile } from '@/lib/upload-helper';
 import { PostType } from './create-post-buttons';
 import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 import { type Post } from '@/lib/types';
+import { getCommunityMembers } from '@/lib/community-utils';
+import { renderPostToHtml } from '@/lib/email-utils';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -53,17 +55,51 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   }, [isOpen]);
 
+  const sendNewPostEmails = async (post: Post & { id: string }) => {
+    try {
+      console.log('📬 Fetching members for email notification...');
+      const members = await getCommunityMembers(communityId);
+      const recipients = members
+        .map(m => m.userDetails?.email)
+        .filter((email): email is string => !!email);
+
+      if (recipients.length === 0) {
+        console.log('📬 No members with emails found to notify.');
+        return;
+      }
+
+      console.log(`📬 Sending new post notification to ${recipients.length} members.`);
+
+      const postHtml = renderPostToHtml(post, communityHandle);
+
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: recipients,
+          subject: `New Post in ${post.communityHandle}: ${post.title}`,
+          html: postHtml,
+        }),
+      });
+
+      console.log('✅ Emails sent successfully.');
+    } catch (error) {
+      console.error('❌ Error sending new post emails:', error);
+      // We don't want to block the UI for this, so we just log the error.
+    }
+  };
+
 
   const handleSubmit = async () => {
     if (!user || !postType || !communityId) return;
 
-    // Validate required fields
     if (!title.trim()) {
       alert('Please enter a title for your post');
       return;
     }
 
-    // Validate file for media posts (only if creating new post)
     if (!editPost && (postType === 'audio' || postType === 'video') && !file) {
       alert(`Please upload a ${postType} file`);
       return;
@@ -75,7 +111,6 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     let fileCategory = '';
     let fileType = '';
     
-    // Only upload new file if one was selected
     if (file) {
       try {
         console.log(`Uploading ${postType} file using server-side API:`, file.name, file.type);
@@ -83,13 +118,10 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         
         if (typeof uploadResult === 'string') {
           mediaUrl = uploadResult;
-          console.log('Upload successful, URL:', mediaUrl);
         } else {
-          // Handle case where uploadFile returns an object with url
           mediaUrl = uploadResult.url || '';
           fileCategory = uploadResult.fileCategory || '';
           fileType = uploadResult.fileType || '';
-          console.log('Upload successful:', { mediaUrl, fileCategory, fileType });
         }
       } catch (error) {
         console.error('Upload failed:', error);
@@ -99,21 +131,15 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
     }
 
-    // Determine final post type
     let finalPostType = postType;
     if (postType === 'text' && file) {
-      if (file.type.startsWith('image/')) {
-        finalPostType = 'image';
-      } else if (file.type.startsWith('video/')) {
-        finalPostType = 'video';
-      } else if (file.type.startsWith('audio/')) {
-        finalPostType = 'audio';
-      }
+      if (file.type.startsWith('image/')) finalPostType = 'image';
+      else if (file.type.startsWith('video/')) finalPostType = 'video';
+      else if (file.type.startsWith('audio/')) finalPostType = 'audio';
     }
 
     try {
       if (editPost) {
-        // Update existing post
         const postRef = doc(db, 'blogs', editPost.id);
         const updateData: any = {
           title,
@@ -125,22 +151,9 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           updatedAt: serverTimestamp()
         };
         
-        console.log('Editing post:', {
-          postId: editPost.id,
-          currentAuthorId: editPost.authorId,
-          currentUserId: user?.uid,
-          isAuthor: editPost.authorId === user?.uid,
-          currentCommunityId: editPost.communityId,
-          currentCommunityHandle: editPost.communityHandle,
-          currentVisibility: editPost.visibility,
-          newVisibility: isPublic ? 'public' : 'private',
-          updateData
-        });
-        
         await updateDoc(postRef, updateData);
         console.log('Post updated successfully');
       } else {
-        // Create new post
         const postData = {
           title,
           content: {
@@ -158,17 +171,20 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           visibility: isPublic ? 'public' : 'private'
         };
         
-        console.log('Creating post:', {
-          authorId: user.uid,
-          userEmail: user.email,
-          communityId,
-          communityHandle,
-          visibility: isPublic ? 'public' : 'private',
-          type: finalPostType
-        });
-        
-        await addDoc(collection(db, 'blogs'), postData);
+        const docRef = await addDoc(collection(db, 'blogs'), postData);
         console.log('Post created successfully:', finalPostType);
+        
+        if (isPublic) {
+            const newPostForEmail: Post & { id: string } = {
+                ...postData,
+                id: docRef.id,
+                author: {
+                    userId: user.uid,
+                    displayName: user.displayName || 'Community Owner'
+                }
+            };
+            sendNewPostEmails(newPostForEmail);
+        }
       }
       
       setIsSubmitting(false);
@@ -201,10 +217,9 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
   }
 
-  // Get file input accept object based on post type
   const getFileInputAccept = () => {
     switch (postType) {
-        case 'text': // Allow image for text posts
+        case 'text':
         case 'image': 
             return { 'image/*': [] };
         case 'audio': return { 'audio/*': [] };
