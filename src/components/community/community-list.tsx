@@ -25,7 +25,7 @@ export function CommunityList({ communities }: CommunityListProps) {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="p-8">
       <CommunityBanner 
         totalCommunities={communities.length} 
         onCreateClick={() => setIsCreateDialogOpen(true)} 
@@ -38,7 +38,6 @@ export function CommunityList({ communities }: CommunityListProps) {
         onViewModeChange={setViewMode}
         searchType={searchType}
         onSearchTypeChange={setSearchType}
-        // Do not render the "add" action in the ListView for communities
         onAddAction={undefined}
       >
         {filteredCommunities.map((community) => (
