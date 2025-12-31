@@ -150,17 +150,23 @@ export default function CommunityFeedPage() {
       }
     };
 
-    switch (post.type) {
-      case 'text':
-      case 'image':
-        return <div onClick={() => setSelectedPost(post)} className="cursor-pointer break-inside-avoid mb-6"><ReadCard {...commonProps} category={post.type === 'image' ? 'Image' : 'Text'} readTime="5 min read" title={post.title || ''} summary={post.content.text} /></div>;
-      case 'audio':
-        return <div onClick={() => setSelectedPost(post)} className="cursor-pointer break-inside-avoid mb-6"><ListenCard {...commonProps} category="Audio" episode="Listen" duration="0:00" title={post.title || ''} summary={post.content.text} /></div>;
-      case 'video':
-        return <div onClick={() => setSelectedPost(post)} className="cursor-pointer break-inside-avoid mb-6"><WatchCard {...commonProps} category="Video" title={post.title || ''} imageUrl={post.content.mediaUrls?.[0] || ''} imageHint="video" /></div>;
-      default:
-        return null;
-    }
+    const postContent = (
+      <>
+        {post.type === 'audio' ? (
+          <ListenCard {...commonProps} category="Audio" episode="Listen" duration="0:00" title={post.title || 'Untitled Audio'} summary={post.content.text} />
+        ) : post.type === 'video' ? (
+          <WatchCard {...commonProps} category="Video" title={post.title || 'Untitled Video'} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'} imageHint="video content" />
+        ) : (
+          <ReadCard {...commonProps} category={post.type === 'image' ? 'Image' : 'Text'} readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`} date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'} title={post.title || 'Untitled'} summary={post.content.text} />
+        )}
+      </>
+    );
+
+    return (
+      <div key={post.id} onClick={() => setSelectedPost(post)} className="break-inside-avoid mb-6 cursor-pointer">
+        {postContent}
+      </div>
+    );
   };
   
   return (

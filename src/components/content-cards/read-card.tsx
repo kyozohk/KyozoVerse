@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deletePost } from '@/lib/post-utils';
 import Image from 'next/image';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface ReadCardProps {
   post: Post & { id: string; _isPublicView?: boolean; _onEdit?: () => void; _canEdit?: boolean };
@@ -117,6 +119,10 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
               alt={post.title || "Post image"} 
               fill 
               className="object-cover"
+              onLoad={() => console.log('Image loaded successfully:', post.content.mediaUrls![0])}
+              onError={() => {
+                console.error('Image failed to load:', post.content.mediaUrls![0]);
+              }}
             />
           </div>
         )}
@@ -130,7 +136,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
                 <p className="text-neutral-500 uppercase tracking-[0.3px] text-[10px] md:text-xs leading-4">
                   {readTime} {date && `• ${date}`}
                 </p>
-                {isPrivate && (
+                {post.visibility === 'private' && (
                   <span className="text-xs font-semibold rounded-full px-2 py-1 bg-red-100 text-red-600 inline-flex items-center gap-1">
                     <Lock className="h-3 w-3" /> Private
                   </span>
