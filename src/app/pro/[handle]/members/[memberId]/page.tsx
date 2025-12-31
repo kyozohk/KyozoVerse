@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,8 +7,8 @@ import { doc, getDoc, deleteDoc, updateDoc, collection, query, where, getDocs, i
 import { db } from '@/firebase/firestore';
 import { User, CommunityMember } from '@/lib/types';
 import Image from 'next/image';
-import { Avatar, AvatarFallback, AvatarImage, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Skeleton } from '@/components/ui';
-import { Mail, Phone, Edit, Trash2, MessageCircle, Users, Heart, Eye, ArrowLeft } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Skeleton, Badge } from '@/components/ui';
+import { Mail, Phone, Edit, Trash2, MessageCircle, Users, Heart, Eye, ArrowLeft, Tag } from 'lucide-react';
 import { MemberDialog } from '@/components/community/member-dialog';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
 import { useAuth } from '@/hooks/use-auth';
@@ -20,7 +21,7 @@ export default function MemberProfilePage() {
   const { toast } = useToast();
   const { handle, memberId } = params as { handle: string, memberId: string };
   
-  const [member, setMember] = useState<(User & { role?: string }) | null>(null);
+  const [member, setMember] = useState<CommunityMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -29,17 +30,28 @@ export default function MemberProfilePage() {
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   useEffect(() => {
-    if (memberId) {
+    if (memberId && handle) {
       const fetchMember = async () => {
+        setLoading(true);
         try {
-          const userDocRef = doc(db, 'users', memberId);
-          const userSnap = await getDoc(userDocRef);
+          const communitiesRef = collection(db, 'communities');
+          const communityQuery = query(communitiesRef, where('handle', '==', handle));
+          const communitySnap = await getDocs(communityQuery);
+          
+          if (communitySnap.empty) {
+            throw new Error("Community not found");
+          }
+          const communityId = communitySnap.docs[0].id;
+          
+          const membersRef = collection(db, "communityMembers");
+          const q = query(membersRef, where("userId", "==", memberId), where("communityId", "==", communityId));
+          const memberSnap = await getDocs(q);
 
-          if (userSnap.exists()) {
-            // In a real app, you would also fetch their role for this specific community
-            setMember({ ...userSnap.data(), role: 'Member' } as User & { role?: string });
+          if (!memberSnap.empty) {
+            const memberDoc = memberSnap.docs[0];
+            setMember({ id: memberDoc.id, ...memberDoc.data() } as CommunityMember);
           } else {
-            console.log('No such user!');
+            console.log('No such member in this community!');
           }
         } catch (error) {
           console.error("Error fetching member data:", error);
@@ -50,7 +62,7 @@ export default function MemberProfilePage() {
 
       fetchMember();
     }
-  }, [memberId]);
+  }, [memberId, handle]);
 
   if (loading) {
     return (
@@ -68,19 +80,21 @@ export default function MemberProfilePage() {
     );
   }
 
-  if (!member) {
+  if (!member || !member.userDetails) {
     return <div className="p-8 text-center">Member not found.</div>;
   }
+  
+  const { userDetails } = member;
 
   return (
     <div className="flex-1">
       {/* Banner with transparent overlay - matching community header style */}
-      <div className="relative w-full h-48 md:h-64">
+      <div className="relative w-full h-64">
         {/* Background Image */}
-        {member.coverUrl ? (
+        {userDetails.coverUrl ? (
           <Image 
-            src={member.coverUrl} 
-            alt={`${member.displayName}'s cover image`} 
+            src={userDetails.coverUrl} 
+            alt={`${userDetails.displayName}'s cover image`} 
             fill
             className="object-cover"
             priority
@@ -93,7 +107,7 @@ export default function MemberProfilePage() {
         <div className="absolute inset-0 bg-black/50"></div>
         
         {/* Content - positioned absolutely inside banner */}
-        <div className="absolute inset-0 z-10 p-6 md:p-8">
+        <div className="absolute inset-0 z-10 p-6 md:p-8 flex flex-col justify-between">
           {/* Back button */}
           <div className="mb-4">
             <Button variant="ghost" onClick={() => router.back()} className="text-white/80 hover:text-white hover:bg-white/10">
@@ -102,31 +116,41 @@ export default function MemberProfilePage() {
             </Button>
           </div>
 
-          <div className="flex justify-between items-start h-full">
+          <div className="flex justify-between items-end h-full">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-shrink-0">
                 <Avatar className="h-24 w-24 border-4 border-white/10">
-                  <AvatarImage src={member.avatarUrl} />
-                  <AvatarFallback className="text-2xl">{member.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                  <AvatarImage src={userDetails.avatarUrl} />
+                  <AvatarFallback className="text-2xl">{userDetails.displayName?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               </div>
 
               <div className="flex-grow">
-                <h1 className="text-3xl md:text-4xl font-bold text-white">{member.displayName}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-white">{userDetails.displayName}</h1>
                 <p className="text-lg text-white/70 mt-1">{member.role || 'Member'}</p>
-                <p className="mt-2 text-white/80 max-w-2xl">{member.bio || 'No bio available.'}</p>
+                
+                {member.tags && member.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {member.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="bg-white/20 text-white backdrop-blur-sm">
+                        <Tag className="h-3 w-3 mr-1.5" />
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
                 
                 <div className="flex flex-wrap gap-4 mt-4 text-sm">
-                  {member.email && (
+                  {userDetails.email && (
                     <div className="flex items-center gap-2 text-white/80">
                       <Mail className="h-4 w-4" /> 
-                      <span>{member.email}</span>
+                      <span>{userDetails.email}</span>
                     </div>
                   )}
-                  {(member.phone || member.phoneNumber) && (
+                  {(userDetails.phone) && (
                     <div className="flex items-center gap-2 text-white/80">
                       <Phone className="h-4 w-4" /> 
-                      <span>{member.phone || member.phoneNumber}</span>
+                      <span>{userDetails.phone}</span>
                     </div>
                   )}
                 </div>
@@ -189,19 +213,7 @@ export default function MemberProfilePage() {
           open={isEditDialogOpen}
           mode="edit"
           communityName={handle}
-          initialMember={member ? {
-            userId: memberId,
-            communityId: '', // You may need to pass the actual communityId
-            userDetails: {
-              displayName: member.displayName,
-              email: member.email,
-              phone: member.phone,
-              avatarUrl: member.avatarUrl,
-              coverUrl: member.coverUrl,
-            },
-            role: member.role || 'member',
-            joinedAt: null,
-          } as CommunityMember : null}
+          initialMember={member}
           onClose={() => setIsEditDialogOpen(false)}
           onSubmit={async (data) => {
             try {
@@ -216,9 +228,9 @@ export default function MemberProfilePage() {
               });
 
               // Refresh member data after edit
-              const userSnap = await getDoc(userDocRef);
-              if (userSnap.exists()) {
-                setMember({ ...userSnap.data(), role: member?.role || 'Member' } as User & { role?: string });
+              const memberSnap = await getDoc(doc(db, "communityMembers", member.id));
+              if (memberSnap.exists()) {
+                setMember({ id: memberSnap.id, ...memberSnap.data() } as CommunityMember);
               }
 
               toast({
@@ -243,20 +255,7 @@ export default function MemberProfilePage() {
           <BroadcastDialog
             isOpen={isBroadcastDialogOpen}
             onClose={() => setIsBroadcastDialogOpen(false)}
-            members={[
-              {
-                userId: memberId,
-                communityId: '',
-                userDetails: {
-                  displayName: member.displayName,
-                  email: member.email,
-                  phone: member.phone || member.phoneNumber || '',
-                  avatarUrl: member.avatarUrl,
-                },
-                role: 'member',
-                joinedAt: null,
-              } as CommunityMember
-            ]}
+            members={[member]}
             templates={templates}
             loadingTemplates={loadingTemplates}
           />

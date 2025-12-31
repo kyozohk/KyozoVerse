@@ -115,8 +115,7 @@ interface CustomFormDialogProps {
   description?: string;
   children: React.ReactNode;
   backgroundImage?: string;
-  showVideo?: boolean;
-  videoSrc?: string;
+  rightComponent?: React.ReactNode;
   color?: string;
 }
 
@@ -127,8 +126,7 @@ export function CustomFormDialog({
   description,
   children,
   backgroundImage = "/bg/light_app_bg.png",
-  showVideo = true,
-  videoSrc = "/videos/form-right.mp4",
+  rightComponent,
   color = "var(--primary-purple)",
 }: CustomFormDialogProps) {
   const [isAnimating, setIsAnimating] = React.useState(false);
@@ -152,7 +150,12 @@ export function CustomFormDialog({
       <DialogPrimitive.Portal>
         <DialogOverlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[50%] z-50 w-full max-w-[90vw] h-[90vh] translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none"
+          className={cn(
+            "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none",
+            rightComponent 
+              ? "w-full max-w-[90vw] h-[90vh]" 
+              : "w-full max-w-md max-h-[85vh]"
+          )}
           style={{
             '--input-border-color': color,
           } as React.CSSProperties}
@@ -163,7 +166,7 @@ export function CustomFormDialog({
           </DialogPrimitive.Title>
           
           {/* Curtain Animation Container */}
-          <div className={`relative w-full h-full grid grid-cols-1 ${showVideo ? 'md:grid-cols-2' : ''} ${isAnimating ? 'animate-curtain-open' : 'animate-curtain-close'}`}>
+          <div className={`relative w-full h-full grid grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''} ${isAnimating ? 'animate-curtain-open' : 'animate-curtain-close'}`}>
             {/* Left Panel - Form */}
             <div 
               className="relative flex flex-col h-full overflow-hidden"
@@ -179,11 +182,20 @@ export function CustomFormDialog({
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
 
-              <div className="p-8 md:p-12 lg:p-16 flex flex-col h-full overflow-y-auto">
+              <div className={cn(
+                "flex flex-col h-full overflow-y-auto",
+                rightComponent ? "p-8 md:p-12 lg:p-16" : "p-6 md:p-8"
+              )}>
                 {/* Header - Fixed at top */}
-                <div className="flex-shrink-0 mb-8">
+                <div className={cn(
+                  "flex-shrink-0",
+                  rightComponent ? "mb-8" : "mb-6"
+                )}>
                   <h2 
-                    className="text-4xl md:text-5xl font-normal text-left mb-3 text-black" 
+                    className={cn(
+                      "font-normal text-left mb-3 text-black",
+                      rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
+                    )}
                     style={{ fontFamily: 'Canicule Display, serif' }}
                     aria-hidden="true"
                   >
@@ -201,17 +213,10 @@ export function CustomFormDialog({
               </div>
             </div>
 
-            {/* Right Panel - Video */}
-            {showVideo && (
+            {/* Right Panel - Custom Component */}
+            {rightComponent && (
               <div className="relative hidden md:block overflow-hidden">
-                <video
-                  className="absolute top-0 left-0 w-full h-full object-cover"
-                  src={videoSrc}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                />
+                {rightComponent}
               </div>
             )}
           </div>

@@ -1,3 +1,4 @@
+
 # Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
@@ -50,3 +51,7 @@ curl -X POST 'https://api.resend.com/emails' \
     "html": "<h1>Hello!</h1><p>This is a test email from welcome@kyozo.space</p>"
   }'
 
+
+1. Get rid off the mushroom animation
+2. E-mail working SMTP
+2. List of selected members should show

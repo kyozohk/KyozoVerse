@@ -5,9 +5,15 @@ import React from 'react';
 
 interface HeroProps {
   text: string[];
+  gradientStart?: string;
+  gradientEnd?: string;
 }
 
-export function Hero({ text }: HeroProps) {
+export function Hero({ 
+  text, 
+  gradientStart = 'var(--gradient-start)', 
+  gradientEnd = 'var(--gradient-end)' 
+}: HeroProps) {
   return (
     <section className="relative w-full overflow-hidden mt-40 mb-60">
       <h1
@@ -22,11 +28,11 @@ export function Hero({ text }: HeroProps) {
             key={index}
             className="text-transparent bg-clip-text block"
             style={{
-              backgroundImage: 'linear-gradient(90deg, var(--gradient-start), var(--gradient-end))',
+              backgroundImage: `linear-gradient(90deg, ${gradientStart}, ${gradientEnd})`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              MozBackgroundClip: 'text',
-              MozTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
             }}
           >
             {line}

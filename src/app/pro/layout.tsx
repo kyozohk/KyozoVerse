@@ -103,13 +103,12 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenu>
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
-                  const href = item.href.replace('/communities', '/pro/communities');
                   return (
                     <SidebarNavItem
                         key={item.href}
-                        href={href}
+                        href={item.href}
                         icon={<Icon />}
-                        isActive={pathname.startsWith(href)}
+                        isActive={pathname.startsWith(item.href)}
                         activeColor={activeColor}
                         activeBgColor={activeBgColor}
                     >

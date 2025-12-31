@@ -1,10 +1,16 @@
 
 'use client';
 
-import React from 'react';
-import { Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, ThumbsUp, MessageSquare, Share2, ArrowRight } from 'lucide-react';
+import { Button } from '../ui';
+import { Post } from '@/lib/types';
+import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { toggleLike } from '@/lib/interaction-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReadCardProps {
+  post: Post & { id: string };
   category: string;
   readTime: string;
   date?: string;
@@ -12,11 +18,48 @@ interface ReadCardProps {
   summary?: string;
   fullText?: string;
   titleColor?: string;
-  titleClassName?: string;
   isPrivate?: boolean;
 }
 
-export function ReadCard({ category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate }: ReadCardProps) {
+export function ReadCard({ post, category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate }: ReadCardProps) {
+  const { user } = useCommunityAuth();
+  const { toast } = useToast();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(post.likes || 0);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const { liked, likesCount } = await toggleLike(post.id, user.uid);
+      setIsLiked(liked);
+      setLikes(likesCount);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not update like status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({ title: "Coming Soon", description: "Commenting functionality will be available soon."});
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({ title: "Coming Soon", description: "Sharing functionality will be available soon."});
+  };
+  
   const cardStyle = {
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E\")",
     backgroundColor: 'rgb(245, 241, 232)'
@@ -26,7 +69,7 @@ export function ReadCard({ category, readTime, date, title, summary, fullText, t
   };
 
   return (
-    <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02]" style={cardStyle}>
+    <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] rounded-lg" style={cardStyle}>
       {isPrivate && (
         <div className="absolute top-4 right-4 z-10">
           <div className="bg-red-500 rounded-full p-2 shadow-lg">
@@ -34,7 +77,7 @@ export function ReadCard({ category, readTime, date, title, summary, fullText, t
           </div>
         </div>
       )}
-      <div className="p-4 md:p-6 lg:p-8 flex flex-col justify-between" style={innerDivStyle}>
+      <div className="p-4 md:p-6 lg:p-8 h-full flex flex-col justify-between" style={innerDivStyle}>
         <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
           <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
             <div className="flex items-center gap-2 md:gap-2.5">
@@ -53,7 +96,22 @@ export function ReadCard({ category, readTime, date, title, summary, fullText, t
           {fullText && <p className="text-[#504c4c] leading-relaxed text-sm md:text-base line-clamp-3">{fullText}</p>}
         </div>
         <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
-          <span className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm">Read Full Article →</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleLike}>
+                    <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-primary' : ''}`} />
+                    <span>{likes}</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleComment}>
+                    <MessageSquare className="h-4 w-4" />
+                    <span>{post.comments || 0}</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleShare}>
+                    <Share2 className="h-4 w-4" />
+                </Button>
+            </div>
+            <span className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm">Read Full Article →</span>
+          </div>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from 'react';
@@ -7,7 +8,6 @@ import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/componen
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
 import { FirebaseError } from 'firebase/app';
-import { Hero } from '@/components/landing/hero';
 import FeatureCard from '@/components/ui/feature-card';
 import VideoWall from '@/components/landing/video-wall';
 import { IphoneMockup } from '@/components/landing/iphone-mockup';
@@ -17,6 +17,7 @@ import { THEME_COLORS } from '@/lib/theme-colors';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
+import { Hero } from '@/components/landing/hero';
 
 function MemberHomeContent() {
   const router = useRouter();
@@ -125,7 +126,7 @@ function MemberHomeContent() {
 
       <main className="flex-1 flex flex-col items-center justify-center text-center">
         <div className="py-24 px-4 md:py-32 w-full">
-          <Hero text={["Discover your", "creative universe"]} />    
+          <Hero text={["Discover your", "creative universe"]} />
           
           <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
@@ -137,7 +138,7 @@ function MemberHomeContent() {
               RightComponent={<IphoneMockup src="/Mobile-white.png" />}
             />
           </section>
-          <Hero text={["Where creative", "minds converge"]} />                  
+          <Hero text={["Where creative", "minds converge"]} />
           <section className="mt-24 space-y-12 mx-40">            
             <FeatureCard
               title="Exclusive access and insights"
@@ -157,7 +158,7 @@ function MemberHomeContent() {
             />            
           </section>
         </div>
-        <Hero text={["We are", "human network"]} />    
+        <Hero text={["We are", "human network"]} />
         {/* Edge-to-edge marquee */}
         <BubbleMarquee
           categories={[
@@ -183,7 +184,7 @@ function MemberHomeContent() {
             }
           ]}
         />
-        <Hero text={["Join the Kyozo", "creative universe"]} />    
+        <Hero text={["Join the Kyozo", "creative universe"]} />
       </main>
 
       <CustomFormDialog 

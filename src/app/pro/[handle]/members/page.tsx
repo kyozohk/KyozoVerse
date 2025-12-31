@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
@@ -18,6 +18,8 @@ import {
   serverTimestamp,
   increment,
   setDoc,
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,6 +31,9 @@ import { ListView } from '@/components/ui/list-view';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { communityAuth } from "@/firebase/community-auth";
 import { CommunityMember } from "@/lib/types";
+import { TagMembersDialog } from "@/components/community/tag-members-dialog";
+import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
+import { addTagsToCommunity } from "@/lib/community-tags";
 
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -54,10 +59,17 @@ export default function CommunityMembersPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("guest");
   const [community, setCommunity] = useState<Community | null>(null);
+  const [searchType, setSearchType] = useState<'name' | 'tag'>('name');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
+  const [isTaggingOpen, setIsTaggingOpen] = useState(false);
+
+  // State for remove tag confirmation
+  const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
+  const [isRemoveTagDialogOpen, setIsRemoveTagDialogOpen] = useState(false);
   
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -101,7 +113,8 @@ export default function CommunityMembersPage() {
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       setLoading(true);
       try {
-        const membersData = await getCommunityMembers(community!.communityId, debouncedSearchTerm);
+        const membersData = await getCommunityMembers(community!.communityId, { type: searchType, value: debouncedSearchTerm });
+        console.log('✅ [Members Page] - Fetched members data:', JSON.stringify(membersData, null, 2));
         setMembers(membersData);
       } catch (error) {
         console.error("Error fetching members:", error);
@@ -292,18 +305,26 @@ export default function CommunityMembersPage() {
       <ListView
         title="Members"
         subtitle="Browse and manage community members."
+        searchType={searchType}
+        onSearchTypeChange={setSearchType}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         loading={loading}
         onAddAction={() => setIsAddMemberOpen(true)}
+        onAddTags={() => setIsTaggingOpen(true)}
+        selectedCount={selectedMembers.length}
       >
         <MembersList 
           members={members} 
           userRole={userRole as any}
           viewMode={viewMode}
+          onMemberClick={handleToggleMemberSelection}
+          selectedMembers={selectedMembers}
+          selectable={true}
           onEditMember={(member) => setEditingMember(member)}
+          onRemoveTag={openRemoveTagDialog}
         />
       </ListView>
       <MemberDialog
@@ -320,6 +341,19 @@ export default function CommunityMembersPage() {
         initialMember={editingMember}
         onClose={() => setEditingMember(null)}
         onSubmit={handleEditMemberSubmit}
+      />
+      <TagMembersDialog
+        isOpen={isTaggingOpen}
+        onClose={() => setIsTaggingOpen(false)}
+        members={selectedMembers}
+        communityId={community?.communityId || ''}
+        onApplyTags={handleApplyTags}
+      />
+      <RemoveTagDialog
+        isOpen={isRemoveTagDialogOpen}
+        onClose={() => setIsRemoveTagDialogOpen(false)}
+        onConfirm={handleRemoveTag}
+        tagName={tagToRemove?.tag || ''}
       />
     </>
   );

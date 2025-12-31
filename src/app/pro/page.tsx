@@ -159,7 +159,11 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center justify-center text-center">
         <div className="py-24 px-4 md:py-32 w-full">
-          <Hero text={["Discover your", "creative universe"]} />    
+          <Hero
+            text={["Discover your", "creative universe"]}
+            gradientStart="#A07FBD"
+            gradientEnd="#23AF98"
+          />
           
           <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
@@ -232,7 +236,7 @@ export default function Home() {
         title="Welcome Back"
         description="Sign in to access your Kyozo dashboard and community."
         backgroundImage="/bg/light_app_bg.png"
-        color="#843484"
+        color={THEME_COLORS.overview.primary}
       >
         <div className="flex flex-col h-full">
           <div className="flex-grow">

@@ -77,9 +77,9 @@ export const getThemeForPath = (path: string) => {
 
     if (segments.length === 0) { // Root path "/"
         section = 'communities';
-    } else if (mainNavItems.some(item => segments[0] === item.href.slice(1))) {
-        // Main sections like /communities, /analytics
-        const mainNavItem = mainNavItems.find(item => segments[0] === item.href.slice(1));
+    } else if (segments[0] === 'pro' && segments.length >= 2) {
+        // Main sections like /pro/communities, /pro/analytics
+        const mainNavItem = mainNavItems.find(item => item.href === `/${segments[0]}/${segments[1]}`);
         section = mainNavItem?.section || 'default';
     } else if (segments.length >= 1) {
         // Community pages like /[handle] or /[handle]/members

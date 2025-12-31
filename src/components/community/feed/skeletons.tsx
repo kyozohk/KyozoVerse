@@ -1,32 +1,35 @@
+
+import { TextPostCardSkeleton } from './text-post-card-skeleton';
+import { AudioPostCardSkeleton } from './audio-post-card-skeleton';
+import { VideoPostCardSkeleton } from './video-post-card-skeleton';
+
 export { TextPostCardSkeleton } from './text-post-card-skeleton';
 export { AudioPostCardSkeleton } from './audio-post-card-skeleton';
 export { VideoPostCardSkeleton } from './video-post-card-skeleton';
 export { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 
 // Combined skeleton component that shows all types
-import { TextPostCardSkeleton } from './text-post-card-skeleton';
-import { AudioPostCardSkeleton } from './audio-post-card-skeleton';
-import { VideoPostCardSkeleton } from './video-post-card-skeleton';
-import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
-
 export function FeedSkeletons() {
   return (
-    <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-      <div className="break-inside-avoid mb-4">
+    <>
+      <div className="break-inside-avoid mb-6">
         <TextPostCardSkeleton hasImage={true} />
       </div>
-      <div className="break-inside-avoid mb-4">
+      <div className="break-inside-avoid mb-6">
         <AudioPostCardSkeleton />
       </div>
-      <div className="break-inside-avoid mb-4">
+      <div className="break-inside-avoid mb-6">
         <VideoPostCardSkeleton />
       </div>
-      <div className="break-inside-avoid mb-4">
+      <div className="break-inside-avoid mb-6">
         <TextPostCardSkeleton hasImage={false} />
       </div>
-      <div className="break-inside-avoid mb-4">
+       <div className="break-inside-avoid mb-6">
         <AudioPostCardSkeleton />
       </div>
-    </div>
+      <div className="break-inside-avoid mb-6">
+        <TextPostCardSkeleton hasImage={false} />
+      </div>
+    </>
   );
 }

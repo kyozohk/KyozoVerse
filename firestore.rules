@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for community membership in the top-level collection
+    // Helper function to check for community membership
     function isCommunityMember(communityId) {
       return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
     }
@@ -25,14 +25,14 @@ service cloud.firestore {
     // Communities can be read by anyone
     match /communities/{communityId} {
       allow read: if true;
-      // Only allow create for authenticated users
       allow create: if request.auth != null;
-      // Only allow update for community owner
-      allow update: if request.auth != null && 
-                       resource.data.ownerId == request.auth.uid;
-      // Allow delete only for community owner
-      allow delete: if request.auth != null && 
-                       resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      
+      // Community tags subcollection
+      match /tags/{tagId} {
+        allow read, write: if request.auth != null;
+      }
     }
 
     // Community members can be read by other members of that same community
@@ -43,68 +43,54 @@ service cloud.firestore {
     // Blogs (posts) rules
     match /blogs/{blogId} {
       // Allow LIST queries for public posts by anyone, and for all posts by authenticated users.
-      // This is safe because the client-side code filters which posts are displayed based on user auth state.
-      allow list: if request.auth != null || request.query.where.visibility.includes_any(['public']);
-
+      allow list: if true;
+      
       // Allow GET requests for public documents, or for the author of a private document.
       allow get: if resource.data.visibility == 'public' || (request.auth != null && request.auth.uid == resource.data.authorId);
       
-      // Allow create for authenticated users (author must match)
       allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
       
-      // Allow update/delete for:
-      // 1. The post author, OR
-      // 2. The community owner/admin (if communityId exists)
       allow update, delete: if request.auth != null && 
                                (request.auth.uid == resource.data.authorId || 
-                                (resource.data.communityId != null && (isCommunityOwner(resource.data.communityId) || isCommunityAdmin(resource.data.communityId))));
+                                (resource.data.communityId != null && isCommunityOwner(resource.data.communityId)));
+
+      // Subcollections for likes and comments
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      }
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      }
+    }
+    
+    // User interaction collection rules
+    match /userInteractions/{interactionId} {
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
     // Users collection can be read by anyone authenticated
-    // This is needed to display author details on posts.
-    // Write access is still restricted.
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null; // Allow authenticated users to create new user documents
-      allow update: if request.auth != null && request.auth.uid == userId; // Only user can update their own profile
-      allow delete: if request.auth != null && request.auth.uid == userId; // Only user can delete their own
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Messages collections - organized by service
-    // WhatsApp messages
+    // Messages collections
     match /messages_whatsapp/{messageId} {
       allow read: if request.auth != null;
-      allow write: if true; // Allow webhook to write messages
-    }
-    
-    // Email messages (future)
-    match /messages_email/{messageId} {
-      allow read: if request.auth != null;
       allow write: if true;
-    }
-    
-    // SMS messages (future)
-    match /messages_sms/{messageId} {
-      allow read: if request.auth != null;
-      allow write: if true;
-    }
-    
-    // Telegram messages (future)
-    match /messages_telegram/{messageId} {
-      allow read: if request.auth != null;
-      allow write: if true;
-    }
-    
-    // In-app messages (future)
-    match /messages_app/{messageId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
     }
     
     // Community members collection
     match /communityMembers/{memberId} {
-      // Allow authenticated users to read
       allow read: if request.auth != null;
+<<<<<<< HEAD
       
       // Allow create for anyone (for RSVP forms, signup, etc.)
       allow create: if true;
@@ -115,6 +101,9 @@ service cloud.firestore {
       // Allow delete for:
       // 1. The member themselves, OR
       // 2. The community owner
+=======
+      allow create, update: if request.auth != null;
+>>>>>>> wip
       allow delete: if request.auth != null && 
                        (resource.data.userId == request.auth.uid || 
                         isCommunityOwner(resource.data.communityId));

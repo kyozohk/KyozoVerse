@@ -181,8 +181,6 @@ export function MemberDialog({
       title={title}
       description={description}
       backgroundImage="/bg/light_app_bg.png"
-      videoSrc="/videos/form-right.mp4"
-      showVideo={true}
       color={THEME_COLORS.members.primary}
     >
       <div className="flex flex-col h-full">

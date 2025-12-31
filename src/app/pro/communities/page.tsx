@@ -43,24 +43,41 @@ export default function CommunitiesDashboardPage() {
       const memberSnapshot = await getDocs(memberQuery);
       const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
       
-      // Fetch member communities (excluding ones already in owned list)
+      // Filter out owned communities
+      const nonOwnedMemberIds = memberCommunityIds.filter(
+        id => !ownedCommunities.find(c => c.communityId === id)
+      );
+      
+      // Fetch community details for member communities (excluding owned ones)
       const memberCommunities: Community[] = [];
-      for (const communityId of memberCommunityIds) {
-        if (!ownedCommunities.find(c => c.communityId === communityId)) {
-          const communityQuery = query(communitiesRef, where('communityId', '==', communityId));
-          const communitySnapshot = await getDocs(communityQuery);
-          communitySnapshot.docs.forEach(doc => {
+      if (nonOwnedMemberIds.length > 0) {
+        const batchSize = 30; // Firestore 'in' query limit is 30
+        const batches = [];
+        
+        for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
+          const batch = nonOwnedMemberIds.slice(i, i + batchSize);
+          const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
+          batches.push(getDocs(communitiesQuery));
+        }
+        
+        const batchResults = await Promise.all(batches);
+        batchResults.forEach(snap => {
+          snap.docs.forEach(doc => {
             memberCommunities.push({
               communityId: doc.id,
               ...doc.data(),
             } as Community);
           });
-        }
+        });
       }
       
-      // Combine owned and member communities
-      const allUserCommunities = [...ownedCommunities, ...memberCommunities];
-      setCommunities(allUserCommunities);
+      // Combine and deduplicate communities
+      const allCommunities = [...ownedCommunities, ...memberCommunities];
+      const uniqueCommunities = Array.from(
+        new Map(allCommunities.map(item => [item.communityId, item])).values()
+      );
+      
+      setCommunities(uniqueCommunities);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching communities:", error);
@@ -72,7 +89,7 @@ export default function CommunitiesDashboardPage() {
   }, [user]);
 
   return (
-    <div className="container mx-auto py-2 px-2">
+    <div className="container mx-auto px-0 py-0">
       <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
         {loading ? (
           <div className="flex justify-center py-12">

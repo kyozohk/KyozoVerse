@@ -60,14 +60,12 @@ export function MembersList({
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   const handleNavigate = (member: CommunityMember) => {
-    // This function is now only for navigation
     const pathParts = pathname.split('/');
     const handle = pathParts[2];
     router.push(`/pro/${handle}/members/${member.userId}`);
   };
 
   const handleSelect = (e: React.MouseEvent | React.KeyboardEvent, member: CommunityMember) => {
-    // This function is for selection
     e.stopPropagation();
     if (onMemberClick) {
       onMemberClick(member);
@@ -97,7 +95,7 @@ export function MembersList({
           return (
             <div
               key={member.id}
-              className="flex items-center p-4 border-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
+              className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
               style={itemStyle}
               onClick={() => handleNavigate(member)}
             >
@@ -105,13 +103,7 @@ export function MembersList({
                 <div className="mr-4 flex items-center h-full" onClick={(e) => handleSelect(e, member)}>
                   <Checkbox
                     checked={isSelected}
-                    onCheckedChange={() => {
-                        // The parent div's onClick handles the logic
-                    }}
-                    className="data-[state=checked]:bg-[var(--primary-purple)] data-[state=checked]:border-[var(--primary-purple)]"
-                    style={{
-                      '--primary-purple': activeColor
-                    } as React.CSSProperties}
+                    onCheckedChange={() => {}}
                   />
                 </div>
               )}

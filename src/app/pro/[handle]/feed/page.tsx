@@ -220,6 +220,7 @@ export default function CommunityFeedPage() {
         return (
           <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <ReadCard
+              post={post}
               category={post.type === 'image' ? 'Image' : 'Text'}
               readTime={readTime}
               date={postDate}
@@ -233,6 +234,7 @@ export default function CommunityFeedPage() {
         return (
           <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <ListenCard
+              post={post}
               category="Audio"
               episode="Listen"
               duration="0:00"
@@ -246,6 +248,7 @@ export default function CommunityFeedPage() {
         return (
           <div key={post.id} onClick={() => setSelectedPost(post)} className="cursor-pointer">
             <WatchCard
+              post={post}
               category="Video"
               title={post.title || 'Untitled Video'}
               imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}

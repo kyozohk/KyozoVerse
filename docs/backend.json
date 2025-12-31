@@ -30,6 +30,9 @@
         "author": { "$ref": "#/backend/entities/user" },
         "communityHandle": { "type": "string" },
         "visibility": { "type": "string", "enum": ["public", "private"] },
+        "likes": { "type": "number", "description": "Total number of likes." },
+        "comments": { "type": "number", "description": "Total number of comments." },
+        "shares": { "type": "number", "description": "Total number of shares." },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
@@ -75,8 +78,8 @@
         "userId": { "type": "string", "description": "The ID of the user (authenticated or anonymous)." },
         "postId": { "type": "string", "description": "The ID of the post being interacted with." },
         "communityId": { "type": "string", "description": "The ID of the community the post belongs to." },
-        "interactionType": { "type": "string", "enum": ["play", "like", "view", "finish"], "description": "The type of interaction." },
-        "mediaType": { "type": "string", "enum": ["audio", "video"], "description": "The type of media interacted with." },
+        "interactionType": { "type": "string", "enum": ["play", "like", "view", "finish", "comment", "share"], "description": "The type of interaction." },
+        "mediaType": { "type": "string", "enum": ["audio", "video", "text", "image"], "description": "The type of media interacted with." },
         "playDurationSeconds": { "type": "number", "description": "Duration of the playback in seconds." },
         "timestamp": { "type": "string", "format": "date-time" }
       },
@@ -94,6 +97,14 @@
     "/blogs/{blogId}": {
       "schema": { "$ref": "#/backend/entities/blog" },
       "description": "Blog post documents"
+    },
+    "/blogs/{blogId}/likes/{likeId}": {
+      "schema": { "$ref": "#/backend/entities/userInteraction" },
+      "description": "Likes on a blog post"
+    },
+    "/blogs/{blogId}/comments/{commentId}": {
+      "schema": { "$ref": "#/backend/entities/userInteraction" },
+      "description": "Comments on a blog post"
     },
     "/communities/{communityId}": {
         "schema": { "$ref": "#/backend/entities/community"},

@@ -33,11 +33,13 @@ export type Community = {
 };
 
 export type CommunityMember = {
+  id: string; // Document ID from Firestore
   userId: string;
   communityId: string;
   role: UserRole;
   joinedAt: any; // Firestore Timestamp
   status: 'active' | 'pending' | 'banned';
+  tags?: string[]; // Added tags for members
   userDetails?: {
     displayName?: string;
     avatarUrl?: string;
@@ -48,7 +50,7 @@ export type CommunityMember = {
 };
 
 export type Post = {
-  id?: string;
+  id: string;
   postId: string;
   title?: string;
   type: "text" | "image" | "audio" | "video" | "poll";
@@ -65,4 +67,7 @@ export type Post = {
   createdAt: any; // Firestore Timestamp
   visibility: 'public' | 'private' | 'members-only';
 };
+
+
+
 

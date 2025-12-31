@@ -554,8 +554,6 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       title={title}
       description={subtitle}
       backgroundImage="/bg/light_app_bg.png"
-      videoSrc="/videos/form-right.mp4"
-      showVideo={true}
       color={THEME_COLORS.broadcast.primary}
     >
       <div className="flex flex-col h-full">
