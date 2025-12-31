@@ -33,6 +33,7 @@ import { communityAuth } from "@/firebase/community-auth";
 import { CommunityMember } from "@/lib/types";
 import { TagMembersDialog } from "@/components/community/tag-members-dialog";
 import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
+import { addTagsToCommunity } from "@/lib/community-tags";
 
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -128,47 +129,58 @@ export default function CommunityMembersPage() {
   };
 
   const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
+    if (!community?.communityId) {
+      console.error('❌ [Applying Tags] No community ID available');
+      return;
+    }
+
     const memberIds = selectedMembers.map(m => m.id);
     console.log(`🏷️ [Applying Tags] Updating ${memberIds.length} members.`);
     console.log(`🏷️ [Applying Tags] Tags to add:`, tagsToAdd);
     console.log(`🏷️ [Applying Tags] Tags to remove:`, tagsToRemove);
     
-    const updates = memberIds.map(async (id) => {
-      const memberRef = doc(db, 'communityMembers', id);
-      console.log(`  - Updating member ${id}: ADD [${tagsToAdd.join(', ')}], REMOVE [${tagsToRemove.join(', ')}]`);
-      
-      try {
-        // Add new tags if any
-        if (tagsToAdd.length > 0) {
-          await updateDoc(memberRef, {
-            tags: arrayUnion(...tagsToAdd),
-          });
-          console.log(`  ✅ Added tags to member ${id}`);
-        }
-        
-        // Remove tags if any
-        if (tagsToRemove.length > 0) {
-          await updateDoc(memberRef, {
-            tags: arrayRemove(...tagsToRemove),
-          });
-          console.log(`  ✅ Removed tags from member ${id}`);
-        }
-      } catch (error) {
-        console.error(`  ❌ Error updating member ${id}:`, error);
-        throw error;
-      }
-    });
-  
     try {
+      // First, save any new tags to the community's tags subcollection
+      if (tagsToAdd.length > 0) {
+        console.log(`🏷️ [Applying Tags] Saving new tags to community subcollection...`);
+        await addTagsToCommunity(community.communityId, tagsToAdd);
+        console.log(`✅ [Applying Tags] Tags saved to community`);
+      }
+
+      // Then update all selected members
+      const updates = memberIds.map(async (id) => {
+        const memberRef = doc(db, 'communityMembers', id);
+        console.log(`  - Updating member ${id}: ADD [${tagsToAdd.join(', ')}], REMOVE [${tagsToRemove.join(', ')}]`);
+        
+        try {
+          // Add new tags if any
+          if (tagsToAdd.length > 0) {
+            await updateDoc(memberRef, {
+              tags: arrayUnion(...tagsToAdd),
+            });
+            console.log(`  ✅ Added tags to member ${id}`);
+          }
+          
+          // Remove tags if any (only from member, not from community)
+          if (tagsToRemove.length > 0) {
+            await updateDoc(memberRef, {
+              tags: arrayRemove(...tagsToRemove),
+            });
+            console.log(`  ✅ Removed tags from member ${id}`);
+          }
+        } catch (error) {
+          console.error(`  ❌ Error updating member ${id}:`, error);
+          throw error;
+        }
+      });
+    
       await Promise.all(updates);
       console.log('✅ [Applying Tags] - All members updated in database.');
       
       // Refresh members data
-      if (community) {
-        const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
-        console.log('✅ [Applying Tags] - Refreshed members data:', membersData.map(m => ({ id: m.id, tags: m.tags })));
-        setMembers(membersData);
-      }
+      const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+      console.log('✅ [Applying Tags] - Refreshed members data:', membersData.map(m => ({ id: m.id, tags: m.tags })));
+      setMembers(membersData);
       setSelectedMembers([]); // Clear selection after applying
     } catch (error) {
       console.error("❌ [Applying Tags] Error:", error);
@@ -423,6 +435,7 @@ export default function CommunityMembersPage() {
         isOpen={isTaggingOpen}
         onClose={() => setIsTaggingOpen(false)}
         members={selectedMembers}
+        communityId={community?.communityId || ''}
         onApplyTags={handleApplyTags}
       />
       <RemoveTagDialog

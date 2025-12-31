@@ -97,7 +97,7 @@ export function MembersList({
           return (
             <div
               key={member.id}
-              className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
+              className="flex items-center p-4 border-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
               style={itemStyle}
               onClick={() => handleNavigate(member)}
             >
@@ -108,6 +108,10 @@ export function MembersList({
                     onCheckedChange={() => {
                         // The parent div's onClick handles the logic
                     }}
+                    className="data-[state=checked]:bg-[var(--primary-purple)] data-[state=checked]:border-[var(--primary-purple)]"
+                    style={{
+                      '--primary-purple': activeColor
+                    } as React.CSSProperties}
                   />
                 </div>
               )}

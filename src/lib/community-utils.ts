@@ -122,6 +122,11 @@ export async function getCommunityMembers(
       ...doc.data(),
     } as CommunityMember));
     
+    console.log(`📋 [getCommunityMembers] Fetched ${members.length} members from Firestore`);
+    members.forEach(m => {
+      console.log(`  - ${m.userDetails?.displayName}: tags =`, m.tags);
+    });
+    
     // Client-side filtering for name search
     if (search.type === 'name' && search.value) {
       const lowerSearch = search.value.toLowerCase();
