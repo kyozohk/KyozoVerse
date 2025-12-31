@@ -25,7 +25,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
   const { user } = useCommunityAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false); // This should be fetched from user-specific data
-  const [likes, setLikes] = useState(post.likes || 0);
+  const [likes, setLikes] = useState(post?.likes ?? 0);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click

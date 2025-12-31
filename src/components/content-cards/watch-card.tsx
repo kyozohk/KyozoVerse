@@ -22,7 +22,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   const { user } = useCommunityAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
-  const [likes, setLikes] = useState(post.likes || 0);
+  const [likes, setLikes] = useState(post?.likes ?? 0);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();

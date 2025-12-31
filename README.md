@@ -52,4 +52,4 @@ curl -X POST 'https://api.resend.com/emails' \
 
 1. Get rid off the mushroom animation
 2. E-mail working SMTP
-2. List of selected members should sh
+2. List of selected members should show
