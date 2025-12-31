@@ -299,6 +299,103 @@ export default function CommunityMembersPage() {
     }
   };
 
+  const handleToggleMemberSelection = (member: CommunityMember) => {
+    setSelectedMembers((prevSelected) => {
+      if (prevSelected.some(m => m.id === member.id)) {
+        return prevSelected.filter(m => m.id !== member.id);
+      } else {
+        return [...prevSelected, member];
+      }
+    });
+  };
+
+  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
+    if (!community?.communityId) {
+      console.error('❌ [Applying Tags] No community ID available');
+      return;
+    }
+
+    const memberIds = selectedMembers.map(m => m.id);
+    console.log(`🏷️ [Applying Tags] Updating ${memberIds.length} members.`);
+    console.log(`🏷️ [Applying Tags] Tags to add:`, tagsToAdd);
+    console.log(`🏷️ [Applying Tags] Tags to remove:`, tagsToRemove);
+    
+    try {
+      // First, save any new tags to the community's tags subcollection
+      if (tagsToAdd.length > 0) {
+        console.log(`🏷️ [Applying Tags] Saving new tags to community subcollection...`);
+        await addTagsToCommunity(community.communityId, tagsToAdd);
+        console.log(`✅ [Applying Tags] Tags saved to community`);
+      }
+
+      // Then update all selected members
+      const updates = memberIds.map(async (id) => {
+        const memberRef = doc(db, 'communityMembers', id);
+        console.log(`  - Updating member ${id}: ADD [${tagsToAdd.join(', ')}], REMOVE [${tagsToRemove.join(', ')}]`);
+        
+        try {
+          // Add new tags if any
+          if (tagsToAdd.length > 0) {
+            await updateDoc(memberRef, {
+              tags: arrayUnion(...tagsToAdd),
+            });
+            console.log(`  ✅ Added tags to member ${id}`);
+          }
+          
+          // Remove tags if any (only from member, not from community)
+          if (tagsToRemove.length > 0) {
+            await updateDoc(memberRef, {
+              tags: arrayRemove(...tagsToRemove),
+            });
+            console.log(`  ✅ Removed tags from member ${id}`);
+          }
+        } catch (error) {
+          console.error(`  ❌ Error updating member ${id}:`, error);
+          throw error;
+        }
+      });
+    
+      await Promise.all(updates);
+      console.log('✅ [Applying Tags] - All members updated in database.');
+      
+      // Refresh members data
+      const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+      console.log('✅ [Applying Tags] - Refreshed members data:', membersData.map(m => ({ id: m.id, tags: m.tags })));
+      setMembers(membersData);
+      setSelectedMembers([]); // Clear selection after applying
+    } catch (error) {
+      console.error("❌ [Applying Tags] Error:", error);
+    }
+  };
+
+  const handleRemoveTag = async () => {
+    if (!tagToRemove) return;
+    try {
+      const memberRef = doc(db, 'communityMembers', tagToRemove.memberId);
+      await updateDoc(memberRef, {
+        tags: arrayRemove(tagToRemove.tag),
+      });
+
+      // Refresh local state
+      setMembers(prevMembers => prevMembers.map(m => {
+        if (m.id === tagToRemove.memberId) {
+          return { ...m, tags: m.tags?.filter(t => t !== tagToRemove.tag) };
+        }
+        return m;
+      }));
+    } catch (error) {
+      console.error("Error removing tag:", error);
+    } finally {
+      setIsRemoveTagDialogOpen(false);
+      setTagToRemove(null);
+    }
+  };
+
+  const openRemoveTagDialog = (memberId: string, tag: string) => {
+    setTagToRemove({ memberId, tag });
+    setIsRemoveTagDialogOpen(true);
+  };
+
 
   return (
     <>

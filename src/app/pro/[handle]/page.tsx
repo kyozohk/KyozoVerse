@@ -14,7 +14,7 @@ import { CreateCommunityDialog } from '@/components/community/create-community-d
 import { MemberDialog } from '@/components/community/member-dialog';
 import { DeleteCommunityDialog } from '@/components/community/delete-community-dialog';
 import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
-import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, addDoc, setDoc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, getDoc, deleteDoc, doc, addDoc, setDoc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
