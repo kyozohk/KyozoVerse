@@ -111,13 +111,30 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   };
 
   const handleFileUpload = async (fileToUpload: File, type: 'media' | 'thumbnail') => {
-    const uploadPath = `community-posts/${communityId}/${type === 'media' ? postType : 'thumbnails'}`;
+    // Use 'video' folder for both video files and thumbnails to avoid CORS issues
+    const uploadPath = `community-posts/${communityId}/${type === 'media' ? postType : 'video'}`;
+    console.log(`📤 Uploading ${type} file:`, {
+      fileName: fileToUpload.name,
+      fileSize: fileToUpload.size,
+      fileType: fileToUpload.type,
+      uploadPath,
+      communityId
+    });
     try {
         const result = await uploadFile(fileToUpload, uploadPath);
-        return typeof result === 'string' ? result : result.url;
-    } catch (error) {
-        console.error(`Error uploading ${type} file:`, error);
-        throw new Error(`Failed to upload ${type} file. Please try again.`);
+        const url = typeof result === 'string' ? result : result.url;
+        console.log(`✅ ${type} file uploaded successfully:`, url);
+        return url;
+    } catch (error: any) {
+        console.error(`❌ Error uploading ${type} file:`, {
+          error,
+          errorMessage: error?.message,
+          errorCode: error?.code,
+          errorStack: error?.stack,
+          fileName: fileToUpload.name,
+          uploadPath
+        });
+        throw new Error(`Failed to upload ${type} file: ${error?.message || 'Unknown error'}`);
     }
   };
 
@@ -155,12 +172,21 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
         // Handle thumbnail file update (only for videos)
         if (postType === 'video') {
+            console.log('🎬 Processing video thumbnail:', {
+              hasThumbnailFile: !!thumbnailFile,
+              currentThumbnailUrl: thumbnailUrl,
+              editPostThumbnailUrl: editPost?.content.thumbnailUrl
+            });
             if (thumbnailFile) {
+                console.log('📸 Uploading new thumbnail...');
                 finalThumbnailUrl = await handleFileUpload(thumbnailFile, 'thumbnail');
+                console.log('✅ Thumbnail uploaded:', finalThumbnailUrl);
                 if (thumbnailUrl && thumbnailUrl !== finalThumbnailUrl) {
+                    console.log('🗑️ Deleting old thumbnail:', thumbnailUrl);
                     await deleteFileByUrl(thumbnailUrl);
                 }
             } else if (!thumbnailUrl && editPost?.content.thumbnailUrl) {
+                console.log('🗑️ Deleting removed thumbnail:', editPost.content.thumbnailUrl);
                 await deleteFileByUrl(editPost.content.thumbnailUrl);
             }
         }

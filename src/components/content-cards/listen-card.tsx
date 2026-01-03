@@ -187,10 +187,10 @@ export function ListenCard({ category, episode, duration: initialDuration, title
                 {episode} • {formatTime(duration)}
               </p>
             </div>
-            <h2 className="text-[#2d3748] font-semibold uppercase tracking-wide text-2xl" style={{ letterSpacing: '0.045em' }}>
+            <h2 className="text-[#2d3748] text-2xl" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {title}
             </h2>
-            {summary && <p className="text-gray-600 text-sm line-clamp-2" style={{ fontWeight: 400, lineHeight: 1.6 }}>{summary}</p>}
+            {summary && <p className="text-gray-600 text-sm line-clamp-2" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>{summary}</p>}
           </div>
           
           {/* Bottom - Playback controls */}

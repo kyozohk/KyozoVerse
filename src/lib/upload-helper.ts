@@ -22,11 +22,37 @@ export async function uploadFile(file: File, path: string): Promise<string | Upl
     throw new Error('User not authenticated');
   }
 
-  const storageRef = ref(storage, `${path}/${Date.now()}-${file.name}`);
-  const uploadResult = await uploadBytes(storageRef, file);
-  const url = await getDownloadURL(uploadResult.ref);
-  
-  return url;
+  const fullPath = `${path}/${Date.now()}-${file.name}`;
+  console.log('🔧 Upload helper - Creating storage reference:', {
+    path,
+    fullPath,
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type
+  });
+
+  try {
+    const storageRef = ref(storage, fullPath);
+    console.log('📦 Upload helper - Starting upload to:', storageRef.fullPath);
+    
+    const uploadResult = await uploadBytes(storageRef, file);
+    console.log('✅ Upload helper - Upload complete, getting download URL...');
+    
+    const url = await getDownloadURL(uploadResult.ref);
+    console.log('✅ Upload helper - Download URL obtained:', url);
+    
+    return url;
+  } catch (error: any) {
+    console.error('❌ Upload helper - Upload failed:', {
+      error,
+      errorMessage: error?.message,
+      errorCode: error?.code,
+      errorName: error?.name,
+      fullPath,
+      fileName: file.name
+    });
+    throw error;
+  }
 }
 
 /**

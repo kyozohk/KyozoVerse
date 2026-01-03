@@ -104,11 +104,11 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
           </div>
           
           <div className="flex-1">
-            <h2 className="text-white font-semibold uppercase tracking-wide text-2xl mb-3 drop-shadow-lg" style={{ letterSpacing: '0.045em' }}>
+            <h2 className="text-white text-2xl mb-3 drop-shadow-lg" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {title}
             </h2>
             {summary && (
-              <p className="text-white/90 text-sm mb-4 line-clamp-3 drop-shadow-md" style={{ fontWeight: 400, lineHeight: 1.6 }}>
+              <p className="text-white/90 text-sm mb-4 line-clamp-3 drop-shadow-md" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>
                 {summary}
               </p>
             )}

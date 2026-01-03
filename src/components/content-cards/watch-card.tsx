@@ -218,7 +218,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
             
             <div>
-            <h2 className="text-white font-semibold uppercase tracking-wide text-2xl mb-4 drop-shadow-lg" style={{ letterSpacing: '0.045em' }}>
+            <h2 className="text-white text-2xl mb-4 drop-shadow-lg" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {title}
             </h2>
             <div className="flex items-center justify-between">
