@@ -39,7 +39,10 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
       const video = thumbnailVideoRef.current;
       
       const handleLoadedData = () => {
-        video.currentTime = 1; // Seek to 1 second for better thumbnail
+        // Seek to the middle of the video for a better thumbnail
+        if (video.duration) {
+          video.currentTime = video.duration / 2;
+        }
       };
       
       const handleSeeked = () => {
@@ -67,23 +70,16 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to like posts.",
-        variant: "destructive",
-      });
+      toast({ title: "Please sign in to like posts", variant: "destructive" });
       return;
     }
     try {
-      const { liked, likesCount } = await toggleLike(post.id, user.uid);
+      const { liked, likesCount } = await toggleLike({ userId: user.uid, postId: post.id, communityId: post.communityId || '' });
       setIsLiked(liked);
       setLikes(likesCount);
     } catch (error) {
-       toast({
-        title: "Error",
-        description: "Could not update like status. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error toggling like:', error);
+      toast({ title: "Failed to like post", variant: "destructive" });
     }
   };
 
@@ -210,7 +206,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 </span>
                 {isPrivate && (
                     <div className="bg-red-500 rounded-full p-2 shadow-lg">
-                        <Lock className="w-4 w-4 text-white" />
+                        <Lock className="w-4 h-4 text-white" />
                     </div>
                 )}
             </div>
