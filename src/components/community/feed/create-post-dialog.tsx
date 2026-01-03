@@ -35,6 +35,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
 
@@ -52,6 +53,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         setTitle('');
         setDescription('');
         setFile(null);
+        setThumbnailFile(null);
         setIsPublic(true); // Reset to default (public) when dialog closes
     }
   }, [isOpen]);
@@ -88,7 +90,6 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       console.log('✅ Emails sent successfully.');
     } catch (error) {
       console.error('❌ Error sending new post emails:', error);
-      // We don't want to block the UI for this, so we just log the error.
     }
   };
 
@@ -109,41 +110,46 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setIsSubmitting(true);
 
     let mediaUrl = '';
-    let fileCategory = '';
-    let fileType = '';
+    let thumbnailUrl = editPost?.content.thumbnailUrl || '';
     
     if (file) {
       try {
-        console.log(`Uploading ${postType} file using server-side API:`, file.name, file.type);
         const uploadResult = await uploadFile(file, communityId);
-        
-        if (typeof uploadResult === 'string') {
-          mediaUrl = uploadResult;
-        } else {
-          mediaUrl = uploadResult.url || '';
-          fileCategory = uploadResult.fileCategory || '';
-          fileType = uploadResult.fileType || '';
-        }
+        mediaUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.url || '';
       } catch (error) {
-        console.error('Upload failed:', error);
-        alert(`Failed to upload ${postType} file. Please try again.`);
+        alert(`Failed to upload media file. Please try again.`);
         setIsSubmitting(false);
         return;
       }
     }
-
-    // Keep the original postType - don't change text to image just because it has an image attachment
-    let finalPostType = postType;
+    
+    if (thumbnailFile) {
+        try {
+            const uploadResult = await uploadFile(thumbnailFile, communityId);
+            thumbnailUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.url || '';
+        } catch (error) {
+            alert(`Failed to upload thumbnail image. Please try again.`);
+            setIsSubmitting(false);
+            return;
+        }
+    }
 
     try {
+      const contentPayload: any = {
+        text: description,
+        mediaUrls: file ? [mediaUrl] : editPost?.content.mediaUrls || [],
+        fileType: file ? file.type : editPost?.content.fileType || ''
+      };
+      
+      if(postType === 'video'){
+        contentPayload.thumbnailUrl = thumbnailUrl;
+      }
+
       if (editPost) {
         const postRef = doc(db, 'blogs', editPost.id);
         const updateData: any = {
           title,
-          content: {
-            text: description,
-            mediaUrls: file ? [mediaUrl] : editPost.content.mediaUrls || [],
-          },
+          content: contentPayload,
           visibility: isPublic ? 'public' : 'private',
           updatedAt: serverTimestamp()
         };
@@ -153,15 +159,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       } else {
         const postData = {
           title,
-          content: {
-            text: description,
-            mediaUrls: file ? [mediaUrl] : [],
-            fileType: file ? file.type : ''
-          },
+          content: contentPayload,
           authorId: user.uid,
           communityId: communityId,
           communityHandle: communityHandle,
-          type: finalPostType,
+          type: postType,
           createdAt: serverTimestamp(),
           likes: 0,
           comments: 0,
@@ -169,7 +171,6 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         };
         
         const docRef = await addDoc(collection(db, 'blogs'), postData);
-        console.log('Post created successfully:', finalPostType);
         
         if (isPublic) {
             const newPostForEmail: Post & { id: string } = {
@@ -258,6 +259,17 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                           fileType={postType === 'text' ? 'image' : postType || 'image'}
                       />
                   )}
+
+                  {postType === 'video' && (
+                    <Dropzone
+                      label="Custom Thumbnail (Optional)"
+                      onFileChange={setThumbnailFile}
+                      file={thumbnailFile}
+                      accept={{ 'image/*': [] }}
+                      fileType="image"
+                      existingImageUrl={editPost?.content.thumbnailUrl}
+                    />
+                  )}
                   
                   <div className="mt-4">
                     <Checkbox
@@ -285,7 +297,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                     disabled={isSubmitting}
                     className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
                   >
-                    Post
+                    {editPost ? 'Save Changes' : 'Post'}
                   </Button>
               </div>
           </div>

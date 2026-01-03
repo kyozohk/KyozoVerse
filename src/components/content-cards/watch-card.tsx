@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -35,6 +36,12 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
 
   // Extract thumbnail from video
   useEffect(() => {
+    // Prioritize custom thumbnail if available
+    if (post.content.thumbnailUrl) {
+      setThumbnail(post.content.thumbnailUrl);
+      return;
+    }
+
     const video = thumbnailVideoRef.current;
     if (post.content.mediaUrls?.[0] && video) {
       
@@ -64,7 +71,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
         video.removeEventListener('seeked', handleSeeked);
       };
     }
-  }, [post.content.mediaUrls]);
+  }, [post.content.mediaUrls, post.content.thumbnailUrl]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -159,7 +166,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   return (
     <>
         {/* Hidden video for thumbnail extraction */}
-        {post.content.mediaUrls?.[0] && (
+        {post.content.mediaUrls?.[0] && !post.content.thumbnailUrl && (
           <video
             ref={thumbnailVideoRef}
             src={post.content.mediaUrls[0]}
@@ -192,6 +199,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 className="absolute inset-0 w-full h-full object-cover z-20"
                 autoPlay
                 controls
+                poster={thumbnail}
                 onPause={() => setIsPlaying(false)}
                 onPlay={() => setIsPlaying(true)}
                 onEnded={handleVideoEnded}
