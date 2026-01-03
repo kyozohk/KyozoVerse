@@ -235,7 +235,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 </div>
                 <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
                     <button onClick={togglePlayPause} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-                        {isPlaying ? <Pause className="h-5 w-5"/> : <Play className="w-5 h-5 ml-1" />}
+                        {isPlaying ? <Pause className="h-5 w-5"/> : <Play className="w-5 w-5 ml-1" />}
                     </button>
                 </div>
             </div>
@@ -247,7 +247,8 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your video post.
+                        This action cannot be undone. This will permanently delete your video post
+                        and remove the data from our servers.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
