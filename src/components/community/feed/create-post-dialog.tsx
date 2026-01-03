@@ -246,78 +246,80 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       title={getDialogTitle()}
       description={getDialogDescription()}
     >
+      <div className="flex flex-col h-full">
         {isSubmitting ? (
-          <CreatePostDialogSkeleton />
-        ) : (
-          <div className="flex flex-col h-full">
-              <div className="flex-grow space-y-4">
-                  <Input 
-                      label="Title"
-                      placeholder="Title" 
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)} 
-                  />
-                  <Textarea 
-                      label="Description"
-                      placeholder="Description" 
-                      value={description} 
-                      onChange={(e) => setDescription(e.target.value)} 
-                      rows={6}
-                  />
-                   {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
-                      <Dropzone
-                          onFileChange={setFile}
-                          onRemoveExisting={() => setMediaUrl(null)}
-                          file={file}
-                          accept={getFileInputAccept()}
-                          fileType={postType === 'text' ? 'image' : postType || 'image'}
-                          existingImageUrl={mediaUrl}
-                      />
-                  )}
-
-                  {postType === 'video' && (
-                    <Dropzone
-                      label="Custom Thumbnail (Optional)"
-                      onFileChange={setThumbnailFile}
-                      onRemoveExisting={() => setThumbnailUrl(null)}
-                      file={thumbnailFile}
-                      accept={{ 'image/*': [] }}
-                      fileType="image"
-                      existingImageUrl={thumbnailUrl}
-                    />
-                  )}
-                  
-                  <div className="mt-4">
-                    <Checkbox
-                      label="Make this post public"
-                      checked={isPublic}
-                      onCheckedChange={setIsPublic}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1 ml-6">
-                      {isPublic ? 
-                        'Public posts are visible to everyone in the community' : 
-                        'Private posts are only visible to you and community admins'}
-                    </p>
-                  </div>
-              </div>
-              <div className="mt-8 flex justify-end gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsOpen(false)} 
-                    className="py-3 text-base font-medium"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleSubmit} 
-                    disabled={isSubmitting}
-                    className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
-                  >
-                    {editPost ? 'Save Changes' : 'Post'}
-                  </Button>
-              </div>
+          <div className="flex-grow flex items-center justify-center">
+            <CreatePostDialogSkeleton />
           </div>
+        ) : (
+          <>
+            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
+              <Input 
+                label="Title"
+                placeholder="Title" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+              />
+              <Textarea 
+                label="Description"
+                placeholder="Description" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                rows={6}
+              />
+              {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
+                <Dropzone
+                  onFileChange={setFile}
+                  onRemoveExisting={() => setMediaUrl(null)}
+                  file={file}
+                  accept={getFileInputAccept()}
+                  fileType={postType === 'text' ? 'image' : postType || 'image'}
+                  existingImageUrl={mediaUrl}
+                />
+              )}
+              {postType === 'video' && (
+                <Dropzone
+                  label="Custom Thumbnail (Optional)"
+                  onFileChange={setThumbnailFile}
+                  onRemoveExisting={() => setThumbnailUrl(null)}
+                  file={thumbnailFile}
+                  accept={{ 'image/*': [] }}
+                  fileType="image"
+                  existingImageUrl={thumbnailUrl}
+                />
+              )}
+              <div className="mt-4">
+                <Checkbox
+                  label="Make this post public"
+                  checked={isPublic}
+                  onCheckedChange={setIsPublic}
+                />
+                <p className="text-xs text-muted-foreground mt-1 ml-6">
+                  {isPublic ? 
+                    'Public posts are visible to everyone in the community' : 
+                    'Private posts are only visible to you and community admins'}
+                </p>
+              </div>
+            </div>
+            <div className="mt-8 flex flex-shrink-0 justify-end gap-4 pt-4 border-t border-border">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsOpen(false)} 
+                className="py-3 text-base font-medium"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting}
+                className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
+              >
+                {editPost ? 'Save Changes' : 'Post'}
+              </Button>
+            </div>
+          </>
         )}
+      </div>
     </CustomFormDialog>
   );
 };
