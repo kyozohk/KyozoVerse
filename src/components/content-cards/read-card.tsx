@@ -92,11 +92,11 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
                   </span>
                 )}
               </div>
-              <h2 className="text-[#2d3748] leading-tight text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
+              <h2 className="text-[#2d3748] font-medium uppercase tracking-wider text-xl" style={{ letterSpacing: '0.05em' }}>
                 {title}
               </h2>
             </div>
-            {summary && <p className="text-gray-600 leading-relaxed text-sm md:text-base line-clamp-3">{summary}</p>}
+            {summary && <p className="text-gray-600 leading-relaxed text-sm md:text-base line-clamp-3" style={{ lineHeight: 1.6 }}>{summary}</p>}
           </div>
           <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
             <div className="flex items-center justify-end">

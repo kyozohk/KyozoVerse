@@ -190,7 +190,7 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
                 {episode} • {formatTime(duration)}
               </p>
             </div>
-            <h2 className="text-[#2d3748] leading-tight text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
+            <h2 className="text-[#2d3748] font-medium uppercase tracking-wider text-xl" style={{ letterSpacing: '0.05em' }}>
               {title}
             </h2>
           </div>

@@ -219,7 +219,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
             
             <div>
-            <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
+            <h2 className="text-white font-medium uppercase tracking-wider text-xl mb-4 drop-shadow-lg" style={{ letterSpacing: '0.05em' }}>
                 {title}
             </h2>
             <div className="flex items-center justify-between">
