@@ -140,6 +140,27 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
     }
   };
 
+  const handleVideoEnded = () => {
+    if (user && post.id && post.communityId && videoRef.current) {
+      recordInteraction({
+        userId: user.uid,
+        postId: post.id,
+        communityId: post.communityId,
+        interactionType: 'finish',
+        mediaType: 'video',
+        playDurationSeconds: videoRef.current.duration,
+      });
+    }
+  };
+
+  const formatVideoDuration = () => {
+    if (!videoRef.current?.duration) return '0:00';
+    const duration = videoRef.current.duration;
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
   return (
     <>
         {/* Hidden video for thumbnail extraction */}
@@ -150,6 +171,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             className="hidden"
             preload="metadata"
             muted
+            crossOrigin="anonymous"
           />
         )}
         
@@ -177,6 +199,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 controls
                 onPause={() => setIsPlaying(false)}
                 onPlay={() => setIsPlaying(true)}
+                onEnded={handleVideoEnded}
             />
         ) : null}
 
