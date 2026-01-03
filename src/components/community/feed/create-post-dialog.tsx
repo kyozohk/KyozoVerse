@@ -48,14 +48,16 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
   // Populate form when editing
   useEffect(() => {
-    if (editPost) {
+    if (isOpen && editPost) {
       setTitle(editPost.title || '');
       setDescription(editPost.content.text || '');
       setIsPublic(editPost.visibility === 'public');
       setMediaUrl(editPost.content.mediaUrls?.[0] || null);
       setThumbnailUrl(editPost.content.thumbnailUrl || null);
+    } else {
+        resetState();
     }
-  }, [editPost]);
+  }, [editPost, isOpen]);
 
   const resetState = () => {
     setTitle('');
@@ -68,11 +70,10 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setIsSubmitting(false);
   }
 
-  useEffect(() => {
-    if (!isOpen) {
-      resetState();
-    }
-  }, [isOpen]);
+  const handleClose = () => {
+    resetState();
+    setIsOpen(false);
+  }
 
   const sendNewPostEmails = async (post: Post & { id: string }) => {
     try {
@@ -197,7 +198,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
             }
         }
         
-        setIsOpen(false);
+        handleClose();
     } catch (error) {
         console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
         alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
@@ -242,7 +243,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={() => setIsOpen(false)}
+      onClose={handleClose}
       title={getDialogTitle()}
       description={getDialogDescription()}
     >
@@ -301,10 +302,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 </p>
               </div>
             </div>
+            
             <div className="mt-8 flex flex-shrink-0 justify-end gap-4 pt-4 border-t border-border">
               <Button 
                 variant="outline" 
-                onClick={() => setIsOpen(false)} 
+                onClick={handleClose}
                 className="py-3 text-base font-medium"
               >
                 Cancel
@@ -314,7 +316,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 disabled={isSubmitting}
                 className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
               >
-                {editPost ? 'Save Changes' : 'Post'}
+                {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
               </Button>
             </div>
           </>
