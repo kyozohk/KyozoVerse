@@ -111,17 +111,14 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   };
 
   const handleFileUpload = async (fileToUpload: File, type: 'media' | 'thumbnail') => {
-    // Use 'video' folder for both video files and thumbnails to avoid CORS issues
-    const uploadPath = `community-posts/${communityId}/${type === 'media' ? postType : 'video'}`;
     console.log(`📤 Uploading ${type} file:`, {
       fileName: fileToUpload.name,
       fileSize: fileToUpload.size,
       fileType: fileToUpload.type,
-      uploadPath,
       communityId
     });
     try {
-        const result = await uploadFile(fileToUpload, uploadPath);
+        const result = await uploadFile(fileToUpload, communityId);
         const url = typeof result === 'string' ? result : result.url;
         console.log(`✅ ${type} file uploaded successfully:`, url);
         return url;
@@ -132,7 +129,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           errorCode: error?.code,
           errorStack: error?.stack,
           fileName: fileToUpload.name,
-          uploadPath
+          communityId
         });
         throw new Error(`Failed to upload ${type} file: ${error?.message || 'Unknown error'}`);
     }

@@ -26,6 +26,9 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(post?.likes ?? 0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [thumbnail, setThumbnail] = useState<string>(imageUrl);
@@ -154,13 +157,33 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
     }
   };
 
-  const formatVideoDuration = () => {
-    if (!videoRef.current?.duration) return '0:00';
-    const duration = videoRef.current.duration;
-    const minutes = Math.floor(duration / 60);
-    const seconds = Math.floor(duration % 60);
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+      setProgress((video.currentTime / video.duration) * 100);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [isPlaying]);
 
   return (
     <>
@@ -206,9 +229,9 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
         ) : null}
 
         <div className="relative z-10 p-4 md:p-6 flex flex-col justify-between h-full min-h-[400px]">
-            <div className="flex justify-between">
-                <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#F0C679] text-black rounded-full font-medium">
-                  WATCH
+            <div className="flex justify-between items-start">
+                <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider bg-[#F0C679] text-black rounded-full font-medium">
+                  Watch
                 </span>
                 {isPrivate && (
                     <div className="bg-red-500 rounded-full p-2 shadow-lg">
@@ -217,30 +240,31 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 )}
             </div>
             
-            <div>
-            <h2 className="text-white text-2xl mb-4 drop-shadow-lg" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {title}
-            </h2>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleLike}>
-                        <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-[#F0C679]' : ''}`} />
-                        <span>{likes}</span>
-                    </Button>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleComment}>
-                        <MessageSquare className="h-4 w-4" />
-                        <span>{post.comments || 0}</span>
-                    </Button>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleShare}>
-                        <Share2 className="h-4 w-4" />
-                    </Button>
-                </div>
-                <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                    <button onClick={togglePlayPause} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-                        {isPlaying ? <Pause className="h-5 w-5"/> : <Play className="w-5 w-5 ml-1" />}
+            <div className="space-y-3">
+                <h2 className="text-white text-2xl md:text-3xl drop-shadow-lg" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.02em' }}>
+                    {title}
+                </h2>
+                
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={togglePlayPause} 
+                        className="w-12 h-12 rounded-full bg-[#F0C679] flex items-center justify-center text-black hover:bg-[#E5B960] transition-colors flex-shrink-0"
+                    >
+                        {isPlaying ? <Pause className="h-5 w-5"/> : <Play className="w-5 h-5 ml-0.5" />}
                     </button>
+                    
+                    <div className="flex-1 space-y-1">
+                        <div className="text-white text-sm font-medium">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-600 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-[#F0C679] transition-all duration-200"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
         </div>
