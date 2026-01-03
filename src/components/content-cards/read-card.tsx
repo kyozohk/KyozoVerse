@@ -92,11 +92,11 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
                   </span>
                 )}
               </div>
-              <h2 className="text-[#2d3748] text-2xl" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <h2 className="text-[#433F36] text-4xl" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 700, textTransform: 'none', letterSpacing: '-0.02em', opacity: 0.8}}>
                 {title}
               </h2>
             </div>
-            {summary && <p className="text-gray-600 text-sm md:text-base line-clamp-3" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>{summary}</p>}
+            {summary && <p className="text-[#6b6b6b] text-sm md:text-base line-clamp-3" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>{summary}</p>}
           </div>
           <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
             <div className="flex items-center justify-end">
