@@ -118,7 +118,7 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
       return;
     }
     try {
-      await toggleLike({ userId: user.uid, postId: post.id, communityId: post.communityId || '' });
+      await toggleLike(post.id, user.uid);
       setIsLiked(!isLiked);
       setLikes(isLiked ? likes - 1 : likes + 1);
     } catch (error) {
@@ -190,7 +190,7 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
                 {episode} • {formatTime(duration)}
               </p>
             </div>
-            <h2 className="text-[#2d3748] leading-tight text-2xl font-bold">
+            <h2 className="text-[#2d3748] leading-tight text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
               {title}
             </h2>
           </div>

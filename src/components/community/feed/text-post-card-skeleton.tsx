@@ -11,7 +11,7 @@ export function TextPostCardSkeleton({ hasImage = true }: { hasImage?: boolean }
   };
 
   return (
-    <div className="bg-white overflow-hidden shadow-md border border-neutral-200" style={cardStyle}>
+    <div className="bg-white overflow-hidden shadow-md border border-neutral-200 rounded-3xl" style={cardStyle}>
       <div className="p-4 md:p-6 lg:p-8 flex flex-col justify-between" style={innerDivStyle}>
         <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
           <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
@@ -27,13 +27,8 @@ export function TextPostCardSkeleton({ hasImage = true }: { hasImage?: boolean }
           </div>
         </div>
         <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-16 rounded-md" />
-              <Skeleton className="h-8 w-16 rounded-md" />
-              <Skeleton className="h-8 w-16 rounded-md" />
-            </div>
-            <Skeleton className="h-4 w-24 rounded-md" />
+          <div className="flex items-center justify-end">
+            <Skeleton className="h-4 w-32 rounded-md" />
           </div>
         </div>
       </div>

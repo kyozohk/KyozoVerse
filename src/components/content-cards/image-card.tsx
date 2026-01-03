@@ -37,7 +37,7 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
       return;
     }
     try {
-      const { liked, likesCount } = await toggleLike({ userId: user.uid, postId: post.id, communityId: post.communityId || '' });
+      const { liked, likesCount } = await toggleLike(post.id, user.uid);
       setIsLiked(liked);
       setLikes(likesCount);
     } catch (error) {
@@ -66,17 +66,16 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
       toast({ title: "Failed to delete post", variant: "destructive" });
     }
   };
+  
+  const cardStyle = {
+    backgroundImage: `url(${imageUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  };
 
   return (
     <>
-      <div className="relative bg-neutral-900 overflow-hidden shadow-md group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] min-h-[400px] rounded-3xl">
-        {/* Background Image */}
-        <img 
-          src={imageUrl} 
-          alt={title}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        
+      <div className="relative bg-neutral-900 overflow-hidden shadow-md group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] min-h-[400px] rounded-3xl" style={cardStyle}>
         {/* Black overlay */}
         <div className="absolute inset-0 bg-black/50" />
         
@@ -94,6 +93,9 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
         {/* Content overlay */}
         <div className="relative z-10 p-6 flex flex-col h-full min-h-[400px]">
           <div className="flex justify-between items-start mb-4">
+            <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#926B7F] text-white rounded-full font-medium">
+              {category}
+            </span>
             {isPrivate && (
               <div className="bg-red-500 rounded-full p-2 shadow-lg">
                 <Lock className="w-4 h-4 text-white" />

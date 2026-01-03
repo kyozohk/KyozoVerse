@@ -32,31 +32,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
-  const hasImage = post.content.mediaUrls && post.content.mediaUrls.length > 0;
-
-  const handleLike = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to like posts.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const { liked, likesCount } = await toggleLike({userId: user.uid, postId: post.id, communityId: post.communityId!});
-      setIsLiked(liked);
-      setLikes(likesCount);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not update like status. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
+  
   const handleDelete = async () => {
     if (!post.id) return;
     setIsDeleting(true);
@@ -77,16 +53,6 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
         setIsDeleting(false);
         setShowDeleteDialog(false);
     }
-  };
-
-  const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast({ title: "Coming Soon", description: "Commenting functionality will be available soon."});
-  };
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast({ title: "Coming Soon", description: "Sharing functionality will be available soon."});
   };
   
   const cardStyle = {

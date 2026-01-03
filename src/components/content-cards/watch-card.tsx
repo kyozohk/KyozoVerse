@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Volume2, ThumbsUp, MessageSquare, Share2, Lock, Pause, Edit, Trash2 } from 'lucide-react';
+import { Play, Lock, ThumbsUp, MessageSquare, Share2, Pause, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
@@ -73,7 +73,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
       return;
     }
     try {
-      const { liked, likesCount } = await toggleLike({ userId: user.uid, postId: post.id, communityId: post.communityId || '' });
+      const { liked, likesCount } = await toggleLike(post.id, user.uid);
       setIsLiked(liked);
       setLikes(likesCount);
     } catch (error) {
@@ -201,7 +201,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
         <div className="relative z-10 p-4 md:p-6 flex flex-col justify-between h-full min-h-[400px]">
             <div className="flex justify-between">
                 <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#F0C679] text-black rounded-full font-medium">
-                WATCH
+                  WATCH
                 </span>
                 {isPrivate && (
                     <div className="bg-red-500 rounded-full p-2 shadow-lg">
@@ -211,13 +211,13 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
             
             <div>
-            <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-3xl font-bold">
+            <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
                 {title}
             </h2>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleLike}>
-                        <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-[#F0C679' : ''}`} />
+                        <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-[#F0C679]' : ''}`} />
                         <span>{likes}</span>
                     </Button>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleComment}>

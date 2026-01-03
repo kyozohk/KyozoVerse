@@ -36,13 +36,13 @@ const Waveform = ({ isPlaying, currentTime, duration }: { isPlaying: boolean, cu
 
     return (
         <div className="flex items-center gap-[2px] h-16 md:h-20 lg:h-24 cursor-pointer">
-            {heights.map((height, index) => (
+            {heights.map((index, i) => (
                 <div
                     key={index}
                     className="flex-1 transition-all duration-75 rounded-full"
                     style={{
-                        height: `${height}%`,
-                        backgroundColor: index < playedBars ? '#3B82F6' : '#CCCCCC',
+                        height: `${heights[i]}%`,
+                        backgroundColor: i < playedBars ? '#3B82F6' : '#CCCCCC',
                         minWidth: '3px'
                     }}
                 />
@@ -82,7 +82,7 @@ export function ListenCard({ category, episode, duration: initialDuration, title
       return;
     }
     try {
-      const { liked, likesCount } = await toggleLike({userId: post.id, postId: user.uid, communityId: post.communityId!});
+      const { liked, likesCount } = await toggleLike(post.id, user.uid);
       setIsLiked(liked);
       setLikes(likesCount);
     } catch (error) {
@@ -187,7 +187,7 @@ export function ListenCard({ category, episode, duration: initialDuration, title
                 {episode} • {formatTime(duration)}
               </p>
             </div>
-            <h2 className="text-[#2d3748] leading-tight text-2xl font-bold">
+            <h2 className="text-[#2d3748] leading-tight text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
               {title}
             </h2>
             {summary && <p className="text-gray-600 text-sm line-clamp-2">{summary}</p>}
