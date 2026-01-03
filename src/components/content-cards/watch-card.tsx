@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -219,7 +218,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
             
             <div>
-            <h2 className="text-white font-medium uppercase tracking-wider text-xl mb-4 drop-shadow-lg" style={{ letterSpacing: '0.05em' }}>
+            <h2 className="text-white font-semibold uppercase tracking-wide text-2xl mb-4 drop-shadow-lg" style={{ letterSpacing: '0.045em' }}>
                 {title}
             </h2>
             <div className="flex items-center justify-between">
