@@ -7,7 +7,7 @@ import { CustomFormDialog, Input, Textarea, Button, Dropzone, Checkbox } from '@
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
-import { uploadFile } from '@/lib/upload-helper';
+import { uploadFile, deleteFileByUrl } from '@/lib/upload-helper';
 import { PostType } from './create-post-buttons';
 import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 import { type Post } from '@/lib/types';
@@ -34,10 +34,17 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+
+  // File states
   const [file, setFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  
+  // URL states for existing media
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPublic, setIsPublic] = useState(true);
 
   // Populate form when editing
   useEffect(() => {
@@ -45,16 +52,25 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       setTitle(editPost.title || '');
       setDescription(editPost.content.text || '');
       setIsPublic(editPost.visibility === 'public');
+      setMediaUrl(editPost.content.mediaUrls?.[0] || null);
+      setThumbnailUrl(editPost.content.thumbnailUrl || null);
     }
   }, [editPost]);
 
+  const resetState = () => {
+    setTitle('');
+    setDescription('');
+    setFile(null);
+    setThumbnailFile(null);
+    setMediaUrl(null);
+    setThumbnailUrl(null);
+    setIsPublic(true);
+    setIsSubmitting(false);
+  }
+
   useEffect(() => {
     if (!isOpen) {
-        setTitle('');
-        setDescription('');
-        setFile(null);
-        setThumbnailFile(null);
-        setIsPublic(true); // Reset to default (public) when dialog closes
+      resetState();
     }
   }, [isOpen]);
 
@@ -93,6 +109,16 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   };
 
+  const handleFileUpload = async (fileToUpload: File, type: 'media' | 'thumbnail') => {
+    const uploadPath = `community-posts/${communityId}/${type === 'media' ? postType : 'thumbnails'}`;
+    try {
+        const result = await uploadFile(fileToUpload, uploadPath);
+        return typeof result === 'string' ? result : result.url;
+    } catch (error) {
+        console.error(`Error uploading ${type} file:`, error);
+        throw new Error(`Failed to upload ${type} file. Please try again.`);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!user || !postType || !communityId) return;
@@ -102,97 +128,84 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       return;
     }
 
-    if (!editPost && (postType === 'audio' || postType === 'video') && !file) {
+    if (!editPost && (postType === 'audio' || postType === 'video' || postType === 'image') && !file) {
       alert(`Please upload a ${postType} file`);
       return;
     }
 
     setIsSubmitting(true);
 
-    let mediaUrl = '';
-    let thumbnailUrl = editPost?.content.thumbnailUrl || '';
-    
-    if (file) {
-      try {
-        const uploadResult = await uploadFile(file, communityId);
-        mediaUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.url || '';
-      } catch (error) {
-        alert(`Failed to upload media file. Please try again.`);
-        setIsSubmitting(false);
-        return;
-      }
-    }
-    
-    if (thumbnailFile) {
-        try {
-            const uploadResult = await uploadFile(thumbnailFile, communityId);
-            thumbnailUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.url || '';
-        } catch (error) {
-            alert(`Failed to upload thumbnail image. Please try again.`);
-            setIsSubmitting(false);
-            return;
-        }
-    }
-
     try {
-      const contentPayload: any = {
-        text: description,
-        mediaUrls: file ? [mediaUrl] : editPost?.content.mediaUrls || [],
-        fileType: file ? file.type : editPost?.content.fileType || ''
-      };
-      
-      if(postType === 'video'){
-        contentPayload.thumbnailUrl = thumbnailUrl;
-      }
+        let finalMediaUrl = mediaUrl;
+        let finalThumbnailUrl = thumbnailUrl;
 
-      if (editPost) {
-        const postRef = doc(db, 'blogs', editPost.id);
-        const updateData: any = {
-          title,
-          content: contentPayload,
-          visibility: isPublic ? 'public' : 'private',
-          updatedAt: serverTimestamp()
-        };
-        
-        await updateDoc(postRef, updateData);
-        console.log('Post updated successfully');
-      } else {
-        const postData = {
-          title,
-          content: contentPayload,
-          authorId: user.uid,
-          communityId: communityId,
-          communityHandle: communityHandle,
-          type: postType,
-          createdAt: serverTimestamp(),
-          likes: 0,
-          comments: 0,
-          visibility: isPublic ? 'public' : 'private'
-        };
-        
-        const docRef = await addDoc(collection(db, 'blogs'), postData);
-        
-        if (isPublic) {
-            const newPostForEmail: Post & { id: string } = {
-                ...postData,
-                id: docRef.id,
-                author: {
-                    userId: user.uid,
-                    displayName: user.displayName || 'Community Owner'
-                }
-            };
-            sendNewPostEmails(newPostForEmail);
+        // Handle media file update
+        if (file) {
+            // If there's a new file, upload it
+            finalMediaUrl = await handleFileUpload(file, 'media');
+            // If there was an old media URL, delete it from storage
+            if (mediaUrl && mediaUrl !== finalMediaUrl) {
+                await deleteFileByUrl(mediaUrl);
+            }
+        } else if (!mediaUrl && editPost?.content.mediaUrls?.[0]) {
+            // If mediaUrl is cleared and there was an old one, delete it
+            await deleteFileByUrl(editPost.content.mediaUrls[0]);
         }
-      }
-      
-      setIsSubmitting(false);
-      setIsOpen(false);
+
+        // Handle thumbnail file update (only for videos)
+        if (postType === 'video') {
+            if (thumbnailFile) {
+                finalThumbnailUrl = await handleFileUpload(thumbnailFile, 'thumbnail');
+                if (thumbnailUrl && thumbnailUrl !== finalThumbnailUrl) {
+                    await deleteFileByUrl(thumbnailUrl);
+                }
+            } else if (!thumbnailUrl && editPost?.content.thumbnailUrl) {
+                await deleteFileByUrl(editPost.content.thumbnailUrl);
+            }
+        }
+
+        const contentPayload: any = {
+          text: description,
+          mediaUrls: finalMediaUrl ? [finalMediaUrl] : [],
+          fileType: file?.type || editPost?.content.fileType || '',
+          thumbnailUrl: postType === 'video' ? finalThumbnailUrl : undefined,
+        };
+
+        if (editPost) {
+            await updateDoc(doc(db, 'blogs', editPost.id), {
+                title,
+                content: contentPayload,
+                visibility: isPublic ? 'public' : 'private',
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            const newPostData = {
+                title,
+                content: contentPayload,
+                authorId: user.uid,
+                communityId: communityId,
+                communityHandle: communityHandle,
+                type: postType,
+                createdAt: serverTimestamp(),
+                likes: 0,
+                comments: 0,
+                visibility: isPublic ? 'public' : 'private'
+            };
+            const docRef = await addDoc(collection(db, 'blogs'), newPostData);
+            if (isPublic) {
+              sendNewPostEmails({ ...newPostData, id: docRef.id, author: { userId: user.uid, displayName: user.displayName || '' } });
+            }
+        }
+        
+        setIsOpen(false);
     } catch (error) {
-      console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
-      alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
-      setIsSubmitting(false);
+        console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
+        alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
+    } finally {
+        setIsSubmitting(false);
     }
   };
+
 
   const getDialogTitle = () => {
     const action = editPost ? 'Edit' : 'Create';
@@ -254,9 +267,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                    {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
                       <Dropzone
                           onFileChange={setFile}
+                          onRemoveExisting={() => setMediaUrl(null)}
                           file={file}
                           accept={getFileInputAccept()}
                           fileType={postType === 'text' ? 'image' : postType || 'image'}
+                          existingImageUrl={mediaUrl}
                       />
                   )}
 
@@ -264,10 +279,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                     <Dropzone
                       label="Custom Thumbnail (Optional)"
                       onFileChange={setThumbnailFile}
+                      onRemoveExisting={() => setThumbnailUrl(null)}
                       file={thumbnailFile}
                       accept={{ 'image/*': [] }}
                       fileType="image"
-                      existingImageUrl={editPost?.content.thumbnailUrl}
+                      existingImageUrl={thumbnailUrl}
                     />
                   )}
                   
