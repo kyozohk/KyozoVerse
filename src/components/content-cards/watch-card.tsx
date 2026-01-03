@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Play, Volume2, ThumbsUp, MessageSquare, Share2, Lock, Pause, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
@@ -28,8 +28,41 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [thumbnail, setThumbnail] = useState<string>(imageUrl);
   const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const thumbnailVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Extract thumbnail from video
+  useEffect(() => {
+    if (post.content.mediaUrls?.[0] && thumbnailVideoRef.current) {
+      const video = thumbnailVideoRef.current;
+      
+      const handleLoadedData = () => {
+        video.currentTime = 1; // Seek to 1 second for better thumbnail
+      };
+      
+      const handleSeeked = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setThumbnail(thumbnailUrl);
+        }
+      };
+      
+      video.addEventListener('loadeddata', handleLoadedData);
+      video.addEventListener('seeked', handleSeeked);
+      
+      return () => {
+        video.removeEventListener('loadeddata', handleLoadedData);
+        video.removeEventListener('seeked', handleSeeked);
+      };
+    }
+  }, [post.content.mediaUrls]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,7 +120,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   };
   
   const cardStyle = {
-    backgroundImage: `url(${imageUrl})`,
+    backgroundImage: `url(${thumbnail})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   };
@@ -109,8 +142,20 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
 
   return (
     <>
-        <div className="relative bg-neutral-900 overflow-hidden shadow-md group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] min-h-[400px] rounded-lg" style={cardStyle}>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* Hidden video for thumbnail extraction */}
+        {post.content.mediaUrls?.[0] && (
+          <video
+            ref={thumbnailVideoRef}
+            src={post.content.mediaUrls[0]}
+            className="hidden"
+            preload="metadata"
+            muted
+          />
+        )}
+        
+        <div className="relative bg-neutral-900 overflow-hidden shadow-md group cursor-pointer transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] min-h-[400px] rounded-3xl" style={cardStyle}>
+        {/* Black overlay */}
+        <div className="absolute inset-0 bg-black/50" />
         
         {isPostCreator && (
             <div className="absolute top-2 right-2 flex gap-1 z-30">
@@ -137,8 +182,8 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
 
         <div className="relative z-10 p-4 md:p-6 flex flex-col justify-between h-full min-h-[400px]">
             <div className="flex justify-between">
-                <span className="px-2 py-1 md:px-2.5 md:py-1.5 text-[10px] md:text-xs uppercase tracking-wide bg-yellow-400 text-neutral-900 rounded-full shadow-md">
-                {category}
+                <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#F0C679] text-black rounded-full font-medium">
+                WATCH
                 </span>
                 {isPrivate && (
                     <div className="bg-red-500 rounded-full p-2 shadow-lg">
@@ -148,13 +193,13 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
             
             <div>
-            <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-xl md:text-2xl" style={{ letterSpacing: '-0.5px', fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 600 }}>
+            <h2 className="text-white leading-tight mb-4 drop-shadow-lg text-3xl font-bold">
                 {title}
             </h2>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleLike}>
-                        <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-yellow-400' : ''}`} />
+                        <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-[#F0C679' : ''}`} />
                         <span>{likes}</span>
                     </Button>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1 text-white" onClick={handleComment}>

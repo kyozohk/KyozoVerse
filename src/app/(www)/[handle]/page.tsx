@@ -8,7 +8,9 @@ import { db } from '@/firebase/firestore';
 import { getCommunityByHandle } from '@/lib/community-utils';
 import { type Post, type Community } from '@/lib/types';
 import { ReadCard } from '@/components/content-cards/read-card';
+import { ImageCard } from '@/components/content-cards/image-card';
 import { ListenCard } from '@/components/content-cards/listen-card';
+import { ListenCardHorizontal } from '@/components/content-cards/listen-card-horizontal';
 import { WatchCard } from '@/components/content-cards/watch-card';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import Link from 'next/link';
@@ -22,6 +24,8 @@ import { useAuthAndDialog } from '@/hooks/use-auth-and-dialog';
 import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
 import { SignupDialog } from '@/components/community/signup-dialog';
 import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
+import { ChevronDown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 function PostList({ filter }: { filter: string }) {
   const params = useParams();
@@ -80,10 +84,10 @@ function PostList({ filter }: { filter: string }) {
   
   const renderPost = (post: Post & { id: string }) => {
     return (
-      <div key={post.id} onClick={() => setSelectedPost(post)} className="break-inside-avoid mb-6 cursor-pointer">
+      <div key={post.id} onClick={() => setSelectedPost(post)} className={`break-inside-avoid mb-6 cursor-pointer`}>
         {post.type === 'audio' ? (
           <ListenCard
-            post={post}
+            post={{ ...post, _isPublicView: true }}
             category="Audio"
             episode="Listen"
             duration="0:00"
@@ -92,16 +96,26 @@ function PostList({ filter }: { filter: string }) {
           />
         ) : post.type === 'video' ? (
           <WatchCard
-            post={post}
+            post={{ ...post, _isPublicView: true }}
             category="Video"
             title={post.title || 'Untitled Video'}
             imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'}
             imageHint="video content"
           />
+        ) : post.type === 'image' ? (
+          <ImageCard
+            post={{ ...post, _isPublicView: true }}
+            category="Image"
+            readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`}
+            date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'}
+            title={post.title || 'Untitled'}
+            summary={post.content.text}
+            imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/image-placeholder/800/600'}
+          />
         ) : (
           <ReadCard
-            post={post}
-            category={post.type === 'image' ? 'Image' : 'Text'}
+            post={{ ...post, _isPublicView: true }}
+            category="Text"
             readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`}
             date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'}
             title={post.title || 'Untitled'}
@@ -128,10 +142,33 @@ function PostList({ filter }: { filter: string }) {
     return true;
   });
 
+  // Get first audio post for top placement, rest stay in feed
+  const firstAudioPost = filteredPosts.find(post => post.type === 'audio');
+  const feedPosts = firstAudioPost 
+    ? filteredPosts.filter(post => post.id !== firstAudioPost.id)
+    : filteredPosts;
+
   return (
     <>
+      {/* First audio post - full width at top */}
+      {firstAudioPost && (
+        <div className="mb-8">
+          <div onClick={() => setSelectedPost(firstAudioPost)} className="cursor-pointer">
+            <ListenCardHorizontal
+              post={{ ...firstAudioPost, _isPublicView: true }}
+              category="Audio"
+              episode="Listen"
+              duration="0:00"
+              title={firstAudioPost.title || 'Untitled Audio'}
+              summary={firstAudioPost.content.text}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* All other posts - masonry grid */}
       <div className="masonry-feed-columns">
-        {filteredPosts.map(renderPost)}
+        {feedPosts.map(renderPost)}
       </div>
       
       <PostDetailPanel
@@ -269,83 +306,102 @@ export default function PublicCommunityPage() {
   };
   
   return (
-    <div className="min-h-screen bg-no-repeat bg-cover bg-center" style={{ backgroundImage: `url(/bg/light_app_bg.png)` }}>
-      <div className="sticky top-0 z-50 relative w-full bg-transparent">
-        <div className="flex flex-row items-center w-full">
-          <div className="content-stretch flex items-center justify-between px-4 md:px-8 lg:px-12 py-3 md:py-3.5 lg:py-4 relative w-full">
-            <p className="font-['DM_Sans',sans-serif] font-bold leading-tight md:leading-[30px] lg:leading-[36.029px] relative shrink-0 text-[#93adae] text-[24px] md:text-[30px] lg:text-[36.696px] tracking-[-1px] md:tracking-[-1.2px] lg:tracking-[-1.3344px]">
-              {communityData?.name || 'Community'}
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-1 bg-white/50 backdrop-blur-sm rounded-full p-1">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'all'
-                      ? 'bg-white text-gray-800 shadow-sm'
-                      : 'bg-transparent text-gray-600 hover:bg-white/70'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter('read')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'read'
-                       ? 'bg-white text-gray-800 shadow-sm'
-                      : 'bg-transparent text-gray-600 hover:bg-white/70'
-                  }`}
-                >
-                  Read
-                </button>
-                <button
-                  onClick={() => setFilter('listen')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'listen'
-                       ? 'bg-white text-gray-800 shadow-sm'
-                      : 'bg-transparent text-gray-600 hover:bg-white/70'
-                  }`}
-                >
-                  Listen
-                </button>
-                <button
-                  onClick={() => setFilter('watch')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    filter === 'watch'
-                       ? 'bg-white text-gray-800 shadow-sm'
-                      : 'bg-transparent text-gray-600 hover:bg-white/70'
-                  }`}
-                >
-                  Watch
-                </button>
-              </div>
-              
-              {!authLoading && (
-                user ? (
-                  <>
-                    {!checkingMembership && !isMember && (
-                      <Button 
-                        onClick={handleJoinCommunity}
-                        disabled={joiningCommunity}
-                        className="bg-[#843484] hover:bg-[#6b2a6b]"
-                      >
-                        {joiningCommunity ? 'Joining...' : 'Join Community'}
-                      </Button>
-                    )}
-                    <UserMenu />
-                  </>
-                ) : (
-                  <>
-                    <Button variant="ghost" onClick={openSignInDialog}>Sign In</Button>
-                    <Button onClick={openSignUpDialog}>Join Community</Button>
-                  </>
-                )
-              )}
-            </div>
+    <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }}>
+      {/* 20% white overlay */}
+      <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
+      {/* Header */}
+      <div className="sticky top-0 z-50 backdrop-blur-sm relative">
+        <div className="w-full px-6 py-4 flex items-center justify-between">
+          {/* Left - Community Name with Dropdown */}
+          <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors group">
+            <span className="text-lg font-semibold uppercase tracking-wide">
+              {communityData?.name?.toUpperCase() || 'COMMUNITY'}
+            </span>
+            <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
+          </button>
+
+          {/* Center - Filter Buttons */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                filter === 'all'
+                  ? 'bg-gray-700 text-white shadow-md '
+                  : 'bg-white/60 text-gray-700 hover:bg-white/80 '
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter('read')}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                filter === 'read'
+                  ? 'bg-[#926B7F] text-white shadow-md'
+                  : 'bg-white/60 text-gray-600 hover:bg-white/80'
+              }`}
+            >
+              Read
+            </button>
+            <button
+              onClick={() => setFilter('listen')}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                filter === 'listen'
+                  ? 'bg-[#6E94B1] text-white shadow-md'
+                  : 'bg-white/60 text-gray-600 hover:bg-white/80'
+              }`}
+            >
+              Listen
+            </button>
+            <button
+              onClick={() => setFilter('watch')}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                filter === 'watch'
+                  ? 'bg-[#F0C679] text-black shadow-md'
+                  : 'bg-white/60 text-gray-600 hover:bg-white/80'
+              }`}
+            >
+              Watch
+            </button>
+          </div>
+
+          {/* Right - User Menu */}
+          <div className="flex items-center gap-3">
+            {!authLoading && (
+              user ? (
+                <>
+                  {!checkingMembership && !isMember && (
+                    <Button 
+                      onClick={handleJoinCommunity}
+                      disabled={joiningCommunity}
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-4"
+                    >
+                      {joiningCommunity ? 'Joining...' : 'Join'}
+                    </Button>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700 font-medium">{user.displayName || 'User'}</span>
+                    <Avatar className="h-8 w-8 cursor-pointer">
+                      <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                      <AvatarFallback className="bg-purple-100 text-purple-700 text-xs">
+                        {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" onClick={openSignInDialog} className="text-gray-700 hover:text-gray-900">Sign In</Button>
+                  <Button size="sm" onClick={openSignUpDialog} className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-4">Join</Button>
+                </>
+              )
+            )}
           </div>
         </div>
       </div>
-      <div id="grid-container" className="px-4 md:px-6 lg:px-8">
+
+      {/* Content Area with proper spacing */}
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 pt-8 pb-12">
         <Suspense fallback={<FeedSkeletons />}>
           <PostList filter={filter} />
         </Suspense>

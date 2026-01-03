@@ -101,7 +101,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
 
   return (
     <>
-      <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] rounded-lg" style={cardStyle}>
+      <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] rounded-3xl" style={cardStyle}>
         {isPostCreator && (
             <div className="absolute top-2 right-2 flex gap-1 z-20">
                 <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={(e) => {e.stopPropagation(); post._onEdit?.()}}>
@@ -130,10 +130,10 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
           <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
             <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
               <div className="flex items-center gap-2 md:gap-2.5">
-                <span className="px-2 py-1 md:px-2.5 md:py-1.5 text-[10px] md:text-xs uppercase tracking-wide bg-[#D946A6] text-white rounded-full shadow-md opacity-50">
-                  {category}
+                <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#926B7F] text-white rounded-full font-medium">
+                  READ
                 </span>
-                <p className="text-neutral-500 uppercase tracking-[0.3px] text-[10px] md:text-xs leading-4">
+                <p className="text-neutral-500 uppercase tracking-wide text-xs">
                   {readTime} {date && `• ${date}`}
                 </p>
                 {post.visibility === 'private' && (
@@ -142,7 +142,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
                   </span>
                 )}
               </div>
-              <h2 className="leading-[1.1] text-2xl md:text-4xl lg:text-5xl" style={{ letterSpacing: '-1.5px', fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 600, color: titleColor }}>
+              <h2 className="text-[#2d3748] leading-tight text-3xl font-bold">
                 {title}
               </h2>
             </div>
