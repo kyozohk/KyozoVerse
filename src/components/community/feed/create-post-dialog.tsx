@@ -132,12 +132,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
     }
 
+    // Keep the original postType - don't change text to image just because it has an image attachment
     let finalPostType = postType;
-    if (postType === 'text' && file) {
-      if (file.type.startsWith('image/')) finalPostType = 'image';
-      else if (file.type.startsWith('video/')) finalPostType = 'video';
-      else if (file.type.startsWith('audio/')) finalPostType = 'audio';
-    }
 
     try {
       if (editPost) {
