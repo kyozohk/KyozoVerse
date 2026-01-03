@@ -35,13 +35,12 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
 
   // Extract thumbnail from video
   useEffect(() => {
-    if (post.content.mediaUrls?.[0] && thumbnailVideoRef.current) {
-      const video = thumbnailVideoRef.current;
+    const video = thumbnailVideoRef.current;
+    if (post.content.mediaUrls?.[0] && video) {
       
       const handleLoadedData = () => {
-        // Seek to the middle of the video for a better thumbnail
         if (video.duration) {
-          video.currentTime = video.duration / 2;
+          video.currentTime = video.duration / 2; // Seek to the middle
         }
       };
       
