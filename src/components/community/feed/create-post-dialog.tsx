@@ -247,13 +247,12 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       title={getDialogTitle()}
       description={getDialogDescription()}
     >
-      <div className="flex flex-col h-full">
         {isSubmitting ? (
           <div className="flex-grow flex items-center justify-center">
             <CreatePostDialogSkeleton />
           </div>
         ) : (
-          <>
+          <div className="flex flex-col h-full">
             <div className="flex-grow space-y-4 overflow-y-auto pr-2">
               <Input 
                 label="Title"
@@ -319,9 +318,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
               </Button>
             </div>
-          </>
+          </div>
         )}
-      </div>
     </CustomFormDialog>
   );
 };
