@@ -210,7 +210,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
                 </span>
                 {isPrivate && (
                     <div className="bg-red-500 rounded-full p-2 shadow-lg">
-                        <Lock className="w-4 h-4 text-white" />
+                        <Lock className="w-4 w-4 text-white" />
                     </div>
                 )}
             </div>
