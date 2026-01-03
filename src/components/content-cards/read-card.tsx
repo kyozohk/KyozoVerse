@@ -21,12 +21,10 @@ interface ReadCardProps {
   date?: string;
   title: string;
   summary?: string;
-  fullText?: string;
-  titleColor?: string;
   isPrivate?: boolean;
 }
 
-export function ReadCard({ post, category, readTime, date, title, summary, fullText, titleColor = '#504c4c', isPrivate }: ReadCardProps) {
+export function ReadCard({ post, category, readTime, date, title, summary, isPrivate }: ReadCardProps) {
   const { user } = useCommunityAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
@@ -47,7 +45,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
       return;
     }
     try {
-      const { liked, likesCount } = await toggleLike(post.id, user.uid);
+      const { liked, likesCount } = await toggleLike({userId: user.uid, postId: post.id, communityId: post.communityId!});
       setIsLiked(liked);
       setLikes(likesCount);
     } catch (error) {
@@ -112,26 +110,12 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
                 </Button>
             </div>
         )}
-        {hasImage && (
-          <div className="relative w-full aspect-video">
-            <Image 
-              src={post.content.mediaUrls![0]} 
-              alt={post.title || "Post image"} 
-              fill 
-              className="object-cover"
-              onLoad={() => console.log('Image loaded successfully:', post.content.mediaUrls![0])}
-              onError={() => {
-                console.error('Image failed to load:', post.content.mediaUrls![0]);
-              }}
-            />
-          </div>
-        )}
         <div className="p-4 md:p-6 lg:p-8 h-full flex flex-col justify-between" style={innerDivStyle}>
           <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
             <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
               <div className="flex items-center gap-2 md:gap-2.5">
                 <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#926B7F] text-white rounded-full font-medium">
-                  READ
+                  {category}
                 </span>
                 <p className="text-neutral-500 uppercase tracking-wide text-xs">
                   {readTime} {date && `• ${date}`}
@@ -142,28 +126,14 @@ export function ReadCard({ post, category, readTime, date, title, summary, fullT
                   </span>
                 )}
               </div>
-              <h2 className="text-[#2d3748] leading-tight text-3xl font-bold">
+              <h2 className="text-[#2d3748] leading-tight text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
                 {title}
               </h2>
             </div>
-            {summary && <p className="text-[#504c4c] leading-relaxed text-sm md:text-base lg:text-lg italic line-clamp-3">{summary}</p>}
-            {fullText && <p className="text-[#504c4c] leading-relaxed text-sm md:text-base line-clamp-3">{fullText}</p>}
+            {summary && <p className="text-gray-600 leading-relaxed text-sm md:text-base line-clamp-3">{summary}</p>}
           </div>
           <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleLike}>
-                      <ThumbsUp className={`h-4 w-4 ${isLiked ? 'text-primary' : ''}`} />
-                      <span>{likes}</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleComment}>
-                      <MessageSquare className="h-4 w-4" />
-                      <span>{post.comments || 0}</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600" onClick={handleShare}>
-                      <Share2 className="h-4 w-4" />
-                  </Button>
-              </div>
+            <div className="flex items-center justify-end">
               <span className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm">Read Full Article →</span>
             </div>
           </div>

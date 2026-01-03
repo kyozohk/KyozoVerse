@@ -82,7 +82,7 @@ export function ListenCard({ category, episode, duration: initialDuration, title
       return;
     }
     try {
-      const { liked, likesCount } = await toggleLike(post.id, user.uid);
+      const { liked, likesCount } = await toggleLike({userId: post.id, postId: user.uid, communityId: post.communityId!});
       setIsLiked(liked);
       setLikes(likesCount);
     } catch (error) {
@@ -141,8 +141,8 @@ export function ListenCard({ category, episode, duration: initialDuration, title
     }
   };
 
-  const handleTimeUpdate = () => audioRef.current && setCurrentTime(audioRef.current.currentTime);
-  const handleLoadedMetadata = () => audioRef.current && setDuration(audioRef.current.duration);
+  const handleTimeUpdate = () => { if(audioRef.current) setCurrentTime(audioRef.current.currentTime); };
+  const handleLoadedMetadata = () => { if(audioRef.current) setDuration(audioRef.current.duration); };
   const handleAudioEnded = () => {
     setIsPlaying(false);
     setCurrentTime(0);
@@ -181,7 +181,7 @@ export function ListenCard({ category, episode, duration: initialDuration, title
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#6E94B1] text-white rounded-full font-medium">
-                LISTEN
+                {category}
               </span>
               <p className="text-neutral-500 uppercase tracking-wide text-xs">
                 {episode} • {formatTime(duration)}

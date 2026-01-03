@@ -37,9 +37,9 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
       return;
     }
     try {
-      await toggleLike({ userId: user.uid, postId: post.id, communityId: post.communityId || '' });
-      setIsLiked(!isLiked);
-      setLikes(isLiked ? likes - 1 : likes + 1);
+      const { liked, likesCount } = await toggleLike({ userId: user.uid, postId: post.id, communityId: post.communityId || '' });
+      setIsLiked(liked);
+      setLikes(likesCount);
     } catch (error) {
       console.error('Error toggling like:', error);
       toast({ title: "Failed to like post", variant: "destructive" });
@@ -102,7 +102,7 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
           </div>
           
           <div className="flex-1">
-            <h2 className="text-white leading-tight mb-3 drop-shadow-lg text-3xl font-bold">
+            <h2 className="text-white leading-tight mb-3 drop-shadow-lg text-3xl font-bold" style={{ fontFamily: 'var(--display-font)'}}>
               {title}
             </h2>
             {summary && (

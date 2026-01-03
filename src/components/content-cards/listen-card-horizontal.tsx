@@ -66,17 +66,17 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
-      audioRef.current.addEventListener('ended', handleAudioEnded);
+      const currentAudio = audioRef.current;
+      currentAudio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      currentAudio.addEventListener('timeupdate', handleTimeUpdate);
+      currentAudio.addEventListener('ended', handleAudioEnded);
+    
+      return () => {
+        currentAudio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        currentAudio.removeEventListener('timeupdate', handleTimeUpdate);
+        currentAudio.removeEventListener('ended', handleAudioEnded);
+      };
     }
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
-        audioRef.current.removeEventListener('ended', handleAudioEnded);
-      }
-    };
   }, []);
 
   const handleLoadedMetadata = () => {
@@ -184,13 +184,13 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
           <div className="w-[40%] flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#6E94B1] text-white rounded-full font-medium">
-                LISTEN
+                {category}
               </span>
               <p className="text-neutral-500 uppercase tracking-wide text-xs">
                 {episode} • {formatTime(duration)}
               </p>
             </div>
-            <h2 className="text-[#2d3748] leading-tight text-3xl font-bold">
+            <h2 className="text-[#2d3748] leading-tight text-2xl font-bold">
               {title}
             </h2>
           </div>
@@ -209,9 +209,6 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
             ref={audioRef} 
             src={post.content.mediaUrls?.[0]} 
             className="hidden"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleAudioEnded}
         />
       </div>
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
