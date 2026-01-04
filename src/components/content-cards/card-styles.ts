@@ -17,5 +17,5 @@ export const cardBodyStyle = {
 };
 
 // Color constants
-export const CARD_TITLE_COLOR = '#2d2d2d';
+export const CARD_TITLE_COLOR = '#4b4848ff';
 export const CARD_BODY_COLOR = '#5a5a5a';

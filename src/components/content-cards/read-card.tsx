@@ -93,7 +93,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
                   </span>
                 )}
               </div>
-              <h2 className="text-4xl" style={{ ...cardTitleStyle, color: CARD_TITLE_COLOR }}>
+              <h2 className="text-4xl font-black" style={{ ...cardTitleStyle, color: CARD_TITLE_COLOR }}>
                 {title}
               </h2>
             </div>

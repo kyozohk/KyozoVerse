@@ -12,7 +12,7 @@ import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-ut
 import { type Post, type User, type Community } from '@/lib/types';
 import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
-import { Pencil, Mic, Video, Image } from 'lucide-react';
+import { Pencil, Mic, Video, Image, ChevronDown } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { ReadCard } from '@/components/content-cards/read-card';
@@ -195,20 +195,13 @@ export default function CommunityFeedPage() {
         {/* Header */}
         <div className="sticky top-0 z-50 backdrop-blur-sm relative">
           <div className="w-full px-6 py-4 flex items-center justify-between">
-            {/* Left - Public View Link */}
-            <a
-              href={`/${handle}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-700 hover:text-gray-900 hover:underline flex items-center gap-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-              Public View
-            </a>
+            {/* Left - Community Name with Dropdown */}
+            <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors group">
+              <span className="text-lg font-semibold uppercase tracking-wide">
+                {community?.name?.toUpperCase() || 'COMMUNITY'}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
+            </button>
             
             {/* Center - Filter Buttons */}
             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
@@ -254,8 +247,20 @@ export default function CommunityFeedPage() {
               </button>
             </div>
             
-            {/* Right - Placeholder for consistency */}
-            <div className="w-24"></div>
+            {/* Right - Public View Link */}
+            <a
+              href={`/${handle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray-700 hover:text-gray-900 hover:underline flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Public View
+            </a>
           </div>
         </div>
         
