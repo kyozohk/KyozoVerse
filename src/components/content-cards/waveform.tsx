@@ -28,7 +28,7 @@ export const Waveform = ({ isPlaying, currentTime, duration, barCount = 80 }: Wa
           className="flex-1 transition-all duration-75 rounded-full"
           style={{
             height: `${height}%`,
-            backgroundColor: i < playedBars ? '#3B82F6' : '#CCCCCC',
+            backgroundColor: i < playedBars ? '#6E94B1' : '#CCCCCC',
             minWidth: '3px'
           }}
         />

@@ -167,7 +167,7 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
           
           {/* Right side - Playback controls (60% width) */}
           <div className="flex-1 flex items-center gap-4">
-            <button onClick={togglePlayPause} className="w-14 h-14 rounded-full bg-[#6E94B1] hover:bg-blue-600 flex items-center justify-center transition-all shadow-lg flex-shrink-0">
+            <button onClick={togglePlayPause} className="w-14 h-14 rounded-full bg-[#6E94B1] hover:bg-[#5a7a94] flex items-center justify-center transition-all shadow-lg flex-shrink-0">
               {isPlaying ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-1" />}
             </button>
             <div className="flex-1">

@@ -34,14 +34,28 @@ export async function POST(request: Request) {
     console.log(`To: ${Array.isArray(to) ? `${to.length} recipients` : to}`);
     console.log(`Subject: ${subject}`);
     
-    const msg = {
-      to,
-      from,
-      subject,
-      html,
-    };
-
-    const [response] = await sgMail.send(msg);
+    // SendGrid requires different handling for single vs multiple recipients
+    let response;
+    if (Array.isArray(to) && to.length > 1) {
+      // For multiple recipients, use sendMultiple to send individual emails
+      const msg = {
+        to,
+        from,
+        subject,
+        html,
+      };
+      const responses = await sgMail.sendMultiple(msg);
+      response = responses[0]; // Get first response for status check
+    } else {
+      // For single recipient
+      const msg = {
+        to: Array.isArray(to) ? to[0] : to,
+        from,
+        subject,
+        html,
+      };
+      [response] = await sgMail.send(msg);
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       console.log(`Email sent successfully! Status code: ${response.statusCode}`);
@@ -58,6 +72,7 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Error processing email request:', error);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     
     let errorMessage = 'An unexpected error occurred.';
     let errorDetails = {};
@@ -65,6 +80,7 @@ export async function POST(request: Request) {
     if (error.response) {
       errorMessage = 'SendGrid API Error';
       errorDetails = error.response.body;
+      console.error('SendGrid response body:', JSON.stringify(error.response.body, null, 2));
     } else if (error instanceof Error) {
       errorMessage = error.message;
       errorDetails = { name: error.name, stack: error.stack };

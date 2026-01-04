@@ -8,7 +8,7 @@
 const http = require('http');
 
 const emailData = {
-  to: 'ashok@kyozo.space',
+  to: 'ashok@kyozo.com',
   subject: 'Test Email from Kyozo App via SendGrid',
   html: '<h1>Hello!</h1><p>This is a test email sent from the Kyozo application using <strong>SendGrid</strong>.</p>',
 };

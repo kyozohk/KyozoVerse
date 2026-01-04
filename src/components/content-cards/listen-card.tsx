@@ -165,7 +165,7 @@ export function ListenCard({ category, episode, duration: initialDuration, title
           
           {/* Bottom - Playback controls */}
           <div className="flex items-center gap-4">
-            <button onClick={togglePlayPause} className="w-12 h-12 rounded-full bg-[#6E94B1] hover:bg-blue-600 flex items-center justify-center transition-all shadow-lg flex-shrink-0">
+            <button onClick={togglePlayPause} className="w-12 h-12 rounded-full bg-[#6E94B1] hover:bg-[#5a7a94] flex items-center justify-center transition-all shadow-lg flex-shrink-0">
               {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white ml-1" />}
             </button>
             <div className="flex-1">

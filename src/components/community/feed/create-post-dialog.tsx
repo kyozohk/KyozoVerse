@@ -192,8 +192,12 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           text: description,
           mediaUrls: finalMediaUrl ? [finalMediaUrl] : [],
           fileType: file?.type || editPost?.content.fileType || '',
-          thumbnailUrl: postType === 'video' ? finalThumbnailUrl : undefined,
         };
+        
+        // Only add thumbnailUrl for video posts
+        if (postType === 'video' && finalThumbnailUrl) {
+          contentPayload.thumbnailUrl = finalThumbnailUrl;
+        }
 
         if (editPost) {
             await updateDoc(doc(db, 'blogs', editPost.id), {
