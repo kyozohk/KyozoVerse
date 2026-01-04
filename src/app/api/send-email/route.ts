@@ -1,19 +1,20 @@
-import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
 
-// Initialize Resend with API key
-// Note: In production, use environment variables for API keys
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+import { NextResponse } from 'next/server';
+import sgMail from '@sendgrid/mail';
+
+// Set the SendGrid API key
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 export async function POST(request: Request) {
   try {
-    // Check if the API key is defined
-    if (!process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY is not defined in environment variables');
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('SENDGRID_API_KEY is not defined in environment variables');
       return NextResponse.json({ error: 'Email service configuration error' }, { status: 500 });
     }
     
-    // Parse the request body with error handling
     let body;
     try {
       body = await request.json();
@@ -22,48 +23,65 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
     }
     
-    // Use the verified domain onboard.kyozo.space instead of kyozo.com
-    const { to, subject, html, from = 'notifications@onboard.kyozo.space' } = body;
+    const { to, subject, html, from = 'dev@kyozo.com' } = body;
 
     if (!to || !subject || !html) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    console.log(`\n==== SENDING EMAIL VIA RESEND API ====`);
+    console.log(`\n==== SENDING EMAIL VIA SENDGRID API ====`);
     console.log(`From: ${from}`);
-    console.log(`To: ${to}`);
+    console.log(`To: ${Array.isArray(to) ? `${to.length} recipients` : to}`);
     console.log(`Subject: ${subject}`);
-    console.log(`API Key: ${process.env.RESEND_API_KEY ? '✓ Present' : '✗ Missing'}`);
     
-    // Send email using Resend
-    const { data, error } = await resend.emails.send({
-      from,
-      to,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error('Error sending email via Resend API:', error);
-      console.log(`==================================\n`);
-      return NextResponse.json({ error: 'Failed to send email', details: error }, { status: 500 });
+    // SendGrid requires different handling for single vs multiple recipients
+    let response;
+    if (Array.isArray(to) && to.length > 1) {
+      // For multiple recipients, use sendMultiple to send individual emails
+      const msg = {
+        to,
+        from,
+        subject,
+        html,
+      };
+      const responses = await sgMail.sendMultiple(msg);
+      response = responses[0]; // Get first response for status check
+    } else {
+      // For single recipient
+      const msg = {
+        to: Array.isArray(to) ? to[0] : to,
+        from,
+        subject,
+        html,
+      };
+      [response] = await sgMail.send(msg);
     }
-    
-    console.log(`Email sent successfully! ID: ${data?.id}`);
-    console.log(`==================================\n`);
 
-    return NextResponse.json({ 
-      message: 'Email sent successfully', 
-      id: data?.id 
-    }, { status: 200 });
-  } catch (error) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      console.log(`Email sent successfully! Status code: ${response.statusCode}`);
+      console.log(`==================================\n`);
+      return NextResponse.json({ 
+        message: 'Email sent successfully', 
+        id: response.headers['x-message-id'] 
+      }, { status: 200 });
+    } else {
+      console.error('Error sending email via SendGrid API:', response.body);
+      console.log(`==================================\n`);
+      return NextResponse.json({ error: 'Failed to send email', details: response.body }, { status: response.statusCode });
+    }
+
+  } catch (error: any) {
     console.error('Error processing email request:', error);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     
-    // Provide more detailed error information
     let errorMessage = 'An unexpected error occurred.';
     let errorDetails = {};
     
-    if (error instanceof Error) {
+    if (error.response) {
+      errorMessage = 'SendGrid API Error';
+      errorDetails = error.response.body;
+      console.error('SendGrid response body:', JSON.stringify(error.response.body, null, 2));
+    } else if (error instanceof Error) {
       errorMessage = error.message;
       errorDetails = { name: error.name, stack: error.stack };
     }

@@ -57,6 +57,8 @@ export type Post = {
   content: {
     text?: string;
     mediaUrls?: string[];
+    thumbnailUrl?: string;
+    fileType?: string;
   };
   authorId: string;
   author: User; // Denormalized author data
@@ -67,6 +69,7 @@ export type Post = {
   createdAt: any; // Firestore Timestamp
   visibility: 'public' | 'private' | 'members-only';
 };
+
 
 
 

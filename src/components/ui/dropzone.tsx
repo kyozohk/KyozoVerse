@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 interface DropzoneProps {
   onFileChange: (file: File | null) => void;
+  onRemoveExisting?: () => void;
   file: File | null;
   accept?: Accept;
   fileType?: 'image' | 'audio' | 'video' | 'text';
@@ -18,7 +19,7 @@ interface DropzoneProps {
   className?: string;
 }
 
-export function Dropzone({ onFileChange, file, accept, fileType = 'image', existingImageUrl, label, className }: DropzoneProps) {
+export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileType = 'image', existingImageUrl, label, className }: DropzoneProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,6 +64,16 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image', exist
     accept,
     maxFiles: 1,
   });
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (file) {
+      onFileChange(null);
+    } else if (existingImageUrl && onRemoveExisting) {
+      onRemoveExisting();
+      setPreviewUrl(null);
+    }
+  }
   
   const getPreview = () => {
       if (!previewUrl) return null;
@@ -147,10 +158,7 @@ export function Dropzone({ onFileChange, file, accept, fileType = 'image', exist
                     variant="destructive"
                     size="icon"
                     className="absolute top-1 right-1 h-6 w-6 z-10"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onFileChange(null)
-                    }}
+                    onClick={handleRemove}
                 >
                     <X className="h-4 w-4" />
                 </Button>

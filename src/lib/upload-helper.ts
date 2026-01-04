@@ -1,5 +1,6 @@
 import { getAuth } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { storage } from '@/firebase/storage';
 
 /**
  * Upload file response type
@@ -64,9 +65,9 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
               
               // Return the full response object if it contains additional metadata
               if (response.fileType || response.fileCategory) {
-                console.log('Upload response includes metadata:', { 
+                console.log('Upload response includes metadata:', {
                   fileType: response.fileType, 
-                  fileCategory: response.fileCategory 
+                  fileCategory: response.fileCategory
                 });
                 resolve({
                   url: response.url,
@@ -114,5 +115,28 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
   } catch (error) {
     console.error('Upload error:', error);
     throw error;
+  }
+}
+
+/**
+ * Delete a file from Firebase Storage by its URL
+ */
+export async function deleteFileByUrl(url: string): Promise<void> {
+  if (!url) return;
+
+  try {
+    const fileRef = ref(storage, url);
+    await deleteObject(fileRef);
+    console.log(`File deleted successfully from: ${url}`);
+  } catch (error: any) {
+    // It's common for this to fail if the URL isn't a direct storage ref,
+    // so we handle it gracefully.
+    if (error.code === 'storage/object-not-found') {
+      console.warn(`File not found at ${url}, it may have already been deleted.`);
+    } else {
+      console.error(`Failed to delete file from URL ${url}:`, error);
+      // We don't re-throw because failing to delete an old file
+      // shouldn't block the user's current action (e.g., saving a post).
+    }
   }
 }

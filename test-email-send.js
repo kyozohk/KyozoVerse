@@ -1,6 +1,6 @@
 
 /**
- * Simple test script to send an email via the local API using Resend.
+ * Simple test script to send an email via the local API using SendGrid.
  * 
  * Usage: node test-email-send.js
  */
@@ -9,8 +9,8 @@ const http = require('http');
 
 const emailData = {
   to: 'ashok@kyozo.com',
-  subject: 'Test Email from Kyozo App',
-  html: '<h1>Hello!</h1><p>This is a test email sent from the Kyozo application using Resend.</p>',
+  subject: 'Test Email from Kyozo App via SendGrid',
+  html: '<h1>Hello!</h1><p>This is a test email sent from the Kyozo application using <strong>SendGrid</strong>.</p>',
 };
 
 const payloadString = JSON.stringify(emailData);
@@ -47,7 +47,7 @@ const req = http.request(options, (res) => {
       console.log('---');
       console.log('Parsed Response:', JSON.stringify(jsonData, null, 2));
       
-      if (res.statusCode === 200) {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
         console.log('✅ Email sent successfully!');
         if (jsonData.id) {
           console.log('Message ID:', jsonData.id);
@@ -56,6 +56,9 @@ const req = http.request(options, (res) => {
         console.log('❌ Email failed to send');
         if (jsonData.error) {
           console.log('Error:', jsonData.error);
+        }
+        if (jsonData.details) {
+          console.log('Details:', jsonData.details);
         }
       }
     } catch (e) {

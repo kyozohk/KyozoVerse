@@ -8,7 +8,7 @@ export function VideoPostCardSkeleton() {
   };
   
   return (
-    <div className="relative bg-neutral-900 overflow-hidden shadow-md border border-neutral-200 min-h-[400px]" style={cardStyle}>
+    <div className="relative bg-neutral-900 overflow-hidden shadow-md border border-neutral-200 min-h-[400px] rounded-3xl" style={cardStyle}>
       <Skeleton className="absolute inset-0 w-full h-full" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       
@@ -18,7 +18,7 @@ export function VideoPostCardSkeleton() {
         </div>
         
         <div>
-          <Skeleton className="h-7 w-3/4 mb-4" />
+          <Skeleton className="h-8 w-3/4 mb-4" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
                 <Skeleton className="h-8 w-16 rounded-md" />
@@ -26,7 +26,7 @@ export function VideoPostCardSkeleton() {
                 <Skeleton className="h-8 w-16 rounded-md" />
             </div>
             <div className="flex items-center gap-2">
-              <Skeleton className="h-10 w-10" />
+              <Skeleton className="h-10 w-10 rounded-full" />
             </div>
           </div>
         </div>

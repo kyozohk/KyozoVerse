@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,10 +7,12 @@ import { CustomFormDialog, Input, Textarea, Button, Dropzone, Checkbox } from '@
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
-import { uploadFile } from '@/lib/upload-helper';
+import { uploadFile, deleteFileByUrl } from '@/lib/upload-helper';
 import { PostType } from './create-post-buttons';
 import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 import { type Post } from '@/lib/types';
+import { getCommunityMembers } from '@/lib/community-utils';
+import { renderPostToHtml } from '@/lib/email-utils';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -31,172 +34,206 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
+
+  // File states
+  const [file, setFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  
+  // URL states for existing media
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Populate form when editing
   useEffect(() => {
-    if (editPost) {
+    if (isOpen && editPost) {
       setTitle(editPost.title || '');
       setDescription(editPost.content.text || '');
       setIsPublic(editPost.visibility === 'public');
+      setMediaUrl(editPost.content.mediaUrls?.[0] || null);
+      setThumbnailUrl(editPost.content.thumbnailUrl || null);
+    } else {
+        resetState();
     }
-  }, [editPost]);
+  }, [editPost, isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) {
-        setTitle('');
-        setDescription('');
-        setFile(null);
-        setIsPublic(true); // Reset to default (public) when dialog closes
+  const resetState = () => {
+    setTitle('');
+    setDescription('');
+    setFile(null);
+    setThumbnailFile(null);
+    setMediaUrl(null);
+    setThumbnailUrl(null);
+    setIsPublic(true);
+    setIsSubmitting(false);
+  }
+
+  const handleClose = () => {
+    resetState();
+    setIsOpen(false);
+  }
+
+  const sendNewPostEmails = async (post: Post & { id: string }) => {
+    try {
+      console.log('📬 Fetching members for email notification...');
+      const members = await getCommunityMembers(communityId);
+      const recipients = members
+        .map(m => m.userDetails?.email)
+        .filter((email): email is string => !!email);
+
+      if (recipients.length === 0) {
+        console.log('📬 No members with emails found to notify.');
+        return;
+      }
+
+      console.log(`📬 Sending new post notification to ${recipients.length} members.`);
+
+      const postHtml = renderPostToHtml(post, communityHandle);
+
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: recipients,
+          subject: `New Post in ${post.communityHandle}: ${post.title}`,
+          html: postHtml,
+        }),
+      });
+
+      console.log('✅ Emails sent successfully.');
+    } catch (error) {
+      console.error('❌ Error sending new post emails:', error);
     }
-  }, [isOpen]);
+  };
 
+  const handleFileUpload = async (fileToUpload: File, type: 'media' | 'thumbnail') => {
+    console.log(`📤 Uploading ${type} file:`, {
+      fileName: fileToUpload.name,
+      fileSize: fileToUpload.size,
+      fileType: fileToUpload.type,
+      communityId
+    });
+    try {
+        const result = await uploadFile(fileToUpload, communityId);
+        const url = typeof result === 'string' ? result : result.url;
+        console.log(`✅ ${type} file uploaded successfully:`, url);
+        return url;
+    } catch (error: any) {
+        console.error(`❌ Error uploading ${type} file:`, {
+          error,
+          errorMessage: error?.message,
+          errorCode: error?.code,
+          errorStack: error?.stack,
+          fileName: fileToUpload.name,
+          communityId
+        });
+        throw new Error(`Failed to upload ${type} file: ${error?.message || 'Unknown error'}`);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!user || !postType || !communityId) return;
 
-    // Validate required fields
     if (!title.trim()) {
       alert('Please enter a title for your post');
       return;
     }
 
-    // Validate file for media posts (only if creating new post)
-    if (!editPost && (postType === 'audio' || postType === 'video') && !file) {
+    if (!editPost && (postType === 'audio' || postType === 'video' || postType === 'image') && !file) {
       alert(`Please upload a ${postType} file`);
       return;
     }
 
     setIsSubmitting(true);
 
-    let mediaUrl = '';
-    let fileCategory = '';
-    let fileType = '';
-    
-    // Only upload new file if one was selected
-    if (file) {
-      try {
-        console.log(`Uploading ${postType} file using server-side API:`, file.name, file.type);
-        const uploadResult = await uploadFile(file, communityId);
-        
-        if (typeof uploadResult === 'string') {
-          mediaUrl = uploadResult;
-          console.log('Upload successful, URL:', mediaUrl);
-        } else {
-          // Handle case where uploadFile returns an object with url
-          mediaUrl = uploadResult.url || '';
-          fileCategory = uploadResult.fileCategory || '';
-          fileType = uploadResult.fileType || '';
-          console.log('Upload successful:', { mediaUrl, fileCategory, fileType });
-        }
-      } catch (error) {
-        console.error('Upload failed:', error);
-        alert(`Failed to upload ${postType} file. Please try again.`);
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
-    // Determine final post type
-    let finalPostType = postType;
-    if (postType === 'text' && file) {
-      if (file.type.startsWith('image/')) {
-        finalPostType = 'image';
-      } else if (file.type.startsWith('video/')) {
-        finalPostType = 'video';
-      } else if (file.type.startsWith('audio/')) {
-        finalPostType = 'audio';
-      }
-    }
-
     try {
-      if (editPost) {
-        // Update existing post
-        const postRef = doc(db, 'blogs', editPost.id);
-        const updateData: any = {
-          title,
-          content: {
-            text: description,
-            mediaUrls: file ? [mediaUrl] : editPost.content.mediaUrls || [],
-          },
-          visibility: isPublic ? 'public' : 'private',
-          updatedAt: serverTimestamp()
+        let finalMediaUrl = mediaUrl;
+        let finalThumbnailUrl = thumbnailUrl;
+
+        // Handle media file update
+        if (file) {
+            // If there's a new file, upload it
+            finalMediaUrl = await handleFileUpload(file, 'media');
+            // If there was an old media URL, delete it from storage
+            if (mediaUrl && mediaUrl !== finalMediaUrl) {
+                await deleteFileByUrl(mediaUrl);
+            }
+        } else if (!mediaUrl && editPost?.content.mediaUrls?.[0]) {
+            // If mediaUrl is cleared and there was an old one, delete it
+            await deleteFileByUrl(editPost.content.mediaUrls[0]);
+        }
+
+        // Handle thumbnail file update (only for videos)
+        if (postType === 'video') {
+            console.log('🎬 Processing video thumbnail:', {
+              hasThumbnailFile: !!thumbnailFile,
+              currentThumbnailUrl: thumbnailUrl,
+              editPostThumbnailUrl: editPost?.content.thumbnailUrl
+            });
+            if (thumbnailFile) {
+                console.log('📸 Uploading new thumbnail...');
+                finalThumbnailUrl = await handleFileUpload(thumbnailFile, 'thumbnail');
+                console.log('✅ Thumbnail uploaded:', finalThumbnailUrl);
+                if (thumbnailUrl && thumbnailUrl !== finalThumbnailUrl) {
+                    console.log('🗑️ Deleting old thumbnail:', thumbnailUrl);
+                    await deleteFileByUrl(thumbnailUrl);
+                }
+            } else if (!thumbnailUrl && editPost?.content.thumbnailUrl) {
+                console.log('🗑️ Deleting removed thumbnail:', editPost.content.thumbnailUrl);
+                await deleteFileByUrl(editPost.content.thumbnailUrl);
+            }
+        }
+
+        const contentPayload: any = {
+          text: description,
+          mediaUrls: finalMediaUrl ? [finalMediaUrl] : [],
+          fileType: file?.type || editPost?.content.fileType || '',
         };
         
-        // Check community membership for debugging
-        const memberDocId = `${user.uid}_${editPost.communityId}`;
-        console.log('Editing post:', {
-          postId: editPost.id,
-          currentAuthorId: editPost.authorId,
-          currentUserId: user?.uid,
-          userEmail: user?.email,
-          isAuthor: editPost.authorId === user?.uid,
-          currentCommunityId: editPost.communityId,
-          currentCommunityHandle: editPost.communityHandle,
-          currentVisibility: editPost.visibility,
-          newVisibility: isPublic ? 'public' : 'private',
-          memberDocId: memberDocId,
-          updateData
-        });
-        
-        // Check if user is member/admin
-        try {
-          const { doc: firestoreDoc, getDoc } = await import('firebase/firestore');
-          const memberRef = firestoreDoc(db, 'communityMembers', memberDocId);
-          const memberSnap = await getDoc(memberRef);
-          if (memberSnap.exists()) {
-            console.log('User membership data:', memberSnap.data());
-          } else {
-            console.warn('User is NOT a member of this community!', memberDocId);
-          }
-        } catch (err) {
-          console.error('Failed to check membership:', err);
+        // Only add thumbnailUrl for video posts
+        if (postType === 'video' && finalThumbnailUrl) {
+          contentPayload.thumbnailUrl = finalThumbnailUrl;
+        }
+
+        if (editPost) {
+            await updateDoc(doc(db, 'blogs', editPost.id), {
+                title,
+                content: contentPayload,
+                visibility: isPublic ? 'public' : 'private',
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            const newPostData = {
+                title,
+                content: contentPayload,
+                authorId: user.uid,
+                communityId: communityId,
+                communityHandle: communityHandle,
+                type: postType,
+                createdAt: serverTimestamp(),
+                likes: 0,
+                comments: 0,
+                visibility: isPublic ? 'public' : 'private'
+            };
+            const docRef = await addDoc(collection(db, 'blogs'), newPostData);
+            if (isPublic) {
+              sendNewPostEmails({ ...newPostData, id: docRef.id, author: { userId: user.uid, displayName: user.displayName || '' } });
+            }
         }
         
-        await updateDoc(postRef, updateData);
-        console.log('Post updated successfully');
-      } else {
-        // Create new post
-        const postData = {
-          title,
-          content: {
-            text: description,
-            mediaUrls: file ? [mediaUrl] : [],
-            fileType: file ? file.type : ''
-          },
-          authorId: user.uid,
-          communityId: communityId,
-          communityHandle: communityHandle,
-          type: finalPostType,
-          createdAt: serverTimestamp(),
-          likes: 0,
-          comments: 0,
-          visibility: isPublic ? 'public' : 'private'
-        };
-        
-        console.log('Creating post:', {
-          authorId: user.uid,
-          userEmail: user.email,
-          communityId,
-          communityHandle,
-          visibility: isPublic ? 'public' : 'private',
-          type: finalPostType
-        });
-        
-        await addDoc(collection(db, 'blogs'), postData);
-        console.log('Post created successfully:', finalPostType);
-      }
-      
-      setIsSubmitting(false);
-      setIsOpen(false);
+        handleClose();
     } catch (error) {
-      console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
-      alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
-      setIsSubmitting(false);
+        console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
+        alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
+    } finally {
+        setIsSubmitting(false);
     }
   };
+
 
   const getDialogTitle = () => {
     const action = editPost ? 'Edit' : 'Create';
@@ -219,10 +256,9 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
   }
 
-  // Get file input accept object based on post type
   const getFileInputAccept = () => {
     switch (postType) {
-        case 'text': // Allow image for text posts
+        case 'text':
         case 'image': 
             return { 'image/*': [] };
         case 'audio': return { 'audio/*': [] };
@@ -234,66 +270,81 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={() => setIsOpen(false)}
+      onClose={handleClose}
       title={getDialogTitle()}
       description={getDialogDescription()}
     >
         {isSubmitting ? (
-          <CreatePostDialogSkeleton />
+          <div className="flex-grow flex items-center justify-center">
+            <CreatePostDialogSkeleton />
+          </div>
         ) : (
           <div className="flex flex-col h-full">
-              <div className="flex-grow space-y-4">
-                  <Input 
-                      label="Title"
-                      placeholder="Title" 
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)} 
-                  />
-                  <Textarea 
-                      label="Description"
-                      placeholder="Description" 
-                      value={description} 
-                      onChange={(e) => setDescription(e.target.value)} 
-                      rows={6}
-                  />
-                   {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
-                      <Dropzone
-                          onFileChange={setFile}
-                          file={file}
-                          accept={getFileInputAccept()}
-                          fileType={postType === 'text' ? 'image' : postType || 'image'}
-                      />
-                  )}
-                  
-                  <div className="mt-4">
-                    <Checkbox
-                      label="Make this post public"
-                      checked={isPublic}
-                      onCheckedChange={setIsPublic}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1 ml-6">
-                      {isPublic ? 
-                        'Public posts are visible to everyone in the community' : 
-                        'Private posts are only visible to you and community admins'}
-                    </p>
-                  </div>
+            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
+              <Input 
+                label="Title"
+                placeholder="Title" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+              />
+              <Textarea 
+                label="Description"
+                placeholder="Description" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                rows={6}
+              />
+              {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
+                <Dropzone
+                  onFileChange={setFile}
+                  onRemoveExisting={() => setMediaUrl(null)}
+                  file={file}
+                  accept={getFileInputAccept()}
+                  fileType={postType === 'text' ? 'image' : postType || 'image'}
+                  existingImageUrl={mediaUrl}
+                />
+              )}
+              {postType === 'video' && (
+                <Dropzone
+                  label="Custom Thumbnail (Optional)"
+                  onFileChange={setThumbnailFile}
+                  onRemoveExisting={() => setThumbnailUrl(null)}
+                  file={thumbnailFile}
+                  accept={{ 'image/*': [] }}
+                  fileType="image"
+                  existingImageUrl={thumbnailUrl}
+                />
+              )}
+              <div className="mt-4">
+                <Checkbox
+                  label="Make this post public"
+                  checked={isPublic}
+                  onCheckedChange={setIsPublic}
+                />
+                <p className="text-xs text-muted-foreground mt-1 ml-6">
+                  {isPublic ? 
+                    'Public posts are visible to everyone in the community' : 
+                    'Private posts are only visible to you and community admins'}
+                </p>
               </div>
-              <div className="mt-8 flex justify-end gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsOpen(false)} 
-                    className="py-3 text-base font-medium"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleSubmit} 
-                    disabled={isSubmitting}
-                    className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
-                  >
-                    Post
-                  </Button>
-              </div>
+            </div>
+            
+            <div className="mt-8 flex flex-shrink-0 justify-end gap-4 pt-4 border-t border-border">
+              <Button 
+                variant="outline" 
+                onClick={handleClose}
+                className="py-3 text-base font-medium"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting}
+                className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
+              >
+                {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
+              </Button>
+            </div>
           </div>
         )}
     </CustomFormDialog>
