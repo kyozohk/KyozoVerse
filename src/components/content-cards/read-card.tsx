@@ -13,6 +13,7 @@ import { deletePost } from '@/lib/post-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { cardTitleStyle, cardBodyStyle, CARD_TITLE_COLOR, CARD_BODY_COLOR } from './card-styles';
 
 interface ReadCardProps {
   post: Post & { id: string; _isPublicView?: boolean; _onEdit?: () => void; _canEdit?: boolean };
@@ -92,11 +93,11 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
                   </span>
                 )}
               </div>
-              <h2 className="text-[#433F36] text-4xl" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 700, textTransform: 'none', letterSpacing: '-0.02em', opacity: 0.8}}>
+              <h2 className="text-4xl" style={{ ...cardTitleStyle, color: CARD_TITLE_COLOR }}>
                 {title}
               </h2>
             </div>
-            {summary && <p className="text-[#6b6b6b] text-sm md:text-base line-clamp-3" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>{summary}</p>}
+            {summary && <p className="text-sm md:text-base line-clamp-3" style={{ ...cardBodyStyle, color: CARD_BODY_COLOR }}>{summary}</p>}
           </div>
           <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
             <div className="flex items-center justify-end">

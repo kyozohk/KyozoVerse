@@ -9,6 +9,7 @@ import { toggleLike } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deletePost } from '@/lib/post-utils';
+import { cardTitleStyle, cardBodyStyle } from './card-styles';
 
 interface ImageCardProps {
   category: string;
@@ -104,11 +105,11 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
           </div>
           
           <div className="flex-1">
-            <h2 className="text-white text-2xl mb-3 drop-shadow-lg" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em' }}>
+            <h2 className="text-white text-4xl mb-3 drop-shadow-lg" style={cardTitleStyle}>
               {title}
             </h2>
             {summary && (
-              <p className="text-white/80 text-sm mb-4 line-clamp-3 drop-shadow-md" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>
+              <p className="text-white/80 text-sm mb-4 line-clamp-3 drop-shadow-md" style={cardBodyStyle}>
                 {summary}
               </p>
             )}

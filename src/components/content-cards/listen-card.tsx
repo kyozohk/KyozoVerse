@@ -1,14 +1,15 @@
-
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Lock, ThumbsUp, MessageSquare, Share2, Pause, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Play, Pause, Lock, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
-import { toggleLike, recordInteraction } from '@/lib/interaction-utils';
+import { recordInteraction } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deletePost } from '@/lib/post-utils';
+import { Waveform } from './waveform';
+import { cardTitleStyle, cardBodyStyle, CARD_TITLE_COLOR, CARD_BODY_COLOR } from './card-styles';
 
 interface ListenCardProps {
   category: string;
@@ -19,37 +20,6 @@ interface ListenCardProps {
   isPrivate?: boolean;
   post: Post & { id: string; _isPublicView?: boolean; _onEdit?: () => void; _canEdit?: boolean };
 }
-
-// Waveform component
-const Waveform = ({ isPlaying, currentTime, duration }: { isPlaying: boolean, currentTime: number, duration: number }) => {
-    const [heights, setHeights] = useState<number[]>([]);
-    const barCount = 80;
-
-    useEffect(() => {
-        const generateHeights = () => {
-            return Array.from({ length: barCount }, () => 20 + Math.random() * 80);
-        };
-        setHeights(generateHeights());
-    }, []);
-    
-    const playedBars = Math.floor((currentTime / duration) * barCount);
-
-    return (
-        <div className="flex items-center gap-[2px] h-16 md:h-20 lg:h-24 cursor-pointer">
-            {heights.map((index, i) => (
-                <div
-                    key={index}
-                    className="flex-1 transition-all duration-75 rounded-full"
-                    style={{
-                        height: `${heights[i]}%`,
-                        backgroundColor: i < playedBars ? '#3B82F6' : '#CCCCCC',
-                        minWidth: '3px'
-                    }}
-                />
-            ))}
-        </div>
-    );
-};
 
 export function ListenCard({ category, episode, duration: initialDuration, title, summary, isPrivate, post }: ListenCardProps) {
   const { user } = useCommunityAuth();
@@ -187,10 +157,10 @@ export function ListenCard({ category, episode, duration: initialDuration, title
                 {episode} • {formatTime(duration)}
               </p>
             </div>
-            <h2 className="text-[#3d3d3d] text-2xl" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em' }}>
+            <h2 className="text-4xl" style={{ ...cardTitleStyle, color: CARD_TITLE_COLOR }}>
               {title}
             </h2>
-            {summary && <p className="text-[#6b6b6b] text-sm line-clamp-2" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 400, lineHeight: 1.6 }}>{summary}</p>}
+            {summary && <p className="text-sm line-clamp-2" style={{ ...cardBodyStyle, color: CARD_BODY_COLOR }}>{summary}</p>}
           </div>
           
           {/* Bottom - Playback controls */}

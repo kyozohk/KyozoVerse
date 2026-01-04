@@ -10,6 +10,7 @@ import { toggleLike, recordInteraction } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deletePost } from '@/lib/post-utils';
+import { cardTitleStyle } from './card-styles';
 
 interface WatchCardProps {
   category: string;
@@ -241,7 +242,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
             
             <div className="space-y-3">
-                <h2 className="text-white text-2xl md:text-3xl drop-shadow-lg" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.02em' }}>
+                <h2 className="text-white text-4xl drop-shadow-lg" style={cardTitleStyle}>
                     {title}
                 </h2>
                 
