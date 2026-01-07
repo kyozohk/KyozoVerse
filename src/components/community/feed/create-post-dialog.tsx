@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CustomFormDialog, Input, Textarea, Button, Dropzone, Checkbox } from '@/components/ui';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -13,6 +13,10 @@ import { CreatePostDialogSkeleton } from './create-post-dialog-skeleton';
 import { type Post } from '@/lib/types';
 import { getCommunityMembers } from '@/lib/community-utils';
 import { renderPostToHtml } from '@/lib/email-utils';
+import { ReadCard } from '@/components/content-cards/read-card';
+import { ListenCard } from '@/components/content-cards/listen-card';
+import { WatchCard } from '@/components/content-cards/watch-card';
+import { ImageCard } from '@/components/content-cards/image-card';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -101,6 +105,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           to: recipients,
           subject: `New Post in ${post.communityHandle}: ${post.title}`,
           html: postHtml,
+          from: user?.email || 'dev@kyozo.com', // Send from user's actual email
         }),
       });
 
@@ -267,12 +272,133 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   }
 
+  // Create preview post object
+  const previewPost = useMemo(() => {
+    const basePost = {
+      id: 'preview',
+      postId: 'preview',
+      title: title || 'Untitled',
+      content: {
+        text: description,
+        mediaUrls: mediaUrl ? [mediaUrl] : file ? [URL.createObjectURL(file)] : [],
+        thumbnailUrl: thumbnailUrl || (thumbnailFile ? URL.createObjectURL(thumbnailFile) : undefined),
+      },
+      type: postType as 'text' | 'image' | 'audio' | 'video',
+      authorId: user?.uid || '',
+      communityId,
+      communityHandle,
+      author: {
+        userId: user?.uid || '',
+        displayName: user?.displayName || 'You',
+      },
+      createdAt: new Date(),
+      likes: 0,
+      comments: 0,
+      visibility: isPublic ? 'public' : 'private' as const,
+      _isPublicView: true,
+    };
+    return basePost;
+  }, [title, description, mediaUrl, file, thumbnailUrl, thumbnailFile, postType, user, communityId, communityHandle, isPublic]);
+
+  // Render preview based on post type
+  const renderPreview = () => {
+    if (!title && !description && !mediaUrl && !file) {
+      return (
+        <div className="relative h-full bg-no-repeat bg-cover bg-center" style={{ backgroundImage: 'url(/bg/public-feed-bg.jpg)' }}>
+          <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
+          <div className="relative z-10 flex items-center justify-center h-full">
+            <p className="text-gray-600 text-lg font-medium">Preview will appear here</p>
+          </div>
+        </div>
+      );
+    }
+
+    const commonProps = {
+      post: previewPost as any,
+      key: 'preview',
+    };
+
+    switch (postType) {
+      case 'text':
+        return (
+          <div className="relative h-full overflow-auto bg-no-repeat bg-cover bg-center" style={{ backgroundImage: 'url(/bg/public-feed-bg.jpg)' }}>
+            <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
+            <div className="relative z-10 p-8">
+              <ReadCard
+                {...commonProps}
+                category="Preview"
+                readTime="1 min"
+                date="Just now"
+                title={title || 'Untitled'}
+                summary={description}
+                isPrivate={!isPublic}
+              />
+            </div>
+          </div>
+        );
+      case 'audio':
+        return (
+          <div className="relative h-full overflow-auto bg-no-repeat bg-cover bg-center" style={{ backgroundImage: 'url(/bg/public-feed-bg.jpg)' }}>
+            <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
+            <div className="relative z-10 p-8">
+              <ListenCard
+                {...commonProps}
+                category="Preview"
+                episode="New"
+                duration="0:00"
+                title={title || 'Untitled'}
+                summary={description}
+                isPrivate={!isPublic}
+              />
+            </div>
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="relative h-full overflow-auto bg-no-repeat bg-cover bg-center" style={{ backgroundImage: 'url(/bg/public-feed-bg.jpg)' }}>
+            <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
+            <div className="relative z-10 p-8">
+              <WatchCard
+                {...commonProps}
+                category="Preview"
+                title={title || 'Untitled'}
+                imageUrl={thumbnailUrl || (thumbnailFile ? URL.createObjectURL(thumbnailFile) : '') || '/placeholder-video.jpg'}
+                imageHint={description || ''}
+                isPrivate={!isPublic}
+              />
+            </div>
+          </div>
+        );
+      case 'image':
+        return (
+          <div className="relative h-full overflow-auto bg-no-repeat bg-cover bg-center" style={{ backgroundImage: 'url(/bg/public-feed-bg.jpg)' }}>
+            <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
+            <div className="relative z-10 p-8">
+              <ImageCard
+                {...commonProps}
+                category="Preview"
+                readTime="1 min"
+                date="Just now"
+                title={title || 'Untitled'}
+                summary={description}
+                imageUrl={mediaUrl || (file ? URL.createObjectURL(file) : '') || '/placeholder-image.jpg'}
+                isPrivate={!isPublic}
+              />
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <CustomFormDialog
       open={isOpen}
       onClose={handleClose}
       title={getDialogTitle()}
       description={getDialogDescription()}
+      rightComponent={renderPreview()}
     >
         {isSubmitting ? (
           <div className="flex-grow flex items-center justify-center">
@@ -280,7 +406,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
+            <div className="flex-grow space-y-4 overflow-y-auto pr-2 pb-4">
               <Input 
                 label="Title"
                 placeholder="Title" 
@@ -329,7 +455,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
               </div>
             </div>
             
-            <div className="mt-8 flex flex-shrink-0 justify-end gap-4 pt-4 border-t border-border">
+            <div className="sticky bottom-0 flex flex-shrink-0 justify-end gap-4 pt-4 pb-2" >
               <Button 
                 variant="outline" 
                 onClick={handleClose}

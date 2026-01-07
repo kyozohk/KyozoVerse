@@ -249,7 +249,7 @@ export default function CommunityFeedPage() {
             
             {/* Right - Public View Link */}
             <a
-              href={`/${handle}`}
+              href={`https://www.kyozo.com/${handle}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-gray-700 hover:text-gray-900 hover:underline flex items-center gap-1"
@@ -259,7 +259,7 @@ export default function CommunityFeedPage() {
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              Public View
+              Open Public View
             </a>
           </div>
         </div>

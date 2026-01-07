@@ -64,6 +64,8 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
     backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E\")"
   };
 
+  const imageUrl = post.content.mediaUrls?.[0];
+
   return (
     <>
       <div className="bg-white overflow-hidden shadow-md cursor-pointer relative group transition-all duration-300 hover:shadow-xl ease-in-out hover:scale-[1.02] rounded-3xl" style={cardStyle}>
@@ -77,31 +79,48 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
                 </Button>
             </div>
         )}
-        <div className="p-4 md:p-6 lg:p-8 h-full flex flex-col justify-between" style={innerDivStyle}>
-          <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
-            <div className="flex flex-col gap-2 md:gap-3 lg:gap-5">
-              <div className="flex items-center gap-2 md:gap-2.5">
-                <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#926B7F] text-white rounded-full font-medium">
-                  {category}
+        <div className="h-full flex flex-col" style={innerDivStyle}>
+          {/* Category badge and metadata at top */}
+          <div className="p-4 md:p-6 lg:p-8 pb-0">
+            <div className="flex items-center gap-2 md:gap-2.5">
+              <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#926B7F] text-white rounded-full font-medium">
+                {category}
+              </span>
+              <p className="text-neutral-500 uppercase tracking-wide text-xs">
+                {readTime} {date && `• ${date}`}
+              </p>
+              {post.visibility === 'private' && (
+                <span className="text-xs font-semibold rounded-full px-2 py-1 bg-red-100 text-red-600 inline-flex items-center gap-1">
+                  <Lock className="h-3 w-3" /> Private
                 </span>
-                <p className="text-neutral-500 uppercase tracking-wide text-xs">
-                  {readTime} {date && `• ${date}`}
-                </p>
-                {post.visibility === 'private' && (
-                  <span className="text-xs font-semibold rounded-full px-2 py-1 bg-red-100 text-red-600 inline-flex items-center gap-1">
-                    <Lock className="h-3 w-3" /> Private
-                  </span>
-                )}
-              </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Image if present */}
+          {imageUrl && (
+            <div className="relative w-full aspect-video overflow-hidden mt-4">
+              <Image
+                src={imageUrl}
+                alt={title}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
+          
+          {/* Content section */}
+          <div className="p-4 md:p-6 lg:p-8 flex-grow flex flex-col justify-between">
+            <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
               <h2 className="text-4xl font-black" style={{ ...cardTitleStyle, color: CARD_TITLE_COLOR }}>
                 {title}
               </h2>
+              {summary && <p className="text-sm md:text-base line-clamp-3" style={{ ...cardBodyStyle, color: CARD_BODY_COLOR }}>{summary}</p>}
             </div>
-            {summary && <p className="text-sm md:text-base line-clamp-3" style={{ ...cardBodyStyle, color: CARD_BODY_COLOR }}>{summary}</p>}
-          </div>
-          <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
-            <div className="flex items-center justify-end">
-              <span className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm">Read Full Article →</span>
+            <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
+              <div className="flex items-center justify-end">
+                <span className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm">Read Full Article →</span>
+              </div>
             </div>
           </div>
         </div>
