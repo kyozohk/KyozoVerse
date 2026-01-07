@@ -99,7 +99,7 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
           
           {/* Image if present */}
           {imageUrl && (
-            <div className="relative w-full aspect-video overflow-hidden mt-4">
+            <div className="relative w-full aspect-video overflow-hidden mt-4 mx-4 md:mx-6 lg:mx-8 rounded-xl">
               <Image
                 src={imageUrl}
                 alt={title}
