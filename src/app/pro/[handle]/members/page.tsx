@@ -33,7 +33,7 @@ import { communityAuth } from "@/firebase/community-auth";
 import { CommunityMember } from "@/lib/types";
 import { TagMembersDialog } from "@/components/community/tag-members-dialog";
 import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
-import { addTagsToCommunity } from "@/lib/community-tags";
+import { addTagsToCommunity, getCommunityTags, type CommunityTag } from "@/lib/community-tags";
 
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -66,6 +66,8 @@ export default function CommunityMembersPage() {
   const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // State for remove tag confirmation
   const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
@@ -87,6 +89,10 @@ export default function CommunityMembersPage() {
             const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
             setUserRole(role);
           }
+          
+          // Fetch available tags for this community
+          const tags = await getCommunityTags(communityData.communityId);
+          setAvailableTags(tags);
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
@@ -214,6 +220,27 @@ export default function CommunityMembersPage() {
     setTagToRemove({ memberId, tag });
     setIsRemoveTagDialogOpen(true);
   };
+
+  const handleToggleTag = (tagName: string) => {
+    setSelectedTags(prev => {
+      if (prev.includes(tagName)) {
+        return prev.filter(t => t !== tagName);
+      } else {
+        return [...prev, tagName];
+      }
+    });
+  };
+
+  // Filter members based on selected tags
+  const filteredMembers = useMemo(() => {
+    if (selectedTags.length === 0) {
+      return members;
+    }
+    return members.filter(member => {
+      const memberTags = member.tags || [];
+      return selectedTags.every(selectedTag => memberTags.includes(selectedTag));
+    });
+  }, [members, selectedTags]);
   
   const handleAddMemberSubmit = async (data: {
     displayName: string;
@@ -404,9 +431,12 @@ export default function CommunityMembersPage() {
         onAddAction={() => setIsAddMemberOpen(true)}
         onAddTags={() => setIsTaggingOpen(true)}
         selectedCount={selectedMembers.length}
+        availableTags={availableTags}
+        selectedTags={selectedTags}
+        onToggleTag={handleToggleTag}
       >
         <MembersList 
-          members={members} 
+          members={filteredMembers} 
           userRole={userRole as any}
           viewMode={viewMode}
           onMemberClick={handleToggleMemberSelection}
