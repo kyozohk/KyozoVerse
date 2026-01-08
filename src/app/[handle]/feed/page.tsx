@@ -98,7 +98,7 @@ export default function CommunityFeedPage() {
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
-      console.error('❌ Firestore query error in /pro feed:', error);
+      console.error('❌ Firestore query error in feed:', error);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: `blogs`,
         operation: 'list',

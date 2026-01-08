@@ -172,7 +172,7 @@ export default function CommunityPage() {
     });
     
     // Redirect to home
-    router.push('/pro');
+    router.push('/');
   };
 
   const filteredMembers = members.filter(member =>

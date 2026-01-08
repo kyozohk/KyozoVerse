@@ -40,9 +40,9 @@ export default function CommunitySidebar() {
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
   
   useEffect(() => {
-    // Extract handle from pathname: /pro/[handle]/... -> handle is at index 2
+    // Extract handle from pathname: /[handle]/... -> handle is at index 1
     const pathParts = pathname.split('/');
-    const handleFromPath = pathParts[2]; // /pro/[handle] -> get handle at index 2
+    const handleFromPath = pathParts[1]; // /[handle] -> get handle at index 1
 
     if (!user) {
       setLoading(false);

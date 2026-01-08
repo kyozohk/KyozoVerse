@@ -39,18 +39,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Public paths that don't require owner authentication
       const isPublicPath = pathname === '/' || 
-                          pathname === '/pro' || 
                           pathname.startsWith('/c/') || 
-                          pathname.startsWith('/invite') ||
-                          pathname.match(/^\/[^/]+$/); // Matches /[handle] routes
+                          pathname.startsWith('/invite');
       
-      // Owner logged in on /pro page - redirect to pro communities
-      if (firebaseUser && pathname === '/pro') {
-        router.replace('/pro/communities');
+      // Owner logged in on landing page - redirect to communities
+      if (firebaseUser && pathname === '/') {
+        router.replace('/communities');
       } 
       // Not logged in trying to access protected owner routes
-      else if (!firebaseUser && !isPublicPath && pathname.startsWith('/pro/')) {
-        router.replace('/pro');
+      else if (!firebaseUser && !isPublicPath) {
+        router.replace('/');
       }
     });
 

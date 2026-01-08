@@ -4,13 +4,13 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { getFirebase } from '@/firebase';
-import { CommunityAuthProvider } from '@/hooks/use-community-auth';
+import ProLayoutClient from './pro-layout-client';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'KyozoVerse',
-  description: 'The universe of communities.',
+  title: 'Kyozo Pro',
+  description: 'Manage your communities on Kyozo.',
   icons: {
     icon: '/favicon.png',
   },
@@ -33,9 +33,9 @@ export default function RootLayout({
         }}
       >
         <FirebaseClientProvider firebase={getFirebase()}>
-          <CommunityAuthProvider>
+          <ProLayoutClient>
             {children}
-          </CommunityAuthProvider>
+          </ProLayoutClient>
         </FirebaseClientProvider>
         <Toaster />
       </body>

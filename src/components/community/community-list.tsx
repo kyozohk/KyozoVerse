@@ -41,7 +41,7 @@ export function CommunityList({ communities }: CommunityListProps) {
         onAddAction={undefined}
       >
         {filteredCommunities.map((community) => (
-          <Link key={community.communityId} href={`/pro/${community.handle}`} className="block h-full">
+          <Link key={community.communityId} href={`/${community.handle}`} className="block h-full">
             <CommunityCard community={community} />
           </Link>
         ))}
