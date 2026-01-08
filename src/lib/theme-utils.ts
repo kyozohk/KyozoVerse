@@ -10,7 +10,8 @@ import {
   Inbox, 
   Rss, 
   Ticket, 
-  Plug 
+  Plug,
+  UserCheck
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { THEME_COLORS, type CategoryKey } from './theme-colors';
@@ -31,6 +32,7 @@ interface CommunityNavItem {
 
 export const mainNavItems: NavItem[] = [
     { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/waitlist', icon: UserCheck, label: 'Wait List', section: 'waitlist' },
     { href: '/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
     { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
     { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },

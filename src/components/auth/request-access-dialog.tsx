@@ -57,6 +57,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
     };
     
     try {
+      // Send notification email to admin with user data
       const response = await fetch('/api/send-invite', {
         method: 'POST',
         headers: {
@@ -109,55 +110,51 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
     <CustomFormDialog
         open={open}
         onClose={handleClose}
-        title={isSuccess ? "Check Your Email! 📧" : "Join the Waitlist"}
-        description={isSuccess ? "We've sent you a login link to get started." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
+        title={isSuccess ? "Request Submitted! ✅" : "Join the Waitlist"}
+        description={isSuccess ? "Your request is being reviewed by our team." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
         backgroundImage="/bg/light_app_bg.png"
         color="#843484"
     >
       {isSuccess ? (
-        // Success View
+        // Success View - Pending Review
         <div className="flex flex-col h-full">
           <div className="flex-grow space-y-6">
             <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold mb-3 text-gray-900">Welcome to KyozoVerse! 🎉</h3>
+              <h3 className="text-2xl font-semibold mb-3 text-gray-900">Request Submitted! 🎉</h3>
               <p className="text-gray-600 mb-2">
-                We've sent a login link to:
+                Your waitlist request has been sent to:
               </p>
               <p className="text-lg font-medium text-purple-600 mb-6">
                 {userEmail}
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-left">
                 <p className="text-sm text-gray-700 mb-2">
-                  <strong>Next steps:</strong>
+                  <strong>What happens next:</strong>
                 </p>
                 <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
-                  <li>Check your email inbox</li>
-                  <li>Click the login link in the email</li>
-                  <li>Setup your community and start creating!</li>
+                  <li>Our team will review your request</li>
+                  <li>You'll receive an email with your login link once approved</li>
+                  <li>Use the link to set up your account and start creating!</li>
                 </ol>
               </div>
+              <p className="text-sm text-gray-500 mt-4">
+                This usually takes 24-48 hours. We'll notify you at <strong>{userEmail}</strong>
+              </p>
             </div>
           </div>
 
-          <div className="mt-auto space-y-3">
+          <div className="mt-auto">
             <CustomButton 
-              onClick={handleOpenEmail}
+              onClick={handleClose}
               variant="waitlist" 
               className="w-full"
             >
-              Open Gmail
-            </CustomButton>
-            <CustomButton 
-              onClick={handleClose}
-              variant="outline" 
-              className="w-full"
-            >
-              Close
+              Got it, thanks!
             </CustomButton>
           </div>
         </div>

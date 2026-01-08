@@ -90,5 +90,11 @@ service cloud.firestore {
                        (resource.data.userId == request.auth.uid || 
                         isCommunityOwner(resource.data.communityId));
     }
+
+    // Waitlist collection - allow anyone to submit, only admin to read/update
+    match /waitlist/{requestId} {
+      allow create: if true; // Anyone can submit a waitlist request
+      allow read, update: if request.auth != null && request.auth.token.email == 'dev@kyozo.com'; // Only admin can read/update
+    }
   }
 }
