@@ -61,7 +61,7 @@ export function MemberDialog({
   };
 
   useEffect(() => {
-    if (open && mode === 'edit' && initialMember) {
+    if (mode === 'edit' && initialMember) {
       const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
       setFirstName(nameParts[0] || "");
       setLastName(nameParts.slice(1).join(' ') || "");
@@ -69,10 +69,12 @@ export function MemberDialog({
       setPhone(initialMember.userDetails?.phone || "");
       setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
       setCoverUrl(initialMember.userDetails?.coverUrl || null);
-    } else if (open && mode === 'add') {
+      setAvatarFile(null);
+      setCoverFile(null);
+    } else if (mode === 'add') {
       resetForm();
     }
-  }, [open, mode, initialMember]);
+  }, [initialMember, mode]);
 
   const handleClose = () => {
     onClose();
