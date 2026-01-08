@@ -120,7 +120,7 @@ export function MembersList({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-grow grid grid-cols-1 md:grid-cols-4 items-center gap-4">
-                <div className="font-semibold text-base truncate">{member.userDetails?.displayName}</div>
+                <div className="font-semibold text-base text-foreground truncate">{member.userDetails?.displayName}</div>
                  <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
                     <Mail className="h-4 w-4 shrink-0" />
                     <span>{member.userDetails?.email || 'No email'}</span>

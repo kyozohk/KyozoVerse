@@ -25,7 +25,7 @@ import { db } from '@/firebase/firestore';
 interface CommunityHeaderProps {
   community: Community;
   userRole: UserRole;
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   onAddMember?: () => void;
   onInvite?: () => void;
@@ -123,12 +123,14 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
         </div>
 
         {canManage && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 md:gap-4">
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                {customActions ? (
-                  customActions
-                ) : (
-                  <>
+            <div className="mt-4 flex items-center gap-2 md:gap-4 w-full">
+              {customActions ? (
+                <div className="flex items-center gap-2 md:gap-4 w-full">
+                  {customActions}
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     {onAddMember && (
                       <CustomButton 
                         variant="rounded-rect" 
@@ -151,28 +153,28 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                       <Megaphone className="h-4 w-4 mr-2" />
                       Broadcast
                     </CustomButton>
-                  </>
-                )}
-              </div>
-              
-              {/* Only show edit/delete on overview page */}
-              {pathname.split('/').filter(Boolean).length === 1 && (
-                <div className="flex items-center gap-2">
-                  <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
-                      <Pencil className="h-4 w-4" />
-                  </CustomButton>
-                  {onDelete && (
-                    <CustomButton 
-                      variant="rounded-rect" 
-                      size="small" 
-                      className="text-white/80 hover:text-red-400 hover:bg-white/10"
-                      onClick={onDelete}
-                      title="Delete community"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </CustomButton>
+                  </div>
+                  
+                  {/* Only show edit/delete on overview page */}
+                  {pathname.split('/').filter(Boolean).length === 1 && (
+                    <div className="flex items-center gap-2 ml-auto">
+                      <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
+                          <Pencil className="h-4 w-4" />
+                      </CustomButton>
+                      {onDelete && (
+                        <CustomButton 
+                          variant="rounded-rect" 
+                          size="small" 
+                          className="text-white/80 hover:text-red-400 hover:bg-white/10"
+                          onClick={onDelete}
+                          title="Delete community"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </CustomButton>
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           )}

@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
@@ -12,7 +12,7 @@ import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-ut
 import { type Post, type User, type Community } from '@/lib/types';
 import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
-import { Pencil, Mic, Video, Image, ChevronDown } from 'lucide-react';
+import { Pencil, Mic, Video, Image, ChevronDown, ExternalLink } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { ReadCard } from '@/components/content-cards/read-card';
@@ -24,6 +24,7 @@ import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 import Link from 'next/link';
 import { FeedStats } from '@/components/community/feed-stats';
 import { CommunityHeader } from '@/components/community/community-header';
+import { CustomButton } from '@/components/ui';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -44,6 +45,7 @@ export default function CommunityFeedPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
+  const [memberCount, setMemberCount] = useState<number>(0);
 
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -56,6 +58,21 @@ export default function CommunityFeedPage() {
         if (communityData && user) {
           const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
           setUserRole(role);
+        }
+        
+        // Fetch actual member count from communityMembers collection
+        if (communityData) {
+          const membersQuery = query(
+            collection(db, "communityMembers"), 
+            where("communityId", "==", communityData.communityId)
+          );
+          const membersSnapshot = await getDocs(membersQuery);
+          // Exclude owner from count
+          const nonOwnerCount = membersSnapshot.docs.filter(doc => {
+            const data = doc.data();
+            return data.role !== 'owner';
+          }).length;
+          setMemberCount(nonOwnerCount);
         }
       } catch (error) {
         console.error('Error fetching community data:', error);
@@ -197,118 +214,46 @@ export default function CommunityFeedPage() {
   const memberCountExcludingOwner = nonOwnerMembers.length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-0">
       {community && (
         <CommunityHeader 
           community={community} 
           userRole={userRole as any} 
-          onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={() => setIsDeleteConfirmOpen(true)}
-          onAddMember={() => setIsAddMemberOpen(true)}
-          onInvite={() => setIsInviteDialogOpen(true)}
-          memberCount={memberCountExcludingOwner}
+          memberCount={memberCount}
+          customActions={
+            canCreatePost ? (
+              <>
+                {buttonConfig.map((config) => (
+                  <CustomButton
+                    key={config.type}
+                    variant="rounded-rect"
+                    className="text-white/80 hover:text-white hover:bg-white/10"
+                    onClick={() => handleSelectPostType(config.type)}
+                  >
+                    <config.icon className="h-4 w-4 mr-2" />
+                    {config.label}
+                  </CustomButton>
+                ))}
+                <div className="flex-grow"></div>
+                <CustomButton
+                  variant="rounded-rect"
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  onClick={() => window.open(`https://www.kyozo.com/${handle}`, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Public View
+                </CustomButton>
+              </>
+            ) : undefined
+          }
         />
       )}
-      <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }}>
-        {/* 70% gray overlay */}
-        <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
-        
-        {/* Header */}
-        <div className="sticky top-0 z-50 backdrop-blur-sm relative">
-          <div className="w-full px-6 py-4 flex items-center justify-between">
-            {/* Left - Community Name with Dropdown */}
-            <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors group">
-              <span className="text-lg font-semibold uppercase tracking-wide">
-                {community?.name?.toUpperCase() || 'COMMUNITY'}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
-            </button>
-            
-            {/* Center - Filter Buttons */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
-              <button
-                onClick={() => setSearchTerm('')}
-                className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  searchTerm === ''
-                    ? 'bg-gray-700 text-white shadow-md'
-                    : 'bg-white/60 text-gray-700 hover:bg-white/80'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setSearchTerm('text')}
-                className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  searchTerm === 'text'
-                    ? 'bg-[#926B7F] text-white shadow-md'
-                    : 'bg-white/60 text-gray-600 hover:bg-white/80'
-                }`}
-              >
-                Read
-              </button>
-              <button
-                onClick={() => setSearchTerm('audio')}
-                className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  searchTerm === 'audio'
-                    ? 'bg-[#6E94B1] text-white shadow-md'
-                    : 'bg-white/60 text-gray-600 hover:bg-white/80'
-                }`}
-              >
-                Listen
-              </button>
-              <button
-                onClick={() => setSearchTerm('video')}
-                className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  searchTerm === 'video'
-                    ? 'bg-[#F0C679] text-black shadow-md'
-                    : 'bg-white/60 text-gray-600 hover:bg-white/80'
-                }`}
-              >
-                Watch
-              </button>
-            </div>
-            
-            {/* Right - Public View Link */}
-            <a
-              href={`https://www.kyozo.com/${handle}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-700 hover:text-gray-900 hover:underline flex items-center gap-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-              Open Public View
-            </a>
-          </div>
-        </div>
-        
+      {/* style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }} */}
+      <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" >
+        {/* 70% gray overlay */}        
         {/* Content Area */}
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 pt-8 pb-12">
           <FeedStats posts={posts} />
-
-          {canCreatePost && (
-            <div className="mb-6 flex gap-3 w-full">
-              {buttonConfig.map((config) => (
-                <button
-                  key={config.type}
-                  className="rounded-lg h-12 flex items-center justify-center cursor-pointer border-0 outline-none hover:opacity-80 transition-opacity flex-1 font-medium"
-                  style={{
-                    backgroundColor: `${config.color}`,
-                    color: config.type === 'video' ? '#000' : 'white',
-                    border: `1px solid ${config.color}`,
-                  }}
-                  onClick={() => handleSelectPostType(config.type)}
-                  title={`Post ${config.label}`}
-                >
-                  <config.icon className="w-5 h-5 mr-2" />
-                  {config.label}
-                </button>
-              ))}
-            </div>
-          )}
 
           {loading ? (
             <div className="masonry-feed-columns"><FeedSkeletons /></div>

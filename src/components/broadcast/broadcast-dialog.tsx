@@ -22,7 +22,8 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   members,
   onContinue,
   templates = [],
-  loadingTemplates = false
+  loadingTemplates = false,
+  mode = 'whatsapp' // Default to WhatsApp for backward compatibility
 }) => {
   // State management
   const { user } = useAuth();
@@ -513,31 +514,32 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   
   // Get step info for UI
   const getStepInfo = () => {
+    const messageType = mode === 'email' ? 'email' : 'message';
     switch (currentStep) {
       case BroadcastStep.RECIPIENTS:
         return {
           title: "Confirm Recipients",
-          subtitle: `Send message to ${selectedMembers.length} selected members`,
+          subtitle: `Send ${messageType} to ${selectedMembers.length} selected members`,
         };
       case BroadcastStep.TEMPLATE:
         return {
-          title: "Choose Template",
-          subtitle: "Select a message template for your broadcast",
+          title: mode === 'email' ? "Compose Email" : "Choose Template",
+          subtitle: mode === 'email' ? "Compose your email message" : "Select a message template for your broadcast",
         };
       case BroadcastStep.PREVIEW:
         return {
-          title: "Message Preview",
-          subtitle: "Review how your message will appear",
+          title: mode === 'email' ? "Email Preview" : "Message Preview",
+          subtitle: mode === 'email' ? "Review your email before sending" : "Review how your message will appear",
         };
       case BroadcastStep.CONFIRM:
         return {
           title: "Confirm & Send",
-          subtitle: `Send message to ${members.length} recipients`,
+          subtitle: `Send ${messageType} to ${members.length} recipients`,
         };
       default:
         return {
-          title: "Broadcast Message",
-          subtitle: "Send message to community members",
+          title: mode === 'email' ? "Send Email" : "Broadcast Message",
+          subtitle: mode === 'email' ? "Send email to community members" : "Send message to community members",
         };
     }
   };
