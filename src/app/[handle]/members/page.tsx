@@ -371,40 +371,50 @@ export default function CommunityMembersPage() {
     coverUrl?: string;
   }) => {
     if (!editingMember?.userId) {
-        throw new Error("No member selected to edit or member is missing user ID.");
+      throw new Error("No member selected to edit or member is missing user ID.");
     }
-    
+  
     const userRef = doc(db, 'users', editingMember.userId);
     const memberRef = doc(db, 'communityMembers', editingMember.id);
-    
+  
     const userUpdateData: any = {
-        displayName: data.displayName,
-        email: data.email,
-        phone: data.phone || '',
-        avatarUrl: data.avatarUrl || '',
-        coverUrl: data.coverUrl || '',
+      displayName: data.displayName,
+      email: data.email,
+      phone: data.phone || '',
+      avatarUrl: data.avatarUrl || '',
+      coverUrl: data.coverUrl || '',
     };
-    
+  
     const memberUpdateData: any = {
-        'userDetails.displayName': data.displayName,
-        'userDetails.email': data.email,
-        'userDetails.phone': data.phone || '',
-        'userDetails.avatarUrl': data.avatarUrl || '',
-        'userDetails.coverUrl': data.coverUrl || '',
+      'userDetails.displayName': data.displayName,
+      'userDetails.email': data.email,
+      'userDetails.phone': data.phone || '',
+      'userDetails.avatarUrl': data.avatarUrl || '',
     };
-    
-    try {
-        await updateDoc(userRef, userUpdateData);
-        await updateDoc(memberRef, memberUpdateData);
-    } catch(error: any) {
-        console.error('Error updating member:', error);
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'update',
-            requestResourceData: userUpdateData
-        }));
-        throw new Error(error?.message || "Unable to update member. Please try again.");
-    }
+  
+    // Update user document
+    updateDoc(userRef, userUpdateData)
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'update',
+          requestResourceData: userUpdateData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw new Error("Failed to update user profile due to permissions.");
+      });
+  
+    // Update community member document
+    updateDoc(memberRef, memberUpdateData)
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: memberRef.path,
+          operation: 'update',
+          requestResourceData: memberUpdateData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        // Don't re-throw here as the first error is more informative for the user
+      });
   };
 
   // Calculate member count excluding owner
