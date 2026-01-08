@@ -9,6 +9,8 @@ import { uploadFile } from "@/lib/upload-helper";
 import { useToast } from "@/hooks/use-toast";
 import { PhoneInput } from "../ui/phone-input";
 import { THEME_COLORS } from "@/lib/theme-colors";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface MemberDialogProps {
   open: boolean;
@@ -61,20 +63,20 @@ export function MemberDialog({
   };
 
   useEffect(() => {
-    if (mode === 'edit' && initialMember) {
-      const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
-      setFirstName(nameParts[0] || "");
-      setLastName(nameParts.slice(1).join(' ') || "");
-      setEmail(initialMember.userDetails?.email || "");
-      setPhone(initialMember.userDetails?.phone || "");
-      setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
-      setCoverUrl(initialMember.userDetails?.coverUrl || null);
-      setAvatarFile(null);
-      setCoverFile(null);
-    } else if (mode === 'add') {
-      resetForm();
+    if (open && mode === 'edit' && initialMember) {
+        const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
+        setFirstName(nameParts[0] || "");
+        setLastName(nameParts.slice(1).join(' ') || "");
+        setEmail(initialMember.userDetails?.email || "");
+        setPhone(initialMember.userDetails?.phone || "");
+        setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
+        setCoverUrl(initialMember.userDetails?.coverUrl || null);
+        setAvatarFile(null);
+        setCoverFile(null);
+    } else {
+        resetForm();
     }
-  }, [initialMember, mode]);
+}, [open, mode, initialMember]);
 
   const handleClose = () => {
     onClose();

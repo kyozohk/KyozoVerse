@@ -41,6 +41,8 @@ import { UserPlus, Mail, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityHeader } from "@/components/community/community-header";
 import { CustomButton } from "@/components/ui";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -252,7 +254,7 @@ export default function CommunityMembersPage() {
     });
   }, [members, selectedTags]);
   
-  const handleAddMemberSubmit = async (data: {
+  const handleAddMemberSubmit = (data: {
     displayName: string;
     email: string;
     phone?: string;
@@ -280,159 +282,97 @@ export default function CommunityMembersPage() {
     
     console.log('[Add Member] Normalized phone:', normalizedPhone, 'wa_id:', wa_id);
   
-    try {
-      const usersRef = collection(db, "users");
-      let userId: string;
-      let userDetails: Partial<User>;
-  
-      // Check if user exists by email OR phone
-      const emailQuery = query(usersRef, where("email", "==", data.email));
-      const phoneQuery = query(usersRef, where("phoneNumber", "==", normalizedPhone));
-      const phoneQuery2 = query(usersRef, where("phone", "==", normalizedPhone));
-      
-      const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
-        getDocs(emailQuery),
-        getDocs(phoneQuery),
-        getDocs(phoneQuery2)
-      ]);
-      
-      // Check if user exists by email or phone - reuse if found
-      const existingByEmail = !emailSnap.empty;
-      const existingByPhone = !phoneSnap.empty || !phoneSnap2.empty;
-      
-      let snap = emailSnap;
-      
-      if (existingByEmail || existingByPhone) {
-        // User exists - reuse them
-        const existingUser = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
-        userId = existingUser.id;
-        userDetails = existingUser.data() as User;
-        
-        console.log(`Found existing user: ${userDetails.displayName || userDetails.email} (${userId}). Reusing for community.`);
-        
-        // Update phone if needed
-        const updateData: any = {};
-        if (normalizedPhone && (userDetails as any).phone !== normalizedPhone) {
-          updateData.phone = normalizedPhone;
-          updateData.phoneNumber = normalizedPhone;
-          updateData.wa_id = wa_id;
-          (userDetails as any).phone = normalizedPhone;
-        } else if (!(userDetails as any).wa_id) {
-          updateData.wa_id = wa_id;
-        }
-        if (Object.keys(updateData).length > 0) {
-          await updateDoc(doc(db, "users", userId), updateData);
-        }
-      } else {
-        // User does not exist, create a new one
-        console.log(`No user found with email ${data.email}. Creating a new user.`);
-        
-        const tempPassword = Math.random().toString(36).slice(-8);
-        
-        try {
-            const userCredential = await createUserWithEmailAndPassword(communityAuth, data.email, tempPassword);
-            userId = userCredential.user.uid;
-            
-            userDetails = {
-                userId: userId,
-                displayName: data.displayName,
-                email: data.email,
-                phone: normalizedPhone,
-                phoneNumber: normalizedPhone,
-                wa_id: wa_id,
-                createdAt: serverTimestamp(),
-            } as unknown as User;
-            
-            await setDoc(doc(db, "users", userId), userDetails);
-            console.log(`New user created with UID: ${userId}, phone: ${normalizedPhone}, wa_id: ${wa_id}. A temporary password was used.`);
-  
-        } catch (authError: any) {
-            if (authError.code === 'auth/email-already-in-use') {
-                throw new Error("This email is already associated with an account in Firebase Authentication, but no profile was found in Firestore. Please resolve this inconsistency.");
-            }
-            throw authError;
-        }
-      }
-  
-      // Add user to the community members subcollection
-      const membersRef = collection(db, "communityMembers");
-      await addDoc(membersRef, {
-        userId,
-        communityId: community.communityId,
-        role: "member",
-        status: "active",
-        joinedAt: serverTimestamp(),
-        userDetails: {
+    // Using a 'then' block to handle success and chaining a 'catch' for errors
+    return createUserWithEmailAndPassword(communityAuth, data.email, Math.random().toString(36).slice(-8))
+      .then(userCredential => {
+        const userId = userCredential.user.uid;
+        const userDetails = {
+          userId: userId,
           displayName: data.displayName,
           email: data.email,
-          avatarUrl: userDetails.avatarUrl || null,
           phone: normalizedPhone,
-        },
+          phoneNumber: normalizedPhone,
+          wa_id: wa_id,
+          createdAt: serverTimestamp(),
+        };
+
+        const userDocRef = doc(db, "users", userId);
+        return setDoc(userDocRef, userDetails)
+          .then(() => ({ userId, userDetails }));
+      })
+      .then(({ userId, userDetails }) => {
+        const membersRef = collection(db, "communityMembers");
+        const newMemberData = {
+          userId,
+          communityId: community.communityId,
+          role: "member",
+          status: "active",
+          joinedAt: serverTimestamp(),
+          userDetails: {
+            displayName: data.displayName,
+            email: data.email,
+            avatarUrl: null,
+            phone: normalizedPhone,
+          },
+        };
+        return addDoc(membersRef, newMemberData);
+      })
+      .then(() => {
+        const communityRef = doc(db, "communities", community!.communityId);
+        return updateDoc(communityRef, { memberCount: increment(1) });
+      })
+      .catch(error => {
+        console.error("Error adding member:", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: '/users or /communityMembers',
+          operation: 'create',
+          requestResourceData: data
+        }));
+        throw new Error(error?.message || "Unable to add member. Please try again.");
       });
-  
-      // Increment member count on the community
-      const communityRef = doc(db, "communities", community.communityId);
-      await updateDoc(communityRef, {
-        memberCount: increment(1),
-      });
-  
-    } catch (error: any) {
-      console.error("Error adding member:", error);
-      throw new Error(error?.message || "Unable to add member. Please try again.");
-    }
   };
 
-  const handleEditMemberSubmit = async (data: {
+  const handleEditMemberSubmit = (data: {
     displayName: string;
     email: string;
     phone?: string;
     avatarUrl?: string;
     coverUrl?: string;
   }) => {
-    if (!editingMember?.userId) {
+    if (!editingMember?.id) {
         throw new Error("No member selected to edit or member is missing ID.");
     }
 
-    try {
-        // Only update the communityMembers collection
-        // Community owners/admins can update member details here
-        const memberRef = doc(db, "communityMembers", (editingMember as any).id);
-        
-        // Build update object with only defined values
-        const updateData: any = {
-            'userDetails.displayName': data.displayName,
-            'userDetails.email': data.email,
-        };
+    const memberRef = doc(db, 'communityMembers', editingMember.id);
+    
+    const updateData: any = {
+        'userDetails.displayName': data.displayName,
+        'userDetails.email': data.email,
+    };
 
-        // Only add phone if it has a value
-        if (data.phone) {
-          updateData['userDetails.phone'] = data.phone;
-        }
-
-        // Only add avatarUrl if it has a value
-        const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
-        if (finalAvatarUrl) {
-          updateData['userDetails.avatarUrl'] = finalAvatarUrl;
-        }
-
-        // Only add coverUrl if it has a value
-        const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
-        if (finalCoverUrl) {
-          updateData['userDetails.coverUrl'] = finalCoverUrl;
-        }
-
-        await updateDoc(memberRef, updateData);
-
-        // Refresh the members list to show updated data
-        if (community?.communityId) {
-          const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
-          setMembers(membersData);
-        }
-
-    } catch (error: any) {
-        console.error("Error updating member:", error);
-        throw new Error(error?.message || "Unable to update member. Please try again.");
+    if (data.phone) {
+      updateData['userDetails.phone'] = data.phone;
     }
+
+    const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
+    if (finalAvatarUrl) {
+      updateData['userDetails.avatarUrl'] = finalAvatarUrl;
+    }
+
+    const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
+    if (finalCoverUrl) {
+      updateData['userDetails.coverUrl'] = finalCoverUrl;
+    }
+
+    updateDoc(memberRef, updateData).catch(error => {
+        console.error('Error updating member:', error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: memberRef.path,
+            operation: 'update',
+            requestResourceData: updateData
+        }));
+        throw new Error(error?.message || "Unable to update member. Please try again.");
+    });
   };
 
   // Calculate member count excluding owner
