@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CustomFormDialog, Input, CustomButton, Label, Dropzone } from "@/components/ui";
+import { CustomFormDialog, Input, CustomButton, Label, Dropzone } from '@/components/ui';
 import type { CommunityMember } from "@/lib/types";
 import { ProfileImageSelector } from './profile-image-selector';
 import { uploadFile } from "@/lib/upload-helper";
@@ -48,29 +48,38 @@ export function MemberDialog({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      if (mode === 'edit' && initialMember) {
-        const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
-        setFirstName(nameParts[0] || "");
-        setLastName(nameParts.slice(1).join(' ') || "");
-        setEmail(initialMember.userDetails?.email || "");
-        setPhone(initialMember.userDetails?.phone || "");
-        setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
-        setCoverUrl(initialMember.userDetails?.coverUrl || null);
-      } else {
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setPhone('');
-        setAvatarUrl(null);
-        setCoverUrl(null);
-      }
-      setAvatarFile(null);
-      setCoverFile(null);
-      setError(null);
-      setSubmitting(false);
+    if (mode === 'edit' && initialMember) {
+      const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
+      setFirstName(nameParts[0] || "");
+      setLastName(nameParts.slice(1).join(' ') || "");
+      setEmail(initialMember.userDetails?.email || "");
+      setPhone(initialMember.userDetails?.phone || "");
+      setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
+      setCoverUrl(initialMember.userDetails?.coverUrl || null);
+    } else {
+      // Reset for "add" mode
+      resetForm();
     }
-  }, [open, mode, initialMember]);
+  }, [initialMember, mode]);
+
+  const resetForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPhone('');
+    setAvatarUrl(null);
+    setCoverUrl(null);
+    setAvatarFile(null);
+    setCoverFile(null);
+    setError(null);
+    setSubmitting(false);
+  };
+
+  const handleClose = () => {
+    onClose();
+    // Delay reset to allow dialog to close gracefully
+    setTimeout(resetForm, 300);
+  };
 
   const handleFileUpload = async (file: File | null, type: 'avatar' | 'cover') => {
     if (!file) {
@@ -129,7 +138,6 @@ export function MemberDialog({
       let finalAvatarUrl = avatarUrl;
       let finalCoverUrl = coverUrl;
 
-      // Only upload files when editing existing members (not when adding new ones)
       if (mode === 'edit' && initialMember?.userId) {
         if (avatarFile) {
           console.log('Uploading avatar file...');
@@ -141,7 +149,6 @@ export function MemberDialog({
           finalCoverUrl = await handleFileUpload(coverFile, 'cover');
         }
       } else if (mode === 'add') {
-        // For new members, just use the selected preset URLs (no file upload)
         console.log('New member - using preset URLs only');
       }
 
@@ -157,7 +164,7 @@ export function MemberDialog({
         avatarUrl: finalAvatarUrl || undefined,
         coverUrl: finalCoverUrl || undefined
       });
-      onClose();
+      handleClose();
     } catch (e: any) {
       console.error('Error in handleSubmit:', e);
       setError(e?.message || "Unable to save member. Please try again.");
@@ -177,7 +184,7 @@ export function MemberDialog({
   return (
     <CustomFormDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={title}
       description={description}
       backgroundImage="/bg/light_app_bg.png"
@@ -230,7 +237,7 @@ export function MemberDialog({
         <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
           <CustomButton
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={submitting}
             className="w-full"
           >
