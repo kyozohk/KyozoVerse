@@ -340,7 +340,7 @@ export default function Home() {
                     </button>
                   </span>
                 }
-              />
+            />
             </div>
           </div>
           {signUpError && (

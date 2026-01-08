@@ -37,14 +37,14 @@ export const mainNavItems: NavItem[] = [
 ];
 
 export const communityNavItems: CommunityNavItem[] = [
-    { href: (handle: string) => `/communities/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
-    { href: (handle: string) => `/communities/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
-    { href: (handle: string) => `/communities/${handle}/broadcast`, icon: Megaphone, label: 'Broadcast', section: 'broadcast' },
-    { href: (handle: string) => `/communities/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
-    { href: (handle: string) => `/communities/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
-    { href: (handle: string) => `/communities/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
-    { href: (handle: string) => `/communities/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
-    { href: (handle: string) => `/communities/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
+    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
+    { href: (handle: string) => `/${handle}/broadcast`, icon: Megaphone, label: 'Broadcast', section: 'broadcast' },
+    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
+    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
+    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
+    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
 ];
 
 // Map sections to centralized theme colors
@@ -77,13 +77,13 @@ export const getThemeForPath = (path: string) => {
 
     if (segments.length === 0) { // Root path "/"
         section = 'communities';
-    } else if (segments[0] === 'pro' && segments.length >= 2) {
-        // Main sections like /pro/communities, /pro/analytics
-        const mainNavItem = mainNavItems.find(item => item.href === `/${segments[0]}/${segments[1]}`);
+    } else if (segments[0] === 'communities' || segments[0] === 'analytics' || segments[0] === 'subscription' || segments[0] === 'settings') {
+        // Main sections like /communities, /analytics, /subscription, /settings
+        const mainNavItem = mainNavItems.find(item => item.href === `/${segments[0]}`);
         section = mainNavItem?.section || 'default';
-    } else if (segments[0] === 'communities' && segments.length >= 2) {
-        // Community pages like /communities/[handle] or /communities/[handle]/members
-        const subRoute = segments[2]; // members, broadcast, etc.
+    } else if (segments.length >= 1) {
+        // Community pages like /[handle] or /[handle]/members (no /communities prefix)
+        const subRoute = segments[1]; // members, broadcast, etc.
         const communityNavItem = communityNavItems.find(item => {
             const itemPath = item.href('handle').split('/')[2];
             return itemPath === subRoute;
@@ -91,8 +91,8 @@ export const getThemeForPath = (path: string) => {
 
         if (communityNavItem) {
             section = communityNavItem.section;
-        } else if (segments.length === 2) {
-            // This is the overview page for a community handle (/communities/[handle])
+        } else if (segments.length === 1) {
+            // This is the overview page for a community handle (/[handle])
             section = 'overview';
         }
     }
