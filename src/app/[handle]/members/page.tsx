@@ -25,7 +25,7 @@ import {
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { type Community, type User } from "@/lib/types";
-import { getUserRoleInCommunity, getCommunityByHandle, getCommunityMembers } from "@/lib/community-utils";
+import { getUserRoleInCommunity, getCommunityByHandle, getCommunityMembers, joinCommunity } from "@/lib/community-utils";
 import { MembersList } from "@/components/community/members-list";
 import { MemberDialog } from "@/components/community/member-dialog";
 import { ListView } from '@/components/ui/list-view';
@@ -254,7 +254,7 @@ export default function CommunityMembersPage() {
     });
   }, [members, selectedTags]);
   
-  const handleAddMemberSubmit = (data: {
+  const handleAddMemberSubmit = async (data: {
     displayName: string;
     email: string;
     phone?: string;
@@ -267,22 +267,31 @@ export default function CommunityMembersPage() {
     }
     
     // Validate and normalize phone number
-    if (!data.phone) {
-      throw new Error("Phone number is required.");
-    }
-    
-    // Normalize phone number: ensure it starts with +
-    let normalizedPhone = data.phone.trim().replace(/\s+/g, '');
-    if (!normalizedPhone.startsWith('+')) {
+    let normalizedPhone = data.phone?.trim().replace(/\s+/g, '') || '';
+    if (normalizedPhone && !normalizedPhone.startsWith('+')) {
       normalizedPhone = '+' + normalizedPhone;
     }
     
-    // Create wa_id (WhatsApp ID) - phone without + and spaces
     const wa_id = normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '');
     
-    console.log('[Add Member] Normalized phone:', normalizedPhone, 'wa_id:', wa_id);
-  
-    // Using a 'then' block to handle success and chaining a 'catch' for errors
+    const usersRef = collection(db, "users");
+    const emailQuery = query(usersRef, where("email", "==", data.email));
+    
+    const emailSnap = await getDocs(emailQuery);
+
+    if (!emailSnap.empty) {
+        const existingUserDoc = emailSnap.docs[0];
+        const existingUserData = existingUserDoc.data() as User;
+        
+        const error: any = new Error("User already exists");
+        error.code = "auth/user-already-exists";
+        error.existingUser = {
+            id: existingUserDoc.id,
+            ...existingUserData,
+        };
+        throw error;
+    }
+    
     return createUserWithEmailAndPassword(communityAuth, data.email, Math.random().toString(36).slice(-8))
       .then(userCredential => {
         const userId = userCredential.user.uid;
@@ -301,34 +310,27 @@ export default function CommunityMembersPage() {
           .then(() => ({ userId, userDetails }));
       })
       .then(({ userId, userDetails }) => {
-        const membersRef = collection(db, "communityMembers");
-        const newMemberData = {
-          userId,
-          communityId: community.communityId,
-          role: "member",
-          status: "active",
-          joinedAt: serverTimestamp(),
-          userDetails: {
+        return joinCommunity(userId, community!.communityId, {
             displayName: data.displayName,
             email: data.email,
-            avatarUrl: null,
-            phone: normalizedPhone,
-          },
-        };
-        return addDoc(membersRef, newMemberData);
+            avatarUrl: undefined,
+            phone: normalizedPhone
+        });
       })
       .then(() => {
         const communityRef = doc(db, "communities", community!.communityId);
         return updateDoc(communityRef, { memberCount: increment(1) });
       })
       .catch(error => {
-        console.error("Error adding member:", error);
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: '/users or /communityMembers',
-          operation: 'create',
-          requestResourceData: data
-        }));
-        throw new Error(error?.message || "Unable to add member. Please try again.");
+        if (error.code !== "auth/user-already-exists") {
+            console.error("Error adding member:", error);
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: '/users or /communityMembers',
+              operation: 'create',
+              requestResourceData: data
+            }));
+        }
+        throw error;
       });
   };
 
