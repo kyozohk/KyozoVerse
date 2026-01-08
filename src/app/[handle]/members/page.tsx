@@ -259,6 +259,8 @@ export default function CommunityMembersPage() {
     displayName: string;
     email: string;
     phone?: string;
+    avatarUrl?: string;
+    coverUrl?: string;
   }) => {
     if (!community?.communityId) {
       throw new Error("Community is not loaded yet.");
@@ -279,28 +281,44 @@ export default function CommunityMembersPage() {
     
     // Check if user exists by email or phone number
     const emailQuery = query(usersRef, where("email", "==", data.email));
-    const phoneQuery = query(usersRef, where("phone", "==", normalizedPhone));
-    const phoneQuery2 = query(usersRef, where("phoneNumber", "==", normalizedPhone));
-    
-    const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
-      getDocs(emailQuery),
-      normalizedPhone ? getDocs(phoneQuery) : Promise.resolve({ empty: true, docs: [] }),
-      normalizedPhone ? getDocs(phoneQuery2) : Promise.resolve({ empty: true, docs: [] }),
-    ]);
-  
-    const existingUserDoc = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
-  
-    if (existingUserDoc) {
-      const existingUserData = existingUserDoc.data() as User;
-      const error: any = new Error("User already exists");
-      error.code = "auth/user-already-exists";
-      error.existingUser = {
-        userId: existingUserDoc.id,
-        ...existingUserData,
-      };
-      throw error;
+    let existingUserQuery = emailQuery;
+
+    if (normalizedPhone) {
+        const phoneQuery = query(usersRef, where("phone", "==", normalizedPhone));
+        const phoneQuery2 = query(usersRef, where("phoneNumber", "==", normalizedPhone));
+        // This is not a valid way to create an OR query in Firestore client SDK
+        // but for the logic, we will check them sequentially
+        const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
+          getDocs(emailQuery),
+          getDocs(phoneQuery),
+          getDocs(phoneQuery2),
+        ]);
+        const existingUserDoc = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
+        if (existingUserDoc) {
+          const existingUserData = existingUserDoc.data() as User;
+          const error: any = new Error("User already exists");
+          error.code = "auth/user-already-exists";
+          error.existingUser = {
+            userId: existingUserDoc.id,
+            ...existingUserData,
+          };
+          throw error;
+        }
+    } else {
+        const emailSnap = await getDocs(emailQuery);
+        if(!emailSnap.empty) {
+            const existingUserDoc = emailSnap.docs[0];
+            const existingUserData = existingUserDoc.data() as User;
+            const error: any = new Error("User already exists");
+            error.code = "auth/user-already-exists";
+            error.existingUser = {
+              userId: existingUserDoc.id,
+              ...existingUserData,
+            };
+            throw error;
+        }
     }
-    
+  
     return createUserWithEmailAndPassword(communityAuth, data.email, Math.random().toString(36).slice(-8))
       .then(userCredential => {
         const userId = userCredential.user.uid;
@@ -311,6 +329,8 @@ export default function CommunityMembersPage() {
           phone: normalizedPhone,
           phoneNumber: normalizedPhone,
           wa_id: wa_id,
+          avatarUrl: data.avatarUrl || '',
+          coverUrl: data.coverUrl || '',
           createdAt: serverTimestamp(),
         };
 
@@ -322,7 +342,7 @@ export default function CommunityMembersPage() {
         return joinCommunity(userId, community!.communityId, {
             displayName: data.displayName,
             email: data.email,
-            avatarUrl: undefined,
+            avatarUrl: data.avatarUrl,
             phone: normalizedPhone
         });
       })

@@ -14,7 +14,7 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { joinCommunity } from "@/lib/community-utils";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, updateDoc, increment, getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 
 interface MemberDialogProps {
@@ -167,7 +167,9 @@ export function MemberDialog({
           finalCoverUrl = await handleFileUpload(coverFile, 'cover');
         }
       } else if (mode === 'add') {
-        console.log('New member - using preset URLs only');
+        // For adding new user, avatarUrl is already set from ProfileImageSelector
+        finalAvatarUrl = avatarUrl;
+        console.log('New member - using preset/uploaded URLs');
       }
 
       console.log('Final URLs:', {
@@ -216,6 +218,27 @@ export function MemberDialog({
         await updateDoc(doc(db, "communities", communityId), {
           memberCount: increment(1)
         });
+        
+        let finalAvatarUrl = avatarUrl;
+        let finalCoverUrl = coverUrl;
+
+        if (avatarFile) {
+          console.log('Uploading new avatar for existing user...');
+          finalAvatarUrl = await handleFileUpload(avatarFile, 'avatar');
+        }
+        if (coverFile) {
+          console.log('Uploading new cover for existing user...');
+          finalCoverUrl = await handleFileUpload(coverFile, 'cover');
+        }
+
+        // Update user profile if new images were provided
+        if (finalAvatarUrl !== existingUser.avatarUrl || finalCoverUrl !== existingUser.coverUrl) {
+            const userRef = doc(db, 'users', existingUser.userId);
+            const updates: {avatarUrl?: string, coverUrl?: string} = {};
+            if (finalAvatarUrl) updates.avatarUrl = finalAvatarUrl;
+            if (finalCoverUrl) updates.coverUrl = finalCoverUrl;
+            await updateDoc(userRef, updates);
+        }
 
         toast({
           title: "Member Added",
@@ -275,7 +298,7 @@ export function MemberDialog({
              </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
+            <div className="flex-grow space-y-4 overflow-y-auto pr-2 pb-4">
                 <div className="grid grid-cols-2 gap-4">
                     <Input
                         label="First Name"
