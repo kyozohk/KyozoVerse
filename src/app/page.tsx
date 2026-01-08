@@ -35,8 +35,13 @@ function MemberHomeContent() {
 
   useEffect(() => {
     // If member is logged in and there's a redirect, go there
-    if (communityUser && redirectTo) {
-      router.replace(redirectTo);
+    // Otherwise redirect to communities page
+    if (communityUser) {
+      if (redirectTo) {
+        router.replace(redirectTo);
+      } else {
+        router.replace('/communities');
+      }
     }
   }, [communityUser, redirectTo, router]);
 
@@ -53,15 +58,18 @@ function MemberHomeContent() {
   const handleSignIn = async () => {
     setError(null);
     try {
-      await signIn(email, password);
+      const userCredential = await signIn(email, password);
       setIsSignInOpen(false);
       toast({
         title: "Welcome back!",
         description: "You're now signed in.",
       });
-      // Redirect to the community feed if specified, otherwise stay on landing
+      
+      // Redirect to the community feed if specified, otherwise to communities list
       if (redirectTo) {
         router.replace(redirectTo);
+      } else {
+        router.replace('/communities');
       }
     } catch (error: any) {
       let description = "An unexpected error occurred. Please try again.";
@@ -78,14 +86,18 @@ function MemberHomeContent() {
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(communityAuth, provider);
+      const userCredential = await signInWithPopup(communityAuth, provider);
       setIsSignInOpen(false);
       toast({
         title: "Welcome!",
         description: "You're now signed in with Google.",
       });
+      
+      // Redirect to the community feed if specified, otherwise to communities list
       if (redirectTo) {
         router.replace(redirectTo);
+      } else {
+        router.replace('/communities');
       }
     } catch (error: any) {
       let description = "An unexpected error occurred. Please try again.";
@@ -231,7 +243,7 @@ function MemberHomeContent() {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-transparent text-gray-500">Or continue with</span>
               </div>
             </div>
 

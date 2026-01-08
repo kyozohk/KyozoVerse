@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSidebar } from '@/components/ui/enhanced-sidebar';
 import { usePathname, useRouter } from 'next/navigation';
 import { PlusCircle, Check } from 'lucide-react';
@@ -40,9 +41,9 @@ export default function CommunitySidebar() {
   const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
   
   useEffect(() => {
-    // Extract handle from pathname: /pro/[handle]/... -> handle is at index 2
+    // Extract handle from pathname: /communities/[handle]/... -> handle is at index 2
     const pathParts = pathname.split('/');
-    const handleFromPath = pathParts[2]; // /pro/[handle] -> get handle at index 2
+    const handleFromPath = pathParts[2]; // /communities/[handle] -> get handle at index 2
 
     if (!user) {
       setLoading(false);
@@ -117,7 +118,7 @@ export default function CommunitySidebar() {
   const handleCommunitySelect = (handle: string) => {
     setSelectedCommunityHandle(handle);
     setShowCommunityList(false);
-    const currentSubPath = pathname.split('/').slice(2).join('/');
+    const currentSubPath = pathname.split('/').slice(3).join('/');
     const targetItem = communityNavItems.find(item => item.href(handle).endsWith(currentSubPath)) || communityNavItems[0];
     router.push(targetItem.href(handle));
   };
@@ -126,7 +127,7 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
+      className={`hidden border-r lg:block w-20 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
         borderColor: activeColor,
@@ -230,58 +231,52 @@ export default function CommunitySidebar() {
       {/* Navigation View (Default) */}
       {!showCommunityList && (
         <div className="relative z-10 flex h-full max-h-screen flex-col" style={{ padding: '0 8px' }}>
-          {/* Selected Community Header (Clickable) */}
-          <div className="flex h-[76px] items-center " style={{ borderColor: activeColor, padding: '0 8px' }}>
+          {/* Selected Community Header (Clickable) - Icon Only */}
+          <div className="flex h-[76px] items-center justify-center" style={{ borderColor: activeColor }}>
             {loading ? (
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-12 rounded-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
               <button
                 onClick={() => setShowCommunityList(true)}
-                className="w-full h-full p-0 bg-transparent hover:opacity-80 transition-opacity"
+                className="p-0 bg-transparent hover:opacity-80 transition-opacity"
               >
-                <div className="flex items-center gap-2 truncate min-h-20">
-                  <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                    <div 
-                      className="absolute inset-0 rounded-full"
-                      style={{ backgroundColor: activeBgColor }}
-                    />
-                    <Avatar className="h-14 w-14 border-2 relative z-10">
-                      <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                      <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <span className="font-semibold text-lg text-foreground truncate">
-                    {selectedCommunity?.name}
-                  </span>
+                <div className="relative rounded-full h-12 w-12 flex items-center justify-center">
+                  <div 
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: activeBgColor }}
+                  />
+                  <Avatar className="h-10 w-10 border-2 relative z-10">
+                    <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                    <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
+                  </Avatar>
                 </div>
               </button>
             ) : (
-              <div className="w-full">
-                <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                  <PlusCircle className="mr-2 h-12 w-12" />
-                  Create Community
-                </CustomButton>
-              </div>
+              <button onClick={() => setIsCreateDialogOpen(true)} className="p-2">
+                <PlusCircle className="h-8 w-8" />
+              </button>
             )}
           </div>
 
-          {/* Navigation Items */}
+          {/* Navigation Items - Icon Only */}
           <div className="flex-1 py-2">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+            <nav className="flex flex-col items-center gap-2">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = pathname === item.href(selectedCommunityHandle);
                 return (
-                  <SidebarNavItem
+                  <Link
                     key={item.label}
                     href={item.href(selectedCommunityHandle)}
-                    icon={<Icon />}
-                    isActive={pathname === item.href(selectedCommunityHandle)}
-                    activeColor={activeColor}
-                    activeBgColor={activeBgColor}
-                    className="my-1"
+                    className="flex items-center justify-center w-12 h-12 rounded-lg transition-all"
+                    style={{
+                      backgroundColor: isActive ? activeBgColor : 'transparent',
+                      color: isActive ? activeColor : 'inherit',
+                    }}
+                    title={item.label}
                   >
-                    {item.label}
-                  </SidebarNavItem>
+                    <Icon className="h-5 w-5" />
+                  </Link>
                 );
               })}
             </nav>

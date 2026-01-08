@@ -30,21 +30,21 @@ interface CommunityNavItem {
 }
 
 export const mainNavItems: NavItem[] = [
-    { href: '/pro/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/pro/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
-    { href: '/pro/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/pro/settings', icon: Settings, label: 'Settings', section: 'settings' },
+    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
+    { href: '/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
+    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
 ];
 
 export const communityNavItems: CommunityNavItem[] = [
-    { href: (handle: string) => `/pro/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
-    { href: (handle: string) => `/pro/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
-    { href: (handle: string) => `/pro/${handle}/broadcast`, icon: Megaphone, label: 'Broadcast', section: 'broadcast' },
-    { href: (handle: string) => `/pro/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
-    { href: (handle: string) => `/pro/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
-    { href: (handle: string) => `/pro/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
-    { href: (handle: string) => `/pro/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
-    { href: (handle: string) => `/pro/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: (handle: string) => `/communities/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
+    { href: (handle: string) => `/communities/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
+    { href: (handle: string) => `/communities/${handle}/broadcast`, icon: Megaphone, label: 'Broadcast', section: 'broadcast' },
+    { href: (handle: string) => `/communities/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
+    { href: (handle: string) => `/communities/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
+    { href: (handle: string) => `/communities/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
+    { href: (handle: string) => `/communities/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
+    { href: (handle: string) => `/communities/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
 ];
 
 // Map sections to centralized theme colors
@@ -81,9 +81,9 @@ export const getThemeForPath = (path: string) => {
         // Main sections like /pro/communities, /pro/analytics
         const mainNavItem = mainNavItems.find(item => item.href === `/${segments[0]}/${segments[1]}`);
         section = mainNavItem?.section || 'default';
-    } else if (segments.length >= 1) {
-        // Community pages like /[handle] or /[handle]/members
-        const subRoute = segments[1];
+    } else if (segments[0] === 'communities' && segments.length >= 2) {
+        // Community pages like /communities/[handle] or /communities/[handle]/members
+        const subRoute = segments[2]; // members, broadcast, etc.
         const communityNavItem = communityNavItems.find(item => {
             const itemPath = item.href('handle').split('/')[2];
             return itemPath === subRoute;
@@ -91,8 +91,8 @@ export const getThemeForPath = (path: string) => {
 
         if (communityNavItem) {
             section = communityNavItem.section;
-        } else if (segments.length === 1) {
-            // This is the overview page for a community handle
+        } else if (segments.length === 2) {
+            // This is the overview page for a community handle (/communities/[handle])
             section = 'overview';
         }
     }

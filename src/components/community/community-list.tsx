@@ -16,7 +16,6 @@ interface CommunityListProps {
 export function CommunityList({ communities }: CommunityListProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<'name' | 'tag'>('name');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const filteredCommunities = communities.filter(community => 
@@ -36,12 +35,10 @@ export function CommunityList({ communities }: CommunityListProps) {
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        searchType={searchType}
-        onSearchTypeChange={setSearchType}
         onAddAction={undefined}
       >
         {filteredCommunities.map((community) => (
-          <Link key={community.communityId} href={`/pro/${community.handle}`} className="block h-full">
+          <Link key={community.communityId} href={`/communities/${community.handle}`} className="block h-full">
             <CommunityCard community={community} />
           </Link>
         ))}
