@@ -70,6 +70,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
+      // Allow users to update their own profile
+      // Note: Community owners/admins should update via communityMembers collection, not users directly
       allow update: if request.auth != null && request.auth.uid == userId;
       allow delete: if request.auth != null && request.auth.uid == userId;
     }

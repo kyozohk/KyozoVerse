@@ -23,6 +23,7 @@ import { WatchCard } from '@/components/content-cards/watch-card';
 import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 import Link from 'next/link';
 import { FeedStats } from '@/components/community/feed-stats';
+import { CommunityHeader } from '@/components/community/community-header';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -38,6 +39,11 @@ export default function CommunityFeedPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [community, setCommunity] = useState<Community | null>(null);
   const [selectedPost, setSelectedPost] = useState<(Post & { id: string}) | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchCommunityAndRole() {
@@ -186,8 +192,23 @@ export default function CommunityFeedPage() {
     ? filteredPosts.filter(post => post.id !== firstAudioPost.id)
     : filteredPosts;
 
+  // Calculate member count excluding owner
+  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
+  const memberCountExcludingOwner = nonOwnerMembers.length;
+
   return (
-    <>
+    <div className="space-y-8">
+      {community && (
+        <CommunityHeader 
+          community={community} 
+          userRole={userRole as any} 
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={() => setIsDeleteConfirmOpen(true)}
+          onAddMember={() => setIsAddMemberOpen(true)}
+          onInvite={() => setIsInviteDialogOpen(true)}
+          memberCount={memberCountExcludingOwner}
+        />
+      )}
       <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }}>
         {/* 70% gray overlay */}
         <div className="absolute inset-0 bg-[#D9D9D9]/70"></div>
@@ -343,6 +364,6 @@ export default function CommunityFeedPage() {
         isOpen={!!selectedPost}
         onClose={() => setSelectedPost(null)}
       />
-    </>
+    </div>
   );
 }

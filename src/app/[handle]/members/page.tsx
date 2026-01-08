@@ -19,7 +19,8 @@ import {
   increment,
   setDoc,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  deleteDoc
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,7 +39,8 @@ import { InviteMemberDialog } from "@/components/community/invite-member-dialog"
 import { ImportMembersDialog } from "@/components/community/import-members-dialog";
 import { UserPlus, Mail, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { CommunityHeader } from "@/components/community/community-header";
+import { CustomButton } from "@/components/ui";
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -73,6 +75,9 @@ export default function CommunityMembersPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<CommunityMember | null>(null);
 
   // State for remove tag confirmation
   const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
@@ -389,30 +394,40 @@ export default function CommunityMembersPage() {
     }
 
     try {
-        const userRef = doc(db, "users", editingMember.userId);
-        
-        const updateData: Partial<User> = {
-            displayName: data.displayName,
-            email: data.email,
-            phone: data.phone,
-        };
-
-        if (data.avatarUrl) {
-            updateData.avatarUrl = data.avatarUrl;
-        }
-        if (data.coverUrl) {
-            updateData.coverUrl = data.coverUrl;
-        }
-
-        await updateDoc(userRef, updateData);
-        
+        // Only update the communityMembers collection
+        // Community owners/admins can update member details here
         const memberRef = doc(db, "communityMembers", (editingMember as any).id);
-        await updateDoc(memberRef, {
+        
+        // Build update object with only defined values
+        const updateData: any = {
             'userDetails.displayName': data.displayName,
             'userDetails.email': data.email,
-            'userDetails.phone': data.phone,
-            'userDetails.avatarUrl': data.avatarUrl || editingMember.userDetails?.avatarUrl,
-        });
+        };
+
+        // Only add phone if it has a value
+        if (data.phone) {
+          updateData['userDetails.phone'] = data.phone;
+        }
+
+        // Only add avatarUrl if it has a value
+        const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
+        if (finalAvatarUrl) {
+          updateData['userDetails.avatarUrl'] = finalAvatarUrl;
+        }
+
+        // Only add coverUrl if it has a value
+        const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
+        if (finalCoverUrl) {
+          updateData['userDetails.coverUrl'] = finalCoverUrl;
+        }
+
+        await updateDoc(memberRef, updateData);
+
+        // Refresh the members list to show updated data
+        if (community?.communityId) {
+          const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
+          setMembers(membersData);
+        }
 
     } catch (error: any) {
         console.error("Error updating member:", error);
@@ -420,9 +435,54 @@ export default function CommunityMembersPage() {
     }
   };
 
+  // Calculate member count excluding owner
+  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
+  const memberCountExcludingOwner = nonOwnerMembers.length;
 
   return (
-    <>
+    <div className="space-y-8">
+      {community && (
+        <CommunityHeader 
+          community={community} 
+          userRole={userRole as any} 
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={() => setIsDeleteConfirmOpen(true)}
+          onAddMember={() => setIsAddMemberOpen(true)}
+          onInvite={() => setIsInviteDialogOpen(true)}
+          memberCount={memberCountExcludingOwner}
+          customActions={
+            <>
+              <CustomButton 
+                variant="rounded-rect" 
+                className="text-white/80 hover:text-white hover:bg-white/10"
+                onClick={() => setIsInviteDialogOpen(true)}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Invite
+              </CustomButton>
+              <CustomButton 
+                variant="rounded-rect" 
+                className="text-white/80 hover:text-white hover:bg-white/10"
+                onClick={() => setIsAddMemberOpen(true)}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add
+              </CustomButton>
+              <CustomButton 
+                variant="rounded-rect" 
+                className="text-white/80 hover:text-white hover:bg-white/10"
+                onClick={() => {
+                  console.log('Import button clicked');
+                  setIsImportDialogOpen(true);
+                }}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </CustomButton>
+            </>
+          }
+        />
+      )}
       <ListView
         title="Members"
         subtitle="Browse and manage community members."
@@ -431,40 +491,6 @@ export default function CommunityMembersPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         loading={loading}
-        actions={
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsInviteDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Invite
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAddMemberOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Add
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                console.log('Import button clicked');
-                setIsImportDialogOpen(true);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Upload className="h-4 w-4" />
-              Import
-            </Button>
-          </div>
-        }
         onAddTags={() => setIsTaggingOpen(true)}
         selectedCount={selectedMembers.length}
         availableTags={availableTags}
@@ -480,6 +506,10 @@ export default function CommunityMembersPage() {
           selectable={true}
           onEditMember={(member) => setEditingMember(member)}
           onRemoveTag={openRemoveTagDialog}
+          onDeleteMember={(member) => {
+            setMemberToDelete(member);
+            setIsDeleteConfirmOpen(true);
+          }}
         />
       </ListView>
       <MemberDialog
@@ -528,6 +558,57 @@ export default function CommunityMembersPage() {
           }}
         />
       )}
-    </>
+      
+      {/* Delete Member Confirmation Dialog */}
+      {isDeleteConfirmOpen && memberToDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4">Delete Member</h2>
+            <p className="mb-6">
+              Are you sure you want to remove <strong>{memberToDelete.userDetails?.displayName}</strong> from this community? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsDeleteConfirmOpen(false);
+                  setMemberToDelete(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={async () => {
+                  try {
+                    if (!community?.communityId || !memberToDelete.id) return;
+                    
+                    // Delete the community member document
+                    await deleteDoc(doc(db, 'communityMembers', memberToDelete.id));
+                    
+                    // Decrement member count
+                    const communityRef = doc(db, 'communities', community.communityId);
+                    await updateDoc(communityRef, {
+                      memberCount: increment(-1),
+                    });
+                    
+                    // Refresh members list
+                    const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
+                    setMembers(membersData);
+                    
+                    setIsDeleteConfirmOpen(false);
+                    setMemberToDelete(null);
+                  } catch (error) {
+                    console.error('Error deleting member:', error);
+                  }
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

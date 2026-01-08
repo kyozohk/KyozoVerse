@@ -15,8 +15,12 @@ import { ListView } from '@/components/ui/list-view';
 import { MembersList } from '@/components/community/members-list';
 import { Button } from '@/components/ui/button';
 import { getThemeForPath } from '@/lib/theme-utils';
+import { CommunityHeader } from '@/components/community/community-header';
+import { useAuth } from '@/hooks/use-auth';
+import { getUserRoleInCommunity } from '@/lib/community-utils';
 
 export default function CommunityBroadcastPage() {
+  const { user } = useAuth();
   const params = useParams();
   const handle = params.handle as string;
   const pathname = usePathname();
@@ -30,6 +34,11 @@ export default function CommunityBroadcastPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [userRole, setUserRole] = useState<string>('guest');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
   const { activeColor } = getThemeForPath(pathname);
 
@@ -46,6 +55,11 @@ export default function CommunityBroadcastPage() {
           return;
         }
         setCommunity(communityData);
+
+        if (user) {
+          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+          setUserRole(role);
+        }
 
         const membersQuery = query(collection(db, "communityMembers"), where("communityId", "==", communityData.communityId));
         const membersSnapshot = await getDocs(membersQuery);
@@ -78,7 +92,7 @@ export default function CommunityBroadcastPage() {
     };
     
     fetchData();
-  }, [handle]);
+  }, [handle, user]);
 
   // Fetch WhatsApp templates from backend, similar to reference project
   useEffect(() => {
@@ -141,9 +155,24 @@ export default function CommunityBroadcastPage() {
     }
   };
   
+  // Calculate member count excluding owner
+  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
+  const memberCountExcludingOwner = nonOwnerMembers.length;
+
   return (
-    <div className="relative min-h-screen">
-       <ListView
+    <div className="space-y-8">
+      {community && (
+        <CommunityHeader 
+          community={community} 
+          userRole={userRole as any} 
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={() => setIsDeleteConfirmOpen(true)}
+          onAddMember={() => setIsAddMemberOpen(true)}
+          onInvite={() => setIsInviteDialogOpen(true)}
+          memberCount={memberCountExcludingOwner}
+        />
+      )}
+      <ListView
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
