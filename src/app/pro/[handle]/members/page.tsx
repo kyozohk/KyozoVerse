@@ -34,6 +34,10 @@ import { CommunityMember } from "@/lib/types";
 import { TagMembersDialog } from "@/components/community/tag-members-dialog";
 import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
 import { addTagsToCommunity, getCommunityTags, type CommunityTag } from "@/lib/community-tags";
+import { InviteMemberDialog } from "@/components/community/invite-member-dialog";
+import { ImportMembersDialog } from "@/components/community/import-members-dialog";
+import { UserPlus, Mail, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -68,6 +72,8 @@ export default function CommunityMembersPage() {
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // State for remove tag confirmation
   const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
@@ -428,7 +434,40 @@ export default function CommunityMembersPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         loading={loading}
-        onAddAction={() => setIsAddMemberOpen(true)}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsInviteDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              Invite
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddMemberOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Add
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                console.log('Import button clicked');
+                setIsImportDialogOpen(true);
+              }}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Import
+            </Button>
+          </div>
+        }
         onAddTags={() => setIsTaggingOpen(true)}
         selectedCount={selectedMembers.length}
         availableTags={availableTags}
@@ -474,6 +513,24 @@ export default function CommunityMembersPage() {
         onConfirm={handleRemoveTag}
         tagName={tagToRemove?.tag || ''}
       />
+      {community && (
+        <InviteMemberDialog
+          isOpen={isInviteDialogOpen}
+          onClose={() => setIsInviteDialogOpen(false)}
+          community={community}
+        />
+      )}
+      {community && (
+        <ImportMembersDialog
+          isOpen={isImportDialogOpen}
+          onClose={() => setIsImportDialogOpen(false)}
+          community={community}
+          onSuccess={async () => {
+            const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+            setMembers(membersData);
+          }}
+        />
+      )}
     </>
   );
 }
