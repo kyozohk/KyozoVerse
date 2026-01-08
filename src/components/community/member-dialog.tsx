@@ -94,13 +94,13 @@ export function MemberDialog({
     setTimeout(resetForm, 300);
   };
 
-  const handleFileUpload = async (file: File | null, type: 'avatar' | 'cover') => {
+  const handleFileUpload = async (file: File | null, userId: string | null | undefined, type: 'avatar' | 'cover') => {
     if (!file) {
       console.log(`No ${type} file to upload`);
       return null;
     }
     
-    if (!initialMember?.userId) {
+    if (!userId) {
       console.error('No userId found for file upload');
       toast({
         title: 'Upload Failed',
@@ -110,10 +110,10 @@ export function MemberDialog({
       return null;
     }
     
-    console.log(`Uploading ${type} for user ${initialMember.userId}`);
+    console.log(`Uploading ${type} for user ${userId}`);
     
     try {
-        const result = await uploadFile(file, `user-media/${initialMember.userId}/${type}`);
+        const result = await uploadFile(file, `user-media/${userId}/${type}`);
         const url = typeof result === 'string' ? result : result.url;
         console.log(`${type} uploaded successfully:`, url);
         return url;
@@ -159,12 +159,12 @@ export function MemberDialog({
       if (mode === 'edit' && initialMember?.userId) {
         if (avatarFile) {
           console.log('Uploading avatar file...');
-          finalAvatarUrl = await handleFileUpload(avatarFile, 'avatar');
+          finalAvatarUrl = await handleFileUpload(avatarFile, initialMember.userId, 'avatar');
         }
 
         if (coverFile) {
           console.log('Uploading cover file...');
-          finalCoverUrl = await handleFileUpload(coverFile, 'cover');
+          finalCoverUrl = await handleFileUpload(coverFile, initialMember.userId, 'cover');
         }
       } else if (mode === 'add') {
         // For adding new user, avatarUrl is already set from ProfileImageSelector
@@ -224,15 +224,15 @@ export function MemberDialog({
 
         if (avatarFile) {
           console.log('Uploading new avatar for existing user...');
-          finalAvatarUrl = await handleFileUpload(avatarFile, 'avatar');
+          finalAvatarUrl = await handleFileUpload(avatarFile, existingUser.userId, 'avatar');
         }
         if (coverFile) {
           console.log('Uploading new cover for existing user...');
-          finalCoverUrl = await handleFileUpload(coverFile, 'cover');
+          finalCoverUrl = await handleFileUpload(coverFile, existingUser.userId, 'cover');
         }
 
         // Update user profile if new images were provided
-        if (finalAvatarUrl !== existingUser.avatarUrl || finalCoverUrl !== existingUser.coverUrl) {
+        if ((finalAvatarUrl && finalAvatarUrl !== existingUser.avatarUrl) || (finalCoverUrl && finalCoverUrl !== existingUser.coverUrl)) {
             const userRef = doc(db, 'users', existingUser.userId);
             const updates: {avatarUrl?: string, coverUrl?: string} = {};
             if (finalAvatarUrl) updates.avatarUrl = finalAvatarUrl;
