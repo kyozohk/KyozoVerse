@@ -200,14 +200,20 @@ export function MemberDialog({
 
       setSubmitting(true);
       try {
-        const communityRef = doc(db, "communities", communityName);
-        const communityData = (await getDoc(communityRef)).data();
-        await joinCommunity(existingUser.userId, communityData?.communityId, {
+        const communitiesRef = collection(db, "communities");
+        const q = query(communitiesRef, where("name", "==", communityName));
+        const communitySnap = await getDocs(q);
+        if (communitySnap.empty) {
+          throw new Error('Community not found');
+        }
+        const communityId = communitySnap.docs[0].id;
+        
+        await joinCommunity(existingUser.userId, communityId, {
             displayName: existingUser.displayName,
             email: existingUser.email,
         });
 
-        await updateDoc(doc(db, "communities", communityData?.communityId), {
+        await updateDoc(doc(db, "communities", communityId), {
           memberCount: increment(1)
         });
 
@@ -268,7 +274,8 @@ export function MemberDialog({
                  </div>
              </div>
         ) : (
-            <div className="flex-grow space-y-4">
+          <div className="flex flex-col h-full">
+            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
                 <div className="grid grid-cols-2 gap-4">
                     <Input
                         label="First Name"
@@ -311,25 +318,24 @@ export function MemberDialog({
               
               {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
-        )}
-        {!existingUser && (
-          <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
-            <CustomButton
-              variant="outline"
-              onClick={handleClose}
-              disabled={submitting}
-              className="w-full"
-            >
-              Cancel
-            </CustomButton>
-            <CustomButton
-              variant="outline"
-              onClick={handleSubmit}
-              className="w-full"
-              disabled={submitting}
-            >
-              {submitting ? (mode === "add" ? "Adding..." : "Saving...") : "Save changes"}
-            </CustomButton>
+            <div className="flex-shrink-0 mt-auto pt-6 flex flex-row justify-end gap-3">
+                <CustomButton
+                variant="outline"
+                onClick={handleClose}
+                disabled={submitting}
+                className="w-full"
+                >
+                Cancel
+                </CustomButton>
+                <CustomButton
+                variant="outline"
+                onClick={handleSubmit}
+                className="w-full"
+                disabled={submitting}
+                >
+                {submitting ? (mode === "add" ? "Adding..." : "Saving...") : "Save changes"}
+                </CustomButton>
+            </div>
           </div>
         )}
       </div>

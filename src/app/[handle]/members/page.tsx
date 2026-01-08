@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { 
   collection, 
   query, 
@@ -62,6 +62,7 @@ export default function CommunityMembersPage() {
   const { user } = useAuth();
   const params = useParams();
   const handle = params.handle as string;
+  const router = useRouter();
   
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -286,7 +287,7 @@ export default function CommunityMembersPage() {
         const error: any = new Error("User already exists");
         error.code = "auth/user-already-exists";
         error.existingUser = {
-            id: existingUserDoc.id,
+            userId: existingUserDoc.id,
             ...existingUserData,
         };
         throw error;
@@ -334,47 +335,48 @@ export default function CommunityMembersPage() {
       });
   };
 
-  const handleEditMemberSubmit = (data: {
+  const handleEditMemberSubmit = async (data: {
     displayName: string;
     email: string;
     phone?: string;
     avatarUrl?: string;
     coverUrl?: string;
   }) => {
-    if (!editingMember?.id) {
-        throw new Error("No member selected to edit or member is missing ID.");
+    if (!editingMember?.userId) {
+        throw new Error("No member selected to edit or member is missing user ID.");
     }
-
+    
+    const userRef = doc(db, 'users', editingMember.userId);
     const memberRef = doc(db, 'communityMembers', editingMember.id);
     
-    const updateData: any = {
+    const userUpdateData: any = {
+        displayName: data.displayName,
+        email: data.email,
+        phone: data.phone || '',
+        avatarUrl: data.avatarUrl || '',
+        coverUrl: data.coverUrl || '',
+    };
+    
+    const memberUpdateData: any = {
         'userDetails.displayName': data.displayName,
         'userDetails.email': data.email,
+        'userDetails.phone': data.phone || '',
+        'userDetails.avatarUrl': data.avatarUrl || '',
+        'userDetails.coverUrl': data.coverUrl || '',
     };
-
-    if (data.phone) {
-      updateData['userDetails.phone'] = data.phone;
-    }
-
-    const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
-    if (finalAvatarUrl) {
-      updateData['userDetails.avatarUrl'] = finalAvatarUrl;
-    }
-
-    const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
-    if (finalCoverUrl) {
-      updateData['userDetails.coverUrl'] = finalCoverUrl;
-    }
-
-    updateDoc(memberRef, updateData).catch(error => {
+    
+    try {
+        await updateDoc(userRef, userUpdateData);
+        await updateDoc(memberRef, memberUpdateData);
+    } catch(error: any) {
         console.error('Error updating member:', error);
         errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: memberRef.path,
+            path: userRef.path,
             operation: 'update',
-            requestResourceData: updateData
+            requestResourceData: userUpdateData
         }));
         throw new Error(error?.message || "Unable to update member. Please try again.");
-    });
+    }
   };
 
   // Calculate member count excluding owner
@@ -387,7 +389,7 @@ export default function CommunityMembersPage() {
         <CommunityHeader 
           community={community} 
           userRole={userRole as any} 
-          onEdit={() => setIsEditDialogOpen(true)}
+          onEdit={() => router.push(`/communities/${community.handle}/edit`)}
           onDelete={() => setIsDeleteConfirmOpen(true)}
           onAddMember={() => setIsAddMemberOpen(true)}
           onInvite={() => setIsInviteDialogOpen(true)}
@@ -554,3 +556,4 @@ export default function CommunityMembersPage() {
     </div>
   );
 }
+
