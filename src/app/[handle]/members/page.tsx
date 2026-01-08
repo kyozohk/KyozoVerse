@@ -373,48 +373,47 @@ export default function CommunityMembersPage() {
     if (!editingMember?.userId) {
       throw new Error("No member selected to edit or member is missing user ID.");
     }
-  
-    const userRef = doc(db, 'users', editingMember.userId);
-    const memberRef = doc(db, 'communityMembers', editingMember.id);
-  
-    const userUpdateData: any = {
-      displayName: data.displayName,
-      email: data.email,
-      phone: data.phone || '',
-      avatarUrl: data.avatarUrl || '',
-      coverUrl: data.coverUrl || '',
-    };
-  
-    const memberUpdateData: any = {
-      'userDetails.displayName': data.displayName,
-      'userDetails.email': data.email,
-      'userDetails.phone': data.phone || '',
-      'userDetails.avatarUrl': data.avatarUrl || '',
-    };
-  
-    // Update user document
-    updateDoc(userRef, userUpdateData)
-      .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: userRef.path,
-          operation: 'update',
-          requestResourceData: userUpdateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw new Error("Failed to update user profile due to permissions.");
-      });
-  
-    // Update community member document
-    updateDoc(memberRef, memberUpdateData)
-      .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: memberRef.path,
-          operation: 'update',
-          requestResourceData: memberUpdateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        // Don't re-throw here as the first error is more informative for the user
-      });
+
+    try {
+      // Only update the communityMembers collection
+      // Community owners/admins can update member details here
+      const memberRef = doc(db, "communityMembers", editingMember.id);
+      
+      // Build update object with only defined values
+      const updateData: any = {
+        'userDetails.displayName': data.displayName,
+        'userDetails.email': data.email,
+      };
+
+      // Only add phone if it has a value
+      if (data.phone) {
+        updateData['userDetails.phone'] = data.phone;
+      }
+
+      // Only add avatarUrl if it has a value
+      const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
+      if (finalAvatarUrl) {
+        updateData['userDetails.avatarUrl'] = finalAvatarUrl;
+      }
+
+      // Only add coverUrl if it has a value
+      const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
+      if (finalCoverUrl) {
+        updateData['userDetails.coverUrl'] = finalCoverUrl;
+      }
+
+      await updateDoc(memberRef, updateData);
+
+      // Refresh the members list to show updated data
+      if (community?.communityId) {
+        const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
+        setMembers(membersData);
+      }
+
+    } catch (error: any) {
+      console.error("Error updating member:", error);
+      throw new Error(error?.message || "Unable to update member. Please try again.");
+    }
   };
 
   // Calculate member count excluding owner
