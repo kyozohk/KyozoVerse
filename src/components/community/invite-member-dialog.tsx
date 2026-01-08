@@ -123,17 +123,51 @@ Looking forward to seeing you there!`;
     }
   };
 
-  const handleSendEmail = () => {
+  const handleSendEmail = async () => {
     if (!email) {
       alert('Please enter an email address');
       return;
     }
 
-    const subject = encodeURIComponent(`Join my ${community.name}`);
-    const body = encodeURIComponent(inviteMessage);
-    const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
-    
-    window.location.href = mailtoLink;
+    try {
+      // Send email via SendGrid API
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          from: 'dev@kyozo.com', // Use verified sender from SendGrid
+          subject: `Join ${community.name} on KyozoVerse`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <h1 style="color: #1f2937; margin-bottom: 20px;">You're Invited!</h1>
+                  <div style="white-space: pre-wrap; color: #4b5563; line-height: 1.6; margin-bottom: 30px;">${inviteMessage}</div>
+                  <a href="${inviteUrl}" style="display: inline-block; background-color: #843484; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">Join ${community.name}</a>
+                </div>
+              </body>
+            </html>
+          `,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      alert('Invitation email sent successfully!');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Failed to send email. Please try again.');
+    }
   };
 
   const handleSendWhatsApp = () => {

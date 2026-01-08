@@ -125,7 +125,8 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
         <div
           {...getRootProps()}
           className={cn(
-              "relative flex justify-center items-center w-full h-32 rounded-lg border border-dotted p-4 cursor-pointer transition-colors",
+              "relative flex justify-center items-center w-full h-64 rounded-lg border border-dotted cursor-pointer transition-colors",
+              previewUrl ? 'p-0' : 'p-4',
               isDragActive ? 'bg-accent' : 'bg-muted/10',
               className
           )}
@@ -152,12 +153,12 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
                 </p>
             </div>
         ) : (
-            <div className="relative w-full h-full rounded-md flex items-center justify-center overflow-hidden">
+            <div className="relative w-full h-full rounded-lg flex items-center justify-center overflow-hidden">
                 {getPreview()}
                 <Button
                     variant="destructive"
                     size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 z-10"
+                    className="absolute top-2 right-2 h-7 w-7 z-10 shadow-lg"
                     onClick={handleRemove}
                 >
                     <X className="h-4 w-4" />

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
     }
     
-    const { to, subject, html, from = 'dev@kyozo.com' } = body;
+    const { to, subject, html, from = 'dev@kyozo.com', replyTo } = body;
 
     if (!to || !subject || !html) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -38,22 +38,24 @@ export async function POST(request: Request) {
     let response;
     if (Array.isArray(to) && to.length > 1) {
       // For multiple recipients, use sendMultiple to send individual emails
-      const msg = {
+      const msg: any = {
         to,
         from,
         subject,
         html,
       };
+      if (replyTo) msg.replyTo = replyTo;
       const responses = await sgMail.sendMultiple(msg);
       response = responses[0]; // Get first response for status check
     } else {
       // For single recipient
-      const msg = {
+      const msg: any = {
         to: Array.isArray(to) ? to[0] : to,
         from,
         subject,
         html,
       };
+      if (replyTo) msg.replyTo = replyTo;
       [response] = await sgMail.send(msg);
     }
 

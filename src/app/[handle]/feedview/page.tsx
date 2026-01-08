@@ -162,7 +162,7 @@ export default function FeedViewPage() {
           >
             Watch
           </button>
-          <Link href={`/pro/${handle}`}>
+          <Link href={`/${handle}`}>
             <button className="px-4 py-1.5 rounded-full text-sm font-medium bg-transparent text-gray-600 hover:bg-gray-100 transition-colors">
               Profile
             </button>
@@ -210,7 +210,7 @@ export default function FeedViewPage() {
       {/* Link to author view if needed */}
       <div className="mt-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Are you the community owner? <Link href={`/pro/${handle}/feed`} className="text-primary hover:underline">Sign in to manage content</Link>
+          Are you the community owner? <Link href={`/${handle}/feed`} className="text-primary hover:underline">Sign in to manage content</Link>
         </p>
       </div>
     </div>

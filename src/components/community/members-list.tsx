@@ -7,7 +7,7 @@ import { CommunityMember, UserRole } from '@/lib/types';
 import { Checkbox } from '../ui';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Users, Edit, Mail, X } from 'lucide-react';
+import { Users, Edit, Mail, X, MessageCircle, Trash2, Phone } from 'lucide-react';
 import { MemberCard } from '../community/member-card';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ interface MembersListProps {
   viewMode?: 'grid' | 'list';
   onEditMember?: (member: CommunityMember) => void;
   onRemoveTag?: (memberId: string, tag: string) => void;
+  onDeleteMember?: (member: CommunityMember) => void;
 }
 
 export function MembersList({
@@ -34,7 +35,8 @@ export function MembersList({
   selectable,
   viewMode = 'grid',
   onEditMember,
-  onRemoveTag
+  onRemoveTag,
+  onDeleteMember
 }: MembersListProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -62,8 +64,8 @@ export function MembersList({
   const handleNavigate = (member: CommunityMember) => {
     // This function is now only for navigation
     const pathParts = pathname.split('/');
-    const handle = pathParts[2];
-    router.push(`/pro/${handle}/members/${member.userId}`);
+    const handle = pathParts[1];
+    router.push(`/${handle}/members/${member.userId}`);
   };
 
   const handleSelect = (e: React.MouseEvent | React.KeyboardEvent, member: CommunityMember) => {
@@ -97,7 +99,7 @@ export function MembersList({
           return (
             <div
               key={member.id}
-              className="flex items-center p-4 border-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
+              className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
               style={itemStyle}
               onClick={() => handleNavigate(member)}
             >
@@ -108,10 +110,6 @@ export function MembersList({
                     onCheckedChange={() => {
                         // The parent div's onClick handles the logic
                     }}
-                    className="data-[state=checked]:bg-[var(--primary-purple)] data-[state=checked]:border-[var(--primary-purple)]"
-                    style={{
-                      '--primary-purple': activeColor
-                    } as React.CSSProperties}
                   />
                 </div>
               )}
@@ -121,11 +119,15 @@ export function MembersList({
                   {member.userDetails?.displayName?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-grow grid grid-cols-1 md:grid-cols-3 items-center gap-4">
-                <div className="font-semibold text-base truncate">{member.userDetails?.displayName}</div>
+              <div className="flex-grow grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                <div className="font-semibold text-base text-foreground truncate">{member.userDetails?.displayName}</div>
                  <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
                     <Mail className="h-4 w-4 shrink-0" />
                     <span>{member.userDetails?.email || 'No email'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span>{member.userDetails?.phone || 'No phone'}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
                   {(member.tags || []).slice(0, 3).map(tag => (
@@ -142,16 +144,54 @@ export function MembersList({
                 </div>
               </div>
               {canManage && (
-                <button
-                  type="button"
-                  className="ml-4 h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditMember && onEditMember(member);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1 ml-4">
+                  <button
+                    type="button"
+                    className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditMember && onEditMember(member);
+                    }}
+                    title="Edit member"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Open message dialog
+                      console.log('Message member:', member.userDetails?.displayName);
+                    }}
+                    title="Message member"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Open email dialog
+                      console.log('Email member:', member.userDetails?.displayName);
+                    }}
+                    title="Email member"
+                  >
+                    <Mail className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="h-8 w-8 flex items-center justify-center rounded-md text-red-500 hover:text-red-400 hover:bg-muted/40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteMember && onDeleteMember(member);
+                    }}
+                    title="Delete member"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               )}
             </div>
           );
@@ -163,16 +203,24 @@ export function MembersList({
   // Grid view
   return (
     <>
-      {members.map((member) => (
-        <MemberCard
-          key={member.id}
-          member={member}
-          canManage={canManage}
-          borderColor={activeColor}
-          onClick={() => handleNavigate(member)}
-          onRemoveTag={onRemoveTag}
-        />
-      ))}
+      {members.map((member) => {
+        const isSelected = selectedMembers.some((m) => 'userId' in m ? m.userId === member.userId : false);
+        return (
+          <MemberCard
+            key={member.id}
+            member={member}
+            canManage={canManage}
+            borderColor={activeColor}
+            onClick={() => handleNavigate(member)}
+            onRemoveTag={onRemoveTag}
+            selectable={selectable}
+            isSelected={isSelected}
+            onSelect={(m) => onMemberClick?.(m)}
+            onEdit={(m) => onEditMember?.(m)}
+            onDelete={(m) => onDeleteMember?.(m)}
+          />
+        );
+      })}
     </>
   );
 }

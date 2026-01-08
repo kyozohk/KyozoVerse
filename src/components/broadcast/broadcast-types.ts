@@ -76,6 +76,7 @@ export interface BroadcastModalProps {
   onContinue?: (selectedMembers: (Member | CommunityMember)[], templateData?: any) => void;
   templates?: Template[];
   loadingTemplates?: boolean;
+  mode?: 'whatsapp' | 'email'; // Add mode to switch between WhatsApp and email
 }
 
 export interface BroadcastResult {

@@ -4,19 +4,25 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useParams } from 'next/navigation';
 import { CustomButton } from '@/components/ui';
-import { MessageSquare, CopyCheck, CopyX } from 'lucide-react';
+import { MessageSquare, CopyCheck, CopyX, Mail } from 'lucide-react';
 import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
+import { EmailSendDialog } from '@/components/broadcast/email-send-dialog';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type CommunityMember, type User, type Community } from '@/lib/types';
 import { Member } from '@/components/broadcast/broadcast-types';
 import { getCommunityByHandle } from '@/lib/community-utils';
+import { getCommunityTags, type CommunityTag } from '@/lib/community-tags';
 import { ListView } from '@/components/ui/list-view';
 import { MembersList } from '@/components/community/members-list';
 import { Button } from '@/components/ui/button';
 import { getThemeForPath } from '@/lib/theme-utils';
+import { CommunityHeader } from '@/components/community/community-header';
+import { useAuth } from '@/hooks/use-auth';
+import { getUserRoleInCommunity } from '@/lib/community-utils';
 
 export default function CommunityBroadcastPage() {
+  const { user } = useAuth();
   const params = useParams();
   const handle = params.handle as string;
   const pathname = usePathname();
@@ -30,6 +36,14 @@ export default function CommunityBroadcastPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [userRole, setUserRole] = useState<string>('guest');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { activeColor } = getThemeForPath(pathname);
 
@@ -47,6 +61,15 @@ export default function CommunityBroadcastPage() {
         }
         setCommunity(communityData);
 
+        if (user) {
+          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+          setUserRole(role);
+        }
+
+        // Fetch available tags for this community
+        const tags = await getCommunityTags(communityData.communityId);
+        setAvailableTags(tags);
+
         const membersQuery = query(collection(db, "communityMembers"), where("communityId", "==", communityData.communityId));
         const membersSnapshot = await getDocs(membersQuery);
 
@@ -56,11 +79,13 @@ export default function CommunityBroadcastPage() {
           const userSnap = await getDoc(userDocRef);
           
           const memberData: CommunityMember = {
+            id: memberDoc.id,
             userId: data.userId,
             communityId: data.communityId,
             role: data.role || 'member',
             joinedAt: data.joinedAt,
             status: data.status || 'active',
+            tags: data.tags || [],
             userDetails: userSnap.exists() ? userSnap.data() as User : undefined
           };
           
@@ -78,7 +103,7 @@ export default function CommunityBroadcastPage() {
     };
     
     fetchData();
-  }, [handle]);
+  }, [handle, user]);
 
   // Fetch WhatsApp templates from backend, similar to reference project
   useEffect(() => {
@@ -125,11 +150,30 @@ export default function CommunityBroadcastPage() {
             : [...prev, member]
     );
   };
+
+  const handleToggleTag = (tagName: string) => {
+    setSelectedTags(prev => {
+      if (prev.includes(tagName)) {
+        return prev.filter(t => t !== tagName);
+      } else {
+        return [...prev, tagName];
+      }
+    });
+  };
   
-  const filteredMembers = members.filter(member =>
-    member.userDetails?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter members based on search term and selected tags
+  const filteredMembers = members.filter(member => {
+    // Search filter
+    const matchesSearch = !searchTerm || 
+      member.userDetails?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Tag filter
+    const matchesTags = selectedTags.length === 0 || 
+      selectedTags.every(selectedTag => (member.tags || []).includes(selectedTag));
+    
+    return matchesSearch && matchesTags;
+  });
 
   const allSelected = filteredMembers.length > 0 && selectedMembers.length === filteredMembers.length;
 
@@ -141,9 +185,50 @@ export default function CommunityBroadcastPage() {
     }
   };
   
+  // Calculate member count excluding owner
+  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
+  const memberCountExcludingOwner = nonOwnerMembers.length;
+
   return (
-    <div className="relative min-h-screen">
-       <ListView
+    <div className="space-y-8">
+      {community && (
+        <CommunityHeader 
+          community={community} 
+          userRole={userRole as any} 
+          memberCount={memberCountExcludingOwner}
+          customActions={
+            <>
+              <CustomButton 
+                variant="rounded-rect" 
+                className={selectedMembers.length > 0 
+                  ? "text-white/80 hover:text-white hover:bg-white/10" 
+                  : "text-white/30 cursor-not-allowed"
+                }
+                onClick={selectedMembers.length > 0 ? handleNewBroadcast : undefined}
+                disabled={selectedMembers.length === 0}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Send Message {selectedMembers.length > 0 ? `(${selectedMembers.length})` : ''}
+              </CustomButton>
+              <CustomButton 
+                variant="rounded-rect" 
+                className={selectedMembers.length > 0 
+                  ? "text-white/80 hover:text-white hover:bg-white/10" 
+                  : "text-white/30 cursor-not-allowed"
+                }
+                onClick={selectedMembers.length > 0 ? () => {
+                  setIsEmailDialogOpen(true);
+                } : undefined}
+                disabled={selectedMembers.length === 0}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Send E-mail {selectedMembers.length > 0 ? `(${selectedMembers.length})` : ''}
+              </CustomButton>
+            </>
+          }
+        />
+      )}
+      <ListView
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
@@ -151,6 +236,9 @@ export default function CommunityBroadcastPage() {
         loading={loading}
         title="Broadcast"
         subtitle="Select members to send a message to."
+        availableTags={availableTags}
+        selectedTags={selectedTags}
+        onToggleTag={handleToggleTag}
         actions={
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" onClick={handleToggleSelectAll} style={{ color: activeColor }}>
@@ -168,25 +256,19 @@ export default function CommunityBroadcastPage() {
         />
       </ListView>
       
-      {selectedMembers.length > 0 && (
-        <div className="fixed bottom-8 right-8 z-50">
-            <CustomButton
-                variant="primary"
-                size="large"
-                onClick={handleNewBroadcast}
-            >
-                <MessageSquare className="h-5 w-5 mr-2" />
-                Send Message ({selectedMembers.length})
-            </CustomButton>
-        </div>
-      )}
-      
       <BroadcastDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         members={selectedMembers}
         templates={templates}
         loadingTemplates={loadingTemplates}
+      />
+      
+      <EmailSendDialog
+        isOpen={isEmailDialogOpen}
+        onClose={() => setIsEmailDialogOpen(false)}
+        members={selectedMembers}
+        communityName={community?.name}
       />
     </div>
   );

@@ -157,6 +157,7 @@ export async function joinCommunity(
     displayName?: string;
     avatarUrl?: string;
     email?: string;
+    phone?: string;
   }
 ): Promise<boolean> {
   const membersRef = collection(db, "communityMembers");
@@ -172,6 +173,14 @@ export async function joinCommunity(
   };
     
   try {
+    // Check if member already exists
+    const q = query(membersRef, where("userId", "==", userId), where("communityId", "==", communityId));
+    const existingMemberSnap = await getDocs(q);
+    if (!existingMemberSnap.empty) {
+        console.log('User is already a member of this community');
+        return true; // Or throw an error if you want to handle this case differently
+    }
+
     // Use a composite key for the document ID to ensure uniqueness and allow for efficient lookups
     const docId = `${userId}_${communityId}`;
     console.log('💾 JOIN - Creating member document:', docId);
@@ -180,6 +189,10 @@ export async function joinCommunity(
     await setDoc(doc(db, "communityMembers", docId), newMemberData);
     
     console.log('✅ JOIN - Member document created successfully');
+    
+    // Increment member count
+    await updateDoc(communityRef, { memberCount: increment(1) });
+    
   } catch (error) {
     console.error("❌ JOIN - Error creating member document:", error);
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -189,13 +202,6 @@ export async function joinCommunity(
     }));
     return false;
   }
-  
-  // NOTE: We don't update memberCount here because regular users shouldn't have
-  // permission to update community documents. The memberCount should be:
-  // 1. Calculated dynamically by counting communityMembers, OR
-  // 2. Updated via a Cloud Function (server-side), OR
-  // 3. Updated only by community owners/admins
-  console.log('ℹ️ JOIN - Skipping memberCount update (should be done server-side)');
     
   return true;
 }

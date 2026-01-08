@@ -61,8 +61,8 @@ export function MembersList({
 
   const handleNavigate = (member: CommunityMember) => {
     const pathParts = pathname.split('/');
-    const handle = pathParts[2];
-    router.push(`/pro/${handle}/members/${member.userId}`);
+    const handle = pathParts[1];
+    router.push(`/${handle}/members/${member.userId}`);
   };
 
   const handleSelect = (e: React.MouseEvent | React.KeyboardEvent, member: CommunityMember) => {

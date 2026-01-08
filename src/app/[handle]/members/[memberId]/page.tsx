@@ -316,7 +316,7 @@ export default function MemberProfilePage() {
                         }
                         
                         setIsDeleteConfirmOpen(false);
-                        router.push(`/pro/${handle}/members`);
+                        router.push(`/${handle}/members`);
                       } catch (error) {
                         console.error('Error deleting member:', error);
                         toast({

@@ -8,9 +8,12 @@ import { db } from '@/firebase/firestore';
 import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, updateDoc, doc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage, Card, Input } from '@/components/ui';
 import { Search, Send } from 'lucide-react';
-import { User } from '@/lib/types';
+import { User, Community } from '@/lib/types';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { MessagingServiceDropdown } from '@/components/inbox/messaging-service-dropdown';
+import { CommunityHeader } from '@/components/community/community-header';
+import { useAuth } from '@/hooks/use-auth';
+import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-utils';
 
 interface WhatsAppMessage {
   id: string;
@@ -46,6 +49,7 @@ interface Conversation {
 }
 
 export default function CommunityInboxPage() {
+  const { user } = useAuth();
   const params = useParams();
   const pathname = usePathname();
   const handle = params?.handle as string;
@@ -58,6 +62,30 @@ export default function CommunityInboxPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<string>('all');
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [userRole, setUserRole] = useState<string>('guest');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+
+  // Load community and role
+  useEffect(() => {
+    async function fetchCommunityAndRole() {
+      if (!handle) return;
+      try {
+        const communityData = await getCommunityByHandle(handle);
+        setCommunity(communityData);
+        if (communityData && user) {
+          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+          setUserRole(role);
+        }
+      } catch (error) {
+        console.error('Error fetching community data:', error);
+      }
+    }
+    fetchCommunityAndRole();
+  }, [handle, user]);
 
   // Load community members
   useEffect(() => {
@@ -277,8 +305,24 @@ useEffect(() => {
     (c) => c.userId === selectedUserId
   );
 
+  // Calculate member count excluding owner
+  const nonOwnerMembers = communityMembers.filter((m: any) => m.role !== 'owner');
+  const memberCountExcludingOwner = nonOwnerMembers.length;
+
   return (
-    <div className="h-[calc(100vh)] flex">
+    <div className="space-y-8">
+      {community && (
+        <CommunityHeader 
+          community={community} 
+          userRole={userRole as any} 
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={() => setIsDeleteConfirmOpen(true)}
+          onAddMember={() => setIsAddMemberOpen(true)}
+          onInvite={() => setIsInviteDialogOpen(true)}
+          memberCount={memberCountExcludingOwner}
+        />
+      )}
+      <div className="h-[calc(100vh-200px)] flex">
       {/* Left sidebar - Conversations list */}
       <div className="w-80 border-r flex flex-col" style={{ borderColor: `${activeColor}70` }}>
         <div className="p-4 border-b" style={{ borderColor: `${activeColor}70` }}>
@@ -459,6 +503,7 @@ useEffect(() => {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

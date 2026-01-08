@@ -5,20 +5,18 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, List, Search, UserPlus, Tag } from 'lucide-react';
+import { LayoutGrid, List, Search, UserPlus, Tag, X } from 'lucide-react';
+import { type CommunityTag } from '@/lib/community-tags';
 import { cn } from '@/lib/utils';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 type ViewMode = 'grid' | 'list';
-type SearchType = 'name' | 'tag';
 
 interface ListViewProps {
   title?: string;
   subtitle?: string;
-  searchType?: SearchType;
-  onSearchTypeChange?: (type: SearchType) => void;
   searchTerm: string;
   onSearchChange: (value: string) => void;
   viewMode: ViewMode;
@@ -30,13 +28,14 @@ interface ListViewProps {
   headerAction?: React.ReactNode;
   onAddTags?: () => void;
   selectedCount?: number;
+  availableTags?: CommunityTag[];
+  selectedTags?: string[];
+  onToggleTag?: (tagName: string) => void;
 }
 
 export function ListView({
   title,
   subtitle,
-  searchType,
-  onSearchTypeChange,
   searchTerm,
   onSearchChange,
   viewMode,
@@ -47,7 +46,10 @@ export function ListView({
   onAddAction,
   headerAction,
   onAddTags,
-  selectedCount = 0
+  selectedCount = 0,
+  availableTags = [],
+  selectedTags = [],
+  onToggleTag
 }: ListViewProps) {
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
@@ -63,17 +65,40 @@ export function ListView({
   const activeBg = hexToRgba(activeColor, 1); // Solid color
 
   return (
-    <div className="bg-card text-foreground p-8 rounded-xl border" style={{ borderColor: activeColor }}>
+    <div className="bg-card text-foreground p-8 m-8 rounded-xl border" style={{ borderColor: activeColor }}>
       {(title || subtitle || headerAction) && (
         <div className="mb-6 flex items-start justify-between">
-          <div>
-            {title && <h1 className="text-2xl font-semibold mb-1">{title}</h1>}
+          <div className="flex items-baseline gap-3">
+            {title && <h1 className="text-2xl font-semibold">{title}</h1>}
             {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
           </div>
           {headerAction && <div className="ml-4">{headerAction}</div>}
         </div>
       )}
-      <div className="flex items-center justify-between gap-4 mb-6">
+      {/* Tag Filter Bubbles */}
+      {availableTags.length > 0 && onToggleTag && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {availableTags.map((tag) => {
+            const isSelected = selectedTags.includes(tag.name);
+            return (
+              <button
+                key={tag.id}
+                onClick={() => onToggleTag(tag.name)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5"
+                style={{
+                  backgroundColor: isSelected ? activeColor : 'transparent',
+                  color: isSelected ? 'white' : activeColor,
+                  border: `1px solid ${activeColor}`,
+                }}
+              >
+                {tag.name}
+                {isSelected && <X className="h-3 w-3" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-4 mb-6 ">
           <div className="relative flex-grow">
               <div className="flex items-center relative h-10 border rounded-md overflow-hidden" style={{ borderColor: activeColor }}>
                   <div className="flex items-center justify-center h-full px-3">
@@ -82,19 +107,8 @@ export function ListView({
                           style={{ color: activeColor }} 
                       />
                   </div>
-                  {onSearchTypeChange && searchType && (
-                      <Select value={searchType} onValueChange={(value) => onSearchTypeChange(value as SearchType)}>
-                          <SelectTrigger className="w-[100px] border-none focus:ring-0 focus:ring-offset-0 h-full bg-transparent">
-                              <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="name">Name</SelectItem>
-                              <SelectItem value="tag">Tag</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  )}
                   <input
-                      placeholder={searchType ? `Search by ${searchType}...` : 'Search...'}
+                      placeholder="Search by name..."
                       value={searchTerm}
                       onChange={(e) => onSearchChange(e.target.value)}
                       className="flex-grow h-full border-0 focus:outline-none bg-transparent px-2"

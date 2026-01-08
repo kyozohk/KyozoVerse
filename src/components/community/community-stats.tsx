@@ -22,7 +22,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors">
+      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Total Members</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
@@ -32,7 +32,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
           <p className="text-xs text-muted-foreground">+0 this month</p>
         </CardContent>
       </Card>
-      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors">
+      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Posts</CardTitle>
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -42,7 +42,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
           <p className="text-xs text-muted-foreground">Total posts in community</p>
         </CardContent>
       </Card>
-      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors">
+      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Growth</CardTitle>
           <LineChart className="h-4 w-4 text-muted-foreground" />
@@ -52,7 +52,7 @@ export function CommunityStats({ community }: CommunityStatsProps) {
           <p className="text-xs text-muted-foreground">New members this month</p>
         </CardContent>
       </Card>
-      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors">
+      <Card className="bg-card border-gray-200/80 hover:border-primary-purple transition-colors border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Daily Messages</CardTitle>
           <Mail className="h-4 w-4 text-muted-foreground" />

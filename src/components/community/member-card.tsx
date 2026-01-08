@@ -2,12 +2,13 @@
 
 import { type CommunityMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, Edit, Trash2, MessageCircle, GripVertical, X } from 'lucide-react';
+import { Mail, Edit, Trash2, MessageCircle, X, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '../ui/checkbox';
 
 interface MemberCardProps {
   member: CommunityMember;
@@ -15,9 +16,14 @@ interface MemberCardProps {
   borderColor?: string;
   onClick?: () => void;
   onRemoveTag?: (memberId: string, tag: string) => void;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onSelect?: (member: CommunityMember) => void;
+  onEdit?: (member: CommunityMember) => void;
+  onDelete?: (member: CommunityMember) => void;
 }
 
-export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))', onClick, onRemoveTag }: MemberCardProps) {
+export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))', onClick, onRemoveTag, selectable, isSelected, onSelect, onEdit, onDelete }: MemberCardProps) {
     
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
@@ -46,7 +52,7 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
         onClick={onClick}
     >
       <CardHeader>
-        <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="h-10 w-10">
               <AvatarImage src={member.userDetails?.avatarUrl} />
@@ -55,9 +61,25 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
             <div>
                 <CardTitle className="text-lg font-bold">{member.userDetails?.displayName}</CardTitle>
                 <p className="text-sm text-muted-foreground">{member.userDetails?.email}</p>
+                {member.userDetails?.phone && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                    <Phone className="h-3 w-3" />
+                    {member.userDetails.phone}
+                  </p>
+                )}
             </div>
           </div>
-          {canManage && <GripVertical className="h-5 w-5 text-muted-foreground" />}
+          {selectable && (
+            <div onClick={(e) => {
+              e.stopPropagation();
+              onSelect?.(member);
+            }}>
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onSelect?.(member)}
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -92,19 +114,54 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
         
         {canManage && (
           <div className="flex justify-end gap-1 pt-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit?.(member);
+              }}
+              title="Edit member"
+            >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Implement message functionality
+                console.log('Message member:', member.userDetails?.displayName);
+              }}
+              title="Message member"
+            >
               <MessageCircle className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-              <Phone className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Open email dialog
+                console.log('Email member:', member.userDetails?.displayName);
+              }}
+              title="Email member"
+            >
               <Mail className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-red-500 hover:text-red-400"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.(member);
+              }}
+              title="Delete member"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>

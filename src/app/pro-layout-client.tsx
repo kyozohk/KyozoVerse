@@ -25,52 +25,46 @@ import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 
-export default function ProLayout({ children }: { children: React.ReactNode }) {
+export default function ProLayoutClient({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   
-  // Check if we're on a community-specific page
   const isCommunityPage = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
-    // /pro/[handle]/... routes are community pages
-    return segments.length >= 2 && segments[0] === 'pro' && segments[1] !== 'communities' && segments[1] !== 'analytics' && segments[1] !== 'subscription' && segments[1] !== 'settings' && segments[1] !== 'account';
+    return segments.length >= 1 && segments[0] !== 'communities' && segments[0] !== 'analytics' && segments[0] !== 'subscription' && segments[0] !== 'settings' && segments[0] !== 'account';
   }, [pathname]);
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
   useEffect(() => {
-    // Require auth for all /pro routes except /pro landing page
-    if (!loading && !user && pathname !== '/pro' && pathname.startsWith('/pro')) {
-      router.replace('/pro');
+    if (!loading && !user && pathname !== '/') {
+      router.replace('/');
     }
   }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/pro');
+    router.push('/');
   };
 
   const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (isCommunityPage) {
-      router.push('/pro/communities');
+      router.push('/communities');
     } else {
       setSidebarOpen(prev => !prev);
     }
   }, [isCommunityPage, router]);
 
   useEffect(() => {
-    // When on a community page, collapse the main sidebar
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
 
-  // If on landing page (/pro), render without sidebar
-  if (pathname === '/pro') {
+  if (pathname === '/') {
     return <>{children}</>;
   }
 
-  // For protected routes, show loading or require auth
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -80,7 +74,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
@@ -93,7 +87,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor, '--sidebar-active-border': activeColor} as React.CSSProperties}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
-              <Link href="/pro/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
+              <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
                 <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
                 <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
