@@ -47,21 +47,6 @@ export function MemberDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (mode === 'edit' && initialMember) {
-      const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
-      setFirstName(nameParts[0] || "");
-      setLastName(nameParts.slice(1).join(' ') || "");
-      setEmail(initialMember.userDetails?.email || "");
-      setPhone(initialMember.userDetails?.phone || "");
-      setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
-      setCoverUrl(initialMember.userDetails?.coverUrl || null);
-    } else {
-      // Reset for "add" mode
-      resetForm();
-    }
-  }, [initialMember, mode]);
-
   const resetForm = () => {
     setFirstName('');
     setLastName('');
@@ -74,6 +59,20 @@ export function MemberDialog({
     setError(null);
     setSubmitting(false);
   };
+
+  useEffect(() => {
+    if (open && mode === 'edit' && initialMember) {
+      const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
+      setFirstName(nameParts[0] || "");
+      setLastName(nameParts.slice(1).join(' ') || "");
+      setEmail(initialMember.userDetails?.email || "");
+      setPhone(initialMember.userDetails?.phone || "");
+      setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
+      setCoverUrl(initialMember.userDetails?.coverUrl || null);
+    } else if (open && mode === 'add') {
+      resetForm();
+    }
+  }, [open, mode, initialMember]);
 
   const handleClose = () => {
     onClose();
