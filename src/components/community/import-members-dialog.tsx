@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CustomFormDialog, Input, Button, Tabs, TabsContent, TabsList, TabsTrigger, Dropzone, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { CustomFormDialog, Input, Button, Tabs, TabsContent, TabsList, TabsTrigger, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { Upload, FileSpreadsheet, Users, Trash2, Plus } from 'lucide-react';
-import { EditableMembersGrid, type MemberGridRow } from './editable-members-grid';
+import { ExcelGrid, type ExcelGridRow } from './excel-grid';
 import { type Community } from '@/lib/types';
 import { addDoc, collection, serverTimestamp, increment, updateDoc, doc, query, where, getDocs, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -41,18 +41,16 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
   const [eventbritePrivateToken, setEventbritePrivateToken] = useState('');
   const [eventbriteEvents, setEventbriteEvents] = useState<any[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
-  const [eventbriteAttendees, setEventbriteAttendees] = useState<MemberGridRow[]>([]);
+  const [eventbriteAttendees, setEventbriteAttendees] = useState<ExcelGridRow[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingAttendees, setLoadingAttendees] = useState(false);
 
   // CSV state
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvMembers, setCsvMembers] = useState<MemberGridRow[]>([]);
+  const [csvMembers, setCsvMembers] = useState<ExcelGridRow[]>([]);
 
   // Manual state
-  const [manualMembers, setManualMembers] = useState<MemberGridRow[]>([
-    { id: 'manual-0', firstName: '', lastName: '', email: '', phone: '', checked: true }
-  ]);
+  const [manualMembers, setManualMembers] = useState<ExcelGridRow[]>([]);
 
   const fetchEventbriteEvents = async () => {
     if (!eventbritePrivateToken) {
@@ -141,7 +139,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
       // Skip header row if it exists
       const startIndex = lines[0].toLowerCase().includes('first') || lines[0].toLowerCase().includes('email') ? 1 : 0;
       
-      const members: MemberGridRow[] = lines.slice(startIndex).map((line, index) => {
+      const members: ExcelGridRow[] = lines.slice(startIndex).map((line, index) => {
         const [firstName = '', lastName = '', email = '', phone = ''] = line.split(',').map(s => s.trim());
         return { id: `csv-${index}`, firstName, lastName, email, phone, checked: true };
       }).filter(m => m.email); // Only include rows with email
@@ -161,12 +159,12 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
     setManualMembers(manualMembers.filter((_, i) => i !== index));
   };
 
-  const updateManualRow = (id: string, field: keyof Omit<MemberGridRow, 'id' | 'checked'>, value: string) => {
+  const updateManualRow = (id: string, field: keyof Omit<ExcelGridRow, 'id' | 'checked'>, value: string) => {
     const updated = manualMembers.map(m => m.id === id ? { ...m, [field]: value } : m);
     setManualMembers(updated);
   };
 
-  const importMembers = async (members: MemberGridRow[]) => {
+  const importMembers = async (members: ExcelGridRow[]) => {
     if (!community?.communityId) {
       throw new Error('Community not found');
     }
@@ -296,13 +294,14 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
     return [];
   };
 
-  const handleMembersChange = (updated: MemberGridRow[]) => {
+  const handleMembersChange = (updated: ExcelGridRow[]) => {
     if (activeTab === 'eventbrite') setEventbriteAttendees(updated);
     else if (activeTab === 'csv') setCsvMembers(updated);
     else if (activeTab === 'manual') setManualMembers(updated);
   };
 
   const membersForGrid = getMembersForGrid();
+  const checkedCount = membersForGrid.filter(m => m.checked && m.email).length;
 
   return (
     <CustomFormDialog
@@ -313,58 +312,72 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
       backgroundImage="/bg/light_app_bg.png"
       color="#843484"
     >
+      <div className="flex flex-col h-full" style={{ maxWidth: '100vw', margin: '0 auto' }}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="eventbrite">
-            <Upload className="h-4 w-4 mr-2" />
+        <TabsList className="grid w-full grid-cols-3" style={{ height: '80px' }}>
+          <TabsTrigger value="eventbrite" className="text-lg px-8 py-4">
+            <Upload className="h-8 w-8 mr-3" />
             Eventbrite
           </TabsTrigger>
-          <TabsTrigger value="csv">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
+          <TabsTrigger value="csv" className="text-lg px-8 py-4">
+            <FileSpreadsheet className="h-8 w-8 mr-3" />
             CSV
           </TabsTrigger>
-          <TabsTrigger value="manual">
-            <Users className="h-4 w-4 mr-2" />
+          <TabsTrigger value="manual" className="text-lg px-8 py-4">
+            <Users className="h-8 w-8 mr-3" />
             Manual
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="eventbrite" className="space-y-4 mt-4">
-          <div>
-            <Label>Eventbrite Private Token</Label>
-            <Input
-              type="password"
-              value={eventbritePrivateToken}
-              onChange={(e) => setEventbritePrivateToken(e.target.value)}
-              placeholder="Enter your Eventbrite Private Token"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Get your Private Token from Eventbrite Account Settings → API Keys
-            </p>
+          <div className="flex gap-2 items-start">
+            <div className="flex-1">
+              <Input
+                type="password"
+                value={eventbritePrivateToken}
+                onChange={(e) => setEventbritePrivateToken(e.target.value)}
+                label="Eventbrite Private Token"
+                wrapperClassName="mb-0"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Get your Private Token from Eventbrite Account Settings → API Keys
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={fetchEventbriteEvents}
+              disabled={!eventbritePrivateToken || loadingEvents}
+              className="mt-0"
+              style={{ backgroundColor: '#843484', minWidth: '140px' }}
+            >
+              {loadingEvents ? 'Loading...' : 'Fetch'}
+            </Button>
           </div>
-
-          <Button
-            type="button"
-            onClick={fetchEventbriteEvents}
-            disabled={!eventbritePrivateToken || loadingEvents}
-            className="w-full"
-          >
-            {loadingEvents ? 'Loading Events...' : 'Fetch Events'}
-          </Button>
 
           {eventbriteEvents.length > 0 && (
             <div>
-              <Label>Select Event</Label>
               <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an event" />
+                <SelectTrigger className="h-auto [&>span]:text-black">
+                  <SelectValue placeholder="Select Event" />
                 </SelectTrigger>
                 <SelectContent>
-                  {eventbriteEvents.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.name.text}
-                    </SelectItem>
-                  ))}
+                  {eventbriteEvents.map((event) => {
+                    const attendeeCount = event.id === selectedEventId ? eventbriteAttendees.length : 0;
+                    return (
+                      <SelectItem 
+                        key={event.id} 
+                        value={event.id}
+                        className="py-3 text-black cursor-pointer hover:bg-muted"
+                      >
+                        <div className="flex justify-between items-center w-full">
+                          <span>{event.name.text}</span>
+                          {attendeeCount > 0 && (
+                            <span className="text-muted-foreground ml-4">({attendeeCount})</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -374,13 +387,10 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
 
           {eventbriteAttendees.length > 0 && (
             <div className="mt-4">
-              <Label className="mb-2 block">Members to Import</Label>
-              <EditableMembersGrid
+              <ExcelGrid
                 members={eventbriteAttendees}
                 onMembersChange={setEventbriteAttendees}
-                onImport={handleImport}
-                loading={loading}
-                importButtonText="Import Members"
+                minRows={5}
               />
             </div>
           )}
@@ -389,12 +399,36 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
         <TabsContent value="csv" className="space-y-4 mt-4">
           <div>
             <Label>Upload CSV File</Label>
-            <Dropzone
-              onFileChange={handleCsvChange}
-              file={csvFile}
-              accept={{ 'text/csv': ['.csv'] }}
-              fileType="text"
-            />
+            <div className="border-2 border-dashed rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  handleCsvChange(file);
+                }}
+                className="hidden"
+                id="csv-upload"
+              />
+              <label htmlFor="csv-upload" className="flex items-center justify-center gap-2 cursor-pointer">
+                <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {csvFile ? csvFile.name : 'Click to upload CSV file'}
+                </span>
+              </label>
+              {csvFile && csvMembers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCsvFile(null);
+                    setCsvMembers([]);
+                  }}
+                  className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full transition-colors"
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </button>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               CSV format: firstName, lastName, email, phone (one member per line)
             </p>
@@ -402,13 +436,10 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
 
           {csvMembers.length > 0 && (
             <div className="mt-4">
-              <Label className="mb-2 block">Members to Import</Label>
-              <EditableMembersGrid
+              <ExcelGrid
                 members={csvMembers}
                 onMembersChange={setCsvMembers}
-                onImport={handleImport}
-                loading={loading}
-                importButtonText="Import Members"
+                minRows={5}
               />
             </div>
           )}
@@ -429,35 +460,43 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
           </p>
 
           <div>
-            <Label className="mb-2 block">Members to Import</Label>
-            <EditableMembersGrid
+            <ExcelGrid
               members={manualMembers}
               onMembersChange={setManualMembers}
-              onImport={handleImport}
-              loading={loading}
-              importButtonText="Import Members"
+              minRows={5}
             />
           </div>
         </TabsContent>
       </Tabs>
 
-      {error && (
-        <div className="mt-4 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
-          {error}
-        </div>
-      )}
+          {error && (
+            <div className="mt-4 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+              {error}
+            </div>
+          )}
 
-      <div className="flex gap-3 pt-6 mt-auto">
-        <Button
-          type="button"
-          onClick={onClose}
-          variant="outline"
-          className="w-full"
-          disabled={loading}
-        >
-          Cancel
-        </Button>
-      </div>
+          {/* Footer with buttons */}
+          <div className="flex gap-3 pt-6 mt-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="outline"
+              className="flex-1"
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleImport}
+              className="flex-1"
+              style={{ backgroundColor: '#843484' }}
+              disabled={loading || checkedCount === 0}
+            >
+              {loading ? 'Importing...' : `Import ${checkedCount} Member${checkedCount !== 1 ? 's' : ''}`}
+            </Button>
+          </div>
+        </div>
     </CustomFormDialog>
   );
 };

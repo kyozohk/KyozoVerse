@@ -154,7 +154,7 @@ export function CustomFormDialog({
             "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
-              : "w-full max-w-md max-h-[85vh]"
+              : "w-full max-w-[50vw] max-h-[85vh]"
           )}
           style={{
             '--input-border-color': color,

@@ -63,7 +63,6 @@ export default function CommunityMembersPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("guest");
   const [community, setCommunity] = useState<Community | null>(null);
-  const [searchType, setSearchType] = useState<'name' | 'tag'>('name');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -117,7 +116,7 @@ export default function CommunityMembersPage() {
     async function fetchMembers() {
       setLoading(true);
       try {
-        const membersData = await getCommunityMembers(community!.communityId, { type: searchType, value: debouncedSearchTerm });
+        const membersData = await getCommunityMembers(community!.communityId, { type: 'name', value: debouncedSearchTerm });
         console.log('✅ [Members Page] - Fetched members data:', JSON.stringify(membersData, null, 2));
         setMembers(membersData);
       } catch (error) {
@@ -128,7 +127,7 @@ export default function CommunityMembersPage() {
     }
     
     fetchMembers();
-  }, [community?.communityId, debouncedSearchTerm, searchType]);
+  }, [community?.communityId, debouncedSearchTerm]);
 
   const handleToggleMemberSelection = (member: CommunityMember) => {
     setSelectedMembers((prevSelected) => {
@@ -190,7 +189,7 @@ export default function CommunityMembersPage() {
       console.log('✅ [Applying Tags] - All members updated in database.');
       
       // Refresh members data
-      const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+      const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
       console.log('✅ [Applying Tags] - Refreshed members data:', membersData.map(m => ({ id: m.id, tags: m.tags })));
       setMembers(membersData);
       setSelectedMembers([]); // Clear selection after applying
@@ -427,8 +426,6 @@ export default function CommunityMembersPage() {
       <ListView
         title="Members"
         subtitle="Browse and manage community members."
-        searchType={searchType}
-        onSearchTypeChange={setSearchType}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
@@ -526,7 +523,7 @@ export default function CommunityMembersPage() {
           onClose={() => setIsImportDialogOpen(false)}
           community={community}
           onSuccess={async () => {
-            const membersData = await getCommunityMembers(community.communityId, { type: searchType, value: debouncedSearchTerm });
+            const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
             setMembers(membersData);
           }}
         />
