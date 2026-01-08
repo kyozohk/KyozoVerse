@@ -266,31 +266,39 @@ export default function CommunityMembersPage() {
     if (!data.email || !data.email.includes('@')) {
       throw new Error("A valid email address is required to create a new user.");
     }
-    
+  
     // Validate and normalize phone number
     let normalizedPhone = data.phone?.trim().replace(/\s+/g, '') || '';
     if (normalizedPhone && !normalizedPhone.startsWith('+')) {
       normalizedPhone = '+' + normalizedPhone;
     }
-    
+  
     const wa_id = normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '');
-    
+  
     const usersRef = collection(db, "users");
-    const emailQuery = query(usersRef, where("email", "==", data.email));
     
-    const emailSnap = await getDocs(emailQuery);
-
-    if (!emailSnap.empty) {
-        const existingUserDoc = emailSnap.docs[0];
-        const existingUserData = existingUserDoc.data() as User;
-        
-        const error: any = new Error("User already exists");
-        error.code = "auth/user-already-exists";
-        error.existingUser = {
-            userId: existingUserDoc.id,
-            ...existingUserData,
-        };
-        throw error;
+    // Check if user exists by email or phone number
+    const emailQuery = query(usersRef, where("email", "==", data.email));
+    const phoneQuery = query(usersRef, where("phone", "==", normalizedPhone));
+    const phoneQuery2 = query(usersRef, where("phoneNumber", "==", normalizedPhone));
+    
+    const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
+      getDocs(emailQuery),
+      normalizedPhone ? getDocs(phoneQuery) : Promise.resolve({ empty: true, docs: [] }),
+      normalizedPhone ? getDocs(phoneQuery2) : Promise.resolve({ empty: true, docs: [] }),
+    ]);
+  
+    const existingUserDoc = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
+  
+    if (existingUserDoc) {
+      const existingUserData = existingUserDoc.data() as User;
+      const error: any = new Error("User already exists");
+      error.code = "auth/user-already-exists";
+      error.existingUser = {
+        userId: existingUserDoc.id,
+        ...existingUserData,
+      };
+      throw error;
     }
     
     return createUserWithEmailAndPassword(communityAuth, data.email, Math.random().toString(36).slice(-8))
@@ -556,4 +564,3 @@ export default function CommunityMembersPage() {
     </div>
   );
 }
-
