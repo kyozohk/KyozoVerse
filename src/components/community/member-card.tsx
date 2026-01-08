@@ -92,19 +92,44 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
         
         {canManage && (
           <div className="flex justify-end gap-1 pt-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
               <MessageCircle className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Phone className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Mail className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-red-500 hover:text-red-400"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
