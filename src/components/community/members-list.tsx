@@ -202,7 +202,7 @@ export function MembersList({
 
   // Grid view
   return (
-    <>
+    <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {members.map((member) => {
         const isSelected = selectedMembers.some((m) => 'userId' in m ? m.userId === member.userId : false);
         return (
@@ -221,6 +221,6 @@ export function MembersList({
           />
         );
       })}
-    </>
+    </div>
   );
 }

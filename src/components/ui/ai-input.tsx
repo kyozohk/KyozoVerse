@@ -77,19 +77,20 @@ export function AIInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{ borderColor: '#C170CF' }}
+        className="text-foreground placeholder:text-muted-foreground"
+        style={{ borderColor: '#C170CF', color: 'inherit' }}
       />
       <button
         type="button"
         onClick={handleAIGenerate}
         disabled={isGenerating}
-        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-muted/50 transition-colors disabled:opacity-50"
+        className="absolute right-3 top-[60%] -translate-y-1/2 p-1.5 rounded-md hover:bg-muted/50 transition-colors disabled:opacity-50 z-10"
         title="Generate with AI"
       >
         {isGenerating ? (
-          <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+          <Loader2 className="h-4 w-4 animate-spin text-[#C170CF]" />
         ) : (
-          <Sparkles className="h-4 w-4 text-purple-500" />
+          <Sparkles className="h-4 w-4 text-[#C170CF]" />
         )}
       </button>
     </div>

@@ -47,6 +47,14 @@ export function EmailSendDialog({
     });
   };
 
+  // Function to replace variables in text
+  const replaceVariables = (text: string, member: CommunityMember): string => {
+    return text
+      .replace(/\{name\}/g, member.userDetails?.displayName || 'Member')
+      .replace(/\{email\}/g, member.userDetails?.email || '')
+      .replace(/\{phone\}/g, member.userDetails?.phone || '');
+  };
+
   const handleSend = async () => {
     if (!subject.trim() || !message.trim()) {
       toast({
@@ -68,55 +76,55 @@ export function EmailSendDialog({
 
     setSending(true);
     try {
-      // Prepare email recipients
-      const recipients = selectedMembers
-        .map(m => m.userDetails?.email)
-        .filter(email => email); // Filter out undefined emails
+      // Send individual emails with personalized content
+      const emailPromises = selectedMembers.map(async (member) => {
+        const email = member.userDetails?.email;
+        if (!email) return null;
 
-      if (recipients.length === 0) {
-        toast({
-          title: 'No valid email addresses',
-          description: 'Selected members do not have email addresses',
-          variant: 'destructive',
+        // Replace variables for this specific member
+        const personalizedSubject = replaceVariables(subject, member);
+        const personalizedMessage = replaceVariables(message, member);
+        
+        // Convert plain text message to HTML
+        const htmlMessage = personalizedMessage.replace(/\n/g, '<br>');
+
+        console.log(`📧 Sending personalized email to: ${email}`);
+        console.log(`📧 Subject: ${personalizedSubject}`);
+
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: [email],
+            subject: personalizedSubject,
+            html: htmlMessage,
+            from: 'dev@kyozo.com',
+          }),
         });
-        setSending(false);
-        return;
-      }
 
-      console.log('📧 Sending email to:', recipients);
-      console.log('📧 Subject:', subject);
-      console.log('📧 Message length:', message.length);
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(`Failed to send to ${email}: ${data.error || 'Unknown error'}`);
+        }
 
-      // Convert plain text message to HTML
-      const htmlMessage = message.replace(/\n/g, '<br>');
-
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: recipients,
-          subject: subject,
-          html: htmlMessage,
-          from: 'dev@kyozo.com',
-        }),
+        return { email, success: true };
       });
 
-      const data = await response.json();
-      console.log('📧 API Response:', { status: response.status, data });
+      const results = await Promise.all(emailPromises);
+      const successCount = results.filter(r => r !== null && r.success).length;
 
-      if (response.ok) {
+      console.log('📧 Email sending complete:', { successCount, total: selectedMembers.length });
+
+      if (successCount > 0) {
         toast({
           title: 'Emails sent successfully',
-          description: `Sent to ${recipients.length} member${recipients.length !== 1 ? 's' : ''}`,
+          description: `Sent to ${successCount} member${successCount !== 1 ? 's' : ''}`,
         });
         setSubject('');
         setMessage('');
         onClose();
       } else {
-        const errorMsg = data.error || 'Failed to send emails';
-        const errorDetails = data.details ? JSON.stringify(data.details, null, 2) : '';
-        console.error('❌ Email send failed:', { status: response.status, error: errorMsg, details: errorDetails });
-        throw new Error(`${errorMsg}${errorDetails ? ': ' + errorDetails : ''}`);
+        throw new Error('No emails were sent successfully');
       }
     } catch (error) {
       console.error('❌ Email send error:', error);
@@ -168,6 +176,11 @@ export function EmailSendDialog({
               rows={12}
               aiPrompt={`Generate a professional, engaging email message for community members${communityName ? ` of ${communityName}` : ''}. The email should be friendly, informative, and encourage engagement.`}
             />
+            
+            <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg border border-[#C170CF]/20">
+              <p className="font-medium mb-1">💡 Personalization Variables:</p>
+              <p>Use <code className="bg-background px-1.5 py-0.5 rounded text-[#C170CF]">{'{name}'}</code>, <code className="bg-background px-1.5 py-0.5 rounded text-[#C170CF]">{'{email}'}</code>, or <code className="bg-background px-1.5 py-0.5 rounded text-[#C170CF]">{'{phone}'}</code> to personalize each email</p>
+            </div>
           </div>
 
           {/* Right side - Selected Members */}
