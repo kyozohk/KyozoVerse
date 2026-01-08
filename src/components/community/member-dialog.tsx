@@ -49,7 +49,7 @@ export function MemberDialog({
 
   useEffect(() => {
     if (open) {
-      if (mode === "edit" && initialMember) {
+      if (mode === 'edit' && initialMember) {
         const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
         setFirstName(nameParts[0] || "");
         setLastName(nameParts.slice(1).join(' ') || "");
@@ -58,10 +58,10 @@ export function MemberDialog({
         setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
         setCoverUrl(initialMember.userDetails?.coverUrl || null);
       } else {
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setPhone("");
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPhone('');
         setAvatarUrl(null);
         setCoverUrl(null);
       }
