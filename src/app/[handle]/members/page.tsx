@@ -379,34 +379,45 @@ export default function CommunityMembersPage() {
     }
 
     try {
-      // Only update the communityMembers collection
-      // Community owners/admins can update member details here
-      const memberRef = doc(db, "communityMembers", editingMember.id);
+      // Update the user document in Firestore first
+      const userRef = doc(db, 'users', editingMember.userId);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const updateData: any = {
+          displayName: data.displayName,
+          email: data.email,
+          phone: data.phone || '',
+          avatarUrl: data.avatarUrl || '',
+          coverUrl: data.coverUrl || '',
+          updatedAt: serverTimestamp(),
+        };
+        await updateDoc(userRef, updateData);
+      } else {
+        // If user doc doesn't exist for some reason, create it
+        const newUserData: any = {
+          userId: editingMember.userId,
+          displayName: data.displayName,
+          email: data.email,
+          phone: data.phone || '',
+          avatarUrl: data.avatarUrl || '',
+          coverUrl: data.coverUrl || '',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        };
+        await setDoc(userRef, newUserData);
+      }
       
-      // Build update object with only defined values
-      const updateData: any = {
+      // Also update the denormalized data in communityMembers
+      const memberRef = doc(db, "communityMembers", editingMember.id);
+      const memberUpdate: any = {
         'userDetails.displayName': data.displayName,
         'userDetails.email': data.email,
+        'userDetails.phone': data.phone,
+        'userDetails.avatarUrl': data.avatarUrl,
       };
+      await updateDoc(memberRef, memberUpdate);
 
-      // Only add phone if it has a value
-      if (data.phone) {
-        updateData['userDetails.phone'] = data.phone;
-      }
-
-      // Only add avatarUrl if it has a value
-      const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
-      if (finalAvatarUrl) {
-        updateData['userDetails.avatarUrl'] = finalAvatarUrl;
-      }
-
-      // Only add coverUrl if it has a value
-      const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
-      if (finalCoverUrl) {
-        updateData['userDetails.coverUrl'] = finalCoverUrl;
-      }
-
-      await updateDoc(memberRef, updateData);
 
       // Refresh the members list to show updated data
       if (community?.communityId) {
@@ -603,3 +614,4 @@ export default function CommunityMembersPage() {
     </div>
   );
 }
+
