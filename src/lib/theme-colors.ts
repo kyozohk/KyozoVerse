@@ -1,3 +1,4 @@
+
 /**
  * Centralized color configuration for the entire application
  * These colors are used across dashboard, feature cards, marquee, and all components
@@ -44,6 +45,15 @@ export const THEME_COLORS = {
     bgSolid: '#5FA8BB',
     border: 'rgba(10, 93, 114, 0.6)',
     borderSolid: '#0A5D72',
+  },
+  settings: {
+    primary: '#06C4B5',
+    active: '#06C4B5',
+    light: '#A0E5DF',
+    bg: 'rgba(6, 196, 181, 0.15)',
+    bgSolid: '#A0E5DF',
+    border: 'rgba(6, 196, 181, 0.6)',
+    borderSolid: '#06C4B5',
   },
 } as const;
 
