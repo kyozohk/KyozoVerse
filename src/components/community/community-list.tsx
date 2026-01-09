@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
 import { CreateCommunityDialog } from './create-community-dialog';
-import { CommunityBanner } from './community-banner';
 import { ListView } from '@/components/ui/list-view';
 
 interface CommunityListProps {
@@ -25,12 +24,7 @@ export function CommunityList({ communities }: CommunityListProps) {
   );
 
   return (
-    <div className="p-8">
-      <CommunityBanner 
-        totalCommunities={communities.length} 
-        onCreateClick={() => setIsCreateDialogOpen(true)} 
-      />
-      
+    <>
       <ListView
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -38,7 +32,7 @@ export function CommunityList({ communities }: CommunityListProps) {
         onViewModeChange={setViewMode}
         searchType={searchType}
         onSearchTypeChange={setSearchType}
-        onAddAction={undefined}
+        onAddAction={() => setIsCreateDialogOpen(true)}
       >
         {filteredCommunities.map((community) => (
           <Link key={community.communityId} href={`/${community.handle}`} className="block h-full">
@@ -48,6 +42,6 @@ export function CommunityList({ communities }: CommunityListProps) {
       </ListView>
       
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
-    </div>
+    </>
   );
 }

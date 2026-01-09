@@ -5,12 +5,13 @@ import { useState, useEffect } from 'react';
 import { Suspense } from 'react';
 import { CommunityList } from '@/components/community/community-list';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
-import { CustomButton } from '@/components/ui/CustomButton';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
+import { CommunityBanner } from '@/components/community/community-banner';
+import { CommunitiesDashboardStats } from '@/components/community/communities-dashboard-stats';
 
 export default function CommunitiesDashboardPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -26,32 +27,25 @@ export default function CommunitiesDashboardPage() {
     
     setLoading(true);
 
-    // Query for communities where user is the owner
-    const communitiesRef = collection(db, 'communities');
-    const ownedCommunitiesQuery = query(communitiesRef, where('ownerId', '==', user.uid));
-
-    const unsubscribeOwned = onSnapshot(ownedCommunitiesQuery, async (querySnapshot) => {
-      const ownedCommunities = querySnapshot.docs.map(doc => ({
+    const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+    
+    const unsubscribe = onSnapshot(ownedQuery, async (ownedSnapshot) => {
+      const ownedCommunities = ownedSnapshot.docs.map(doc => ({
         communityId: doc.id,
         ...doc.data(),
       } as Community));
 
-      // Query for communities where user is a member
-      const membersRef = collection(db, 'communityMembers');
-      const memberQuery = query(membersRef, where('userId', '==', user.uid));
-      
+      const memberQuery = query(collection(db, 'communityMembers'), where('userId', '==', user.uid));
       const memberSnapshot = await getDocs(memberQuery);
       const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
       
-      // Filter out owned communities
       const nonOwnedMemberIds = memberCommunityIds.filter(
         id => !ownedCommunities.find(c => c.communityId === id)
       );
       
-      // Fetch community details for member communities (excluding owned ones)
-      const memberCommunities: Community[] = [];
+      let memberCommunities: Community[] = [];
       if (nonOwnedMemberIds.length > 0) {
-        const batchSize = 30; // Firestore 'in' query limit is 30
+        const batchSize = 30;
         const batches = [];
         
         for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
@@ -71,7 +65,6 @@ export default function CommunitiesDashboardPage() {
         });
       }
       
-      // Combine and deduplicate communities
       const allCommunities = [...ownedCommunities, ...memberCommunities];
       const uniqueCommunities = Array.from(
         new Map(allCommunities.map(item => [item.communityId, item])).values()
@@ -84,8 +77,7 @@ export default function CommunitiesDashboardPage() {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribeOwned();
+    return () => unsubscribe();
   }, [user]);
 
   return (
@@ -96,7 +88,14 @@ export default function CommunitiesDashboardPage() {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <CommunityList communities={communities} />
+          <div className="p-8">
+            <CommunityBanner 
+              totalCommunities={communities.length} 
+              onCreateClick={() => setIsCreateDialogOpen(true)} 
+            />
+            <CommunitiesDashboardStats communities={communities} />
+            <CommunityList communities={communities} />
+          </div>
         )}
       </Suspense>
       
