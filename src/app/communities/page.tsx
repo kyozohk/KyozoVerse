@@ -81,14 +81,14 @@ export default function CommunitiesDashboardPage() {
   }, [user]);
 
   return (
-    <div className="container mx-auto px-0 py-0">
+    <div className="container mx-auto px-4 py-8">
       <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <div className="p-8">
+          <div className="space-y-8">
             <CommunityBanner 
               totalCommunities={communities.length} 
               onCreateClick={() => setIsCreateDialogOpen(true)} 
