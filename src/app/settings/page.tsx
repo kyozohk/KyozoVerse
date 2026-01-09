@@ -1,7 +1,7 @@
 
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -17,10 +17,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UploadCloud, X } from 'lucide-react';
+import { UploadCloud, X, Settings as SettingsIcon, Palette, User, Shield } from 'lucide-react';
 import Image from 'next/image';
-import { type User } from '@/lib/types';
+import { type User as UserType } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }).max(50),
@@ -80,7 +81,7 @@ function ImageUploader({
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [userData, setUserData] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -102,7 +103,7 @@ export default function SettingsPage() {
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          const fetchedData = userSnap.data() as User;
+          const fetchedData = userSnap.data() as UserType;
           setUserData(fetchedData);
           form.reset({
             displayName: fetchedData.displayName || '',
@@ -170,9 +171,8 @@ export default function SettingsPage() {
   
   if (loading) {
       return (
-          <div className="space-y-6">
-              <Skeleton className="h-10 w-1/3" />
-              <Skeleton className="h-6 w-2/3" />
+          <div className="container mx-auto px-4 py-6 space-y-6">
+              <Skeleton className="h-40 w-full" />
               <Card>
                   <CardHeader>
                       <Skeleton className="h-8 w-1/4" />
@@ -180,7 +180,6 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-8">
                        <Skeleton className="h-10 w-full" />
-                       <Skeleton className="h-24 w-full" />
                        <Skeleton className="h-24 w-full" />
                        <Skeleton className="h-24 w-full" />
                        <Skeleton className="h-10 w-24 self-end" />
@@ -191,68 +190,138 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and profile settings.</p>
+    <div className="container mx-auto px-4 py-6">
+      <div className="bg-gradient-to-r from-[#06C4B5] to-[#4DDFD3] text-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+        <div className="flex items-center mb-2">
+          <SettingsIcon className="h-6 w-6 mr-2" />
+          <h2 className="text-2xl md:text-3xl font-bold">Settings</h2>
+        </div>
+        
+        <div className="flex items-center text-white/90 mb-4 bg-white/10 px-3 py-1 rounded-full w-fit">
+          <User className="h-5 w-5 mr-2" />
+          <span>Manage your account and profile settings</span>
+        </div>
+        
+        <p className="text-white/90 max-w-md backdrop-blur-sm bg-black/5 p-3 rounded-lg">
+          Update your public profile, notification preferences, and security settings.
+        </p>
       </div>
+      
+      <Tabs defaultValue="profile" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Appearance
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="profile" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Public Profile</CardTitle>
+              <CardDescription>This information will be displayed publicly on your profile.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <FormField
+                    control={form.control}
+                    name="displayName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your display name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="bio"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bio</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Tell us a little bit about yourself" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Public Profile</CardTitle>
-          <CardDescription>This information will be displayed publicly on your profile.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your display name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Tell us a little bit about yourself" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <ImageUploader 
+                    label="Avatar Image"
+                    currentImageUrl={userData?.avatarUrl}
+                    onFileChange={setAvatarFile}
+                    isUploading={isUploading}
+                  />
+                  
+                  <ImageUploader 
+                    label="Cover Image"
+                    currentImageUrl={userData?.coverUrl}
+                    onFileChange={setCoverFile}
+                    isUploading={isUploading}
+                  />
 
-              <ImageUploader 
-                label="Avatar Image"
-                currentImageUrl={userData?.avatarUrl}
-                onFileChange={setAvatarFile}
-                isUploading={isUploading}
-              />
-              
-              <ImageUploader 
-                label="Cover Image"
-                currentImageUrl={userData?.coverUrl}
-                onFileChange={setCoverFile}
-                isUploading={isUploading}
-              />
+                  <Button type="submit" disabled={isUploading}>
+                    {isUploading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications" className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Notifications</CardTitle>
+                    <CardDescription>Manage how you receive notifications.</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-12 text-muted-foreground">
+                    <p>Notification settings are coming soon.</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        
+        <TabsContent value="security" className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Security</CardTitle>
+                    <CardDescription>Manage your account security.</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-12 text-muted-foreground">
+                    <p>Security settings are coming soon.</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
 
-              <Button type="submit" disabled={isUploading}>
-                {isUploading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+        <TabsContent value="appearance" className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Appearance</CardTitle>
+                    <CardDescription>Customize the look and feel of the app.</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-12 text-muted-foreground">
+                    <p>Appearance settings are coming soon.</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
