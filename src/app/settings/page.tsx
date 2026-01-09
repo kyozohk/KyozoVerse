@@ -7,7 +7,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { storage } from '@/firebase/storage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -17,11 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UploadCloud, X, Settings as SettingsIcon, Palette, User, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, User, Shield } from 'lucide-react';
 import Image from 'next/image';
 import { type User as UserType } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dropzone } from '@/components/ui';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }).max(50),
@@ -29,54 +30,6 @@ const profileFormSchema = z.object({
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
-function ImageUploader({
-  label,
-  currentImageUrl,
-  onFileChange,
-  isUploading,
-}: {
-  label: string;
-  currentImageUrl: string | null | undefined;
-  onFileChange: (file: File) => void;
-  isUploading: boolean;
-}) {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setPreview(URL.createObjectURL(file));
-      onFileChange(file);
-    }
-  };
-
-  return (
-    <FormItem>
-      <FormLabel>{label}</FormLabel>
-      <div className="flex items-center gap-4">
-        {preview ? (
-          <Image src={preview} alt="Preview" width={96} height={96} className="rounded-md object-cover h-24 w-24" />
-        ) : currentImageUrl ? (
-          <Image src={currentImageUrl} alt={label} width={96} height={96} className="rounded-md object-cover h-24 w-24" />
-        ) : (
-          <div className="h-24 w-24 bg-muted rounded-md flex items-center justify-center">
-            <UploadCloud className="h-8 w-8 text-muted-foreground" />
-          </div>
-        )}
-        <div className="flex-1">
-          <FormControl>
-             <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isUploading} />
-          </FormControl>
-          <FormDescription>
-            Upload a new image to replace the current one.
-          </FormDescription>
-        </div>
-      </div>
-    </FormItem>
-  );
-}
-
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -137,12 +90,12 @@ export default function SettingsPage() {
     try {
       let avatarUrl = userData.avatarUrl;
       if (avatarFile) {
-        avatarUrl = await uploadImage(avatarFile, `avatars/${user.uid}`);
+        avatarUrl = await uploadImage(avatarFile, `user-media/${user.uid}/avatar/${avatarFile.name}`);
       }
 
       let coverUrl = userData.coverUrl;
       if (coverFile) {
-        coverUrl = await uploadImage(coverFile, `covers/${user.uid}`);
+        coverUrl = await uploadImage(coverFile, `user-media/${user.uid}/cover/${coverFile.name}`);
       }
       
       const userRef = doc(db, 'users', user.uid);
@@ -156,6 +109,12 @@ export default function SettingsPage() {
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
+
+      // Refetch data to show updated images
+       const userSnap = await getDoc(userRef);
+       if (userSnap.exists()) {
+         setUserData(userSnap.data() as UserType);
+       }
 
     } catch (error) {
       console.error("Error updating profile: ", error);
@@ -206,8 +165,19 @@ export default function SettingsPage() {
           Update your public profile, notification preferences, and security settings.
         </p>
       </div>
+
+      <div className="relative h-48 w-full rounded-lg overflow-hidden mb-[-48px]">
+        {userData?.coverUrl && <Image src={userData.coverUrl} alt="Cover image" fill className="object-cover" />}
+      </div>
       
-      <Tabs defaultValue="profile" className="w-full">
+      <div className="relative flex items-end px-8">
+        <Avatar className="h-24 w-24 border-4 border-background">
+          <AvatarImage src={userData?.avatarUrl} />
+          <AvatarFallback>{userData?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+        </Avatar>
+      </div>
+
+      <Tabs defaultValue="profile" className="w-full mt-8">
         <TabsList className="mb-6">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -241,9 +211,8 @@ export default function SettingsPage() {
                     name="displayName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Display Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Your display name" {...field} />
+                          <Input label="Display Name" placeholder="Your display name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -254,27 +223,32 @@ export default function SettingsPage() {
                     name="bio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bio</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Tell us a little bit about yourself" {...field} />
+                          <Textarea label="Bio" placeholder="Tell us a little bit about yourself" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <ImageUploader 
+                  <Dropzone 
                     label="Avatar Image"
-                    currentImageUrl={userData?.avatarUrl}
                     onFileChange={setAvatarFile}
-                    isUploading={isUploading}
+                    file={avatarFile}
+                    fileType="image"
+                    accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] }}
+                    existingImageUrl={userData?.avatarUrl}
+                    className="h-32"
                   />
                   
-                  <ImageUploader 
+                  <Dropzone 
                     label="Cover Image"
-                    currentImageUrl={userData?.coverUrl}
                     onFileChange={setCoverFile}
-                    isUploading={isUploading}
+                    file={coverFile}
+                    fileType="image"
+                    accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] }}
+                    existingImageUrl={userData?.coverUrl}
+                    className="h-32"
                   />
 
                   <Button type="submit" disabled={isUploading}>
