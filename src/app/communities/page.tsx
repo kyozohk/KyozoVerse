@@ -81,7 +81,7 @@ export default function CommunitiesDashboardPage() {
   }, [user]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-8 py-8">
       <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
         {loading ? (
           <div className="flex justify-center py-12">

@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { getCommunityByHandle, getUserRoleInCommunity } from '@/lib/community-utils';
+import { getCommunityByHandle, getUserRoleInCommunity, getCommunityMembers } from '@/lib/community-utils';
 import { Community, CommunityMember, UserRole } from '@/lib/types';
 import { CommunityHeader } from '@/components/community/community-header';
 import { CommunityStats } from '@/components/community/community-stats';
@@ -38,7 +38,10 @@ export default function CommunityPage() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<CommunityMember | null>(null);
+  const [isDeleteMemberConfirmOpen, setIsDeleteMemberConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -57,35 +60,8 @@ export default function CommunityPage() {
             setUserRole(role);
           }
           
-          const membersRef = collection(db, "communityMembers");
-          const q = query(membersRef, where("communityId", "==", communityData.communityId));
-          const unsubscribe = onSnapshot(q, async (snapshot) => {
-            const memberPromises = snapshot.docs.map(async (memberDoc) => {
-              const memberData = memberDoc.data();
-              
-              // Fetch user details
-              const userDocRef = doc(db, 'users', memberData.userId);
-              const userDocSnap = await getDoc(userDocRef);
-              const userData = userDocSnap.data();
-              
-              return {
-                userId: memberData.userId,
-                communityId: memberData.communityId,
-                role: memberData.role || 'member',
-                joinedAt: memberData.joinedAt,
-                status: memberData.status || 'active',
-                userDetails: {
-                  displayName: userData?.displayName || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() || 'Unknown',
-                  email: userData?.email || '',
-                  phone: userData?.phone || userData?.phoneNumber || '',
-                  avatarUrl: userData?.photoURL || userData?.avatarUrl || '',
-                },
-              } as CommunityMember;
-            });
-            
-            const membersData = await Promise.all(memberPromises);
-            setMembers(membersData);
-          });
+          const membersData = await getCommunityMembers(communityData.communityId);
+          setMembers(membersData);
         }
 
       } catch (error) {
@@ -105,6 +81,52 @@ export default function CommunityPage() {
         setCommunity(communityData);
         setLoading(false);
       });
+    }
+  };
+
+  const handleEditMemberSubmit = async (data: {
+    displayName: string;
+    email: string;
+    phone?: string;
+    avatarUrl?: string;
+    coverUrl?: string;
+  }) => {
+    if (!editingMember?.id) {
+      throw new Error("No member selected to edit or member is missing document ID.");
+    }
+    try {
+      const memberRef = doc(db, "communityMembers", editingMember.id);
+      const updateData: any = {
+        'userDetails.displayName': data.displayName,
+        'userDetails.email': data.email,
+        'userDetails.phone': data.phone || '',
+        'userDetails.avatarUrl': data.avatarUrl || '',
+        'userDetails.coverUrl': data.coverUrl || '',
+      };
+      await updateDoc(memberRef, updateData);
+      setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, userDetails: { ...m.userDetails, ...data } } : m));
+      toast({ title: 'Success', description: 'Member updated.' });
+    } catch (error) {
+      console.error("Error updating member:", error);
+      toast({ title: 'Error', description: 'Failed to update member.', variant: "destructive" });
+    }
+  };
+  
+  const handleDeleteMember = async () => {
+    if (!memberToDelete || !community) return;
+    try {
+      await deleteDoc(doc(db, 'communityMembers', memberToDelete.id));
+      await updateDoc(doc(db, 'communities', community.communityId), {
+        memberCount: increment(-1),
+      });
+      setMembers(prev => prev.filter(m => m.id !== memberToDelete.id));
+      toast({ title: 'Member removed', description: `${memberToDelete.userDetails?.displayName} has been removed.` });
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast({ title: 'Error', description: 'Failed to remove member.', variant: 'destructive' });
+    } finally {
+      setIsDeleteMemberConfirmOpen(false);
+      setMemberToDelete(null);
     }
   };
   
@@ -171,8 +193,8 @@ export default function CommunityPage() {
     await addDoc(collection(db, "communityMembers"), {
       userId,
       communityId: community.communityId,
-      role: "member",
-      status: "active",
+      role: 'member',
+      status: 'active',
       joinedAt: serverTimestamp(),
       userDetails: {
         displayName: data.displayName,
@@ -251,7 +273,16 @@ export default function CommunityPage() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         >
-          <MembersList members={filteredMembers} userRole={userRole} viewMode={viewMode} />
+          <MembersList 
+            members={filteredMembers} 
+            userRole={userRole} 
+            viewMode={viewMode}
+            onEditMember={(member) => setEditingMember(member)}
+            onDeleteMember={(member) => {
+              setMemberToDelete(member);
+              setIsDeleteMemberConfirmOpen(true);
+            }}
+          />
       </ListView>
 
       {isEditDialogOpen && (
@@ -288,6 +319,17 @@ export default function CommunityPage() {
           }}
         />
       )}
+      
+      {editingMember && (
+        <MemberDialog
+          open={!!editingMember}
+          mode="edit"
+          communityName={community.name}
+          initialMember={editingMember}
+          onClose={() => setEditingMember(null)}
+          onSubmit={handleEditMemberSubmit}
+        />
+      )}
 
       {community && (
         <>
@@ -304,6 +346,23 @@ export default function CommunityPage() {
             onSuccess={handleDeleteSuccess}
           />
         </>
+      )}
+
+      {isDeleteMemberConfirmOpen && memberToDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>Delete Member</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-6">Are you sure you want to remove <strong>{memberToDelete.userDetails?.displayName}</strong> from the community?</p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setIsDeleteMemberConfirmOpen(false)}>Cancel</Button>
+                <Button variant="destructive" onClick={handleDeleteMember}>Delete</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
