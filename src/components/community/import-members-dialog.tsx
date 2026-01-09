@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -313,7 +314,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
       color="#843484"
     >
       <div className="flex flex-col h-full" style={{ maxWidth: '100vw', margin: '0 auto' }}>
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full flex-grow flex flex-col">
         <TabsList className="grid w-full grid-cols-3" style={{ height: '80px' }}>
           <TabsTrigger value="eventbrite" className="text-lg px-8 py-4">
             <Upload className="h-8 w-8 mr-3" />
@@ -329,144 +330,148 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="eventbrite" className="space-y-4 mt-4">
-          <div className="flex gap-2 items-start">
-            <div className="flex-1">
-              <Input
-                type="password"
-                value={eventbritePrivateToken}
-                onChange={(e) => setEventbritePrivateToken(e.target.value)}
-                label="Eventbrite Private Token"
-                wrapperClassName="mb-0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Get your Private Token from Eventbrite Account Settings → API Keys
-              </p>
-            </div>
-            <Button
-              type="button"
-              onClick={fetchEventbriteEvents}
-              disabled={!eventbritePrivateToken || loadingEvents}
-              className="mt-0"
-              style={{ backgroundColor: '#843484', minWidth: '140px' }}
-            >
-              {loadingEvents ? 'Loading...' : 'Fetch'}
-            </Button>
-          </div>
-
-          {eventbriteEvents.length > 0 && (
-            <div>
-              <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                <SelectTrigger className="h-auto [&>span]:text-black">
-                  <SelectValue placeholder="Select Event" />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventbriteEvents.map((event) => {
-                    const attendeeCount = event.id === selectedEventId ? eventbriteAttendees.length : 0;
-                    return (
-                      <SelectItem 
-                        key={event.id} 
-                        value={event.id}
-                        className="py-3 text-black cursor-pointer hover:bg-muted"
-                      >
-                        <div className="flex justify-between items-center w-full">
-                          <span>{event.name.text}</span>
-                          {attendeeCount > 0 && (
-                            <span className="text-muted-foreground ml-4">({attendeeCount})</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {loadingAttendees && <p className="text-sm text-muted-foreground">Loading attendees...</p>}
-
-          {eventbriteAttendees.length > 0 && (
-            <div className="mt-4">
-              <ExcelGrid
-                members={eventbriteAttendees}
-                onMembersChange={setEventbriteAttendees}
-                minRows={5}
-              />
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="csv" className="space-y-4 mt-4">
-          <div>
-            <Label>Upload CSV File</Label>
-            <div className="border-2 border-dashed rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative">
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  handleCsvChange(file);
-                }}
-                className="hidden"
-                id="csv-upload"
-              />
-              <label htmlFor="csv-upload" className="flex items-center justify-center gap-2 cursor-pointer">
-                <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {csvFile ? csvFile.name : 'Click to upload CSV file'}
-                </span>
-              </label>
-              {csvFile && csvMembers.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCsvFile(null);
-                    setCsvMembers([]);
-                  }}
-                  className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full transition-colors"
+        <div className="flex-grow mt-4 flex flex-col">
+            <TabsContent value="eventbrite" className="space-y-4 flex-grow flex flex-col">
+            <div className="flex gap-2 items-start">
+                <div className="flex-1">
+                <Input
+                    type="password"
+                    value={eventbritePrivateToken}
+                    onChange={(e) => setEventbritePrivateToken(e.target.value)}
+                    label="Eventbrite Private Token"
+                    wrapperClassName="mb-0"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                    Get your Private Token from Eventbrite Account Settings → API Keys
+                </p>
+                </div>
+                <Button
+                type="button"
+                onClick={fetchEventbriteEvents}
+                disabled={!eventbritePrivateToken || loadingEvents}
+                className="mt-0"
+                style={{ backgroundColor: '#843484', minWidth: '140px' }}
                 >
-                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                </button>
-              )}
+                {loadingEvents ? 'Loading...' : 'Fetch'}
+                </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              CSV format: firstName, lastName, email, phone (one member per line)
-            </p>
-          </div>
 
-          {csvMembers.length > 0 && (
-            <div className="mt-4">
-              <ExcelGrid
-                members={csvMembers}
-                onMembersChange={setCsvMembers}
-                minRows={5}
-              />
+            {eventbriteEvents.length > 0 && (
+                <div>
+                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                    <SelectTrigger className="h-auto [&>span]:text-black">
+                    <SelectValue placeholder="Select Event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {eventbriteEvents.map((event) => {
+                        const attendeeCount = event.id === selectedEventId ? eventbriteAttendees.length : 0;
+                        return (
+                        <SelectItem 
+                            key={event.id} 
+                            value={event.id}
+                            className="py-3 text-black cursor-pointer hover:bg-muted"
+                        >
+                            <div className="flex justify-between items-center w-full">
+                            <span>{event.name.text}</span>
+                            {attendeeCount > 0 && (
+                                <span className="text-muted-foreground ml-4">({attendeeCount})</span>
+                            )}
+                            </div>
+                        </SelectItem>
+                        );
+                    })}
+                    </SelectContent>
+                </Select>
+                </div>
+            )}
+
+            {loadingAttendees && <p className="text-sm text-muted-foreground">Loading attendees...</p>}
+
+            {eventbriteAttendees.length > 0 && (
+                <div className="flex-grow mt-4 overflow-hidden">
+                <ExcelGrid
+                    members={eventbriteAttendees}
+                    onMembersChange={setEventbriteAttendees}
+                    minRows={3}
+                />
+                </div>
+            )}
+            </TabsContent>
+
+            <TabsContent value="csv" className="space-y-4 flex-grow flex flex-col">
+            <div>
+                <Label>Upload CSV File</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative">
+                <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    handleCsvChange(file);
+                    }}
+                    className="hidden"
+                    id="csv-upload"
+                />
+                <label htmlFor="csv-upload" className="flex items-center justify-center gap-2 cursor-pointer">
+                    <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                    {csvFile ? csvFile.name : 'Click to upload CSV file'}
+                    </span>
+                </label>
+                {csvFile && csvMembers.length > 0 && (
+                    <button
+                    type="button"
+                    onClick={() => {
+                        setCsvFile(null);
+                        setCsvMembers([]);
+                    }}
+                    className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full transition-colors"
+                    >
+                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                    </button>
+                )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                CSV format: firstName, lastName, email, phone (one member per line)
+                </p>
             </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="manual" className="space-y-4 mt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addManualRow}
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Row
-          </Button>
-          <p className="text-xs text-muted-foreground mb-4">
-            Add members manually and edit details in the grid below.
-          </p>
+            {csvMembers.length > 0 && (
+                <div className="flex-grow mt-4 overflow-hidden">
+                <ExcelGrid
+                    members={csvMembers}
+                    onMembersChange={setCsvMembers}
+                    minRows={3}
+                />
+                </div>
+            )}
+            </TabsContent>
 
-          <div>
-            <ExcelGrid
-              members={manualMembers}
-              onMembersChange={setManualMembers}
-              minRows={5}
-            />
-          </div>
-        </TabsContent>
+            <TabsContent value="manual" className="space-y-4 flex-grow flex flex-col">
+              <div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addManualRow}
+                    className="w-full"
+                >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Row
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                    Add members manually and edit details in the grid below.
+                </p>
+              </div>
+
+              <div className="flex-grow overflow-hidden">
+                <ExcelGrid
+                  members={manualMembers}
+                  onMembersChange={setManualMembers}
+                  minRows={3}
+                />
+              </div>
+            </TabsContent>
+        </div>
       </Tabs>
 
           {error && (

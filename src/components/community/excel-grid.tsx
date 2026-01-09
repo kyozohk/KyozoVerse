@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -22,7 +23,7 @@ interface ExcelGridProps {
 export const ExcelGrid: React.FC<ExcelGridProps> = ({
   members,
   onMembersChange,
-  minRows = 5
+  minRows = 3
 }) => {
   const [focusedCell, setFocusedCell] = useState<{ rowId: string; field: string } | null>(null);
 
@@ -48,7 +49,7 @@ export const ExcelGrid: React.FC<ExcelGridProps> = ({
       }));
       onMembersChange([...members, ...newRows]);
     }
-  }, []);
+  }, [members, minRows, onMembersChange]);
 
   const handleCheckboxChange = (id: string, checked: boolean) => {
     const updated = members.map(m => m.id === id ? { ...m, checked } : m);
@@ -115,9 +116,9 @@ export const ExcelGrid: React.FC<ExcelGridProps> = ({
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border rounded-lg overflow-hidden flex flex-col h-full">
       {/* Header */}
-      <div className="grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_40px] bg-muted/50 border-b font-medium text-sm text-black">
+      <div className="grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_40px] bg-muted/50 border-b font-medium text-sm text-black flex-shrink-0">
         <div className="p-2 border-r flex items-center justify-center">
           <Checkbox 
             checked={allChecked}
@@ -134,7 +135,7 @@ export const ExcelGrid: React.FC<ExcelGridProps> = ({
       </div>
 
       {/* Scrollable Body */}
-      <div className="overflow-y-auto" style={{ maxHeight: '300px' }}>
+      <div className="overflow-y-auto flex-grow">
         {members.map((member, rowIndex) => (
           <div
             key={member.id}
