@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -154,15 +155,6 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
   const addManualRow = () => {
     const newId = `manual-${Date.now()}`;
     setManualMembers([...manualMembers, { id: newId, firstName: '', lastName: '', email: '', phone: '', checked: true }]);
-  };
-
-  const removeManualRow = (index: number) => {
-    setManualMembers(manualMembers.filter((_, i) => i !== index));
-  };
-
-  const updateManualRow = (id: string, field: keyof Omit<ExcelGridRow, 'id' | 'checked'>, value: string) => {
-    const updated = manualMembers.map(m => m.id === id ? { ...m, [field]: value } : m);
-    setManualMembers(updated);
   };
 
   const importMembers = async (members: ExcelGridRow[]) => {
@@ -352,7 +344,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                 className="mt-0"
                 style={{ backgroundColor: '#843484', minWidth: '140px' }}
                 >
-                {loadingEvents ? 'Loading...' : 'Fetch'}
+                {loadingEvents ? 'Loading...' : 'Fetch Events'}
                 </Button>
             </div>
 
@@ -360,7 +352,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                 <div>
                 <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                     <SelectTrigger className="h-auto [&>span]:text-black">
-                    <SelectValue placeholder="Select Event" />
+                    <SelectValue placeholder="Select an event to import attendees" />
                     </SelectTrigger>
                     <SelectContent>
                     {eventbriteEvents.map((event) => {
@@ -387,15 +379,13 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
 
             {loadingAttendees && <p className="text-sm text-muted-foreground">Loading attendees...</p>}
 
-            {eventbriteAttendees.length > 0 && (
-                <div className="flex-grow mt-4 overflow-hidden">
+            <div className="flex-grow mt-4 overflow-hidden">
                 <ExcelGrid
                     members={eventbriteAttendees}
                     onMembersChange={setEventbriteAttendees}
                     minRows={3}
                 />
-                </div>
-            )}
+            </div>
             </TabsContent>
 
             <TabsContent value="csv" className="space-y-4 flex-grow flex flex-col">
@@ -418,13 +408,10 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                     {csvFile ? csvFile.name : 'Click to upload CSV file'}
                     </span>
                 </label>
-                {csvFile && csvMembers.length > 0 && (
+                {csvFile && (
                     <button
                     type="button"
-                    onClick={() => {
-                        setCsvFile(null);
-                        setCsvMembers([]);
-                    }}
+                    onClick={() => handleCsvChange(null)}
                     className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full transition-colors"
                     >
                     <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -436,15 +423,13 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                 </p>
             </div>
 
-            {csvMembers.length > 0 && (
-                <div className="flex-grow mt-4 overflow-hidden">
+            <div className="flex-grow mt-4 overflow-hidden">
                 <ExcelGrid
                     members={csvMembers}
                     onMembersChange={setCsvMembers}
                     minRows={3}
                 />
-                </div>
-            )}
+            </div>
             </TabsContent>
 
             <TabsContent value="manual" className="space-y-4 flex-grow flex flex-col">
