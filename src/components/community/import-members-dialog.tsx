@@ -388,9 +388,8 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
             </div>
             </TabsContent>
 
-            <TabsContent value="csv" className="space-y-4 flex-grow flex flex-col">
+            <TabsContent value="csv" className="space-y-2 flex-grow flex flex-col">
             <div>
-                <Label>Upload CSV File</Label>
                 <div className="border-2 border-dashed rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative">
                 <input
                     type="file"
@@ -407,6 +406,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                     <span className="text-sm text-muted-foreground">
                     {csvFile ? csvFile.name : 'Click to upload CSV file'}
                     </span>
+                    
                 </label>
                 {csvFile && (
                     <button
@@ -418,9 +418,6 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                     </button>
                 )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                CSV format: firstName, lastName, email, phone (one member per line)
-                </p>
             </div>
 
             <div className="flex-grow mt-4 overflow-hidden">
