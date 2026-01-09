@@ -1,5 +1,5 @@
 
-
+import React from 'react';
 import { type CommunityMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Edit, Trash2, MessageCircle, X, Phone } from 'lucide-react';
@@ -25,6 +25,8 @@ interface MemberCardProps {
 
 export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border))', onClick, onRemoveTag, selectable, isSelected, onSelect, onEdit, onDelete }: MemberCardProps) {
     
+  const [isHovered, setIsHovered] = React.useState(false);
+
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
     const r = parseInt(hex.slice(1, 3), 16);
@@ -34,9 +36,9 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
   };
 
   const itemStyle: React.CSSProperties = {
-    '--hover-bg-color': hexToRgba(borderColor, 0.1),
     borderColor: borderColor,
-  } as any;
+    backgroundColor: isHovered ? hexToRgba(borderColor, 0.1) : 'transparent',
+  };
 
   const handleTagRemove = (e: React.MouseEvent, tag: string) => {
     e.stopPropagation();
@@ -47,9 +49,11 @@ export function MemberCard({ member, canManage, borderColor = 'hsl(var(--border)
 
   return (
     <Card 
-        className="hover:shadow-lg transition-shadow duration-300 h-full cursor-pointer hover:bg-[var(--hover-bg-color)]"
+        className="hover:shadow-lg transition-shadow duration-300 h-full cursor-pointer"
         style={itemStyle}
         onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
     >
       <CardHeader>
           <div className="flex items-start justify-between">

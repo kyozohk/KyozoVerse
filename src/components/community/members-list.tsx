@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Users, Edit, Mail, X, MessageCircle, Trash2, Phone } from 'lucide-react';
 import { MemberCard } from '../community/member-card';
+import { MemberListItem } from '../community/member-list-item';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
@@ -25,6 +26,7 @@ interface MembersListProps {
   onEditMember?: (member: CommunityMember) => void;
   onRemoveTag?: (memberId: string, tag: string) => void;
   onDeleteMember?: (member: CommunityMember) => void;
+  activeColor?: string;
 }
 
 export function MembersList({
@@ -36,11 +38,13 @@ export function MembersList({
   viewMode = 'grid',
   onEditMember,
   onRemoveTag,
-  onDeleteMember
+  onDeleteMember,
+  activeColor: activeColorProp
 }: MembersListProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { activeColor } = getThemeForPath(pathname);
+  const { activeColor: themeColor } = getThemeForPath(pathname);
+  const activeColor = activeColorProp || themeColor;
 
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
@@ -86,114 +90,22 @@ export function MembersList({
       <div className="col-span-full space-y-2">
         {members.map((member) => {
           const isSelected = selectedMembers.some((m) => 'userId' in m ? m.userId === member.userId : false);
-          const itemStyle: React.CSSProperties = {
-            '--hover-bg-color': hexToRgba(activeColor, 0.08),
-            borderColor: isSelected ? activeColor : hexToRgba(activeColor, 0.5),
-          } as any;
-          if (isSelected) {
-            itemStyle.backgroundColor = hexToRgba(activeColor, 0.1);
-            itemStyle.borderColor = activeColor;
-          }
           console.log(`🎨 [Members List] Rendering member: ${member.userDetails?.displayName}, Tags:`, member.tags);
 
           return (
-            <div
+            <MemberListItem
               key={member.id}
-              className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
-              style={itemStyle}
+              member={member}
+              isSelected={isSelected}
+              selectable={selectable}
+              canManage={canManage}
+              activeColor={activeColor}
               onClick={() => handleNavigate(member)}
-            >
-              {selectable && (
-                <div className="mr-4 flex items-center h-full" onClick={(e) => handleSelect(e, member)}>
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => {
-                        // The parent div's onClick handles the logic
-                    }}
-                  />
-                </div>
-              )}
-              <Avatar className="h-12 w-12 mr-4">
-                <AvatarImage src={member.userDetails?.avatarUrl} />
-                <AvatarFallback>
-                  {member.userDetails?.displayName?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-grow grid grid-cols-1 md:grid-cols-4 items-center gap-4">
-                <div className="font-semibold text-base text-foreground truncate">{member.userDetails?.displayName}</div>
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
-                    <Mail className="h-4 w-4 shrink-0" />
-                    <span>{member.userDetails?.email || 'No email'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
-                    <Phone className="h-4 w-4 shrink-0" />
-                    <span>{member.userDetails?.phone || 'No phone'}</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1">
-                  {(member.tags || []).slice(0, 3).map(tag => (
-                    <Badge key={tag} variant="secondary" className="group text-xs">
-                      {tag}
-                      <button onClick={(e) => handleTagRemove(e, member.id, tag)} className="ml-1.5 opacity-50 group-hover:opacity-100">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                  {(member.tags?.length || 0) > 3 && (
-                    <Badge variant="outline">+{member.tags!.length - 3}</Badge>
-                  )}
-                </div>
-              </div>
-              {canManage && (
-                <div className="flex items-center gap-1 ml-4">
-                  <button
-                    type="button"
-                    className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditMember && onEditMember(member);
-                    }}
-                    title="Edit member"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Open message dialog
-                      console.log('Message member:', member.userDetails?.displayName);
-                    }}
-                    title="Message member"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Open email dialog
-                      console.log('Email member:', member.userDetails?.displayName);
-                    }}
-                    title="Email member"
-                  >
-                    <Mail className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    className="h-8 w-8 flex items-center justify-center rounded-md text-red-500 hover:text-red-400 hover:bg-muted/40"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteMember && onDeleteMember(member);
-                    }}
-                    title="Delete member"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
+              onSelect={(e) => handleSelect(e, member)}
+              onEdit={() => onEditMember?.(member)}
+              onDelete={() => onDeleteMember?.(member)}
+              onRemoveTag={(tag) => onRemoveTag?.(member.id, tag)}
+            />
           );
         })}
       </div>
