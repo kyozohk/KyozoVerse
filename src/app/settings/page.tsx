@@ -1,12 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { storage } from '@/firebase/storage';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +20,9 @@ import { type User as UserType } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dropzone } from '@/components/ui';
+import { uploadFile } from '@/lib/upload-helper';
+import { CustomButton } from '@/components/ui';
+import { THEME_COLORS } from '@/lib/theme-colors';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }).max(50),
@@ -77,10 +77,12 @@ export default function SettingsPage() {
     fetchUserData();
   }, [user, form, toast]);
 
-  const uploadImage = async (file: File, path: string): Promise<string> => {
-    const storageRef = ref(storage, path);
-    const uploadResult = await uploadBytes(storageRef, file);
-    return getDownloadURL(uploadResult.ref);
+  const handleFileUpload = async (file: File, type: 'avatar' | 'cover') => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const result = await uploadFile(file, `user-media/${user.uid}/${type}`);
+    return typeof result === 'string' ? result : result.url;
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
@@ -90,12 +92,12 @@ export default function SettingsPage() {
     try {
       let avatarUrl = userData.avatarUrl;
       if (avatarFile) {
-        avatarUrl = await uploadImage(avatarFile, `user-media/${user.uid}/avatar/${avatarFile.name}`);
+        avatarUrl = await handleFileUpload(avatarFile, 'avatar');
       }
 
       let coverUrl = userData.coverUrl;
       if (coverFile) {
-        coverUrl = await uploadImage(coverFile, `user-media/${user.uid}/cover/${coverFile.name}`);
+        coverUrl = await handleFileUpload(coverFile, 'cover');
       }
       
       const userRef = doc(db, 'users', user.uid);
@@ -198,7 +200,7 @@ export default function SettingsPage() {
         </TabsList>
         
         <TabsContent value="profile" className="space-y-6">
-          <Card>
+          <Card style={{ borderColor: THEME_COLORS.settings.active }}>
             <CardHeader>
               <CardTitle>Public Profile</CardTitle>
               <CardDescription>This information will be displayed publicly on your profile.</CardDescription>
@@ -212,7 +214,7 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input label="Display Name" placeholder="Your display name" {...field} />
+                          <Input label="Display Name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -224,7 +226,7 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Textarea label="Bio" placeholder="Tell us a little bit about yourself" {...field} />
+                          <Textarea label="Bio" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -251,9 +253,11 @@ export default function SettingsPage() {
                     className="h-32"
                   />
 
-                  <Button type="submit" disabled={isUploading}>
-                    {isUploading ? 'Saving...' : 'Save Changes'}
-                  </Button>
+                  <div className="flex justify-end">
+                    <CustomButton type="submit" disabled={isUploading} color={THEME_COLORS.settings.active}>
+                      {isUploading ? 'Saving...' : 'Save Changes'}
+                    </CustomButton>
+                  </div>
                 </form>
               </Form>
             </CardContent>
