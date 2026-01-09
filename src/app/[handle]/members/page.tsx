@@ -487,20 +487,20 @@ export default function CommunityMembersPage() {
         selectedTags={selectedTags}
         onToggleTag={handleToggleTag}
       >
-        <MembersList 
-          members={filteredMembers} 
-          userRole={userRole as any}
-          viewMode={viewMode}
-          onMemberClick={handleToggleMemberSelection}
-          selectedMembers={selectedMembers}
-          selectable={true}
-          onEditMember={(member) => setEditingMember(member)}
-          onRemoveTag={openRemoveTagDialog}
-          onDeleteMember={(member) => {
-            setMemberToDelete(member);
-            setIsDeleteConfirmOpen(true);
-          }}
-          activeColor={activeColor}
+        <MembersList
+            members={filteredMembers}
+            userRole={userRole as any}
+            viewMode={viewMode}
+            onMemberClick={handleToggleMemberSelection}
+            selectedMembers={selectedMembers}
+            selectable={true}
+            onEditMember={(member) => setEditingMember(member)}
+            onRemoveTag={openRemoveTagDialog}
+            onDeleteMember={(member) => {
+              setMemberToDelete(member);
+              setIsDeleteConfirmOpen(true);
+            }}
+            activeColor={activeColor}
         />
       </ListView>
       <MemberDialog
