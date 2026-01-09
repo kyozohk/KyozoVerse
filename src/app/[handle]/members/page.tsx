@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { 
   collection, 
   query, 
@@ -43,6 +43,8 @@ import { CommunityHeader } from "@/components/community/community-header";
 import { CustomButton } from "@/components/ui";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { getThemeForPath } from "@/lib/theme-utils";
+
 // A simple debounce hook
 function useDebounce(value: string, delay: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -63,6 +65,8 @@ export default function CommunityMembersPage() {
   const params = useParams();
   const handle = params.handle as string;
   const router = useRouter();
+  const pathname = usePathname();
+  const { activeColor } = getThemeForPath(pathname);
   
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -412,6 +416,11 @@ export default function CommunityMembersPage() {
 
     } catch (error: any) {
       console.error("Error updating member:", error);
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: `communityMembers/${editingMember.id}`,
+          operation: 'update',
+          requestResourceData: data,
+      }));
       throw new Error(error?.message || "Unable to update member. Please try again.");
     }
   };
@@ -491,6 +500,7 @@ export default function CommunityMembersPage() {
             setMemberToDelete(member);
             setIsDeleteConfirmOpen(true);
           }}
+          activeColor={activeColor}
         />
       </ListView>
       <MemberDialog
