@@ -1,10 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { CommunityMember } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from '../ui';
 import { Mail, Phone, Edit, MessageCircle, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
