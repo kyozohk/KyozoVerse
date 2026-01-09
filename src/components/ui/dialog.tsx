@@ -129,24 +129,25 @@ export function CustomFormDialog({
   rightComponent,
   color = "var(--primary-purple)",
 }: CustomFormDialogProps) {
-  const [isAnimating, setIsAnimating] = React.useState(false);
+  const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
 
   React.useEffect(() => {
-    if (open) {
-      setIsAnimating(true);
+    if (!open) {
+      setIsAnimatingOut(true);
+      const timer = setTimeout(() => setIsAnimatingOut(false), 300); // Duration of the closing animation
+      return () => clearTimeout(timer);
     }
   }, [open]);
 
-  const handleClose = () => {
-    setIsAnimating(false);
-    // Wait for animation to complete before actually closing
-    setTimeout(() => {
+  // Use a stable function for onOpenChange
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
       onClose();
-    }, 300);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogPrimitive.Portal>
         <DialogOverlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
@@ -154,19 +155,23 @@ export function CustomFormDialog({
             "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
-              : "w-full max-w-[50vw] max-h-[85vh]"
+              : "w-full max-w-[50vw] max-h-[85vh]",
+            open && !isAnimatingOut ? 'animate-curtain-open' : 'animate-curtain-close'
           )}
           style={{
             '--input-border-color': color,
           } as React.CSSProperties}
+          onAnimationEnd={() => {
+            if (!open) setIsAnimatingOut(false);
+          }}
         >
           {/* Accessible title for screen readers */}
           <DialogPrimitive.Title className="sr-only">
             {title}
           </DialogPrimitive.Title>
           
-          {/* Curtain Animation Container */}
-          <div className={`relative w-full h-full grid grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''} ${isAnimating ? 'animate-curtain-open' : 'animate-curtain-close'}`}>
+          {/* Main Content Grid */}
+          <div className={`relative w-full h-full grid grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''}`}>
             {/* Left Panel - Form */}
             <div 
               className="relative flex flex-col h-full overflow-hidden"
