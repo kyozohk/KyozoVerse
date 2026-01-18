@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,7 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dropzone } from '@/components/ui';
 import { uploadFile } from '@/lib/upload-helper';
 import { CustomButton } from '@/components/ui';
-import { THEME_COLORS } from '@/lib/theme-colors';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }).max(50),
