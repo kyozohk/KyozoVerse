@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CustomButton } from '@/components/ui';
 import { PlusCircle, Users, Sparkles } from 'lucide-react';
@@ -10,7 +11,7 @@ interface CommunityBannerProps {
 
 export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBannerProps) {
   return (
-    <div className="relative w-full mb-8 overflow-hidden rounded-xl bg-gradient-to-r from-[#843484] to-[#a64ca6] text-white shadow-lg banner-glow">
+    <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#843484] to-[#a64ca6] text-white shadow-lg banner-glow">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 w-full h-full bg-[url('/bg/pattern.svg')] bg-repeat opacity-20"></div>
