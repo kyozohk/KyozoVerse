@@ -19,7 +19,6 @@ import BubbleMarquee from '@/components/landing/bubble-marquee';
 import ScrollRevealText from '@/components/landing/scroll-reveal-text';
 import AnimatedTitle from '@/components/landing/animated-title';
 import BottomText from '@/components/landing/bottom-text';
-import { THEME_COLORS } from '@/lib/theme-colors';
 
 
 export default function Home() {
@@ -121,7 +120,7 @@ export default function Home() {
         let description = "An unexpected error occurred. Please try again.";
         if (error instanceof FirebaseError) {
             if (error.code === 'auth/email-already-in-use') {
-                description = "This email is already registered. Please sign in instead.";
+                description = "This email is already in use. Please sign in instead.";
             } else if (error.code === 'auth/invalid-email') {
                 description = "Invalid email address.";
             } else if (error.code === 'auth/weak-password') {
@@ -161,8 +160,6 @@ export default function Home() {
         <div className="py-24 px-4 md:py-32 w-full">
           <Hero
             text={["Discover your", "creative universe"]}
-            gradientStart="#A07FBD"
-            gradientEnd="#23AF98"
           />
           
           <section className="mt-24 space-y-12 mx-40">
@@ -171,9 +168,7 @@ export default function Home() {
               description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color={THEME_COLORS.feed.primary}
               RightComponent={<IphoneMockup src="/Mobile-white.png" />}
-              
             />
           </section>
           <Hero text={["Where creative", "minds converge"]} />                  
@@ -183,7 +178,6 @@ export default function Home() {
               description="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color={THEME_COLORS.broadcast.primary}
               RightComponent={<VideoWall />}
             />
              <FeatureCard
@@ -191,7 +185,6 @@ export default function Home() {
               description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
               buttonText="Join the waitlist"
               buttonAction={openWaitlist}
-              color={THEME_COLORS.overview.primary}
               RightComponent={<ParallaxGrid />}
             />            
           </section>
@@ -236,7 +229,6 @@ export default function Home() {
         title="Welcome Back"
         description="Sign in to access your Kyozo dashboard and community."
         backgroundImage="/bg/light_app_bg.png"
-        color={THEME_COLORS.overview.primary}
       >
         <div className="flex flex-col h-full">
           <div className="flex-grow">
@@ -283,7 +275,6 @@ export default function Home() {
         title="Create Your Account"
         description="Sign up to create and manage your own communities on Kyozo."
         backgroundImage="/bg/light_app_bg.png"
-        color="#843484"
       >
         <div className="space-y-6">
           <div className="space-y-4">

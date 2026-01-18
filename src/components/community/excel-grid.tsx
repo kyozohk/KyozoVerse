@@ -123,7 +123,7 @@ export const ExcelGrid: React.FC<ExcelGridProps> = ({
           <Checkbox 
             checked={allChecked}
             onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-            className="data-[state=checked]:bg-[#843484] data-[state=checked]:border-[#843484]"
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             aria-label="Select all"
           />
         </div>
@@ -146,7 +146,7 @@ export const ExcelGrid: React.FC<ExcelGridProps> = ({
               <Checkbox
                 checked={member.checked}
                 onCheckedChange={(checked) => handleCheckboxChange(member.id, checked as boolean)}
-                className="data-[state=checked]:bg-[#843484] data-[state=checked]:border-[#843484]"
+                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
             </div>
 

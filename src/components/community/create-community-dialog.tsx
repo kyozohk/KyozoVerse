@@ -47,11 +47,11 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
 
     return (
         <div className="inputWrapper relative">
-            <div className="flex flex-wrap items-center gap-2 p-2 border rounded-lg input" style={{ borderColor: 'var(--input-border-color, var(--button-border))' }}>
+            <div className="flex flex-wrap items-center gap-2 p-2 border rounded-lg input h-auto min-h-[44px]">
                 {tags.map((tag, index) => (
-                    <div key={index} className="flex items-center gap-1 bg-muted rounded-full px-3 py-1 text-sm" style={{ color: 'var(--primary-purple)' }}>
+                    <div key={index} className="flex items-center gap-1 bg-muted rounded-full px-3 py-1 text-sm text-primary">
                         <span className="font-medium">{tag}</span>
-                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-foreground" style={{ color: 'var(--primary-purple)' }}>
+                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-foreground text-primary">
                             <X className="h-3 w-3" />
                         </button>
                     </div>
@@ -65,7 +65,7 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
                     className="flex-grow bg-transparent focus:outline-none p-1 text-foreground"
                 />
             </div>
-            <label className="floatingLabel" style={{ top: tags.length > 0 ? '-0.5rem' : '0.7rem', fontSize: tags.length > 0 ? '0.75rem' : '1rem', backgroundColor: tags.length > 0 ? '#EDEDED' : 'transparent', color: tags.length > 0 ? 'var(--input-border-color, #C170CF)' : 'var(--text-secondary)' }}>
+            <label className="floatingLabel" style={{ top: tags.length > 0 ? '-0.5rem' : '0.7rem', fontSize: tags.length > 0 ? '0.75rem' : '1rem', backgroundColor: tags.length > 0 ? 'hsl(var(--background))' : 'transparent' }}>
                 Tags
             </label>
         </div>

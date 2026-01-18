@@ -9,7 +9,6 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { X } from 'lucide-react';
 import { Mail } from 'lucide-react';
-import { THEME_COLORS } from '@/lib/theme-colors';
 import { useToast } from '@/hooks/use-toast';
 import { PrivacyPolicyDialog } from './privacy-policy-dialog';
 
@@ -113,14 +112,13 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
         title={isSuccess ? "Request Submitted! ✅" : "Join the Waitlist"}
         description={isSuccess ? "Your request is being reviewed by our team." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
         backgroundImage="/bg/light_app_bg.png"
-        color="#843484"
     >
       {isSuccess ? (
         // Success View - Pending Review
         <div className="flex flex-col h-full">
           <div className="flex-grow space-y-6">
             <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -129,10 +127,10 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
               <p className="text-gray-600 mb-2">
                 Your waitlist request has been sent to:
               </p>
-              <p className="text-lg font-medium text-purple-600 mb-6">
+              <p className="text-lg font-medium text-primary mb-6">
                 {userEmail}
               </p>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-left">
+              <div className="bg-muted/50 border rounded-lg p-4 text-left">
                 <p className="text-sm text-gray-700 mb-2">
                   <strong>What happens next:</strong>
                 </p>

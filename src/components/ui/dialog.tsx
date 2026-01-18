@@ -116,7 +116,6 @@ interface CustomFormDialogProps {
   children: React.ReactNode;
   backgroundImage?: string;
   rightComponent?: React.ReactNode;
-  color?: string;
 }
 
 export function CustomFormDialog({
@@ -125,9 +124,8 @@ export function CustomFormDialog({
   title,
   description,
   children,
-  backgroundImage = "/bg/light_app_bg.png",
+  backgroundImage,
   rightComponent,
-  color = "var(--primary-purple)",
 }: CustomFormDialogProps) {
   const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
 
@@ -139,28 +137,18 @@ export function CustomFormDialog({
     }
   }, [open]);
 
-  // Use a stable function for onOpenChange
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      onClose();
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogPrimitive.Portal>
         <DialogOverlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none",
+            "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none bg-background",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
-              : "w-full max-w-[50vw] max-h-[85vh]",
+              : "w-full max-w-md max-h-[85vh]",
             open && !isAnimatingOut ? 'animate-curtain-open' : 'animate-curtain-close'
           )}
-          style={{
-            '--input-border-color': color,
-          } as React.CSSProperties}
           onAnimationEnd={() => {
             if (!open) setIsAnimatingOut(false);
           }}
@@ -174,16 +162,11 @@ export function CustomFormDialog({
           <div className={`relative w-full h-full grid grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''}`}>
             {/* Left Panel - Form */}
             <div 
-              className="relative flex flex-col h-full overflow-hidden"
-              style={{
-                backgroundImage: `url(${backgroundImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
+              className="relative flex flex-col h-full overflow-hidden bg-background"
             >
               {/* Close Button - Top Right of Left Panel */}
               <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full p-2 bg-black/10 hover:bg-black/20 transition-colors z-50">
-                <X className="h-5 w-5 text-black" />
+                <X className="h-5 w-5 text-foreground" />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
 
@@ -198,7 +181,7 @@ export function CustomFormDialog({
                 )}>
                   <h2 
                     className={cn(
-                      "font-normal text-left mb-3 text-black",
+                      "font-normal text-left mb-3 text-foreground",
                       rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
                     )}
                     style={{ fontFamily: 'Canicule Display, serif' }}
@@ -207,7 +190,7 @@ export function CustomFormDialog({
                     {title}
                   </h2>
                   {description && (
-                    <p className="text-left text-base text-gray-600">{description}</p>
+                    <p className="text-left text-base text-muted-foreground">{description}</p>
                   )}
                 </div>
                 

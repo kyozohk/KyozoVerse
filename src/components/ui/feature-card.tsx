@@ -5,14 +5,12 @@ import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './CustomButton';
-import { hexToRgba } from '@/lib/theme-colors';
 
 interface FeatureCardProps {
   title: string;
   description: string;
   buttonText: string;
   buttonAction: () => void;
-  color: string;
   RightComponent: React.ReactNode;
   className?: string;
   reverse?: boolean;
@@ -23,45 +21,26 @@ export function FeatureCard({
   description,
   buttonText,
   buttonAction,
-  color,
   RightComponent,
   className,
   reverse = false,
 }: FeatureCardProps) {
   
-  
-  const overlayStyle = {
-    backgroundColor: hexToRgba(color, 0.1)
-  };
-
-  const textStyle = {
-    color: color
-  };
-
   return (
     <div
       className={cn(
-        "relative flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg w-full min-h-[600px] md:h-[600px]",
+        "relative flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg w-full min-h-[600px] md:h-[600px] bg-background",
         reverse ? "md:flex-row-reverse" : "md:flex-row",
         className
       )}
-      style={{
-        backgroundImage: `url('/bg/light_app_bg.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
     >
-      {/* Color Overlay */}
-      <div className="absolute inset-0 z-0" style={overlayStyle}></div>
-
       {/* Content */}
       <div className={cn("relative z-10 flex flex-col md:flex-row flex-grow w-full h-full")}>
         {/* Left content */}
        <div className="flex flex-col p-8 md:p-12 lg:p-16 w-full md:w-[45%] justify-center h-auto md:h-full order-2 md:order-1">
           <h2
-            className="text-5xl md:text-6xl mb-4 text-left leading-tight"
+            className="text-5xl md:text-6xl mb-4 text-left leading-tight text-foreground"
             style={{
-              ...textStyle,
               fontFamily: '"Playfair Display", "Gloock", serif',
               textAlign: 'left',
               lineHeight: '1',
@@ -71,8 +50,8 @@ export function FeatureCard({
           </h2>
 
           <p
-            className="text-base md:text-lg font-light mb-8" // thinner + wider
-            style={{ color: '#5A5A5A', textAlign: 'left' }}
+            className="text-base md:text-lg font-light mb-8 text-muted-foreground"
+            style={{ textAlign: 'left' }}
           >
             {description}
           </p>
@@ -81,8 +60,7 @@ export function FeatureCard({
             <CustomButton
               onClick={buttonAction}
               variant="outline"
-              className="border-2 hover:bg-white"
-              color={color}
+              className="border-2 hover:bg-muted"
               style={{
                 backdropFilter: 'blur(10px)',
               }}

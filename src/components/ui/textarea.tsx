@@ -27,9 +27,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
             {...props}
           />
-          <label htmlFor={id} className="floatingLabel">
-            {label}
-          </label>
+          {label && (
+            <label htmlFor={id} className="floatingLabel">
+              {label}
+            </label>
+           )}
         </div>
         {error && <div className="errorMessage">{error}</div>}
       </div>

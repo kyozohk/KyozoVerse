@@ -305,7 +305,7 @@ export function AcceptInviteForm({ inviteData, token }: AcceptInviteFormProps) {
       <div className="pt-6">
         <CustomButton
           type="submit"
-          variant="waitlist"
+          variant="primary"
           disabled={isSubmitting}
           className="w-full"
         >

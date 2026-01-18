@@ -24,6 +24,7 @@ import Image from 'next/image';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 import CommunitySidebar from '@/components/layout/community-sidebar';
+import { Logo } from '@/components/icons/logo';
 
 export default function ProLayoutClient({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
@@ -87,9 +88,9 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
         <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor, '--sidebar-active-border': activeColor} as React.CSSProperties}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
-              <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
-                <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
-                <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
+              <Link href="/communities" className="flex items-center justify-center gap-2" onClick={handleLogoClick}>
+                <Logo className="h-6 w-6 text-primary" />
+                <span className="font-bold text-xl text-primary group-data-[collapsible=icon]:hidden">Kyozo</span>
               </Link>
             </div>
           </SidebarHeader>
@@ -141,14 +142,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
         
         {isCommunityPage && <CommunitySidebar />}
         
-        <SidebarInset 
-          style={{ 
-            backgroundImage: `url('/bg/light_app_bg.png')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+        <SidebarInset>
           {children}
         </SidebarInset>
       </div>

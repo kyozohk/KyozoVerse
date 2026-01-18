@@ -303,7 +303,6 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
       title="Import Members"
       description={`Import members to ${community.name}`}
       backgroundImage="/bg/light_app_bg.png"
-      color="#843484"
     >
       <div className="flex flex-col h-full" style={{ maxWidth: '100vw', margin: '0 auto' }}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full flex-grow flex flex-col">
@@ -341,8 +340,8 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
                 type="button"
                 onClick={fetchEventbriteEvents}
                 disabled={!eventbritePrivateToken || loadingEvents}
-                className="mt-0"
-                style={{ backgroundColor: '#843484', minWidth: '140px' }}
+                className="mt-0 bg-primary"
+                style={{ minWidth: '140px' }}
                 >
                 {loadingEvents ? 'Loading...' : 'Fetch Events'}
                 </Button>
@@ -476,8 +475,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
             <Button
               type="button"
               onClick={handleImport}
-              className="flex-1"
-              style={{ backgroundColor: '#843484' }}
+              className="flex-1 bg-primary"
               disabled={loading || checkedCount === 0}
             >
               {loading ? 'Importing...' : `Import ${checkedCount} Member${checkedCount !== 1 ? 's' : ''}`}

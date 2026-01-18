@@ -77,7 +77,7 @@ export const SignupDialog: React.FC<SignupDialogProps> = ({
         {/* Content */}
         <div className="relative z-10 p-6">
           <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-bold text-center" style={{ color: '#843484' }}>
+            <DialogTitle className="text-2xl font-bold text-center text-primary">
               {isSignup ? 'Join' : 'Sign In to'} {communityName}
             </DialogTitle>
             <p className="text-sm text-gray-600 text-center mt-2">
@@ -159,7 +159,7 @@ export const SignupDialog: React.FC<SignupDialogProps> = ({
                   <button
                     type="button"
                     onClick={onShowPrivacyPolicy}
-                    className="text-[#843484] hover:underline"
+                    className="text-primary hover:underline"
                   >
                     Privacy Policy
                   </button>
@@ -170,8 +170,7 @@ export const SignupDialog: React.FC<SignupDialogProps> = ({
             {/* Submit Button */}
             <Button
               onClick={onSubmit}
-              className="w-full"
-              style={{ backgroundColor: '#843484' }}
+              className="w-full bg-primary"
             >
               {isSignup ? 'Sign Up' : 'Sign In'}
             </Button>
@@ -219,7 +218,7 @@ export const SignupDialog: React.FC<SignupDialogProps> = ({
               <button
                 type="button"
                 onClick={onToggleMode}
-                className="text-[#843484] hover:underline font-medium"
+                className="text-primary hover:underline font-medium"
               >
                 {isSignup ? 'Sign In' : 'Sign Up'}
               </button>

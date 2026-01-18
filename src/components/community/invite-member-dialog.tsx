@@ -151,7 +151,7 @@ Looking forward to seeing you there!`;
                 <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                   <h1 style="color: #1f2937; margin-bottom: 20px;">You're Invited!</h1>
                   <div style="white-space: pre-wrap; color: #4b5563; line-height: 1.6; margin-bottom: 30px;">${inviteMessage}</div>
-                  <a href="${inviteUrl}" style="display: inline-block; background-color: #843484; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">Join ${community.name}</a>
+                  <a href="${inviteUrl}" style="display: inline-block; background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">Join ${community.name}</a>
                 </div>
               </body>
             </html>
@@ -223,7 +223,6 @@ Looking forward to seeing you there!`;
       title="Invite Member"
       description={`Invite someone to join ${community.name}`}
       backgroundImage="/bg/light_app_bg.png"
-      color="#843484"
     >
       <div className="space-y-5">
         {/* Name Fields */}
@@ -252,7 +251,7 @@ Looking forward to seeing you there!`;
               onClick={() => setUseEmail(!useEmail)}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all ${
                 useEmail
-                  ? 'border-purple-500 bg-purple-50 text-purple-700'
+                  ? 'border-primary bg-primary/10 text-primary'
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
               }`}
             >
@@ -320,13 +319,13 @@ Looking forward to seeing you there!`;
           <button
             type="button"
             onClick={handleCopyLink}
-            className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-purple-50 transition-colors"
+            className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
             title="Copy link"
           >
             {copied ? (
               <Check className="h-5 w-5 text-green-600" />
             ) : (
-              <Copy className="h-5 w-5 text-[#843484]" />
+              <Copy className="h-5 w-5 text-primary" />
             )}
           </button>
         </div>
@@ -345,8 +344,7 @@ Looking forward to seeing you there!`;
         <Button
           type="button"
           onClick={handleSend}
-          className="flex-1"
-          style={{ backgroundColor: '#843484' }}
+          className="flex-1 bg-primary"
         >
           Send Invite
         </Button>

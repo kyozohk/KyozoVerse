@@ -1,9 +1,3 @@
-
-
-
-/* Import theme variables */
-@import './themes/theme-variables.css';
-
 /* Button styles */
 .button {
   position: relative;
@@ -13,87 +7,47 @@
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: 400;
-  border-radius: var(--button-radius);
-  color: var(--button-text-color, var(--primary-purple));
-  border: 1px solid var(--button-border-color, var(--button-border));
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   text-align: center;
   overflow: hidden;
-  background-color: #EDEDED;
-  background-image: url('/bg/light_app_bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: var(--button-bg-color, rgba(132, 52, 132, 0.2)); /* Reduced opacity for more subtlety */
-  z-index: 0;
-  transition: background-color 0.2s ease;
-}
-
-.button > * {
-  position: relative;
-  z-index: 1;
-}
-
-.button:hover::before {
-  background-color: var(--button-bg-color-hover, rgba(132, 52, 132, 0.3)); /* Slightly darker on hover */
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
 }
 
 .button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: hsl(var(--muted));
 }
 
-/* Rounded rect button variant - uses light_app_bg.png with slug color overlay */
-.button.button-rounded-rect {
-  position: relative;
-  border-radius: 8px;
-  color: var(--button-text-color);
-  font-weight: 500;
-  padding: 0.6rem 1.5rem;
-  border: 1px solid var(--button-border);
-  transition: all 0.2s ease;
-  overflow: hidden;
-  background-image: url('/bg/light_app_bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+.button-primary {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+}
+.button-primary:hover {
+    background-color: hsl(var(--primary) / 0.9);
 }
 
-.button.button-rounded-rect::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: rgba(132, 52, 132, 0.2);
-  z-index: 0;
+.button-waitlist {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
 }
 
-.button.button-rounded-rect > * {
-  position: relative;
-  z-index: 1;
-}
-
-.button.button-rounded-rect:hover::before {
-  background-color: rgba(132, 52, 132, 0.3);
-}
-
-.button.button-rounded-rect:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+.button-waitlist:hover {
+   background-color: hsl(var(--primary) / 0.9);
 }
 
 /* Semi-rounded button variant */
 .button.button-semi-rounded {
   border-radius: 8px;
-  background-color: var(--primary-purple);
-  color: white;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
   font-weight: 500;
   padding: 0.6rem 1.5rem;
   border: none;
@@ -101,24 +55,24 @@
 }
 
 .button.button-semi-rounded:hover {
-  background-color: rgba(132, 52, 132, 0.9);
+  background-color: hsl(var(--primary) / 0.9);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* White button variant for banners */
 .button.button-white {
-  border-radius: var(--button-radius);
-  background-color: white;
-  color: var(--primary-purple);
+  border-radius: var(--radius);
+  background-color: hsl(var(--background));
+  color: hsl(var(--primary));
   font-weight: 500;
   padding: 0.75rem 2rem;
-  border: none;
+  border: 1px solid hsl(var(--border));
   transition: all 0.2s ease;
 }
 
 .button.button-white:hover {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: hsl(var(--muted));
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
@@ -129,17 +83,19 @@
   border: none;
   padding: 0.5rem;
   border-radius: 6px;
-  color: var(--button-border);
+  color: hsl(var(--muted-foreground));
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .icon-button:hover {
   opacity: 0.8;
+  background-color: hsl(var(--accent));
 }
 
 .icon-button.icon-button-active {
-  background-color: rgba(132, 52, 132, 0.2);
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
 }
 
 /* Input styles */
@@ -155,7 +111,7 @@
 
 .input {
   background-color: transparent;
-  border: 1px solid var(--input-border-color, var(--button-border)); /* Use CSS variable for border color */
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   width: 100%;
@@ -166,18 +122,18 @@
 }
 
 .input::placeholder {
-  color: var(--input-border-color, var(--text-secondary));
+  color: hsl(var(--muted-foreground));
   opacity: 0.7;
 }
 
 input::placeholder {
-  color: var(--placeholder-color, var(--text-secondary));
+  color: hsl(var(--muted-foreground));
   opacity: 0.7;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--input-border-color, #843484); /* Use CSS variable for focus border color */
+  border-color: hsl(var(--ring));
 }
 
 .input-with-icon {
@@ -189,7 +145,7 @@ input::placeholder {
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--input-border-color, var(--button-border)); /* Use CSS variable for icon color */
+  color: hsl(var(--muted-foreground));
   pointer-events: none;
   z-index: 1;
 }
@@ -199,7 +155,7 @@ input::placeholder {
   top: 0.7rem;
   left: 0.75rem;
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: hsl(var(--muted-foreground));
   pointer-events: none;
   transition: all 0.2s ease;
   background-color: transparent;
@@ -211,18 +167,20 @@ input::placeholder {
 }
 
 .input:focus ~ .floatingLabel,
-.input:not(:placeholder-shown) ~ .floatingLabel {
+.input:not(:placeholder-shown) ~ .floatingLabel,
+textarea:focus ~ .floatingLabel,
+textarea:not(:placeholder-shown) ~ .floatingLabel {
   top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
-  background-color: #EDEDED;
+  color: hsl(var(--primary));
+  background-color: hsl(var(--background));
 }
 
 /* Select trigger styled like input, used in FloatingSelect */
 .selectTrigger {
   background-color: transparent;
-  border: 1px solid var(--input-border-color, var(--button-border));
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   width: 100%;
@@ -237,8 +195,8 @@ input::placeholder {
   top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  color: var(--input-border-color, #C170CF);
-  background-color: #EDEDED;
+  color: hsl(var(--primary));
+  background-color: hsl(var(--background));
 }
 
 
@@ -271,17 +229,17 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s ease;
-  border: 1px solid var(--input-border-color);
+  border: 1px solid hsl(var(--border));
 }
 
 .checkboxInput:checked ~ .checkbox {
-  background-color: var(--primary-purple);
-  border-color: var(--primary-purple);
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
 }
 
 .checkIcon {
   display: none;
-  color: white;
+  color: hsl(var(--primary-foreground));
 }
 
 .checkboxInput:checked ~ .checkbox .checkIcon {
@@ -291,24 +249,7 @@ input::placeholder {
 .checkboxLabel {
   margin-left: 0.5rem;
   font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-/* Utility classes */
-.text-primary {
-  color: var(--text-primary);
-}
-
-.text-secondary {
-  color: var(--text-secondary);
-}
-
-.text-tertiary {
-  color: var(--text-tertiary);
-}
-
-.border-primary {
-  border-color: var(--primary-purple);
+  color: hsl(var(--muted-foreground));
 }
 
 /* Sidebar styles */
@@ -317,74 +258,4 @@ input::placeholder {
 }
 .sidebar-shadow {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar-nav-item {
-  margin-bottom: 6px; /* Increased gap by 2px */
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
-}
-
-.sidebar-nav-item.active {
-  color: var(--button-border);
-}
-
-.sidebar-nav-item.active svg {
-  color: var(--button-border);
-}
-
-.sidebar-nav-item:hover {
-  color: var(--button-border);
-}
-
-.sidebar-nav-item:hover svg {
-  color: var(--button-border);
-}
-
-.selected-community-icon-bg {
-  background-color: rgba(132, 52, 132, 0.2);
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-}
-
-/* Sidebar section background colors */
-.sidebar-bg-communities { background-color: var(--communities-color-border); }
-.sidebar-bg-analytics { background-color: var(--analytics-color-border); }
-.sidebar-bg-subscription { background-color: var(--subscription-color-border); }
-.sidebar-bg-settings { background-color: var(--settings-color-border); }
-.sidebar-bg-overview { background-color: var(--overview-color-border); }
-.sidebar-bg-members { background-color: var(--members-color-border); }
-.sidebar-bg-broadcast { background-color: var(--broadcast-color-border); }
-.sidebar-bg-inbox { background-color: var(--inbox-color-border); }
-.sidebar-bg-feed { background-color: var(--feed-color-border); }
-.sidebar-bg-ticketing { background-color: var(--ticketing-color-border); }
-.sidebar-bg-integrations { background-color: var(--integrations-color-border); }
-.sidebar-bg-default { background-color: var(--default-color-border); }
-
-/* Community Select Trigger Fix */
-.community-select-trigger {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-}
-
-/* Fix for phone input label */
-.phone-input-container .floatingLabel {
-  top: 50%;
-  transform: translateY(-50%);
-  transition: all 0.2s ease;
-}
-
-.phone-input-container .input:focus ~ .floatingLabel,
-.phone-input-container .input:not(:placeholder-shown) ~ .floatingLabel {
-  top: -0.5rem;
-  left: 0.75rem;
-  transform: translateY(0);
-  font-size: 0.75rem;
-}
-
-
-.button-outline {
-  --button-border-color: var(--color-override, var(--primary-purple));
-  --button-bg-color: var(--color-override-bg, rgba(132, 52, 132, 0.2));
-  --button-bg-color-hover: var(--color-override-bg-hover, rgba(132, 52, 132, 0.3));
 }

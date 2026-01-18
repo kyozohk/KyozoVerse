@@ -15,18 +15,18 @@ export default function SettingsPage() {
   
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="bg-gradient-to-r from-[#06C4B5] to-[#4DDFD3] text-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+      <div className="bg-primary text-primary-foreground p-6 md:p-8 rounded-xl shadow-lg mb-8">
         <div className="flex items-center mb-2">
           <SettingsIcon className="h-6 w-6 mr-2" />
           <h2 className="text-2xl md:text-3xl font-bold">Account Settings</h2>
         </div>
         
-        <div className="flex items-center text-white/90 mb-4 bg-white/10 px-3 py-1 rounded-full w-fit">
+        <div className="flex items-center text-primary-foreground/90 mb-4 bg-white/10 px-3 py-1 rounded-full w-fit">
           <User className="h-5 w-5 mr-2" />
           <span>Manage your account preferences</span>
         </div>
         
-        <p className="text-white/90 max-w-md backdrop-blur-sm bg-black/5 p-3 rounded-lg">
+        <p className="text-primary-foreground/90 max-w-md backdrop-blur-sm bg-black/5 p-3 rounded-lg">
           Update your profile, notification preferences, and security settings.
         </p>
       </div>

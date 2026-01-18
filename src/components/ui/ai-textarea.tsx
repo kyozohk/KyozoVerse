@@ -82,7 +82,6 @@ export function AITextarea({
           placeholder={placeholder}
           rows={rows}
           className="text-foreground placeholder:text-muted-foreground"
-          style={{ borderColor: '#C170CF', color: 'inherit' }}
         />
         <button
           type="button"
@@ -92,9 +91,9 @@ export function AITextarea({
           title="Generate with AI"
         >
           {isGenerating ? (
-            <Loader2 className="h-4 w-4 animate-spin text-[#C170CF]" />
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
           ) : (
-            <Sparkles className="h-4 w-4 text-[#C170CF]" />
+            <Sparkles className="h-4 w-4 text-primary" />
           )}
         </button>
       </div>
