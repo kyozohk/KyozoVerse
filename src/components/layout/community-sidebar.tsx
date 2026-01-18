@@ -126,7 +126,7 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
+      className={`hidden border-r-2 lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
         borderColor: activeColor,

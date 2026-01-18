@@ -11,7 +11,7 @@ interface CommunityBannerProps {
 
 export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBannerProps) {
   return (
-    <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#843484] to-[#a64ca6] text-white shadow-lg banner-glow">
+    <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#8B7355] to-[#a18a6a] text-white shadow-lg banner-glow border-2 border-primary">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 w-full h-full bg-[url('/bg/pattern.svg')] bg-repeat opacity-20"></div>
@@ -27,7 +27,7 @@ export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBa
       <div className="relative z-10 flex items-start justify-between p-6 md:p-8">
         <div className="flex-1">
           <div className="flex items-center mb-2">
-            <Sparkles className="h-6 w-6 mr-2 text-yellow-300 pulse-animation" />
+            <Sparkles className="h-6 w-6 mr-2 text-amber-200 pulse-animation" />
             <h2 className="text-2xl md:text-3xl font-bold">Your Communities</h2>
           </div>
           
@@ -44,7 +44,7 @@ export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBa
           <CustomButton 
             variant="white"
             onClick={onCreateClick}
-            className="bg-white/90 text-[#843484] hover:bg-white"
+            className="bg-white/90 text-primary hover:bg-white"
           >
             <PlusCircle className="h-5 w-5 mr-2" />
             Create Community

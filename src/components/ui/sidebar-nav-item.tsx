@@ -12,8 +12,8 @@ const sidebarNavItemVariants = cva(
   {
     variants: {
       state: {
-        default: 'text-[#3B3B3B] hover:text-[var(--active-color)] hover:bg-[var(--active-color-bg)]',
-        active: 'text-[var(--active-color)] bg-[var(--active-color-bg)]',
+        default: 'text-muted-foreground hover:text-primary hover:bg-[var(--active-color-bg)]',
+        active: 'text-primary bg-[var(--active-color-bg)] font-semibold',
       },
     },
     defaultVariants: {
@@ -27,8 +27,8 @@ const iconVariants = cva(
     {
         variants: {
             state: {
-                default: 'text-[#3B3B3B] group-hover:text-[var(--active-color)]',
-                active: 'text-[var(--active-color)]',
+                default: 'text-muted-foreground group-hover:text-primary',
+                active: 'text-primary',
             }
         },
         defaultVariants: {
@@ -47,7 +47,7 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, isActive: isActiveProp, activeColor = '#763182', activeBgColor = 'rgba(132, 52, 132, 0.1)', ...props }, ref) => {
+  ({ className, href, icon, children, isActive: isActiveProp, activeColor = 'hsl(var(--primary))', activeBgColor = 'hsl(var(--accent))', ...props }, ref) => {
     const pathname = usePathname();
     const isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
 
