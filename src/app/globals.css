@@ -21,13 +21,13 @@
     --primary: 33 13% 22%; /* Main interactive color - dark brown */
     --primary-foreground: 30 100% 99%;
 
-    --secondary: 33 25% 88%; /* Active sidebar bg */
+    --secondary: 40 29% 92%; /* #E9DFD0 */
     --secondary-foreground: 33 13% 22%; /* Active sidebar text */
     
     --muted: 33 25% 92%;
     --muted-foreground: 33 10% 38%; /* #6B6358 */
 
-    --accent: 33 25% 88%; /* Active sidebar bg */
+    --accent: 40 29% 92%; /* #E9DFD0 */
     --accent-foreground: 33 13% 22%; /* Active sidebar text */
     
     --destructive: 0 84.2% 60.2%;

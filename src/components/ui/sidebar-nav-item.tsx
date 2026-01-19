@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-lg px-4 py-2.5 text-base font-medium transition-colors',
+  'group flex items-center gap-4 rounded-[10px] px-4 py-3 text-lg font-medium transition-colors',
   {
     variants: {
       state: {
-        default: 'text-muted-foreground hover:text-accent-foreground hover:bg-accent/50',
+        default: 'text-muted-foreground hover:text-accent-foreground hover:bg-accent',
         active: 'text-accent-foreground bg-accent',
       },
     },
@@ -22,7 +22,7 @@ const sidebarNavItemVariants = cva(
 );
 
 const iconVariants = cva(
-    'h-5 w-5 transition-colors',
+    'h-6 w-6 transition-colors',
     {
         variants: {
             state: {
@@ -46,7 +46,13 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
   ({ className, href, icon, children, isActive: isActiveProp, ...props }, ref) => {
     const pathname = usePathname();
-    const isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
+    const isActive = isActiveProp !== undefined ? isActiveProp : pathname.startsWith(href) && href !== '/';
+
+    // Special case for root, only active if path is exactly '/'
+    if (href === '/') {
+        const isActive = pathname === href;
+    }
+
 
     return (
       <li className="list-none">
@@ -57,7 +63,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
           {...props}
         >
           {React.cloneElement(icon, {
-              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-5 w-5')
+              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-6 w-6')
           })}
           {children}
         </Link>

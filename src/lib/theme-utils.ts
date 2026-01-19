@@ -3,7 +3,6 @@ import {
   BarChart, 
   CreditCard, 
   Settings, 
-  LayoutDashboard, 
   Users, 
   Inbox, 
   Rss, 
@@ -11,7 +10,7 @@ import {
   UserCheck,
   Calendar,
   Send,
-  ClipboardList
+  Ticket
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -38,10 +37,10 @@ export const mainNavItems: NavItem[] = [
 ];
 
 export const communityNavItems: CommunityNavItem[] = [
-    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
+    { href: (handle: string) => `/${handle}`, icon: LayoutGrid, label: 'Overview', section: 'overview' },
     { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Audience', section: 'audience' },
     { href: (handle: string) => `/${handle}/broadcast`, icon: Send, label: 'Broadcast', section: 'broadcast' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: ClipboardList, label: 'RSVP & Guestlists', section: 'ticketing' },
+    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'RSVP & Guestlists', section: 'ticketing' },
     { href: (handle: string) => `/${handle}/schedule`, icon: Calendar, label: 'Schedule', section: 'schedule' },
     { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
     { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
