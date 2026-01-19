@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -121,8 +120,8 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
                   <AvatarFallback>{fallback}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium leading-none">{user.displayName || user.email}</span>
-                  <span className="text-xs text-muted-foreground">{user.email}</span>
+                  <span className="text-sm font-medium leading-none text-primary">{user.displayName || user.email}</span>
+                  <span className="text-xs text-primary/80">{user.email}</span>
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">

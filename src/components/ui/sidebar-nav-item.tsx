@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -12,7 +11,7 @@ const sidebarNavItemVariants = cva(
   {
     variants: {
       state: {
-        default: 'text-muted-foreground hover:text-primary hover:bg-[var(--active-color-bg)]',
+        default: 'text-primary/80 hover:text-primary hover:bg-[var(--active-color-bg)]',
         active: 'text-primary bg-[var(--active-color-bg)] font-semibold',
       },
     },
@@ -27,7 +26,7 @@ const iconVariants = cva(
     {
         variants: {
             state: {
-                default: 'text-muted-foreground group-hover:text-primary',
+                default: 'text-primary/80 group-hover:text-primary',
                 active: 'text-primary',
             }
         },
