@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-4 rounded-[10px] px-4 py-3 text-lg font-medium transition-colors',
+  'group flex items-center gap-4 rounded-[10px] px-4 py-3 text-lg font-semibold transition-colors',
   {
     variants: {
       state: {
@@ -41,10 +41,12 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
     icon: React.ReactElement;
     children: React.ReactNode;
     isActive?: boolean;
+    activeColor?: string;
+    activeBgColor?: string;
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, isActive: isActiveProp, ...props }, ref) => {
+  ({ className, href, icon, children, isActive: isActiveProp, activeColor, activeBgColor, ...props }, ref) => {
     const pathname = usePathname();
     const isActive = isActiveProp !== undefined ? isActiveProp : pathname.startsWith(href) && href !== '/';
 
