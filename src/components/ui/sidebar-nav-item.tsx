@@ -7,12 +7,12 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors font-dm-sans',
+  'group flex items-center gap-3 rounded-lg px-4 py-2.5 text-base font-medium transition-colors',
   {
     variants: {
       state: {
-        default: 'text-primary/80 hover:text-primary hover:bg-[var(--active-color-bg)]',
-        active: 'text-primary bg-[var(--active-color-bg)] font-semibold',
+        default: 'text-muted-foreground hover:text-accent-foreground hover:bg-accent/50',
+        active: 'text-accent-foreground bg-accent',
       },
     },
     defaultVariants: {
@@ -22,12 +22,12 @@ const sidebarNavItemVariants = cva(
 );
 
 const iconVariants = cva(
-    'h-5 w-5 transition-colors', // Standardized icon size
+    'h-5 w-5 transition-colors',
     {
         variants: {
             state: {
-                default: 'text-primary/80 group-hover:text-primary',
-                active: 'text-primary',
+                default: 'text-muted-foreground group-hover:text-accent-foreground',
+                active: 'text-accent-foreground',
             }
         },
         defaultVariants: {
@@ -41,12 +41,10 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
     icon: React.ReactElement;
     children: React.ReactNode;
     isActive?: boolean;
-    activeColor?: string;
-    activeBgColor?: string;
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, isActive: isActiveProp, activeColor = 'hsl(var(--primary))', activeBgColor = 'hsl(var(--accent))', ...props }, ref) => {
+  ({ className, href, icon, children, isActive: isActiveProp, ...props }, ref) => {
     const pathname = usePathname();
     const isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
 
@@ -55,15 +53,11 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
         <Link
           href={href}
           className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
-          style={{ 
-              '--active-color': activeColor,
-              '--active-color-bg': activeBgColor
-          } as React.CSSProperties}
           ref={ref}
           {...props}
         >
           {React.cloneElement(icon, {
-              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-5 w-5 font-light')
+              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-5 w-5')
           })}
           {children}
         </Link>

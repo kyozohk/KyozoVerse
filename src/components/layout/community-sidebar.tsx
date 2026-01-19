@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSidebar } from '@/components/ui/enhanced-sidebar';
 import { usePathname, useRouter } from 'next/navigation';
-import { PlusCircle, Check } from 'lucide-react';
+import { PlusCircle, Check, Plus, ChevronDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -68,10 +68,10 @@ export default function CommunitySidebar() {
       );
       
       // Fetch community details for member communities (excluding owned ones)
-      // Firestore 'in' query has a limit of 10 items, so batch the queries
+      // Firestore 'in' query has a limit of 30 items, so we can batch if needed.
       const memberCommunities: Community[] = [];
       if (nonOwnedMemberIds.length > 0) {
-        const batchSize = 10;
+        const batchSize = 30;
         const batches = [];
         
         for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
@@ -134,19 +134,13 @@ export default function CommunitySidebar() {
     >
       {/* Background with light_app_bg.png and color overlay */}
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 bg-cover bg-center"
         style={{
           backgroundImage: `url('/bg/light_app_bg.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
         }}
       />
       <div 
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundColor: activeBgColor,
-        }}
+        className="absolute inset-0 z-0 bg-background/80 backdrop-blur-sm"
       />
 
       {/* Community List View (Full Height) */}
@@ -178,38 +172,13 @@ export default function CommunitySidebar() {
                     <button
                       key={community.communityId}
                       onClick={() => handleCommunitySelect(community.handle)}
-                      className="w-full p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] relative group"
-                      style={{
-                        border: `2px solid ${isSelected ? activeColor : 'transparent'}`,
-                        backgroundColor: isSelected ? activeBgColor : 'transparent',
-                      }}
+                      className="w-full p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] relative group flex items-center gap-3 text-left hover:bg-accent"
                     >
-                      {/* Hover effect */}
-                      <div 
-                        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        style={{
-                          backgroundColor: activeBgColor,
-                          border: `2px solid ${activeColor}`,
-                        }}
-                      />
-                      
-                      <div className="flex items-center gap-3 relative z-10">
-                        <div className="relative rounded-full h-14 w-14 flex items-center justify-center flex-shrink-0">
-                          <div 
-                            className="absolute inset-0 rounded-full"
-                            style={{ backgroundColor: activeBgColor }}
-                          />
-                          <Avatar className="h-12 w-12 border-2 relative z-10">
-                            <AvatarImage src={community.communityProfileImage} />
-                            <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
-                          </Avatar>
-                          {isSelected && (
-                            <span className="absolute -top-1 -left-1 bg-white rounded-full p-0.5 z-20">
-                              <Check className="h-4 w-4 text-black" />
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
+                      <Avatar className="h-12 w-12 border-2 flex-shrink-0">
+                        <AvatarImage src={community.communityProfileImage} />
+                        <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
                           <p className="font-semibold text-base text-foreground truncate">
                             {community.name}
                           </p>
@@ -217,7 +186,9 @@ export default function CommunitySidebar() {
                             {community.memberCount} members
                           </p>
                         </div>
-                      </div>
+                      {isSelected && (
+                        <Check className="h-5 w-5 text-primary ml-auto" />
+                      )}
                     </button>
                   );
                 })}
@@ -231,34 +202,29 @@ export default function CommunitySidebar() {
       {!showCommunityList && (
         <div className="relative z-10 flex h-full max-h-screen flex-col" style={{ padding: '0 8px' }}>
           {/* Selected Community Header (Clickable) */}
-          <div className="flex h-[76px] items-center " style={{ borderColor: activeColor, padding: '0 8px' }}>
+          <div className="flex h-[76px] items-center border-b" style={{ borderColor: activeColor, padding: '0 8px' }}>
             {loading ? (
               <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
               <button
                 onClick={() => setShowCommunityList(true)}
-                className="w-full h-full p-0 bg-transparent hover:opacity-80 transition-opacity"
+                className="w-full h-full p-0 bg-transparent hover:bg-accent/50 transition-colors rounded-lg"
               >
-                <div className="flex items-center gap-2 truncate min-h-20">
-                  <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                    <div 
-                      className="absolute inset-0 rounded-full"
-                      style={{ backgroundColor: activeBgColor }}
-                    />
-                    <Avatar className="h-14 w-14 border-2 relative z-10">
-                      <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                      <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <span className="font-semibold text-lg text-foreground truncate">
+                <div className="flex items-center gap-3 truncate py-4 px-4">
+                  <Avatar className="h-12 w-12 border-2">
+                    <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                    <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-semibold text-xl text-foreground truncate">
                     {selectedCommunity?.name}
                   </span>
+                  <ChevronDown className="h-5 w-5 text-muted-foreground ml-auto" />
                 </div>
               </button>
             ) : (
               <div className="w-full">
-                <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                  <PlusCircle className="mr-2 h-12 w-12" />
+                <CustomButton variant="outline" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
                   Create Community
                 </CustomButton>
               </div>
@@ -266,8 +232,8 @@ export default function CommunitySidebar() {
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 py-2">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          <div className="flex-1 py-2 flex flex-col">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4 flex-grow">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -276,8 +242,6 @@ export default function CommunitySidebar() {
                     href={item.href(selectedCommunityHandle)}
                     icon={<Icon />}
                     isActive={pathname === item.href(selectedCommunityHandle)}
-                    activeColor={activeColor}
-                    activeBgColor={activeBgColor}
                     className="my-1"
                   >
                     {item.label}
@@ -285,6 +249,17 @@ export default function CommunitySidebar() {
                 );
               })}
             </nav>
+            {/* More Features Button */}
+            <div className="px-2 lg:px-4 mt-auto pb-4">
+               <SidebarNavItem
+                    href="#"
+                    icon={<Plus />}
+                    isActive={false}
+                    className="text-muted-foreground hover:bg-transparent"
+                >
+                    More Features...
+                </SidebarNavItem>
+            </div>
           </div>
         </div>
       )}
