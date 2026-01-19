@@ -87,9 +87,23 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
         <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor, '--sidebar-active-border': activeColor} as React.CSSProperties}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
-              <Link href="/communities" className="flex items-center justify-center gap-2" onClick={handleLogoClick}>
-                <Image src="/logo-icon.svg" alt="Kyozo" width={24} height={24} />
-                <span className="font-bold text-xl text-primary group-data-[collapsible=icon]:hidden">Kyozo</span>
+              <Link href="/communities" className="flex items-center justify-center h-full w-full" onClick={handleLogoClick}>
+                {/* Wide logo (logo-orig.png) */}
+                <Image 
+                  src="/logo-orig.png" 
+                  alt="Kyozo" 
+                  width={100} 
+                  height={28}
+                  className="hidden group-data-[state=expanded]:block"
+                />
+                {/* Narrow logo (favicon.png) */}
+                <Image 
+                  src="/favicon.png" 
+                  alt="Kyozo" 
+                  width={32} 
+                  height={32} 
+                  className="hidden group-data-[state=collapsed]:block"
+                />
               </Link>
             </div>
           </SidebarHeader>
