@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -23,7 +24,6 @@ import Image from 'next/image';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 import CommunitySidebar from '@/components/layout/community-sidebar';
-import { Logo } from '@/components/icons/logo';
 
 export default function ProLayoutClient({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
@@ -88,7 +88,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center gap-2" onClick={handleLogoClick}>
-                <Logo className="h-6 w-6 text-primary" />
+                <Image src="/logo-icon.svg" alt="Kyozo" width={24} height={24} />
                 <span className="font-bold text-xl text-primary group-data-[collapsible=icon]:hidden">Kyozo</span>
               </Link>
             </div>
