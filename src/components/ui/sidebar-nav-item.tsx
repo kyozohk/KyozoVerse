@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-semibold transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2.5',
+  'group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2.5',
   {
     variants: {
       state: {
@@ -55,8 +55,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
         isActive = pathname.startsWith(href);
     }
     
-    // Destructure out the props that shouldn't be passed to Link
-    const { activeColor, activeBgColor, ...restProps } = props as any;
+    const { ...restProps } = props as any;
 
     return (
       <li className="list-none">
@@ -69,7 +68,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
           {React.cloneElement(icon, {
               className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-6 w-6')
           })}
-          {children}
+          <div className="group-data-[collapsible=icon]:hidden">{children}</div>
         </Link>
       </li>
     );

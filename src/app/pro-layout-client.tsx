@@ -84,23 +84,23 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar className="bg-sidebar border-border shadow-sm">
           <SidebarHeader>
-            <div className="flex h-20 items-center justify-center p-4 border-b border-border">
+            <div className="flex h-24 items-center justify-center p-4 border-b border-border">
               <Link href="/communities" className="flex items-center justify-center h-full w-full" onClick={handleLogoClick}>
                 {/* Wide logo (logo.svg) */}
                 <Image 
                   src="/logo.svg" 
                   alt="Kyozo" 
-                  width={100} 
-                  height={28}
+                  width={130} 
+                  height={36}
                   className="hidden group-data-[state=expanded]:block"
                 />
                 {/* Narrow logo (favicon.png) */}
-                <div className="hidden group-data-[state=collapsed]:flex h-10 w-10 items-center justify-center rounded-lg">
+                <div className="hidden group-data-[state=collapsed]:flex h-12 w-12 items-center justify-center rounded-lg">
                   <Image 
                     src="/favicon.png" 
                     alt="Kyozo" 
-                    width={32} 
-                    height={32}
+                    width={42} 
+                    height={42}
                   />
                 </div>
               </Link>
@@ -125,14 +125,14 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
           </SidebarContent>
           <SidebarFooter>
             <div className="flex flex-col gap-2 p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
-              <div className="flex items-center gap-3 p-4">
-                <Avatar className="h-10 w-10 ring-2 ring-border">
+              <div className="flex flex-col items-center gap-2 p-4 text-center">
+                <Avatar className="h-11 w-11 ring-2 ring-border">
                   <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
                   <AvatarFallback>{fallback}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-semibold leading-none text-[#6B6358]">{user.displayName || user.email}</span>
-                  <span className="text-xs text-[#8B7355]">{user.email}</span>
+                  <span className="text-sm font-semibold leading-none text-foreground">{user.displayName || user.email}</span>
+                  <span className="text-xs text-muted-foreground">{user.email}</span>
                 </div>
               </div>
               <SidebarMenu className="group-data-[collapsible=icon]:p-0">

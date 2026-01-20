@@ -19,7 +19,7 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "12rem"
+const SIDEBAR_WIDTH = "14.4rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3.5rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
@@ -263,7 +263,7 @@ const Sidebar = React.forwardRef<
            side === "right" && "border-r-0 border-l",
            variant === 'floating' && 'rounded-lg border shadow',
            variant === 'inset' && 'bg-transparent',
-           variant !== 'inset' && 'bg-[--sidebar-active-bg]',
+           variant !== 'inset' && 'bg-[var(--sidebar-active-bg)]',
            className
            )}
            style={{borderColor: 'var(--sidebar-active-border)'}}
