@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2.5',
+  'group flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2.5',
   {
     variants: {
       state: {
@@ -55,7 +55,9 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
         isActive = pathname.startsWith(href);
     }
     
-    const { ...restProps } = props as any;
+    // Remove custom props from being passed to the DOM element
+    const { ...restProps } = props;
+
 
     return (
       <li className="list-none">
