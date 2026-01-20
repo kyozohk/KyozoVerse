@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -47,7 +48,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
       <div className="flex flex-col h-full">
         {!isSubmitted ? (
           <>
-            <div className="flex-grow">
+            <div className="flex-grow overflow-y-auto pr-2">
               <Input
                 label="Email"
                 type="email"
@@ -56,7 +57,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
               />
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
-            <div className="mt-8">
+            <div className="mt-auto flex-shrink-0 pt-6">
               <div className="mb-4">
                 <CustomButton 
                   onClick={handleSubmit} 

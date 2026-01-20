@@ -231,7 +231,7 @@ export default function Home() {
         backgroundImage="/bg/light_app_bg.png"
       >
         <div className="flex flex-col h-full">
-          <div className="flex-grow">
+          <div className="flex-grow overflow-y-auto pr-2">
             <div className="space-y-6">
               <Input 
                 label="Email" 
@@ -254,16 +254,14 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="mt-12">
-            <div className="mb-8">
+          <div className="mt-auto flex-shrink-0 pt-8">
+            <div className="mb-6">
               <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground mt-8">
-              Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button>
-            </div>
-            <div className="text-center text-sm text-muted-foreground mt-4">
-              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+            <div className="text-center text-sm text-muted-foreground space-y-3">
+              <p>Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button></p>
+              <p>Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button></p>
             </div>
           </div>
         </div>
@@ -277,8 +275,7 @@ export default function Home() {
         backgroundImage="/bg/light_app_bg.png"
       >
         <div className="flex flex-col h-full">
-          <div className="flex-grow">
-            <div className="space-y-4">
+          <div className="flex-grow space-y-4 overflow-y-auto pr-2">
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   label="First Name"
@@ -334,7 +331,6 @@ export default function Home() {
                   }
                 />
               </div>
-            </div>
             {signUpError && (
               <div className="text-sm text-red-500 bg-red-50 p-3 rounded mt-4">
                 {signUpError}
@@ -342,16 +338,14 @@ export default function Home() {
             )}
           </div>
           
-          <div className="mt-8">
-            <div className="mb-8">
+          <div className="mt-auto flex-shrink-0 pt-8">
+            <div className="mb-6">
               <CustomButton onClick={handleSignUp} className="w-full">Create Account</CustomButton>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground mt-8">
-              Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button>
-            </div>
-            <div className="text-center text-sm text-muted-foreground mt-4">
-              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+            <div className="text-center text-sm text-muted-foreground space-y-3">
+              <p>Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button></p>
+              <p>Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button></p>
             </div>
           </div>
         </div>

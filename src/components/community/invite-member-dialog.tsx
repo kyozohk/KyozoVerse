@@ -224,130 +224,132 @@ Looking forward to seeing you there!`;
       description={`Invite someone to join ${community.name}`}
       backgroundImage="/bg/light_app_bg.png"
     >
-      <div className="space-y-5">
-        {/* Name Fields */}
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="First Name"
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="John"
-          />
-          <Input
-            label="Last Name"
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Doe"
-          />
-        </div>
-
-        {/* Invite Method Toggle Buttons */}
-        <div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setUseEmail(!useEmail)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all ${
-                useEmail
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-              }`}
-            >
-              <Mail className="h-5 w-5" />
-              <span className="font-medium">Email</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setUseWhatsApp(!useWhatsApp)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all ${
-                useWhatsApp
-                  ? 'border-green-500 bg-green-50 text-green-700'
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-              }`}
-            >
-              <MessageCircle className="h-5 w-5" />
-              <span className="font-medium">WhatsApp</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Email Input (conditional) */}
-        {useEmail && (
-          <Input
-            label="Email Address"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="john@example.com"
-          />
-        )}
-
-        {/* Phone Input (conditional) */}
-        {useWhatsApp && (
-          <Input
-            label="Phone Number (with country code)"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+1234567890"
-          />
-        )}
-
-        {/* Editable Message */}
-        <div>
-          <Textarea
-            label="Invite Message"
-            value={inviteMessage}
-            onChange={(e) => setInviteMessage(e.target.value)}
-            rows={8}
-            placeholder="Enter your invite message..."
-          />
-       </div>
-
-        {/* Invite Link */}
-        <div className="flex gap-2 items-end">
-          <div className="flex-1">
+      <div className="flex flex-col h-full">
+        <div className="flex-grow space-y-5 overflow-y-auto pr-2">
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Invite Link"
+              label="First Name"
               type="text"
-              value={inviteUrl}
-              readOnly
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="John"
+            />
+            <Input
+              label="Last Name"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Doe"
             />
           </div>
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
-            title="Copy link"
-          >
-            {copied ? (
-              <Check className="h-5 w-5 text-green-600" />
-            ) : (
-              <Copy className="h-5 w-5 text-primary" />
-            )}
-          </button>
-        </div>
-      </div>
 
-      {/* Action Buttons - Bottom aligned */}
-      <div className="flex gap-3 pt-6 mt-auto">
-        <Button
-          type="button"
-          onClick={onClose}
-          variant="outline"
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSend}
-          className="flex-1 bg-primary"
-        >
-          Send Invite
-        </Button>
+          {/* Invite Method Toggle Buttons */}
+          <div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setUseEmail(!useEmail)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all ${
+                  useEmail
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <Mail className="h-5 w-5" />
+                <span className="font-medium">Email</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseWhatsApp(!useWhatsApp)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all ${
+                  useWhatsApp
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="font-medium">WhatsApp</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Email Input (conditional) */}
+          {useEmail && (
+            <Input
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="john@example.com"
+            />
+          )}
+
+          {/* Phone Input (conditional) */}
+          {useWhatsApp && (
+            <Input
+              label="Phone Number (with country code)"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1234567890"
+            />
+          )}
+
+          {/* Editable Message */}
+          <div>
+            <Textarea
+              label="Invite Message"
+              value={inviteMessage}
+              onChange={(e) => setInviteMessage(e.target.value)}
+              rows={8}
+              placeholder="Enter your invite message..."
+            />
+        </div>
+
+          {/* Invite Link */}
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Input
+                label="Invite Link"
+                type="text"
+                value={inviteUrl}
+                readOnly
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              title="Copy link"
+            >
+              {copied ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <Copy className="h-5 w-5 text-primary" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Action Buttons - Bottom aligned */}
+        <div className="flex-shrink-0 flex gap-3 pt-6 mt-4 border-t">
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="outline"
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSend}
+            className="flex-1 bg-primary"
+          >
+            Send Invite
+          </Button>
+        </div>
       </div>
     </CustomFormDialog>
   );

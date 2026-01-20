@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -275,7 +274,7 @@ export function MemberDialog({
       <div className="flex flex-col h-full">
         {existingUser ? (
              <div className="flex flex-col h-full">
-                 <div className="flex-grow space-y-4">
+                 <div className="flex-grow space-y-4 overflow-y-auto pr-4">
                      <p>A user with this email or phone number already exists.</p>
                      <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30">
                          <Avatar className="h-16 w-16">
@@ -289,7 +288,7 @@ export function MemberDialog({
                      </div>
                      <p>Do you want to add this existing user to the community?</p>
                  </div>
-                 <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
+                 <div className="mt-8 flex-shrink-0 flex flex-row justify-end gap-3 pt-4 border-t">
                      <CustomButton variant="outline" onClick={() => setExistingUser(null)} disabled={submitting}>Back to form</CustomButton>
                      <CustomButton variant="primary" onClick={handleConfirmAddExistingUser} disabled={submitting}>
                          {submitting ? 'Adding...' : 'Add to Community'}
@@ -298,7 +297,7 @@ export function MemberDialog({
              </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-grow space-y-4 overflow-y-auto pr-2 pb-4">
+            <div className="flex-grow space-y-4 overflow-y-auto pr-4">
                 <div className="grid grid-cols-2 gap-4">
                     <Input
                         label="First Name"
@@ -341,7 +340,7 @@ export function MemberDialog({
               
               {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
-            <div className="flex-shrink-0 mt-auto pt-6 flex flex-row justify-end gap-3">
+            <div className="flex-shrink-0 mt-auto pt-6 border-t flex flex-row justify-end gap-3">
                 <CustomButton
                 variant="outline"
                 onClick={handleClose}

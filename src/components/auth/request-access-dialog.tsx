@@ -116,7 +116,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
       {isSuccess ? (
         // Success View - Pending Review
         <div className="flex flex-col h-full">
-          <div className="flex-grow space-y-6">
+          <div className="flex-grow space-y-6 overflow-y-auto pr-2">
             <div className="text-center py-8">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +146,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
             </div>
           </div>
 
-          <div className="mt-auto">
+          <div className="mt-auto flex-shrink-0 pt-6 border-t">
             <CustomButton 
               onClick={handleClose}
               variant="waitlist" 
@@ -157,9 +157,8 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
           </div>
         </div>
       ) : (
-        // Form View
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-grow space-y-4">
+          <div className="flex-grow space-y-4 overflow-y-auto pr-4">
             <div className="grid grid-cols-2 gap-4">
               <Input
                 name="firstName"
@@ -225,7 +224,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
             </div>
           </div>
         
-          <div className="mt-8">
+          <div className="mt-8 flex-shrink-0 pt-6 border-t">
             <CustomButton 
               type="submit" 
               variant="waitlist" 

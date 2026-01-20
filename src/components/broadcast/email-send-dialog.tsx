@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -159,7 +160,7 @@ export function EmailSendDialog({
       <div className="flex flex-col h-full">
         <div className="flex-grow grid grid-cols-2 gap-6 overflow-hidden">
           {/* Left side - Compose */}
-          <div className="flex flex-col space-y-4 overflow-y-auto pr-2">
+          <div className="flex flex-col space-y-4 overflow-y-auto pr-4">
             <AIInput
               label="Email Subject"
               value={subject}
@@ -225,7 +226,7 @@ export function EmailSendDialog({
         </div>
 
         {/* Footer buttons */}
-        <div className="mt-6 grid grid-cols-2 gap-4 pt-4 border-t">
+        <div className="mt-6 flex-shrink-0 grid grid-cols-2 gap-4 pt-4 border-t">
           <CustomButton
             variant="outline"
             onClick={onClose}

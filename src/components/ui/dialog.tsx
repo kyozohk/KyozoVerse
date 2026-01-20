@@ -171,8 +171,8 @@ export function CustomFormDialog({
               </DialogPrimitive.Close>
 
               <div className={cn(
-                "flex flex-col h-full overflow-y-auto",
-                rightComponent ? "p-8 md:p-12 lg:p-16" : "p-6 md:p-8"
+                "flex flex-col h-full",
+                rightComponent ? "p-8 md:p-12 lg:p-16" : "p-8 md:p-12"
               )}>
                 {/* Header - Fixed at top */}
                 <div className={cn(
@@ -194,8 +194,8 @@ export function CustomFormDialog({
                   )}
                 </div>
                 
-                {/* Form Content - Scrollable */}
-                <div className="flex-grow overflow-y-auto pt-4 -mt-4">
+                {/* Form Content - Scrollable child */}
+                <div className="flex-grow overflow-hidden">
                   {children}
                 </div>
               </div>

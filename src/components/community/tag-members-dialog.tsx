@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -251,14 +250,14 @@ export function TagMembersDialog({
       rightComponent={rightPanel}
     >
       <div className="flex flex-col h-full">
-        <div className="flex-grow space-y-4">
+        <div className="flex-grow space-y-4 overflow-y-auto pr-2">
           <TagInput tags={tags} setTags={setTags} availableTags={availableTags} />
           <p className="text-xs text-muted-foreground">
             Click existing tags above to add them, or type a new tag name and press Enter to create one. Remove tags by clicking the X.
           </p>
         </div>
 
-        <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
+        <div className="mt-auto flex-shrink-0 flex flex-row justify-end gap-3 pt-4 border-t">
           <CustomButton
             variant="outline"
             onClick={onClose}

@@ -312,8 +312,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
         >
             <div className="flex flex-col h-full">
-                <div className="flex-grow space-y-4 pt-4">
-                    
+                <div className="flex-grow space-y-4 pt-4 overflow-y-auto pr-4">
                     {currentStep === 0 && (
                         <div className="space-y-4">
                             <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
@@ -371,7 +370,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                     )}
                 </div>
 
-                 <div className="mt-8 grid grid-cols-2 gap-4">
+                 <div className="mt-8 grid grid-cols-2 gap-4 flex-shrink-0 pt-6 border-t">
                     {currentStep > 0 ? (
                         <CustomButton variant="outline" onClick={handlePrev} className="w-full py-3 text-base font-medium">
                             <ArrowLeft className="h-4 w-4 mr-2" />
