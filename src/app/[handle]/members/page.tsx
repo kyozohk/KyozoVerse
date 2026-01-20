@@ -29,7 +29,7 @@ import { ImportMembersDialog } from "@/components/community/import-members-dialo
 import { UserPlus, Mail, Upload, Plus, Tag, Search, List, LayoutGrid, ChevronDown, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage, Checkbox, Skeleton } from "@/components/ui";
+import { Avatar, AvatarFallback, AvatarImage, Checkbox, Skeleton, Input } from "@/components/ui";
 import { format } from 'date-fns';
 
 // A simple debounce hook
