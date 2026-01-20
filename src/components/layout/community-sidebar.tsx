@@ -219,7 +219,7 @@ export default function CommunitySidebar() {
 
           {/* Navigation Items */}
           <div className="flex-1 py-2 flex flex-col">
-            <nav className="grid items-start text-sm font-medium flex-grow">
+            <nav className="grid items-start text-sm font-medium">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
