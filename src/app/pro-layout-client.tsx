@@ -22,7 +22,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-import { mainNavItems } from '@/lib/theme-utils';
+import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 
 export default function ProLayoutClient({ children }: { children: React.ReactNode }) {
@@ -86,9 +86,9 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
           <SidebarHeader>
             <div className="flex h-20 items-center justify-center p-4 border-b border-border">
               <Link href="/communities" className="flex items-center justify-center h-full w-full" onClick={handleLogoClick}>
-                {/* Wide logo (logo-orig.png) */}
+                {/* Wide logo (logo.svg) */}
                 <Image 
-                  src="/logo-orig.png" 
+                  src="/logo.svg" 
                   alt="Kyozo" 
                   width={100} 
                   height={28}

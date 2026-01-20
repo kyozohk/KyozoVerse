@@ -139,7 +139,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
       <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-20">
-        <Image src="/logo-orig.png" alt="Kyozo Logo" width={100} height={28} />
+        <Image src="/logo.svg" alt="Kyozo Logo" width={100} height={28} />
         {user ? (
           <CustomButton onClick={() => {
             signOut();
