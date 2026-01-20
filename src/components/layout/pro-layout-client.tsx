@@ -86,21 +86,21 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
           <SidebarHeader>
             <div className="flex h-20 items-center justify-center p-4 border-b border-border">
               <Link href="/communities" className="flex items-center justify-center h-full w-full" onClick={handleLogoClick}>
-                {/* Wide logo (logo-orig.png) */}
+                {/* Wide logo (logo.svg) */}
                 <Image 
-                  src="/logo-orig.png" 
+                  src="/logo.svg" 
                   alt="Kyozo" 
-                  width={100} 
-                  height={28}
+                  width={130} 
+                  height={36}
                   className="hidden group-data-[state=expanded]:block"
                 />
-                {/* Narrow logo (favicon.png) */}
+                {/* Narrow logo (favicon.svg) */}
                 <div className="hidden group-data-[state=collapsed]:flex h-10 w-10 items-center justify-center rounded-lg">
                   <Image 
-                    src="/favicon.png" 
+                    src="/favicon.svg" 
                     alt="Kyozo" 
-                    width={32} 
-                    height={32}
+                    width={36} 
+                    height={36}
                   />
                 </div>
               </Link>
@@ -125,8 +125,8 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
           </SidebarContent>
           <SidebarFooter>
             <div className="flex flex-col gap-2 p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
-              <div className="flex items-center gap-3 p-4">
-                <Avatar className="h-10 w-10 ring-2 ring-border">
+              <div className="flex flex-col items-center gap-2 p-4 text-center">
+                <Avatar className="h-11 w-11 ring-2 ring-border">
                   <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
                   <AvatarFallback>{fallback}</AvatarFallback>
                 </Avatar>

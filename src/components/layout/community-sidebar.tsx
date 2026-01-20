@@ -187,26 +187,26 @@ export default function CommunitySidebar() {
 
       {/* Navigation View (Default) */}
       {!showCommunityList && (
-        <div className="relative z-10 flex h-full max-h-screen flex-col p-4">
+        <div className="relative z-10 flex h-full max-h-screen flex-col">
           {/* Selected Community Header (Clickable) */}
-          <div className="flex h-20 items-center border-b-2 border-border">
+          <div className="flex h-20 items-center border-b-2 border-border px-4">
             {loading ? (
               <Skeleton className="h-12 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
               <button
                 onClick={() => setShowCommunityList(true)}
-                className="w-full h-full p-0 bg-transparent hover:bg-secondary/50 transition-colors rounded-lg"
+                className="w-full h-full p-0 bg-transparent hover:bg-secondary/50 transition-colors rounded-lg flex items-center justify-between"
               >
-                <div className="flex items-center gap-3 truncate py-4 px-4">
-                  <Avatar className="h-12 w-12 border-2 border-border">
+                <div className="flex items-center gap-3 truncate">
+                  <Avatar className="h-12 w-12 border-2 border-border flex-shrink-0">
                     <AvatarImage src={selectedCommunity?.communityProfileImage} />
                     <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
                   </Avatar>
-                  <span className="font-semibold text-xl text-foreground truncate">
+                  <span className="font-semibold text-lg text-foreground truncate">
                     {selectedCommunity?.name}
                   </span>
-                  <ChevronDown className="h-5 w-5 text-muted-foreground ml-auto" />
                 </div>
+                <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
               </button>
             ) : (
               <div className="w-full">
