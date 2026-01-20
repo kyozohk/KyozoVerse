@@ -18,7 +18,7 @@ import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-import { mainNavItems, communityNavItems } from '@/lib/theme-utils';
+import { communityNavItems } from '@/lib/theme-utils';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();

@@ -3,17 +3,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-xl py-2.5 text-base font-semibold transition-all group-data-[state=expanded]:px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2.5',
+  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-semibold transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2.5',
   {
     variants: {
       state: {
-        default: 'text-[#6B6358] hover:bg-[#F5F1E8]', // Normal state from guide
-        active: 'bg-[#E8DFD0] text-[#3A3630] font-bold shadow-sm', // Active state from guide
+        default: 'text-[#6B6358] hover:bg-[#F5F1E8]',
+        active: 'bg-[#E8DFD0] text-[#3A3630] shadow-sm',
       },
     },
     defaultVariants: {
@@ -49,20 +49,22 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
     const pathname = usePathname();
     let isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
 
-    // Special case for root, only active if path is exactly '/'
     if (href === '/') {
         isActive = pathname === href;
     } else if (href !== '/') {
         isActive = pathname.startsWith(href);
     }
     
+    // Destructure out the props that shouldn't be passed to Link
+    const { activeColor, activeBgColor, ...restProps } = props as any;
+
     return (
       <li className="list-none">
         <Link
           href={href}
           className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
           ref={ref}
-          {...props}
+          {...restProps}
         >
           {React.cloneElement(icon, {
               className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-6 w-6')
