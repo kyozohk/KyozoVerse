@@ -84,7 +84,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar className="bg-sidebar border-border shadow-sm">
           <SidebarHeader>
-            <div className="flex h-24 items-center justify-center p-4 border-b border-border">
+            <div className="flex h-20 items-center justify-center p-4 border-b border-border">
               <Link href="/communities" className="flex items-center justify-center h-full w-full" onClick={handleLogoClick}>
                 {/* Wide logo (logo.svg) */}
                 <Image 
@@ -94,13 +94,13 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
                   height={36}
                   className="hidden group-data-[state=expanded]:block"
                 />
-                {/* Narrow logo (favicon.png) */}
-                <div className="hidden group-data-[state=collapsed]:flex h-12 w-12 items-center justify-center rounded-lg">
+                {/* Narrow logo (favicon.svg) */}
+                <div className="hidden group-data-[state=collapsed]:flex h-10 w-10 items-center justify-center rounded-lg">
                   <Image 
-                    src="/favicon.png" 
+                    src="/favicon.svg" 
                     alt="Kyozo" 
-                    width={42} 
-                    height={42}
+                    width={32} 
+                    height={32}
                   />
                 </div>
               </Link>

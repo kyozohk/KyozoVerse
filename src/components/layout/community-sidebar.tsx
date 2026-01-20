@@ -10,7 +10,8 @@ import {
   AvatarFallback,
   AvatarImage,
   Skeleton,
-  CustomButton
+  CustomButton,
+  SidebarMenu,
 } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
@@ -218,8 +219,8 @@ export default function CommunitySidebar() {
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 py-2 flex flex-col">
-            <nav className="grid items-start text-sm font-medium">
+          <div className="flex-1 flex flex-col">
+            <SidebarMenu>
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -228,15 +229,14 @@ export default function CommunitySidebar() {
                     href={item.href(selectedCommunityHandle)}
                     icon={<Icon />}
                     isActive={pathname === item.href(selectedCommunityHandle) || (item.label === 'Audience' && pathname.includes('/members'))}
-                    className="my-1"
                   >
                     {item.label}
                   </SidebarNavItem>
                 );
               })}
-            </nav>
+            </SidebarMenu>
             {/* More Features Button */}
-            <div className="mt-auto pb-4">
+            <div className="mt-auto px-2 pb-2">
                <SidebarNavItem
                     href="#"
                     icon={<Plus />}
