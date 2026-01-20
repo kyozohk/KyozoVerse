@@ -232,7 +232,7 @@ export default function Home() {
       >
         <div className="flex flex-col h-full">
           <div className="flex-grow">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <Input 
                 label="Email" 
                 type="email" 
@@ -254,15 +254,15 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="mt-6">
-            <div className="mb-4">
+          <div className="mt-12">
+            <div className="mb-8">
               <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
             </div>
 
-            <div className="text-center text-sm text-secondary mt-4">
+            <div className="text-center text-sm text-muted-foreground mt-8">
               Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button>
             </div>
-            <div className="text-center text-sm text-secondary mt-2">
+            <div className="text-center text-sm text-muted-foreground mt-4">
               Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>
@@ -276,79 +276,81 @@ export default function Home() {
         description="Sign up to create and manage your own communities on Kyozo."
         backgroundImage="/bg/light_app_bg.png"
       >
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="First Name"
-                type="text"
-                value={signUpFirstName}
-                onChange={(e) => setSignUpFirstName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+        <div className="flex flex-col h-full">
+          <div className="flex-grow">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="First Name"
+                  type="text"
+                  value={signUpFirstName}
+                  onChange={(e) => setSignUpFirstName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+                />
+                <Input
+                  label="Last Name"
+                  type="text"
+                  value={signUpLastName}
+                  onChange={(e) => setSignUpLastName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+                />
+              </div>
+              <PhoneInput
+                label="Phone Number"
+                value={signUpPhone}
+                onChange={(value) => setSignUpPhone(value)}
               />
               <Input
-                label="Last Name"
-                type="text"
-                value={signUpLastName}
-                onChange={(e) => setSignUpLastName(e.target.value)}
+                label="Email"
+                type="email"
+                value={signUpEmail}
+                onChange={(e) => setSignUpEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
               />
-            </div>
-            <PhoneInput
-              label="Phone Number"
-              value={signUpPhone}
-              onChange={(value) => setSignUpPhone(value)}
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={signUpEmail}
-              onChange={(e) => setSignUpEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-            />
-            <PasswordInput
-              label="Password"
-              value={signUpPassword}
-              onChange={(e) => setSignUpPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-            />
-            <div className="mt-3">
-              <Checkbox
-                checked={agreedToPrivacy}
-                onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
-                label={
-                  <span className="text-sm text-gray-700">
-                    I agree to the{' '}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowPrivacyDialog(true);
-                      }}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Privacy Policy
-                    </button>
-                  </span>
-                }
+              <PasswordInput
+                label="Password"
+                value={signUpPassword}
+                onChange={(e) => setSignUpPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
               />
+              <div className="mt-3">
+                <Checkbox
+                  checked={agreedToPrivacy}
+                  onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                  label={
+                    <span className="text-sm text-gray-700">
+                      I agree to the{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowPrivacyDialog(true);
+                        }}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Privacy Policy
+                      </button>
+                    </span>
+                  }
+                />
+              </div>
             </div>
+            {signUpError && (
+              <div className="text-sm text-red-500 bg-red-50 p-3 rounded mt-4">
+                {signUpError}
+              </div>
+            )}
           </div>
-          {signUpError && (
-            <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
-              {signUpError}
-            </div>
-          )}
           
-          <div className="mt-6">
-            <div className="mb-4">
+          <div className="mt-8">
+            <div className="mb-8">
               <CustomButton onClick={handleSignUp} className="w-full">Create Account</CustomButton>
             </div>
 
-            <div className="text-center text-sm text-secondary mt-4">
+            <div className="text-center text-sm text-muted-foreground mt-8">
               Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button>
             </div>
-            <div className="text-center text-sm text-secondary mt-2">
+            <div className="text-center text-sm text-muted-foreground mt-4">
               Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>
