@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,12 +8,12 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-4 rounded-[10px] px-4 py-3 text-lg font-semibold transition-colors',
+  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-all',
   {
     variants: {
       state: {
-        default: 'text-muted-foreground hover:text-accent-foreground hover:bg-accent',
-        active: 'text-accent-foreground bg-accent',
+        default: 'text-muted-foreground hover:bg-secondary',
+        active: 'bg-accent text-foreground font-bold shadow-sm',
       },
     },
     defaultVariants: {
@@ -22,12 +23,12 @@ const sidebarNavItemVariants = cva(
 );
 
 const iconVariants = cva(
-    'h-6 w-6 transition-colors',
+    'h-5 w-5 transition-colors',
     {
         variants: {
             state: {
-                default: 'text-muted-foreground group-hover:text-accent-foreground',
-                active: 'text-accent-foreground',
+                default: 'text-muted-foreground group-hover:text-foreground',
+                active: 'text-foreground',
             }
         },
         defaultVariants: {
@@ -41,18 +42,18 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
     icon: React.ReactElement;
     children: React.ReactNode;
     isActive?: boolean;
-    activeColor?: string;
-    activeBgColor?: string;
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, isActive: isActiveProp, activeColor, activeBgColor, ...props }, ref) => {
+  ({ className, href, icon, children, isActive: isActiveProp, ...props }, ref) => {
     const pathname = usePathname();
-    const isActive = isActiveProp !== undefined ? isActiveProp : pathname.startsWith(href) && href !== '/';
+    let isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
 
     // Special case for root, only active if path is exactly '/'
     if (href === '/') {
-        const isActive = pathname === href;
+        isActive = pathname === href;
+    } else if (href !== '/') {
+        isActive = pathname.startsWith(href);
     }
 
 
@@ -65,7 +66,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
           {...props}
         >
           {React.cloneElement(icon, {
-              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-6 w-6')
+              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-5 w-5')
           })}
           {children}
         </Link>

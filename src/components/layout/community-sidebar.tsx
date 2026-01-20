@@ -6,11 +6,6 @@ import { useSidebar } from '@/components/ui/enhanced-sidebar';
 import { usePathname, useRouter } from 'next/navigation';
 import { PlusCircle, Check, Plus, ChevronDown } from 'lucide-react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -23,7 +18,7 @@ import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-import { getThemeForPath, communityNavItems } from '@/lib/theme-utils';
+import { mainNavItems, communityNavItems } from '@/lib/theme-utils';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
@@ -36,13 +31,11 @@ export default function CommunitySidebar() {
   const [selectedCommunityHandle, setSelectedCommunityHandle] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [showCommunityList, setShowCommunityList] = useState(false);
-
-  const { section: currentSection, activeColor, activeBgColor } = getThemeForPath(pathname);
   
   useEffect(() => {
     // Extract handle from pathname: /[handle]/... -> handle is at index 1
     const pathParts = pathname.split('/');
-    const handleFromPath = pathParts[1]; // /[handle] -> get handle at index 1
+    const handleFromPath = pathParts[1]; 
 
     if (!user) {
       setLoading(false);
@@ -51,24 +44,19 @@ export default function CommunitySidebar() {
 
     setLoading(true);
 
-    // Fetch communities where user is owner
     const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
     
     const unsubscribeOwned = onSnapshot(ownedQuery, async (ownedSnapshot) => {
       const ownedCommunities = ownedSnapshot.docs.map(doc => ({ communityId: doc.id, ...doc.data() } as Community));
       
-      // Fetch communities where user is a member
       const memberQuery = query(collection(db, 'communityMembers'), where('userId', '==', user.uid));
       const memberSnapshot = await getDocs(memberQuery);
       const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
       
-      // Filter out owned communities
       const nonOwnedMemberIds = memberCommunityIds.filter(
         id => !ownedCommunities.find(c => c.communityId === id)
       );
       
-      // Fetch community details for member communities (excluding owned ones)
-      // Firestore 'in' query has a limit of 30 items, so we can batch if needed.
       const memberCommunities: Community[] = [];
       if (nonOwnedMemberIds.length > 0) {
         const batchSize = 30;
@@ -91,7 +79,6 @@ export default function CommunitySidebar() {
         });
       }
       
-      // Combine owned and member communities
       const allCommunities = [...ownedCommunities, ...memberCommunities];
       setCommunities(allCommunities);
 
@@ -126,10 +113,9 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r-2 lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
+      className={`hidden lg:block w-64 border-r-2 border-border bg-sidebar overflow-y-auto shadow-sm relative`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
-        borderColor: activeColor,
       }}
     >
       {/* Background with light_app_bg.png and color overlay */}
@@ -145,12 +131,12 @@ export default function CommunitySidebar() {
 
       {/* Community List View (Full Height) */}
       {showCommunityList && (
-        <div className="absolute inset-0 z-20 flex flex-col" style={{ padding: '8px' }}>
+        <div className="absolute inset-0 z-20 flex flex-col p-4 bg-sidebar">
           {/* Header */}
-          <div className="flex h-[88px] items-center justify-between border-b px-2" style={{ borderColor: activeColor }}>
+          <div className="flex h-20 items-center justify-between border-b-2 border-border px-2">
             <h2 className="text-xl font-bold text-foreground">Communities</h2>
             <CustomButton 
-              variant="rounded-rect" 
+              variant="outline" 
               size="small"
               onClick={() => setIsCreateDialogOpen(true)}
             >
@@ -172,9 +158,9 @@ export default function CommunitySidebar() {
                     <button
                       key={community.communityId}
                       onClick={() => handleCommunitySelect(community.handle)}
-                      className="w-full p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] relative group flex items-center gap-3 text-left hover:bg-accent"
+                      className="w-full p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] relative group flex items-center gap-3 text-left hover:bg-secondary"
                     >
-                      <Avatar className="h-12 w-12 border-2 flex-shrink-0">
+                      <Avatar className="h-12 w-12 border-2 border-border flex-shrink-0">
                         <AvatarImage src={community.communityProfileImage} />
                         <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
                       </Avatar>
@@ -187,7 +173,7 @@ export default function CommunitySidebar() {
                           </p>
                         </div>
                       {isSelected && (
-                        <Check className="h-5 w-5 text-primary ml-auto" />
+                        <Check className="h-5 w-5 text-ring ml-auto" />
                       )}
                     </button>
                   );
@@ -200,18 +186,18 @@ export default function CommunitySidebar() {
 
       {/* Navigation View (Default) */}
       {!showCommunityList && (
-        <div className="relative z-10 flex h-full max-h-screen flex-col" style={{ padding: '0 8px' }}>
+        <div className="relative z-10 flex h-full max-h-screen flex-col p-4">
           {/* Selected Community Header (Clickable) */}
-          <div className="flex h-[76px] items-center border-b" style={{ borderColor: activeColor, padding: '0 8px' }}>
+          <div className="flex h-20 items-center border-b-2 border-border">
             {loading ? (
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
               <button
                 onClick={() => setShowCommunityList(true)}
-                className="w-full h-full p-0 bg-transparent hover:bg-accent/50 transition-colors rounded-lg"
+                className="w-full h-full p-0 bg-transparent hover:bg-secondary/50 transition-colors rounded-lg"
               >
                 <div className="flex items-center gap-3 truncate py-4 px-4">
-                  <Avatar className="h-12 w-12 border-2">
+                  <Avatar className="h-12 w-12 border-2 border-border">
                     <AvatarImage src={selectedCommunity?.communityProfileImage} />
                     <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
                   </Avatar>
@@ -233,7 +219,7 @@ export default function CommunitySidebar() {
 
           {/* Navigation Items */}
           <div className="flex-1 py-2 flex flex-col">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4 flex-grow">
+            <nav className="grid items-start text-sm font-medium flex-grow">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -241,7 +227,7 @@ export default function CommunitySidebar() {
                     key={item.label}
                     href={item.href(selectedCommunityHandle)}
                     icon={<Icon />}
-                    isActive={pathname === item.href(selectedCommunityHandle)}
+                    isActive={pathname === item.href(selectedCommunityHandle) || (item.label === 'Audience' && pathname.includes('/members'))}
                     className="my-1"
                   >
                     {item.label}
@@ -250,7 +236,7 @@ export default function CommunitySidebar() {
               })}
             </nav>
             {/* More Features Button */}
-            <div className="px-2 lg:px-4 mt-auto pb-4">
+            <div className="mt-auto pb-4">
                <SidebarNavItem
                     href="#"
                     icon={<Plus />}

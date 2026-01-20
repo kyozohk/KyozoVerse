@@ -11,7 +11,7 @@ interface CommunityBannerProps {
 
 export function CommunityBanner({ totalCommunities, onCreateClick }: CommunityBannerProps) {
   return (
-    <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#8B7355] to-[#a18a6a] text-white shadow-lg banner-glow border-2 border-primary">
+    <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#D4A574] to-[#C39564] text-white shadow-lg banner-glow border-2 border-ring">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 w-full h-full bg-[url('/bg/pattern.svg')] bg-repeat opacity-20"></div>
