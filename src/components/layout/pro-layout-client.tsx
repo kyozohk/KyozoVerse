@@ -95,12 +95,12 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
                   className="hidden group-data-[state=expanded]:block"
                 />
                 {/* Narrow logo (favicon.png) */}
-                <div className="hidden group-data-[state=collapsed]:flex h-10 w-10 items-center justify-center rounded-lg bg-ring">
+                <div className="hidden group-data-[state=collapsed]:flex h-10 w-10 items-center justify-center rounded-lg">
                   <Image 
                     src="/favicon.png" 
                     alt="Kyozo" 
-                    width={24} 
-                    height={24}
+                    width={32} 
+                    height={32}
                   />
                 </div>
               </Link>

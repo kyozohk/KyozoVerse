@@ -159,7 +159,7 @@ const SidebarProvider = React.forwardRef<
               } as React.CSSProperties
             }
             className={cn(
-              "group/sidebar-wrapper flex w-full",
+              "flex w-full",
               className
             )}
             ref={ref}
@@ -244,7 +244,7 @@ const Sidebar = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "group peer hidden md:block text-card-foreground",
+          "group hidden md:block text-card-foreground",
           "transition-all duration-200 ease-linear",
           "w-[--sidebar-width]",
           collapsible === "icon" && state === "collapsed" && "w-[--sidebar-width-icon]",
