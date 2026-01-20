@@ -12,8 +12,8 @@ const sidebarNavItemVariants = cva(
   {
     variants: {
       state: {
-        default: 'text-muted-foreground hover:bg-secondary',
-        active: 'bg-accent text-foreground font-bold shadow-sm',
+        default: 'text-[#6B6358] hover:bg-[#F5F1E8]', // Normal state from guide
+        active: 'bg-[#E8DFD0] text-[#3A3630] font-bold shadow-sm', // Active state from guide
       },
     },
     defaultVariants: {
@@ -27,8 +27,8 @@ const iconVariants = cva(
     {
         variants: {
             state: {
-                default: 'text-muted-foreground group-hover:text-foreground',
-                active: 'text-foreground',
+                default: 'text-[#6B6358] group-hover:text-[#3A3630]',
+                active: 'text-[#3A3630]',
             }
         },
         defaultVariants: {
@@ -55,8 +55,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
     } else if (href !== '/') {
         isActive = pathname.startsWith(href);
     }
-
-
+    
     return (
       <li className="list-none">
         <Link
