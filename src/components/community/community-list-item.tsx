@@ -10,7 +10,7 @@ export function CommunityListItem({ community }: { community: Community }) {
   const displayTags = community.tags?.slice(0, 3) || [];
   const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 w-full">
+    <Card className="hover:shadow-lg hover:bg-muted transition-all duration-300 w-full">
         <CardContent className="p-4 flex items-center gap-4">
             <Avatar className="h-12 w-12">
                 <AvatarImage src={community.communityProfileImage} />

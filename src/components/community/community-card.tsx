@@ -11,7 +11,7 @@ export function CommunityCard({ community }: { community: Community }) {
   const displayTags = community.tags?.slice(0, 2) || [];
   const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 h-full flex flex-col items-center justify-center text-center p-6">
+    <Card className="hover:shadow-lg hover:bg-muted transition-all duration-300 h-full flex flex-col items-center justify-center text-center p-6">
       <Avatar className="h-14 w-14 mb-4">
         <AvatarImage src={community.communityProfileImage} />
         <AvatarFallback className="text-2xl">{community.name?.charAt(0) || 'C'}</AvatarFallback>
