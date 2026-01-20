@@ -7,6 +7,7 @@ import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
 import { CreateCommunityDialog } from './create-community-dialog';
 import { ListView } from '@/components/ui/list-view';
+import { CommunityListItem } from './community-list-item';
 
 interface CommunityListProps {
   communities: Community[];
@@ -36,7 +37,11 @@ export function CommunityList({ communities }: CommunityListProps) {
       >
         {filteredCommunities.map((community) => (
           <Link key={community.communityId} href={`/${community.handle}`} className="block h-full">
-            <CommunityCard community={community} />
+            {viewMode === 'grid' ? (
+                <CommunityCard community={community} />
+            ) : (
+                <CommunityListItem community={community} />
+            )}
           </Link>
         ))}
       </ListView>

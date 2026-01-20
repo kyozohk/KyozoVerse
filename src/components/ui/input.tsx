@@ -13,7 +13,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, error, wrapperClassName, icon, style, ...props }, ref) => {
+  ({ className, type, label, error, wrapperClassName, icon, style, placeholder, ...props }, ref) => {
     const inputId = React.useId();
 
     return (
@@ -25,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={cn("input", icon ? "input-with-icon" : "", error ? "hasError" : "", className)}
             ref={ref}
-            placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
+            placeholder={label ? " " : placeholder} // Use a space for the placeholder to enable :not(:placeholder-shown)
             style={style}
             {...props}
           />

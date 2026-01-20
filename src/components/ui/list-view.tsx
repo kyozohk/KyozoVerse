@@ -33,13 +33,13 @@ export function ListView({
   return (
     <div className="bg-card text-foreground p-6 rounded-xl border">
       <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex-grow">
           <Input
             placeholder="Search by name..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 bg-background border-border"
+            className="bg-background border-border"
+            icon={<Search className="h-4 w-4 text-muted-foreground" />}
           />
         </div>
         <div className="flex items-center gap-2">
