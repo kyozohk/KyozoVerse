@@ -35,12 +35,12 @@ const BubbleRow: React.FC<BubbleRowProps> = ({
   }, [items]);
 
   const categoryStyles: Record<string, string> = {
-    inbox: "bg-blue-100 border-blue-200 text-blue-800",
-    overview: "bg-purple-100 border-purple-200 text-purple-800",
-    broadcast: "bg-yellow-100 border-yellow-200 text-yellow-800",
-    members: "bg-red-100 border-red-200 text-red-800",
-    feed: "bg-teal-100 border-teal-200 text-teal-800",
-    default: "bg-accent border-border text-accent-foreground",
+    inbox: "bg-blue-100/70 border-blue-300 text-blue-800",
+    overview: "bg-purple-100/70 border-purple-300 text-purple-800",
+    broadcast: "bg-yellow-100/70 border-yellow-300 text-yellow-800",
+    members: "bg-red-100/70 border-red-300 text-red-800",
+    feed: "bg-teal-100/70 border-teal-300 text-teal-800",
+    default: "bg-accent/70 border-border text-accent-foreground",
   };
   
   const bubbleClasses = categoryStyles[category] || categoryStyles.default;
