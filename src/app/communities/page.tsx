@@ -2,16 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Suspense } from 'react';
-import { CommunityList } from '@/components/community/community-list';
-import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
-import { Loader2 } from 'lucide-react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
-import { CommunityBanner } from '@/components/community/community-banner';
-import { CommunitiesDashboardStats } from '@/components/community/communities-dashboard-stats';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { db } from '@/firebase/firestore';
+import { CommunityList } from '@/components/community/community-list';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 
 export default function CommunitiesDashboardPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -81,24 +79,20 @@ export default function CommunitiesDashboardPage() {
   }, [user]);
 
   return (
-    <div className="container mx-auto px-8 py-8">
-      <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Your Communities</h1>
+            <p className="text-muted-foreground mt-1">You are a member of {communities.length} communities.</p>
           </div>
-        ) : (
-          <div className="space-y-8">
-            <CommunityBanner 
-              totalCommunities={communities.length} 
-              onCreateClick={() => setIsCreateDialogOpen(true)} 
-            />
-            <CommunitiesDashboardStats communities={communities} />
-            <CommunityList communities={communities} />
-          </div>
-        )}
-      </Suspense>
-      
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Community
+          </Button>
+        </div>
+        <CommunityList communities={communities} loading={loading} />
+      </div>
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
   );

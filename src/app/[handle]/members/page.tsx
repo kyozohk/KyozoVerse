@@ -11,28 +11,25 @@ import {
   doc, 
   updateDoc, 
   increment,
-  arrayUnion,
-  arrayRemove,
   deleteDoc
 } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
-import { type Community, type User } from "@/lib/types";
+import { type Community, type CommunityMember } from "@/lib/types";
 import { getUserRoleInCommunity, getCommunityByHandle, getCommunityMembers } from "@/lib/community-utils";
 import { MemberDialog } from "@/components/community/member-dialog";
-import { CommunityMember } from "@/lib/types";
 import { TagMembersDialog } from "@/components/community/tag-members-dialog";
-import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
-import { addTagsToCommunity, getCommunityTags, type CommunityTag } from "@/lib/community-tags";
 import { InviteMemberDialog } from "@/components/community/invite-member-dialog";
 import { ImportMembersDialog } from "@/components/community/import-members-dialog";
-import { UserPlus, Mail, Upload, Plus, Tag, Search, List, LayoutGrid, ChevronDown, CheckCircle2 } from "lucide-react";
+import { UserPlus, Mail, Upload, Plus, Search, List, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage, Checkbox, Skeleton, Input, Badge } from "@/components/ui";
+import { Avatar, AvatarFallback, AvatarImage, Checkbox, Input, Badge } from "@/components/ui";
 import { format } from 'date-fns';
+import { MemberCard } from '@/components/community/member-card';
+import { ItemsGrid } from '@/components/shared/items-grid';
+import { cn } from "@/lib/utils";
 
-// A simple debounce hook
 function useDebounce(value: string, delay: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -46,12 +43,10 @@ function useDebounce(value: string, delay: number) {
     return debouncedValue;
 }
 
-
 export default function CommunityMembersPage() {
   const { user } = useAuth();
   const params = useParams();
   const handle = params.handle as string;
-  const router = useRouter();
   const { toast } = useToast();
   
   const [members, setMembers] = useState<CommunityMember[]>([]);
@@ -66,14 +61,9 @@ export default function CommunityMembersPage() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<CommunityMember | null>(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
-  // State for remove tag confirmation
-  const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
-  const [isRemoveTagDialogOpen, setIsRemoveTagDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
   const [activeTab, setActiveTab] = useState('all');
 
   const fetchCommunityData = async () => {
@@ -132,16 +122,14 @@ export default function CommunityMembersPage() {
     );
   }, [members, debouncedSearchTerm]);
 
-
   const handleDeleteMember = async () => {
     if (!memberToDelete || !community) return;
-    setIsDeleteConfirmOpen(false);
     try {
       await deleteDoc(doc(db, 'communityMembers', memberToDelete.id));
       await updateDoc(doc(db, 'communities', community.communityId), {
         memberCount: increment(-1),
       });
-      fetchMembers(); // Re-fetch members
+      fetchMembers();
       toast({ title: 'Member removed' });
     } catch (error) {
       toast({ title: 'Error removing member', variant: 'destructive' });
@@ -149,116 +137,115 @@ export default function CommunityMembersPage() {
       setMemberToDelete(null);
     }
   };
+  
+  const renderMemberListItem = (member: CommunityMember) => (
+    <div key={member.id} className="flex items-center gap-4 p-2 border bg-card rounded-lg hover:bg-muted/50 transition-colors w-full">
+      <Checkbox 
+        checked={selectedMembers.some(m => m.id === member.id)}
+        onCheckedChange={() => handleToggleMemberSelection(member)}
+        className="ml-2"
+      />
+      <Avatar className="h-9 w-9">
+        <AvatarImage src={member.userDetails?.avatarUrl} />
+        <AvatarFallback>{member.userDetails?.displayName?.charAt(0)}</AvatarFallback>
+      </Avatar>
+      <div className="flex-grow">
+        <div className="font-semibold text-foreground">{member.userDetails?.displayName}</div>
+        <div className="text-sm text-muted-foreground">{member.userDetails?.email}</div>
+      </div>
+      <div className="w-24">
+        <Badge variant={member.status === 'active' ? 'default' : 'destructive'} className="bg-green-100 text-green-800">Active</Badge>
+      </div>
+      <div className="text-sm text-muted-foreground w-40">
+        Joined {member.joinedAt ? format(member.joinedAt.toDate(), 'MMM dd, yyyy') : '-'}
+      </div>
+      <div className="text-sm text-muted-foreground flex-grow">
+        {member.tags && member.tags.length > 0 ? member.tags.join(', ') : 'No tags'}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex justify-between items-start">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Audience</h1>
           <p className="text-muted-foreground mt-1">Browse and manage your community audience.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-4 sm:mt-0">
           <Button variant="outline" onClick={() => setIsAddMemberOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
-            Add Member
+            Add
           </Button>
           <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
             <Mail className="h-4 w-4 mr-2" />
-            Invite Member
+            Invite
           </Button>
           <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
-            Import Member
+            Import
           </Button>
         </div>
       </div>
 
-      <div className="border rounded-lg bg-card p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="font-semibold text-sm uppercase text-muted-foreground">Total Audience Overview</h3>
-            <p className="text-xs text-muted-foreground">Breakdown of your community reach</p>
+      <div className="bg-background/80 backdrop-blur-sm rounded-lg shadow-sm p-2 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+            <Button variant={activeTab === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActiveTab('all')}>All ({members.length})</Button>
+            <Button variant={activeTab === 'members' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActiveTab('members')}>Members (6)</Button>
+            <Button variant={activeTab === 'contacts' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActiveTab('contacts')}>Contacts (5)</Button>
           </div>
-          <div className="flex items-center gap-8">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-500">6</p>
-              <p className="text-xs text-muted-foreground">Members</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-orange-500">5</p>
-              <p className="text-xs text-muted-foreground">Contacts</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-foreground">11</p>
-              <p className="text-xs text-muted-foreground">Total</p>
-            </div>
+          <div className="relative flex-grow max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 w-full bg-transparent border-0 focus-visible:ring-0"
+            />
           </div>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center gap-4">
-        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
-          <Button variant={activeTab === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActiveTab('all')}>All ({members.length})</Button>
-          <Button variant={activeTab === 'members' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActiveTab('members')}>Members (6)</Button>
-          <Button variant={activeTab === 'contacts' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActiveTab('contacts')}>Contacts (5)</Button>
-        </div>
-        <div className="relative flex-grow max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search by name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button style={{ backgroundColor: '#843484', color: 'white' }} onClick={() => setIsTaggingOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create / Edit Tag
-          </Button>
-          <div className="flex items-center gap-1 rounded-md bg-muted p-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <List className="h-5 w-5" />
+          <div className="flex items-center gap-2">
+            <Button style={{ backgroundColor: '#843484', color: 'white' }} onClick={() => setIsTaggingOpen(true)} disabled={selectedMembers.length === 0}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tag
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <LayoutGrid className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+              <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}>
+                <List className="h-5 w-5" />
+              </Button>
+              <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}>
+                <LayoutGrid className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)
-        ) : (
-          filteredMembers.map((member) => (
-            <div key={member.id} className="grid grid-cols-[auto_40px_1fr_1fr_1fr_1fr_1fr] items-center gap-4 p-2 border bg-card rounded-lg hover:bg-muted/50 transition-colors">
-              <Checkbox 
-                checked={selectedMembers.some(m => m.id === member.id)}
-                onCheckedChange={() => handleToggleMemberSelection(member)}
-                className="ml-2"
+        <ItemsGrid
+          items={filteredMembers}
+          isLoading={loading}
+          renderItem={(member) => (
+            viewMode === 'grid' ? (
+              <MemberCard 
+                  key={member.id}
+                  member={member}
+                  canManage={userRole === 'admin' || userRole === 'owner'}
+                  onEdit={() => setEditingMember(member)}
+                  onDelete={() => {
+                      setMemberToDelete(member);
+                  }}
+                  selectable={true}
+                  isSelected={selectedMembers.some(m => m.id === member.id)}
+                  onSelect={() => handleToggleMemberSelection(member)}
               />
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={member.userDetails?.avatarUrl} />
-                <AvatarFallback>{member.userDetails?.displayName?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold text-foreground">{member.userDetails?.displayName}</div>
-                <div className="text-sm text-muted-foreground">{member.userDetails?.email}</div>
-              </div>
-              <div>
-                <Badge variant={member.status === 'active' ? 'default' : 'destructive'} className="bg-green-100 text-green-800">Active</Badge>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Joined {member.joinedAt ? format(member.joinedAt.toDate(), 'MMM dd, yyyy') : '-'}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {member.tags && member.tags.length > 0 ? member.tags.join(', ') : 'No tags'}
-              </div>
-            </div>
-          ))
-        )}
+            ) : (
+              renderMemberListItem(member)
+            )
+          )}
+          gridClassName={cn(
+            "grid gap-2",
+            viewMode === 'grid' ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"
+          )}
+        />
       </div>
 
       {isTaggingOpen && community && (
@@ -267,9 +254,7 @@ export default function CommunityMembersPage() {
           onClose={() => setIsTaggingOpen(false)}
           members={selectedMembers}
           communityId={community.communityId}
-          onApplyTags={async (tagsToAdd, tagsToRemove) => {
-            // This logic can be expanded
-            console.log('Applying tags', { tagsToAdd, tagsToRemove });
+          onApplyTags={async () => {
             setIsTaggingOpen(false);
             await fetchMembers();
           }}
@@ -290,10 +275,7 @@ export default function CommunityMembersPage() {
           mode="add"
           communityName={community?.name}
           onClose={() => setIsAddMemberOpen(false)}
-          onSubmit={async () => {
-            // Implement add logic
-            fetchMembers();
-          }}
+          onSubmit={fetchMembers}
         />
       )}
       
@@ -305,16 +287,6 @@ export default function CommunityMembersPage() {
           onSuccess={fetchMembers}
         />
       )}
-
-      {/* Floating Buttons */}
-      <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
-        <Button variant="default" className="rounded-full w-14 h-14 shadow-lg" style={{backgroundColor: '#E53935'}}>
-          <Plus className="h-6 w-6" />
-        </Button>
-        <Button variant="default" className="rounded-full w-14 h-14 shadow-lg bg-black text-white">
-          ?
-        </Button>
-      </div>
 
     </div>
   );

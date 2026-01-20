@@ -1,35 +1,53 @@
 
+import React from 'react';
 import { type Community } from '@/lib/types';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { Users, Tag, Calendar } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
+interface CommunityCardProps {
+  community: Community;
+}
 
-export function CommunityCard({ community }: { community: Community }) {
-  const displayTags = community.tags?.slice(0, 2) || [];
-  const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
+export function CommunityCard({ community }: CommunityCardProps) {
+  const router = useRouter();
+
+  const handleCommunityClick = () => {
+    router.push(`/${community.handle}`);
+  };
+
   return (
-    <Card className="hover:shadow-lg hover:bg-muted transition-all duration-300 h-full flex flex-col items-center justify-center text-center p-6">
-      <Avatar className="h-14 w-14 mb-4">
-        <AvatarImage src={community.communityProfileImage} />
-        <AvatarFallback className="text-2xl">{community.name?.charAt(0) || 'C'}</AvatarFallback>
-      </Avatar>
-      <CardTitle className="text-lg font-bold">{community.name}</CardTitle>
-      <p className="text-sm text-muted-foreground mt-1">{community.memberCount || 0} members</p>
-      
-      {displayTags.length > 0 && (
-        <div className="flex flex-wrap gap-1 justify-center mt-3">
-            {displayTags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-            {remainingTags > 0 && <Badge variant="outline">+{remainingTags}</Badge>}
+    <Card 
+        className="hover:shadow-lg transition-shadow duration-300 h-full cursor-pointer bg-card"
+        onClick={handleCommunityClick}
+    >
+      <CardHeader className="items-center text-center">
+        <Avatar className="h-20 w-20 border-4 border-background">
+          <AvatarImage src={community.communityProfileImage} />
+          <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
+        </Avatar>
+        <CardTitle className="text-xl font-bold pt-4">{community.name}</CardTitle>
+        <p className="text-sm text-muted-foreground">{community.memberCount} members</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {community.tags && community.tags.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {community.tags.slice(0, 3).map(tag => (
+              <Badge key={tag} variant="secondary">{tag}</Badge>
+            ))}
+            {community.tags.length > 3 && (
+              <Badge variant="outline">+{community.tags.length - 3}</Badge>
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-center text-xs text-muted-foreground pt-2">
+            <CalendarIcon className="mr-1 h-4 w-4" />
+            Created {community.createdAt ? format(new Date(community.createdAt.seconds * 1000), 'PP') : '-'}
         </div>
-      )}
-
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-4">
-        <Calendar className="h-3 w-3" />
-        <span>Created {community.createdAt ? format(new Date(community.createdAt.seconds * 1000), 'MMM dd, yyyy') : 'N/A'}</span>
-      </div>
+      </CardContent>
     </Card>
   );
 }

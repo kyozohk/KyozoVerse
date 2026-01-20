@@ -236,7 +236,7 @@ export default function CommunitySidebar() {
               })}
             </SidebarMenu>
             {/* More Features Button */}
-            <div className="mt-auto px-2 pb-2">
+            <div className="mt-auto px-2 pb-1">
                <SidebarNavItem
                     href="#"
                     icon={<Plus />}
