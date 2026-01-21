@@ -11,12 +11,12 @@ interface CommunityListItemProps {
 
 export function CommunityListItem({ community }: CommunityListItemProps) {
   return (
-    <div className="flex items-center p-4 bg-card rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
-      <Avatar className="h-12 w-12 mr-4">
+    <div className="flex items-center p-4 bg-card rounded-lg shadow-sm hover:bg-muted/50 transition-colors duration-200 w-full cursor-pointer">
+      <Avatar className="h-12 w-12 mr-6">
         <AvatarImage src={community.logoUrl} alt={community.name} />
         <AvatarFallback>{community.name.charAt(0)}</AvatarFallback>
       </Avatar>
-      <div className="flex-grow grid grid-cols-4 gap-4 items-center">
+      <div className="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
         <div className="font-semibold text-lg col-span-1">{community.name}</div>
         <div className="flex items-center text-sm text-muted-foreground col-span-1">
           <Users className="h-4 w-4 mr-2" />
@@ -33,7 +33,7 @@ export function CommunityListItem({ community }: CommunityListItemProps) {
             )}
           </div>
         </div>
-        <div className="flex items-center text-sm text-muted-foreground col-span-1 justify-self-end">
+        <div className="flex items-center text-sm text-muted-foreground col-span-1 md:justify-self-end">
           <Calendar className="h-4 w-4 mr-2" />
           Created {format(new Date(community.createdAt), 'MMM dd, yyyy')}
         </div>

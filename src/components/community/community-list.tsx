@@ -2,13 +2,16 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Community } from '@/lib/types';
 import { CommunityCard } from './community-card';
+import { CommunityListItem } from './community-list-item'; // Make sure this is imported
 import { ItemsGrid } from '@/components/shared/items-grid';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { List, LayoutGrid, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CommunityListProps {
   communities: Community[];
@@ -56,15 +59,30 @@ export function CommunityList({ communities, loading }: CommunityListProps) {
         </div>
       </div>
 
-      <ItemsGrid
-        items={filteredCommunities}
-        isLoading={loading}
-        renderItem={(community) => <CommunityCard community={community} />}
-        gridClassName={cn(
-          "grid gap-6",
-          viewMode === 'grid' ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" : "grid-cols-1"
-        )}
-      />
+      {viewMode === 'grid' ? (
+        <ItemsGrid
+          items={filteredCommunities}
+          isLoading={loading}
+          renderItem={(community) => (
+            <Link href={`/${community.handle}`} className="h-full block">
+              <CommunityCard community={community} />
+            </Link>
+          )}
+          gridClassName="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+        />
+      ) : (
+        <div className="space-y-2">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)
+          ) : (
+            filteredCommunities.map((community) => (
+              <Link key={community.communityId} href={`/${community.handle}`} className="block">
+                <CommunityListItem community={community} />
+              </Link>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

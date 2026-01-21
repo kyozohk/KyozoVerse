@@ -24,7 +24,7 @@ import { ImportMembersDialog } from "@/components/community/import-members-dialo
 import { UserPlus, Mail, Upload, Plus, Search, List, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage, Checkbox, Input, Badge } from "@/components/ui";
+import { Avatar, AvatarFallback, AvatarImage, Checkbox, Input, Badge } from '@/components/ui';
 import { format } from 'date-fns';
 import { MemberCard } from '@/components/community/member-card';
 import { ItemsGrid } from '@/components/shared/items-grid';
