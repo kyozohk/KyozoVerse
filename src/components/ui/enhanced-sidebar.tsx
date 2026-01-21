@@ -88,8 +88,6 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
     const setOpen = React.useCallback(
@@ -101,20 +99,17 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState)
         }
 
-        // This sets the cookie to keep the sidebar state.
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
       },
       [setOpenProp, open]
     )
 
-    // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
         ? setOpenMobile((open) => !open)
         : setOpen((open) => !open)
     }, [isMobile, setOpen, setOpenMobile])
 
-    // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
@@ -130,8 +125,6 @@ const SidebarProvider = React.forwardRef<
       return () => window.removeEventListener("keydown", handleKeyDown)
     }, [toggleSidebar])
 
-    // We add a state so that we can do data-state="expanded" or "collapsed".
-    // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? "expanded" : "collapsed"
 
     const contextValue = React.useMemo<SidebarContext>(
@@ -217,13 +210,11 @@ const Sidebar = React.forwardRef<
         <div
           data-sidebar="sidebar"
           data-mobile="true"
-          className="w-[--sidebar-width] p-0 text-card-foreground fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out"
+          className="w-[--sidebar-width] p-0 text-card-foreground fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out bg-background border-r"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
               transform: openMobile ? "translateX(0)" : "translateX(-100%)",
-              backgroundColor: 'var(--sidebar-active-bg)',
-              borderColor: 'var(--sidebar-active-border)',
               ...style
             } as React.CSSProperties
           }
@@ -263,10 +254,9 @@ const Sidebar = React.forwardRef<
            side === "right" && "border-r-0 border-l",
            variant === 'floating' && 'rounded-lg border shadow',
            variant === 'inset' && 'bg-transparent',
-           variant !== 'inset' && 'bg-sidebar-background',
+           variant !== 'inset' && 'bg-background',
            className
            )}
-           style={{borderColor: 'var(--sidebar-active-border)'}}
         >
           {children}
         </div>

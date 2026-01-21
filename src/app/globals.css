@@ -5,59 +5,65 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98.6%;
-    --foreground: 30 11% 25%;
-    --card: 40 30% 99%;
-    --card-foreground: 30 11% 25%;
-    --popover: 40 30% 98%;
-    --popover-foreground: 30 11% 25%;
-    --primary: 290 44% 35%; /* Purple for active sidebar text */
-    --primary-foreground: 210 20% 98%;
-    
-    /* Buttons use secondary colors */
-    --secondary: 39 31% 88%; /* #E5DFD1 */
-    --secondary-foreground: 30 11% 30%; /* #5E4B3B */
-    
-    --muted: 39 27% 90%;
-    --muted-foreground: 29 21% 47%; /* Subheading color */
-    
-    --accent: 258 43% 92%; /* Light purple for active sidebar bg */
-    --accent-foreground: 290 44% 35%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 39 27% 85%;
-    --input: 39 27% 85%;
-    --ring: 290 44% 35%;
-    --radius: 0.75rem;
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
 
-    /* Custom variables */
-    --heading-color: 28 7% 51%; /* #88796E */
-    --sidebar-background: 258 43% 95%; /* #F0EEF3 */
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+ 
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
+ 
+    --radius: 0.5rem;
   }
 
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
-    --card: 224 71.4% 8%;
+
+    --card: 224 71.4% 4.1%;
     --card-foreground: 210 20% 98%;
+
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 290 44% 35%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 39 31% 88%;
-    --secondary-foreground: 30 11% 30%;
+
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
+
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 15.8% 54.9%;
-    --accent: 258 43% 92%;
+
+    --accent: 215 27.9% 16.9%;
     --accent-foreground: 210 20% 98%;
+
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
+    --destructive-foreground: 210 20% 98%;
+
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 290 44% 35%;
-    --heading-color: 210 20% 98%;
-    --sidebar-background: 224 71.4% 6%;
+    --ring: 210 20% 98%;
   }
 }
 

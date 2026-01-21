@@ -22,10 +22,10 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-  className={cn(
-    "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-    className
-  )}    
+    className={cn(
+      "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}    
     {...props}
   />
 ))
@@ -40,13 +40,13 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full h-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full h-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card text-card-foreground p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-lg",
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary z-50">
+      <DialogPrimitive.Close className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary z-50">
         <X className="h-5 w-5" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -115,7 +115,6 @@ interface CustomFormDialogProps {
   description?: string;
   children: React.ReactNode;
   rightComponent?: React.ReactNode;
-  color?: string;
 }
 
 export function CustomFormDialog({
@@ -125,51 +124,25 @@ export function CustomFormDialog({
   description,
   children,
   rightComponent,
-  color = "var(--primary-purple)",
 }: CustomFormDialogProps) {
-  const [isAnimating, setIsAnimating] = React.useState(false);
-
-  React.useEffect(() => {
-    if (open) {
-      setIsAnimating(true);
-    }
-  }, [open]);
-
-  const handleClose = () => {
-    setIsAnimating(false);
-    // Wait for animation to complete before actually closing
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogPrimitive.Portal>
-        <DialogOverlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogOverlay />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none",
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg border-0 shadow-2xl focus:outline-none",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
               : "w-full max-w-md max-h-[85vh]"
           )}
-          style={{
-            '--input-border-color': color,
-          } as React.CSSProperties}
         >
-          {/* Accessible title for screen readers */}
-          <DialogPrimitive.Title className="sr-only">
-            {title}
-          </DialogPrimitive.Title>
-          
-          {/* Curtain Animation Container */}
-          <div className={`relative w-full h-full grid grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''} ${isAnimating ? 'animate-curtain-open' : 'animate-curtain-close'}`}>
-            {/* Left Panel - Form */}            
-            <div className="relative flex flex-col h-full overflow-hidden bg-background">
-              {/* Close Button - Top Right of Left Panel */}
-              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full p-2 bg-black/10 hover:bg-black/20 transition-colors z-50">
-                <X className="h-5 w-5 text-black" />
+          <div className={`grid h-full w-full grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''}`}>
+            <div className="relative flex flex-col h-full overflow-hidden bg-card text-card-foreground">
+              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50">
+                <X className="h-5 w-5" />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
 
@@ -177,36 +150,32 @@ export function CustomFormDialog({
                 "flex flex-col h-full",
                 rightComponent ? "p-8 md:p-12 lg:p-16" : "p-8 md:p-10"
               )}>
-                {/* Header - Fixed at top */}
                 <div className={cn(
                   "flex-shrink-0",
                   rightComponent ? "mb-8" : "mb-6"
                 )}>
                   <h2 
                     className={cn(
-                      "font-normal text-left mb-3 text-black",
+                      "font-normal text-left mb-3 text-foreground",
                       rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
                     )}
                     style={{ fontFamily: 'Canicule Display, serif' }}
-                    aria-hidden="true"
                   >
                     {title}
                   </h2>
                   {description && (
-                    <p className="text-left text-base text-gray-600">{description}</p>
+                    <p className="text-left text-base text-muted-foreground">{description}</p>
                   )}
                 </div>
                 
-                {/* Children container */}
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 overflow-y-auto">
                   {children}
                 </div>
               </div>
             </div>
 
-            {/* Right Panel - Custom Component */}
             {rightComponent && (
-              <div className="relative hidden md:block overflow-hidden">
+              <div className="relative hidden md:block overflow-hidden rounded-r-lg">
                 {rightComponent}
               </div>
             )}

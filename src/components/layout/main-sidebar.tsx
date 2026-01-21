@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -20,21 +19,21 @@ export default function MainSidebar() {
     ];
 
     return (
-        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r bg-sidebar sm:flex sidebar-bg-default">
-            <div className="flex h-full flex-col">
-                <div className="flex h-[88px] items-center justify-center border-b" style={{ borderColor: 'var(--default-color-border)' }}>
+        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r sm:flex bg-background">
+            <div className="flex h-full flex-col p-2">
+                <div className="flex h-[76px] items-center justify-center">
                     <div className="flex items-center justify-center">
-                        <img src="/favicon.svg" alt="Kyozo" width={48} height={48} />
+                        <Image src="/logo-icon.svg" alt="Kyozo" width={48} height={48} />
                     </div>
                 </div>
                 
-                <nav className="flex flex-col items-center py-2">
+                <nav className="flex flex-col items-center gap-y-2">
                     {navItems.map((item) => (
                         <SidebarNavItem 
                             key={item.label} 
                             href={item.href} 
                             icon={item.icon}
-                            className="w-full justify-center my-1"
+                            className="w-full justify-center"
                         >
                             <span className="sr-only">{item.label}</span>
                         </SidebarNavItem>

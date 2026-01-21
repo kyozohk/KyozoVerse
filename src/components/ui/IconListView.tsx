@@ -132,15 +132,17 @@ export function IconListView({
   return (
     <div className="p-4 md:p-8 space-y-4 bg-background">
        <div className="flex justify-between items-center mb-4">
-        <div className="relative flex-grow mr-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-                placeholder="Search by name..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-12 pr-4 py-2 bg-card border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0 text-base w-full"
-            />
-        </div>
+       <div className="relative flex-grow mr-4">
+       <div className="flex items-center bg-card border rounded-lg focus-within:border-primary transition-colors">
+         <Search className="h-5 w-5 text-muted-foreground ml-4" />
+         <Input
+           placeholder="Search by name..."
+           value={searchTerm}
+           onChange={(e) => onSearchChange(e.target.value)}
+           className="pl-4 pr-4 py-2 bg-transparent border-none focus-visible:ring-0 text-base w-full"
+         />
+       </div>
+     </div>
         <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
             <Button
                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
