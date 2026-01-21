@@ -20,7 +20,7 @@ export function CommunityListItem({ community }: { community: Community }) {
     const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
   
     return (
-        <Link href={`/${community.handle}`}>
+        <Link href={`/${community.handle}`} className="block">
             <Card className="hover:bg-accent/50 transition-colors">
                 <CardContent className="p-6 grid grid-cols-12 gap-4 items-center">
                     {/* Community Info (4 columns) */}
