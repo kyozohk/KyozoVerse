@@ -154,7 +154,7 @@ export function CustomFormDialog({
             "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 rounded-lg overflow-hidden shadow-2xl focus:outline-none",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
-              : "w-full max-w-[50vw] max-h-[85vh]"
+              : "w-full max-w-md max-h-[85vh]"
           )}
           style={{
             '--input-border-color': color,
@@ -183,8 +183,8 @@ export function CustomFormDialog({
               </DialogPrimitive.Close>
 
               <div className={cn(
-                "flex flex-col h-full overflow-y-auto",
-                rightComponent ? "p-8 md:p-12 lg:p-16" : "p-6 md:p-8"
+                "flex flex-col h-full",
+                rightComponent ? "p-8 md:p-12 lg:p-16" : "p-8 md:p-10"
               )}>
                 {/* Header - Fixed at top */}
                 <div className={cn(
@@ -206,8 +206,8 @@ export function CustomFormDialog({
                   )}
                 </div>
                 
-                {/* Form Content - Scrollable */}
-                <div className="flex-grow overflow-y-auto pt-4 -mt-4">
+                {/* Children container */}
+                <div className="flex-1 min-h-0">
                   {children}
                 </div>
               </div>

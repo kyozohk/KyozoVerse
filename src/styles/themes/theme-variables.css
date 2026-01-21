@@ -1,3 +1,4 @@
+
 /* Font declarations */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
 
@@ -12,6 +13,41 @@
 /* Fallback fonts similar to Canicule Display */
 :root {
   --display-font: 'Canicule Display', 'Playfair Display', 'Times New Roman', serif;
+  --primary-purple: #843484;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-tertiary: #9CA3AF;
+  --button-border: #D1D5DB; /* A medium sandy color */
+  --waitlist-color: #C170CF; /* Light purple for waitlist buttons */
+  
+  --gradient-start: #A07FBD;
+  --gradient-end: #23AF98;
+  
+  /* Theme colors for different sections */
+  --overview-color-active: #843484;
+  --overview-color-border: rgba(132, 52, 132, 0.2);
+  --members-color-active: #06C4B5;
+  --members-color-border: rgba(6, 196, 181, 0.2);
+  --broadcast-color-active: #E1B327;
+  --broadcast-color-border: rgba(225, 179, 39, 0.2);
+  --inbox-color-active: #699FE5;
+  --inbox-color-border: rgba(105, 159, 229, 0.2);
+  --feed-color-active: #CF7770;
+  --feed-color-border: rgba(207, 119, 112, 0.2);
+  
+  --communities-color-active: #843484;
+  --communities-color-border: rgba(132, 52, 132, 0.2);
+  --analytics-color-active: #06C4B5;
+  --analytics-color-border: rgba(6, 196, 181, 0.2);
+  --subscription-color-active: #E1B327;
+  --subscription-color-border: rgba(225, 179, 39, 0.2);
+  --settings-color-active: #699FE5;
+  --settings-color-border: rgba(105, 159, 229, 0.2);
+  --waitlist-color-active: #CF7770;
+  --waitlist-color-border: rgba(207, 119, 112, 0.2);
+  
+  --default-color-active: #843484;
+  --default-color-border: rgba(132, 52, 132, 0.2);
 }
 
 .font-dm-sans {

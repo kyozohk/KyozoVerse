@@ -39,7 +39,7 @@ export default function Home() {
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpError, setSignUpError] = useState<string | null>(null);
-  const { user, signIn, signOut, signUp } = useAuth();
+  const { user, signIn, signOut, signUp, loading } = useAuth();
 
   useEffect(() => {
     // If the user is logged in (owner/leader), redirect them to the communities dashboard
@@ -121,7 +121,7 @@ export default function Home() {
         let description = "An unexpected error occurred. Please try again.";
         if (error instanceof FirebaseError) {
             if (error.code === 'auth/email-already-in-use') {
-                description = "This email is already registered. Please sign in instead.";
+                description = "This email is already in use. Please sign in instead.";
             } else if (error.code === 'auth/invalid-email') {
                 description = "Invalid email address.";
             } else if (error.code === 'auth/weak-password') {
@@ -133,7 +133,7 @@ export default function Home() {
   };
   
     // If the user is logged in, we render null while the useEffect redirects
-    if (user) {
+    if (user || loading) {
         return null;
     }
 
@@ -239,7 +239,7 @@ export default function Home() {
         color={THEME_COLORS.overview.primary}
       >
         <div className="flex flex-col h-full">
-          <div className="flex-grow">
+          <div className="flex-grow overflow-y-auto pr-2">
             <div className="space-y-4">
               <Input 
                 label="Email" 
@@ -262,15 +262,15 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="mt-6">
+          <div className="mt-6 flex-shrink-0">
             <div className="mb-4">
               <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
             </div>
 
-            <div className="text-center text-sm text-secondary mt-4">
+            <div className="text-center text-sm text-muted-foreground mt-4">
               Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button>
             </div>
-            <div className="text-center text-sm text-secondary mt-2">
+            <div className="text-center text-sm text-muted-foreground mt-2">
               Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>
@@ -285,8 +285,8 @@ export default function Home() {
         backgroundImage="/bg/light_app_bg.png"
         color="#843484"
       >
-        <div className="space-y-6">
-          <div className="space-y-4">
+        <div className="flex flex-col h-full">
+            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="First Name"
@@ -349,15 +349,15 @@ export default function Home() {
             </div>
           )}
           
-          <div className="mt-6">
+          <div className="mt-6 flex-shrink-0">
             <div className="mb-4">
               <CustomButton onClick={handleSignUp} className="w-full">Create Account</CustomButton>
             </div>
 
-            <div className="text-center text-sm text-secondary mt-4">
+            <div className="text-center text-sm text-muted-foreground mt-4">
               Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button>
             </div>
-            <div className="text-center text-sm text-secondary mt-2">
+            <div className="text-center text-sm text-muted-foreground mt-2">
               Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>

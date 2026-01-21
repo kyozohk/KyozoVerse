@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -49,7 +50,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
       <div className="flex flex-col h-full">
         {!isSubmitted ? (
           <>
-            <div className="flex-grow">
+            <div className="flex-grow overflow-y-auto pr-2">
               <Input
                 label="Email"
                 type="email"
@@ -58,7 +59,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
               />
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
-            <div className="mt-8">
+            <div className="mt-8 flex-shrink-0">
               <div className="mb-4">
                 <CustomButton 
                   onClick={handleSubmit} 
@@ -77,7 +78,7 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
           </>
         ) : (
           <div className="flex-grow flex items-center justify-center">
-            <div className="text-center text-sm text-secondary">
+            <div className="text-center text-sm text-muted-foreground">
                 Didn't receive the email?{' '}
                 <button type="button" className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleResend} disabled={resendStatus === 'sending' || resendStatus === 'sent'}>
                   {resendStatus === 'idle' && 'Resend'}
