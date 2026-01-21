@@ -9,11 +9,18 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  signInAnonymously as firebaseSignInAnonymously
+  signInAnonymously as firebaseSignInAnonymously,
+  initializeAuth,
+  browserLocalPersistence,
+  inMemoryPersistence
 } from 'firebase/auth';
 import { app } from './config';
 
-export const auth = getAuth(app);
+// Conditionally initialize Auth based on the environment
+const auth = typeof window !== 'undefined'
+  ? getAuth(app)
+  : initializeAuth(app, { persistence: inMemoryPersistence });
+
 const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = () => {
@@ -44,3 +51,5 @@ export const signInAnonymously = async (): Promise<any> => {
 export const resetPassword = (email: string) => {
   return sendPasswordResetEmail(auth, email);
 };
+
+export { auth };
