@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -248,9 +247,7 @@ export default function CommunityFeedPage() {
           }
         />
       )}
-      {/* style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }} */}
-      <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" >
-        {/* 70% gray overlay */}        
+      <div className="min-h-screen relative">
         {/* Content Area */}
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 pt-8 pb-12">
           <FeedStats posts={posts} />

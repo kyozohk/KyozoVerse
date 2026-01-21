@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -23,13 +24,7 @@ export default function JoinCommunityPage() {
   }, [handle, searchParams, router]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gray-100">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/bg/light_app_bg.png)' }}
-      />
-      
+    <div className="min-h-screen relative overflow-hidden">
       {/* Loading content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-200">

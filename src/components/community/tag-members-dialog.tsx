@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -190,12 +189,7 @@ export function TagMembersDialog({
   // Create right panel component showing selected members
   const rightPanel = (
     <div 
-      className="h-full p-6 overflow-y-auto relative"
-      style={{
-        backgroundImage: 'url(/bg/light_app_bg.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
+      className="h-full p-6 overflow-y-auto relative bg-background"
     >
       {/* 10% transparent black overlay */}
       <div className="absolute inset-0 bg-black/10 pointer-events-none" />

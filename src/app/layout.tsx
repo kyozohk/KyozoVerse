@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { Inter } from 'next/font/google'
 import './globals.css';
@@ -24,13 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body 
-        className="font-body antialiased" 
-        style={{
-          backgroundImage: `url('/bg/light_app_bg.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
+        className="font-body antialiased"
       >
         <FirebaseClientProvider firebase={getFirebase()}>
           <ProLayoutClient>

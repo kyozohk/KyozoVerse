@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -54,7 +55,6 @@ export function WhatsAppMessageDialog({
       onClose={handleClose}
       title="Send WhatsApp Message"
       description={`Send a message to ${recipientName}`}
-      backgroundImage="/bg/light_app_bg.png"
       color="#25D366" // WhatsApp green
     >
       <div className="flex flex-col h-full gap-4">

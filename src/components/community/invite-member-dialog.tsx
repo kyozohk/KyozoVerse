@@ -222,7 +222,6 @@ Looking forward to seeing you there!`;
       onClose={onClose}
       title="Invite Member"
       description={`Invite someone to join ${community.name}`}
-      backgroundImage="/bg/light_app_bg.png"
       color="#843484"
     >
       <div className="space-y-5">

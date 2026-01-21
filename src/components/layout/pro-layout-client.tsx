@@ -139,14 +139,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
         
         {isCommunityPage && <CommunitySidebar />}
         
-        <SidebarInset 
-          style={{ 
-            backgroundImage: `url('/bg/light_app_bg.png')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+        <SidebarInset>
           {children}
         </SidebarInset>
       </div>

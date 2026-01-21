@@ -114,7 +114,6 @@ interface CustomFormDialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  backgroundImage?: string;
   rightComponent?: React.ReactNode;
   color?: string;
 }
@@ -125,7 +124,6 @@ export function CustomFormDialog({
   title,
   description,
   children,
-  backgroundImage = "/bg/light_app_bg.png",
   rightComponent,
   color = "var(--primary-purple)",
 }: CustomFormDialogProps) {
@@ -167,15 +165,8 @@ export function CustomFormDialog({
           
           {/* Curtain Animation Container */}
           <div className={`relative w-full h-full grid grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''} ${isAnimating ? 'animate-curtain-open' : 'animate-curtain-close'}`}>
-            {/* Left Panel - Form */}
-            <div 
-              className="relative flex flex-col h-full overflow-hidden"
-              style={{
-                backgroundImage: `url(${backgroundImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
+            {/* Left Panel - Form */}            
+            <div className="relative flex flex-col h-full overflow-hidden bg-background">
               {/* Close Button - Top Right of Left Panel */}
               <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full p-2 bg-black/10 hover:bg-black/20 transition-colors z-50">
                 <X className="h-5 w-5 text-black" />

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -153,7 +154,6 @@ export function EmailSendDialog({
       onClose={onClose}
       title="Send Email"
       description={`Send email to ${selectedMembers.length} selected member${selectedMembers.length !== 1 ? 's' : ''}`}
-      backgroundImage="/bg/light_app_bg.png"
       color={THEME_COLORS.broadcast.primary}
     >
       <div className="flex flex-col h-full">

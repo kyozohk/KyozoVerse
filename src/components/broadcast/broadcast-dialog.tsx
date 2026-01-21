@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -555,7 +556,6 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       onClose={onClose}
       title={title}
       description={subtitle}
-      backgroundImage="/bg/light_app_bg.png"
       color={THEME_COLORS.broadcast.primary}
     >
       <div className="flex flex-col h-full">

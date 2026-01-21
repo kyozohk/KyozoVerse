@@ -44,7 +44,6 @@ export function ResetPasswordDialog({ open, onClose, onGoBack }: { open: boolean
       onClose={onClose}
       title={isSubmitted ? "Check your inbox" : "Reset your password"}
       description={isSubmitted ? `We've sent a password reset link to ${email}.` : "Enter the email address associated with your account and we'll send you a link to reset your password."}
-      backgroundImage="/bg/light_app_bg.png"
       color={THEME_COLORS.overview.primary}
     >
       <div className="flex flex-col h-full">

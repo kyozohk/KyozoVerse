@@ -20,6 +20,7 @@ import ScrollRevealText from '@/components/landing/scroll-reveal-text';
 import AnimatedTitle from '@/components/landing/animated-title';
 import BottomText from '@/components/landing/bottom-text';
 import { THEME_COLORS } from '@/lib/theme-colors';
+import { Loader2 } from 'lucide-react';
 
 
 export default function Home() {
@@ -134,7 +135,11 @@ export default function Home() {
   
     // If the user is logged in, we render null while the useEffect redirects
     if (user || loading) {
-        return null;
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
     }
 
   return (
@@ -235,7 +240,6 @@ export default function Home() {
         onClose={() => setIsSignInOpen(false)}
         title="Welcome Back"
         description="Sign in to access your Kyozo dashboard and community."
-        backgroundImage="/bg/light_app_bg.png"
         color={THEME_COLORS.overview.primary}
       >
         <div className="flex flex-col h-full">
@@ -282,7 +286,6 @@ export default function Home() {
         onClose={() => setIsSignUpOpen(false)}
         title="Create Your Account"
         description="Sign up to create and manage your own communities on Kyozo."
-        backgroundImage="/bg/light_app_bg.png"
         color="#843484"
       >
         <div className="flex flex-col h-full">
