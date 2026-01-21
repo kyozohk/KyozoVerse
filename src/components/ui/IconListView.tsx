@@ -43,7 +43,7 @@ function IconViewItem({
     onToggleSelect?: (id: string) => void 
 }) {
   const content = (
-    <div className="relative flex flex-col items-center text-center p-4 border rounded-lg h-full bg-white shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative flex flex-col items-center text-center p-4 border rounded-lg h-full bg-white shadow-sm hover:shadow-md transition-shadow w-[22rem]">
       {selectable && onToggleSelect && (
         <Checkbox
           checked={selected}
@@ -51,7 +51,7 @@ function IconViewItem({
           className="absolute top-4 left-4"
         />
       )}
-      <Avatar className="h-20 w-20 mb-4 mt-8">
+      <Avatar className="h-24 w-24 mb-4 mt-8">
         <AvatarImage src={item.avatarUrl} alt={item.name} />
         <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
       </Avatar>
@@ -72,7 +72,7 @@ function IconViewItem({
 
 function ListItemView({ item, selectable, selected, onToggleSelect }: { item: IconListItem, selectable?: boolean, selected?: boolean, onToggleSelect?: (id: string) => void }) {
     const content = (
-        <div className="flex items-center p-2 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center p-2 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow w-full h-28">
             {selectable && onToggleSelect && (
                 <Checkbox
                 checked={selected}
@@ -80,7 +80,7 @@ function ListItemView({ item, selectable, selected, onToggleSelect }: { item: Ic
                 className="mr-4"
                 />
             )}
-            <Avatar className="h-12 w-12 mr-4">
+            <Avatar className="h-16 w-16 mr-4">
                 <AvatarImage src={item.avatarUrl} alt={item.name} />
                 <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
             </Avatar>
@@ -131,37 +131,37 @@ export function IconListView({
 
   return (
     <div className="p-4 md:p-8 space-y-4 bg-gray-50">
-      <div className="flex justify-between items-center mb-4 bg-white p-2 rounded-lg border border-gray-200">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <Input
-            placeholder="Search by name..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-12 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
-          />
+       <div className="flex justify-between items-center mb-4">
+        <div className="relative flex-grow mr-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+                placeholder="Search by name..."
+                value={searchTerm}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-12 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0 text-base w-full"
+            />
         </div>
         <div className="flex items-center gap-1 rounded-md bg-gray-100 p-1">
-          <Button
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-            size="icon"
-            onClick={() => onViewModeChange('list')}
-            className="h-9 w-9"
-          >
-            <List className="h-5 w-5" />
-          </Button>
-          <Button
-            variant={viewMode === 'icon' ? 'secondary' : 'ghost'}
-            size="icon"
-            onClick={() => onViewModeChange('icon')}
-            className="h-9 w-9"
-          >
-            <LayoutGrid className="h-5 w-5 text-purple-600" />
-          </Button>
+            <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="icon"
+                onClick={() => onViewModeChange('list')}
+                className="h-9 w-9"
+            >
+                <List className="h-5 w-5" />
+            </Button>
+            <Button
+                variant={viewMode === 'icon' ? 'secondary' : 'ghost'}
+                size="icon"
+                onClick={() => onViewModeChange('icon')}
+                className="h-9 w-9"
+            >
+                <LayoutGrid className="h-5 w-5 text-purple-600" />
+            </Button>
         </div>
-      </div>
+    </div>
       {viewMode === 'icon' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="flex flex-wrap gap-4">
           {filteredData.map(item => (
             <IconViewItem 
                 key={item.id} 
@@ -173,7 +173,7 @@ export function IconListView({
         ))}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {filteredData.map(item => (
             <ListItemView 
                 key={item.id} 

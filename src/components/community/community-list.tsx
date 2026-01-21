@@ -28,6 +28,8 @@ export function CommunityList({ communities }: CommunityListProps) {
     href: `/${community.handle}`,
   }));
 
+  console.log('Items passed to IconListView:', communityItems);
+
   return (
     <div className="p-8">
       <CommunityBanner 
