@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Suspense } from 'react';
 import { CommunityList } from '@/components/community/community-list';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
-import { CustomButton } from '@/components/ui/CustomButton';
+import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -26,7 +26,6 @@ export default function CommunitiesDashboardPage() {
     
     setLoading(true);
 
-    // Query for communities where user is the owner
     const communitiesRef = collection(db, 'communities');
     const ownedCommunitiesQuery = query(communitiesRef, where('ownerId', '==', user.uid));
 
@@ -36,22 +35,19 @@ export default function CommunitiesDashboardPage() {
         ...doc.data(),
       } as Community));
 
-      // Query for communities where user is a member
       const membersRef = collection(db, 'communityMembers');
       const memberQuery = query(membersRef, where('userId', '==', user.uid));
       
       const memberSnapshot = await getDocs(memberQuery);
       const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
       
-      // Filter out owned communities
       const nonOwnedMemberIds = memberCommunityIds.filter(
         id => !ownedCommunities.find(c => c.communityId === id)
       );
       
-      // Fetch community details for member communities (excluding owned ones)
       const memberCommunities: Community[] = [];
       if (nonOwnedMemberIds.length > 0) {
-        const batchSize = 30; // Firestore 'in' query limit is 30
+        const batchSize = 30;
         const batches = [];
         
         for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
@@ -71,7 +67,6 @@ export default function CommunitiesDashboardPage() {
         });
       }
       
-      // Combine and deduplicate communities
       const allCommunities = [...ownedCommunities, ...memberCommunities];
       const uniqueCommunities = Array.from(
         new Map(allCommunities.map(item => [item.communityId, item])).values()
@@ -84,12 +79,21 @@ export default function CommunitiesDashboardPage() {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribeOwned();
   }, [user]);
 
   return (
-    <div className="container mx-auto px-0 py-0">
+    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-foreground">Communities</h1>
+          <p className="text-muted-foreground mt-1">Manage your communities or create a new one.</p>
+        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <PlusCircle className="mr-2 h-4 w-4" /> Create Community
+        </Button>
+      </div>
+
       <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
         {loading ? (
           <div className="flex justify-center py-12">
