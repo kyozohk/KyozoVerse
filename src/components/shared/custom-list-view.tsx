@@ -6,6 +6,9 @@ import { Search, Grid, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { CommunityGridItem } from '../community/community-grid-item';
+import { CommunityListItem } from '../community/community-list-item';
+import { Community } from '@/lib/types';
 
 interface CustomListViewProps<T> {
   items: T[];
@@ -102,7 +105,7 @@ export function CustomListView<T extends { id: string }>({
             )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filteredItems.map((item) =>
               renderListItem(
                 item,

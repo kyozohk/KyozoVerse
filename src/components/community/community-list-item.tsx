@@ -21,7 +21,7 @@ export function CommunityListItem({ community }: { community: Community }) {
   
     return (
         <Link href={`/${community.handle}`}>
-            <Card className="hover:bg-accent transition-colors">
+            <Card className="hover:bg-accent/50 transition-colors">
                 <CardContent className="p-4 flex items-center gap-4">
                 <Avatar className="h-16 w-16 rounded-lg">
                     <AvatarImage src={community.communityProfileImage} alt={community.name} />
