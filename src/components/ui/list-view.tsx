@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { LayoutGrid, List, Search, UserPlus, Tag, X } from 'lucide-react';
 import { type CommunityTag } from '@/lib/community-tags';
 import { cn } from '@/lib/utils';
-import { getThemeForPath } from '@/lib/theme-utils';
+import { getThemeForPath, hexToRgba } from '@/lib/theme-utils';
 import { usePathname } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
@@ -100,24 +100,13 @@ export function ListView({
       )}
       <div className="flex items-center justify-between gap-4 mb-6 ">
           <div className="relative flex-grow">
-              <div className="flex items-center relative h-10 border rounded-md overflow-hidden" style={{ borderColor: activeColor }}>
-                  <div className="flex items-center justify-center h-full px-3">
-                      <Search 
-                          className="h-5 w-5" 
-                          style={{ color: activeColor }} 
-                      />
-                  </div>
-                  <input
-                      placeholder="Search by name..."
-                      value={searchTerm}
-                      onChange={(e) => onSearchChange(e.target.value)}
-                      className="flex-grow h-full border-0 focus:outline-none bg-transparent px-2"
-                      style={{ 
-                          color: activeColor,
-                          '--placeholder-color': hexToRgba(activeColor, 0.7)
-                      } as React.CSSProperties}
-                  />
-              </div>
+              <Input
+                  placeholder="Search by name..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  icon={<Search className="h-5 w-5" style={{ color: 'hsl(var(--foreground))' }} />}
+                  style={{ '--input-border-color': 'hsl(var(--foreground))', color: 'hsl(var(--foreground))', '--placeholder-color': 'hsl(var(--muted-foreground))' } as React.CSSProperties}
+              />
           </div>
           <div className="flex items-center gap-2">
             {actions}

@@ -61,7 +61,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
   }, [community.ownerId]);
 
   return (
-    <div className="relative p-6 md:p-8 text-white">
+    <div className="relative p-6 md:p-8 text-white bg-neutral-900">
       {community.communityBackgroundImage && (
         <Image
           src={community.communityBackgroundImage}
