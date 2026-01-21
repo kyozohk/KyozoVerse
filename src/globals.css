@@ -6,36 +6,34 @@
 @layer base {
   :root {
     --background: 40 33% 99%; /* #FDFCFA */
-    --foreground: 26 25% 30%; /* #5E4B3B */
+    --foreground: 26 15% 33%; /* #5E4B3B */
 
     --card: 40 33% 99%;
-    --card-foreground: 26 25% 30%;
+    --card-foreground: 26 15% 33%;
  
     --popover: 40 33% 99%;
-    --popover-foreground: 26 25% 30%;
+    --popover-foreground: 26 15% 33%;
  
     --primary: 40 27% 91%; /* #E5DFD1 - button bg */
-    --primary-foreground: 26 25% 30%; /* #5E4B3B - button text */
+    --primary-foreground: 26 15% 33%; /* #5E4B3B - button text */
 
     --secondary: 40 27% 91%; /* #E5DFD1 - for active toggles, etc. */
-    --secondary-foreground: 26 25% 30%;
+    --secondary-foreground: 26 15% 33%; /* #5E4B3B */
 
     --muted: 40 29% 95%; /* #F5F3F0 - lighter beige */
     --muted-foreground: 29 22% 49%; /* #8D7059 - subheadings */
 
     --accent: 31 29% 83%; /* #D4C5B4 - for hover/active sidebar */
-    --accent-foreground: 26 25% 30%;
+    --accent-foreground: 26 15% 33%; /* #5E4B3B */
  
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 31 29% 83%; /* #D4C5B4 */
     --input: 31 29% 83%;
-    --ring: 26 25% 30%;
+    --ring: 26 15% 33%;
  
     --radius: 0.5rem;
-
-    --heading-color: #88796E;
   }
 
   .dark {
@@ -79,9 +77,9 @@
     font-family: 'PT Sans', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    color: var(--heading-color);
+    color: #88796E;
   }
-  p {
-    @apply text-muted-foreground;
+  p, div, span {
+     color: #8D7059;
   }
 }

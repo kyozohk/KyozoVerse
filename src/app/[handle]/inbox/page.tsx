@@ -9,7 +9,6 @@ import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, updateD
 import { Avatar, AvatarFallback, AvatarImage, Card, Input } from '@/components/ui';
 import { Search, Send } from 'lucide-react';
 import { User, Community } from '@/lib/types';
-import { getThemeForPath } from '@/lib/theme-utils';
 import { MessagingServiceDropdown } from '@/components/inbox/messaging-service-dropdown';
 import { CommunityHeader } from '@/components/community/community-header';
 import { useAuth } from '@/hooks/use-auth';
@@ -53,7 +52,6 @@ export default function CommunityInboxPage() {
   const params = useParams();
   const pathname = usePathname();
   const handle = params?.handle as string;
-  const { activeColor } = getThemeForPath(pathname);
   
   const [communityMembers, setCommunityMembers] = useState<User[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -324,8 +322,8 @@ useEffect(() => {
       )}
       <div className="h-[calc(100vh-200px)] flex">
       {/* Left sidebar - Conversations list */}
-      <div className="w-80 border-r flex flex-col" style={{ borderColor: `${activeColor}70` }}>
-        <div className="p-4 border-b" style={{ borderColor: `${activeColor}70` }}>
+      <div className="w-80 border-r flex flex-col">
+        <div className="p-4 border-b">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -350,11 +348,7 @@ useEffect(() => {
             filteredConversations.map((conv) => (
               <div
                 key={conv.userId || conv.userPhone}
-                className="p-4 border-b cursor-pointer hover:bg-muted/20 transition-colors"
-                style={{ 
-                  borderColor: `${activeColor}70`,
-                  backgroundColor: selectedUserId === conv.userId ? `${activeColor}10` : 'transparent'
-                }}
+                className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${selectedUserId === conv.userId ? 'bg-muted' : ''}`}
                 onClick={() => setSelectedUserId(conv.userId)}
               >
                 <div className="flex items-start gap-3">
@@ -366,9 +360,9 @@ useEffect(() => {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold truncate" style={{ color: activeColor }}>{conv.userName}</p>
+                      <p className="font-semibold truncate">{conv.userName}</p>
                       {conv.unreadCount > 0 && (
-                        <span className="text-xs rounded-full px-2 py-0.5" style={{ backgroundColor: activeColor, color: 'white' }}>
+                        <span className="text-xs rounded-full px-2 py-0.5 bg-primary text-primary-foreground">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -392,7 +386,7 @@ useEffect(() => {
         {selectedUserId ? (
           <>
             {/* Chat header */}
-            <div className="p-4 border-b" style={{ borderColor: `${activeColor}70` }}>
+            <div className="p-4 border-b">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <Avatar>
@@ -402,7 +396,7 @@ useEffect(() => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold" style={{ color: activeColor }}>{selectedConversation?.userName}</p>
+                    <p className="font-semibold">{selectedConversation?.userName}</p>
                     <p className="text-sm text-muted-foreground">
                       {selectedConversation?.userPhone}
                     </p>
@@ -413,7 +407,6 @@ useEffect(() => {
                 <MessagingServiceDropdown
                   value={selectedService}
                   onChange={setSelectedService}
-                  activeColor={activeColor}
                 />
               </div>
             </div>
@@ -437,12 +430,11 @@ useEffect(() => {
                       }`}
                     >
                       <div
-                        className="max-w-[70%] rounded-lg px-4 py-2"
-                        style={
+                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
                           msg.direction === 'outgoing'
-                            ? { backgroundColor: activeColor, color: 'white' }
-                            : { backgroundColor: `${activeColor}15`, border: `1px solid ${activeColor}70`, color: '#1f2937' }
-                        }
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
                       >
                         {mediaUrl && (msg.messageType === 'image') && (
                           <img
@@ -458,12 +450,11 @@ useEffect(() => {
                         )}
                         
                         <p
-                          className="text-xs mt-1"
-                          style={{
-                            color: msg.direction === 'outgoing'
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(0, 0, 0, 0.5)'
-                          }}
+                          className={`text-xs mt-1 ${
+                            msg.direction === 'outgoing'
+                              ? 'text-primary-foreground/70'
+                              : 'text-muted-foreground'
+                          }`}
                         >
                           {msg.timestamp?.toDate?.()?.toLocaleTimeString() || 'Just now'}
                         </p>
@@ -475,20 +466,19 @@ useEffect(() => {
             </div>
 
             {/* Message input (placeholder) */}
-            <div className="p-4 border-t-1" style={{ borderColor: activeColor }}>
+            <div className="p-4 border-t">
               <div className="flex items-center gap-2">
                 <Input
                   placeholder="Type a message... (replies not yet supported)"
                   disabled
                   className="flex-1"
                 />
-                <button
+                <Button
                   disabled
-                  className="p-2 rounded-lg opacity-50 cursor-not-allowed"
-                  style={{ backgroundColor: activeColor, color: 'white' }}
+                  size="icon"
                 >
                   <Send className="h-5 w-5" />
-                </button>
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 Note: Direct replies are not yet supported. Use broadcast to send messages.

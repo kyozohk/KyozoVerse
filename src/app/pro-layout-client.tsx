@@ -22,7 +22,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-import { getThemeForPath, mainNavItems } from '@/lib/theme-utils';
+import { mainNavItems } from '@/lib/theme-utils';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 
 export default function ProLayoutClient({ children }: { children: React.ReactNode }) {
@@ -32,7 +32,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   
   const isCommunityPage = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
-    return segments.length >= 1 && segments[0] !== 'communities' && segments[0] !== 'analytics' && segments[0] !== 'subscription' && segments[0] !== 'settings' && segments[0] !== 'account';
+    return segments.length >= 1 && !mainNavItems.some(item => item.href === `/${segments[0]}`);
   }, [pathname]);
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
@@ -74,27 +74,27 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   }
 
   if (!user) {
-    return null;
+    return <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>;
   }
   
   const fallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
-  const { activeColor, activeBgColor } = getThemeForPath(pathname);
-
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className="sidebar-shadow" style={{'--sidebar-active-bg': activeBgColor, '--sidebar-active-border': activeColor} as React.CSSProperties}>
+        <Sidebar className="sidebar-shadow bg-secondary">
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
-                <img src="/logo.svg" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
-                <img src="/favicon.svg" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
+                <Image src="/logo.svg" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
+                <Image src="/favicon.svg" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block scale-110" />
               </Link>
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <SidebarMenu>
+            <SidebarMenu className="py-4 space-y-2">
               {mainNavItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -103,8 +103,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
                         href={item.href}
                         icon={<Icon />}
                         isActive={pathname.startsWith(item.href)}
-                        activeColor={activeColor}
-                        activeBgColor={activeBgColor}
+                        className="py-3"
                     >
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </SidebarNavItem>
@@ -129,8 +128,6 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
                     href="#"
                     icon={<LogOut />}
                     onClick={handleLogout}
-                    activeColor={activeColor}
-                    activeBgColor={activeBgColor}
                 >
                     <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
                 </SidebarNavItem>

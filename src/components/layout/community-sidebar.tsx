@@ -18,13 +18,7 @@ import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
-
-const communityNavItems = [
-    { label: 'Dashboard', href: (handle: string) => `/${handle}`, icon: () => <div></div> },
-    { label: 'Members', href: (handle: string) => `/${handle}/members`, icon: () => <div></div> },
-    { label: 'Content', href: (handle: string) => `/${handle}/content`, icon: () => <div></div> },
-    { label: 'Channels', href: (handle: string) => `/${handle}/channels`, icon: () => <div></div> },
-];
+import { communityNavItems } from '@/lib/theme-utils';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
@@ -64,13 +58,16 @@ export default function CommunitySidebar() {
       
       const memberCommunities: Community[] = [];
       if (nonOwnedMemberIds.length > 0) {
-        const batchSize = 10;
+        const batchSize = 30; // Firestore 'in' query limit is 30
         const batches = [];
         
         for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
           const batch = nonOwnedMemberIds.slice(i, i + batchSize);
-          const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
-          batches.push(getDocs(communitiesQuery));
+          // Firestore `in` query requires a non-empty array.
+          if(batch.length > 0) {
+            const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
+            batches.push(getDocs(communitiesQuery));
+          }
         }
         
         const batchResults = await Promise.all(batches);
@@ -85,14 +82,18 @@ export default function CommunitySidebar() {
       }
       
       const allCommunities = [...ownedCommunities, ...memberCommunities];
-      setCommunities(allCommunities);
+      const uniqueCommunities = Array.from(
+        new Map(allCommunities.map(item => [item.communityId, item])).values()
+      );
+      
+      setCommunities(uniqueCommunities);
 
-      const currentCommunity = allCommunities.find(c => c.handle === handleFromPath);
+      const currentCommunity = uniqueCommunities.find(c => c.handle === handleFromPath);
       if (currentCommunity) {
         setSelectedCommunityHandle(currentCommunity.handle);
-      } else if (allCommunities.length > 0 && handleFromPath) {
-        const communityExists = allCommunities.some(c => c.handle === handleFromPath);
-        setSelectedCommunityHandle(communityExists ? handleFromPath : allCommunities[0]?.handle);
+      } else if (uniqueCommunities.length > 0 && handleFromPath) {
+        const communityExists = uniqueCommunities.some(c => c.handle === handleFromPath);
+        setSelectedCommunityHandle(communityExists ? handleFromPath : uniqueCommunities[0]?.handle);
       } else {
         setSelectedCommunityHandle(null);
       }
@@ -124,8 +125,8 @@ export default function CommunitySidebar() {
       }}
     >
       {showCommunityList && (
-        <div className="absolute inset-0 z-20 flex flex-col p-2">
-          <div className="flex h-[88px] items-center justify-between border-b px-2">
+        <div className="absolute inset-0 z-20 flex flex-col p-2 bg-background">
+          <div className="flex h-[80px] items-center justify-between border-b px-2">
             <h2 className="text-xl font-bold text-foreground">Communities</h2>
             <Button 
               variant="ghost" 
@@ -185,28 +186,24 @@ export default function CommunitySidebar() {
 
       {!showCommunityList && (
         <div className="relative z-10 flex h-full max-h-screen flex-col p-2">
-          <div className="flex h-[76px] items-center px-2">
+          <div className="flex h-[80px] items-center border-b">
             {loading ? (
               <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
               <button
                 onClick={() => setShowCommunityList(true)}
-                className="w-full h-full p-0 bg-transparent hover:opacity-80 transition-opacity"
+                className="w-full h-full px-2 bg-transparent hover:opacity-80 transition-opacity flex items-center gap-3"
               >
-                <div className="flex items-center gap-2 truncate min-h-20">
-                  <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                     <Avatar className="h-14 w-14 border-2 relative z-10">
-                      <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                      <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <span className="font-semibold text-lg text-foreground truncate">
-                    {selectedCommunity?.name}
-                  </span>
-                </div>
+                <Avatar className="h-10 w-10 border-2">
+                  <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                  <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold text-lg text-foreground truncate">
+                  {selectedCommunity?.name}
+                </span>
               </button>
             ) : (
-              <div className="w-full">
+              <div className="w-full px-2">
                 <Button variant="outline" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create Community
@@ -216,7 +213,7 @@ export default function CommunitySidebar() {
           </div>
 
           <div className="flex-1 py-2">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+            <nav className="grid items-start px-2 text-sm font-medium">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -225,7 +222,7 @@ export default function CommunitySidebar() {
                     href={item.href(selectedCommunityHandle)}
                     icon={<Icon />}
                     isActive={pathname === item.href(selectedCommunityHandle)}
-                    className="my-1"
+                    className="my-1 py-3"
                   >
                     {item.label}
                   </SidebarNavItem>

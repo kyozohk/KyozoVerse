@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Users, Edit, Mail, X, MessageCircle, Trash2, Phone } from 'lucide-react';
 import { MemberCard } from '../community/member-card';
-import { getThemeForPath } from '@/lib/theme-utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { Member } from '../broadcast/broadcast-types';
 import { Badge } from '@/components/ui';
@@ -40,16 +39,7 @@ export function MembersList({
 }: MembersListProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { activeColor } = getThemeForPath(pathname);
 
-  const hexToRgba = (hex: string, alpha: number) => {
-    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
-  
   if (members.length === 0) {
     return (
       <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -86,21 +76,13 @@ export function MembersList({
       <div className="col-span-full space-y-2">
         {members.map((member) => {
           const isSelected = selectedMembers.some((m) => 'userId' in m ? m.userId === member.userId : false);
-          const itemStyle: React.CSSProperties = {
-            '--hover-bg-color': hexToRgba(activeColor, 0.08),
-            borderColor: isSelected ? activeColor : hexToRgba(activeColor, 0.5),
-          } as any;
-          if (isSelected) {
-            itemStyle.backgroundColor = hexToRgba(activeColor, 0.1);
-            itemStyle.borderColor = activeColor;
-          }
+
           console.log(`🎨 [Members List] Rendering member: ${member.userDetails?.displayName}, Tags:`, member.tags);
 
           return (
             <div
               key={member.id}
-              className="flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-[var(--hover-bg-color)]"
-              style={itemStyle}
+              className={cn("flex items-center p-4 border rounded-lg transition-colors cursor-pointer hover:bg-muted/50", isSelected && "bg-muted border-primary")}
               onClick={() => handleNavigate(member)}
             >
               {selectable && (
@@ -210,7 +192,6 @@ export function MembersList({
             key={member.id}
             member={member}
             canManage={canManage}
-            borderColor={activeColor}
             onClick={() => handleNavigate(member)}
             onRemoveTag={onRemoveTag}
             selectable={selectable}

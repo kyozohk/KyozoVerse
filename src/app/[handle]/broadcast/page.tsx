@@ -16,7 +16,6 @@ import { getCommunityTags, type CommunityTag } from '@/lib/community-tags';
 import { ListView } from '@/components/ui/list-view';
 import { MembersList } from '@/components/community/members-list';
 import { Button } from '@/components/ui/button';
-import { getThemeForPath } from '@/lib/theme-utils';
 import { CommunityHeader } from '@/components/community/community-header';
 import { useAuth } from '@/hooks/use-auth';
 import { getUserRoleInCommunity } from '@/lib/community-utils';
@@ -25,7 +24,6 @@ export default function CommunityBroadcastPage() {
   const { user } = useAuth();
   const params = useParams();
   const handle = params.handle as string;
-  const pathname = usePathname();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -44,8 +42,6 @@ export default function CommunityBroadcastPage() {
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  const { activeColor } = getThemeForPath(pathname);
 
   // Fetch community and members data
   useEffect(() => {
@@ -241,7 +237,7 @@ export default function CommunityBroadcastPage() {
         onToggleTag={handleToggleTag}
         actions={
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={handleToggleSelectAll} style={{ color: activeColor }}>
+            <Button variant="ghost" size="icon" onClick={handleToggleSelectAll}>
               {allSelected ? <CopyX className="h-5 w-5" /> : <CopyCheck className="h-5 w-5" />}
             </Button>
           </div>

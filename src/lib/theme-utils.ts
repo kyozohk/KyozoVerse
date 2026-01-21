@@ -1,94 +1,114 @@
 
-import { 
-  LayoutGrid, 
-  BarChart, 
-  CreditCard, 
-  Settings, 
-  LayoutDashboard, 
-  Users, 
-  Megaphone, 
-  Inbox, 
-  Rss, 
-  Ticket, 
-  Plug,
-  UserCheck
+import {
+    LayoutGrid,
+    BarChart3,
+    CreditCard,
+    Settings,
+    Users,
+    Bell,
+    Inbox,
+    Rss,
+    Ticket,
+    Plug,
+    LayoutDashboard,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { THEME_COLORS, type CategoryKey } from './theme-colors';
 
+
 interface NavItem {
   href: string;
-  icon: LucideIcon;
   label: string;
-  section: string;
-}
-
-interface CommunityNavItem {
-    href: (handle: string) => string;
-    icon: LucideIcon;
-    label: string;
-    section: string;
+  icon: LucideIcon;
 }
 
 export const mainNavItems: NavItem[] = [
-    { href: '/communities', icon: LayoutGrid, label: 'Communities', section: 'communities' },
-    { href: '/waitlist', icon: UserCheck, label: 'Wait List', section: 'waitlist' },
-    { href: '/analytics', icon: BarChart, label: 'Analytics', section: 'analytics' },
-    { href: '/subscription', icon: CreditCard, label: 'Subscription', section: 'subscription' },
-    { href: '/settings', icon: Settings, label: 'Settings', section: 'settings' },
+    { href: '/communities', label: 'Communities', icon: LayoutGrid },
+    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/subscription', label: 'Subscription', icon: CreditCard },
+    { href: '/account', label: 'Settings', icon: Settings },
 ];
+
+interface CommunityNavItem {
+  href: (handle: string) => string;
+  label: string;
+  icon: LucideIcon;
+  section: string;
+}
 
 export const communityNavItems: CommunityNavItem[] = [
-    { href: (handle: string) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'overview' },
-    { href: (handle: string) => `/${handle}/members`, icon: Users, label: 'Members', section: 'members' },
-    { href: (handle: string) => `/${handle}/broadcast`, icon: Megaphone, label: 'Broadcast', section: 'broadcast' },
-    { href: (handle: string) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'inbox' },
-    { href: (handle: string) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'feed' },
-    { href: (handle: string) => `/${handle}/ticketing`, icon: Ticket, label: 'Ticketing', section: 'ticketing' },
-    { href: (handle: string) => `/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'integrations' },
-    { href: (handle: string) => `/${handle}/analytics`, icon: BarChart, label: 'Analytics', section: 'analytics' },
+    { href: (handle) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
+    { href: (handle) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
+    { href: (handle) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
+    { href: (handle) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
+    { href: (handle) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
+    { href: (handle) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
+    { href: (handle) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
+    { href: (handle) => `/${handle}/analytics`, icon: BarChart3, label: 'Analytics', section: 'analytics' },
 ];
 
-export function getThemeForPath(pathname: string) {
-    const pathSegments = pathname.split('/').filter(Boolean);
-
-    // Check main nav items first
-    if (pathSegments.length > 0) {
-        const topLevelPath = `/${pathSegments[0]}`;
-        const mainNavItem = mainNavItems.find(item => item.href === topLevelPath);
-        if (mainNavItem) {
-            const section = mainNavItem.section as CategoryKey;
-            const theme = THEME_COLORS[section] || THEME_COLORS.communities;
-            return {
-                activeColor: theme.primary,
-                activeBgColor: theme.bg,
-            };
-        }
+export const getThemeForPath = (pathname: string) => {
+    const segments = pathname.split('/').filter(Boolean);
+  
+    if (segments.length === 0) { // Root path
+      return {
+        activeColor: THEME_COLORS.overview.primary,
+        borderColor: THEME_COLORS.overview.border,
+      };
+    }
+  
+    const mainSegment = segments[0];
+  
+    // Check main navigation items first
+    const mainNavItem = mainNavItems.find(item => item.href === `/${mainSegment}`);
+    if (mainNavItem) {
+      const key = mainNavItem.label.toLowerCase() as CategoryKey;
+      const colors = THEME_COLORS[key] || THEME_COLORS.overview;
+      return {
+        activeColor: colors.primary,
+        borderColor: colors.border,
+      };
     }
     
-    // If not a main nav item, assume it's a community path
-    if (pathSegments.length > 0) {
-        const communitySubPath = pathSegments[1] || ''; // e.g., 'members', 'feed' or empty for overview
-        
-        const communityNavItem = communityNavItems.find(item => {
-            const itemSubPath = item.href('handle').split('/')[2] || '';
-            return itemSubPath === communitySubPath;
-        });
-
-        if (communityNavItem) {
-            const section = communityNavItem.section as CategoryKey;
-            const theme = THEME_COLORS[section] || THEME_COLORS.overview;
-            return {
-                activeColor: theme.primary,
-                activeBgColor: theme.bg,
-            };
-        }
+    // Check community sub-pages
+    if (segments.length > 1) {
+      const subSegment = segments[1];
+      const communityNavItem = communityNavItems.find(item => item.href('handle').endsWith(subSegment));
+      if (communityNavItem) {
+        const key = communityNavItem.section as CategoryKey;
+        const colors = THEME_COLORS[key] || THEME_COLORS.overview;
+        return {
+          activeColor: colors.primary,
+          borderColor: colors.border,
+        };
+      }
     }
-    
+  
+    // Fallback for community root (e.g. /[handle])
+    // If the path is /[something] and it's not a main nav item, assume it's a community page.
+    if (segments.length === 1 && !mainNavItem) {
+      const communityRootItem = communityNavItems.find(item => item.label === 'Overview');
+      if (communityRootItem) {
+          const key = communityRootItem.section as CategoryKey;
+          const colors = THEME_COLORS[key] || THEME_COLORS.overview;
+          return {
+              activeColor: colors.primary,
+              borderColor: colors.border,
+          };
+      }
+    }
+  
     // Default theme
-    const defaultTheme = THEME_COLORS.communities;
     return {
-        activeColor: defaultTheme.primary,
-        activeBgColor: defaultTheme.bg,
+      activeColor: THEME_COLORS.overview.primary,
+      borderColor: THEME_COLORS.overview.border,
     };
-}
+  };
+
+export const hexToRgba = (hex: string, alpha: number) => {
+    if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return 'rgba(0,0,0,0)';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};

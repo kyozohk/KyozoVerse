@@ -15,72 +15,8 @@ import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-const CommunityGridItem = (item: Community, isSelected: boolean, onSelect: () => void) => (
-  <Card key={item.communityId} className={cn("overflow-hidden transition-all hover:shadow-md flex flex-col", isSelected && "ring-2 ring-ring")}>
-    <Link href={`/${item.handle}`} className="block flex flex-col h-full">
-      <CardHeader className="p-0">
-        <div className="aspect-[4/3] relative bg-muted">
-          {item.communityProfileImage ? (
-            <Image
-              src={item.communityProfileImage}
-              alt={item.name}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              <Users className="h-12 w-12" />
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <h3 className="font-semibold text-lg truncate">{item.name}</h3>
-        {item.tagline && (
-          <p className="text-sm text-muted-foreground truncate mt-1">{item.tagline}</p>
-        )}
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Users className="h-4 w-4 mr-2" />
-          <span>{item.memberCount.toLocaleString()} members</span>
-        </div>
-      </CardFooter>
-    </Link>
-  </Card>
-);
-
-const CommunityListItem = (item: Community, isSelected: boolean, onSelect: () => void) => (
-  <Link key={item.communityId} href={`/${item.handle}`} className="block">
-    <Card className={cn("flex items-center p-4 transition-all hover:bg-secondary/50 rounded-xl border", isSelected && "ring-2 ring-ring bg-secondary")}>
-      <div className="w-16 h-16 relative rounded-md overflow-hidden bg-muted flex-shrink-0">
-        {item.communityProfileImage ? (
-          <Image
-            src={item.communityProfileImage}
-            alt={item.name}
-            fill
-            className="object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            <Users className="h-8 w-8" />
-          </div>
-        )}
-      </div>
-      <div className="ml-4 flex-grow min-w-0">
-        <h3 className="font-semibold text-lg truncate">{item.name}</h3>
-        {item.tagline && (
-          <p className="text-sm text-muted-foreground truncate">{item.tagline}</p>
-        )}
-        <div className="flex items-center text-sm text-muted-foreground mt-1">
-          <Users className="h-4 w-4 mr-2" />
-          <span>{item.memberCount.toLocaleString()} members</span>
-        </div>
-      </div>
-    </Card>
-  </Link>
-);
+import { CommunityGridItem } from '@/components/community/community-grid-item';
+import { CommunityListItem } from '@/components/community/community-list-item';
 
 export default function CommunitiesDashboardPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -122,8 +58,11 @@ export default function CommunitiesDashboardPage() {
         
         for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
           const batch = nonOwnedMemberIds.slice(i, i + batchSize);
-          const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
-          batches.push(getDocs(communitiesQuery));
+          // Firestore `in` query requires a non-empty array.
+          if(batch.length > 0) {
+            const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
+            batches.push(getDocs(communitiesQuery));
+          }
         }
         
         const batchResults = await Promise.all(batches);

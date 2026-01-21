@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
@@ -12,8 +12,8 @@ const sidebarNavItemVariants = cva(
   {
     variants: {
       state: {
-        default: 'text-[hsl(var(--foreground))] hover:text-primary hover:bg-accent',
-        active: 'text-primary bg-accent',
+        default: 'text-secondary-foreground/80 hover:text-secondary-foreground hover:bg-accent',
+        active: 'text-accent-foreground bg-accent',
       },
     },
     defaultVariants: {
@@ -27,8 +27,8 @@ const iconVariants = cva(
     {
         variants: {
             state: {
-                default: 'text-[hsl(var(--foreground))] group-hover:text-primary',
-                active: 'text-primary',
+                default: 'text-secondary-foreground/80 group-hover:text-secondary-foreground',
+                active: 'text-accent-foreground',
             }
         },
         defaultVariants: {
