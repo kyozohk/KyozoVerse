@@ -112,8 +112,8 @@ export default function CommunitiesDashboardPage() {
       </HeaderBanner>
       <CustomListView<Community & { id: string }>
         items={communities.map(c => ({ ...c, id: c.communityId }))}
-        renderGridItem={CommunityGridItem}
-        renderListItem={CommunityListItem}
+        renderGridItem={(community, isSelected, onSelect) => <CommunityGridItem key={community.id} community={community} />}
+        renderListItem={(community, isSelected, onSelect) => <CommunityListItem key={community.id} community={community} />}
         searchKeys={['name', 'tagline']}
         selectable={false}
       />
