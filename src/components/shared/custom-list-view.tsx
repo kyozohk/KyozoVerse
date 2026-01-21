@@ -105,7 +105,7 @@ export function CustomListView<T extends { id: string }>({
             )}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {filteredItems.map((item) =>
               renderListItem(
                 item,
