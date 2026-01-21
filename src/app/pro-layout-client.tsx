@@ -88,8 +88,8 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>
-                <Image src="/logo.png" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
-                <Image src="/favicon.png" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
+                <img src="/logo.svg" alt="Kyozo Logo" width={120} height={41} className="group-data-[collapsible=icon]:hidden" style={{ height: 'auto' }} />
+                <img src="/favicon.svg" alt="Kyozo Icon" width={41} height={41} className="hidden group-data-[collapsible=icon]:block" />
               </Link>
             </div>
           </SidebarHeader>
@@ -141,14 +141,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
         
         {isCommunityPage && <CommunitySidebar />}
         
-        <SidebarInset 
-          style={{ 
-            backgroundImage: `url('/bg/light_app_bg.png')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+        <SidebarInset>
           {children}
         </SidebarInset>
       </div>

@@ -269,7 +269,6 @@ export function MemberDialog({
       onClose={handleClose}
       title={existingUser ? 'User Found' : title}
       description={description}
-      backgroundImage="/bg/light_app_bg.png"
       color={THEME_COLORS.members.primary}
     >
       <div className="flex flex-col h-full">

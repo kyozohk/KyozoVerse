@@ -133,12 +133,6 @@ export default function CommunitySidebar() {
       }}
     >
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{ 
-          backgroundImage: `url('/bg/light_app_bg.png')`,
-        }}
-      />
-      <div 
         className="absolute inset-0 z-0"
         style={{
           backgroundColor: activeBgColor,

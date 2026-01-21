@@ -45,11 +45,6 @@ export function FeatureCard({
         reverse ? "md:flex-row-reverse" : "md:flex-row",
         className
       )}
-      style={{
-        backgroundImage: `url('/bg/light_app_bg.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
     >
       {/* Color Overlay */}
       <div className="absolute inset-0 z-0" style={overlayStyle}></div>

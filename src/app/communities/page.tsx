@@ -2,15 +2,85 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Suspense } from 'react';
-import { CommunityList } from '@/components/community/community-list';
+import Link from 'next/link';
+import Image from 'next/image';
+import { HeaderBanner } from '@/components/layout/header-banner';
+import { CustomListView } from '@/components/shared/custom-list-view';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Plus, Users, Loader2 } from 'lucide-react';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
+import { cn } from '@/lib/utils';
+
+const CommunityGridItem = (item: Community, isSelected: boolean, onSelect: () => void) => (
+  <Card key={item.communityId} className={cn("overflow-hidden transition-all hover:shadow-md flex flex-col", isSelected && "ring-2 ring-ring")}>
+    <Link href={`/${item.handle}`} className="block flex flex-col h-full">
+      <CardHeader className="p-0">
+        <div className="aspect-[4/3] relative bg-muted">
+          {item.communityProfileImage ? (
+            <Image
+              src={item.communityProfileImage}
+              alt={item.name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <Users className="h-12 w-12" />
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 flex-grow">
+        <h3 className="font-semibold text-lg truncate">{item.name}</h3>
+        {item.tagline && (
+          <p className="text-sm text-muted-foreground truncate mt-1">{item.tagline}</p>
+        )}
+      </CardContent>
+      <CardFooter className="p-4 pt-0">
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Users className="h-4 w-4 mr-2" />
+          <span>{item.memberCount.toLocaleString()} members</span>
+        </div>
+      </CardFooter>
+    </Link>
+  </Card>
+);
+
+const CommunityListItem = (item: Community, isSelected: boolean, onSelect: () => void) => (
+  <Link key={item.communityId} href={`/${item.handle}`} className="block">
+    <Card className={cn("flex items-center p-4 transition-all hover:bg-secondary/50 rounded-xl border", isSelected && "ring-2 ring-ring bg-secondary")}>
+      <div className="w-16 h-16 relative rounded-md overflow-hidden bg-muted flex-shrink-0">
+        {item.communityProfileImage ? (
+          <Image
+            src={item.communityProfileImage}
+            alt={item.name}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <Users className="h-8 w-8" />
+          </div>
+        )}
+      </div>
+      <div className="ml-4 flex-grow min-w-0">
+        <h3 className="font-semibold text-lg truncate">{item.name}</h3>
+        {item.tagline && (
+          <p className="text-sm text-muted-foreground truncate">{item.tagline}</p>
+        )}
+        <div className="flex items-center text-sm text-muted-foreground mt-1">
+          <Users className="h-4 w-4 mr-2" />
+          <span>{item.memberCount.toLocaleString()} members</span>
+        </div>
+      </div>
+    </Card>
+  </Link>
+);
 
 export default function CommunitiesDashboardPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -82,28 +152,32 @@ export default function CommunitiesDashboardPage() {
     return () => unsubscribeOwned();
   }, [user]);
 
-  return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-4xl font-bold" style={{ color: 'hsl(var(--heading-color))' }}>Communities</h1>
-          <p className="text-muted-foreground mt-1">Manage your communities or create a new one.</p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Community
-        </Button>
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
 
-      <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <CommunityList communities={communities} />
-        )}
-      </Suspense>
-      
+  return (
+    <div className="flex flex-col h-screen">
+      <HeaderBanner
+        title="Communities"
+        description="Manage your communities or create a new one."
+      >
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Community
+        </Button>
+      </HeaderBanner>
+      <CustomListView<Community & { id: string }>
+        items={communities.map(c => ({ ...c, id: c.communityId }))}
+        renderGridItem={CommunityGridItem}
+        renderListItem={CommunityListItem}
+        searchKeys={['name', 'tagline']}
+        selectable={false}
+      />
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
   );

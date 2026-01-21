@@ -309,7 +309,6 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
       onClose={onClose}
       title="Import Members"
       description={`Import members to ${community.name}`}
-      backgroundImage="/bg/light_app_bg.png"
       color="#843484"
     >
       <div className="flex flex-col h-full" style={{ maxWidth: '100vw', margin: '0 auto' }}>

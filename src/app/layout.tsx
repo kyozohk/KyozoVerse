@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: 'Kyozo Pro',
   description: 'Manage your communities on Kyozo.',
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.svg',
   },
 };
 

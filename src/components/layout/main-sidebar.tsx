@@ -24,7 +24,7 @@ export default function MainSidebar() {
             <div className="flex h-full flex-col">
                 <div className="flex h-[88px] items-center justify-center border-b" style={{ borderColor: 'var(--default-color-border)' }}>
                     <div className="flex items-center justify-center">
-                        <Image src="/logo-icon.svg" alt="Kyozo" width={48} height={48} />
+                        <img src="/favicon.svg" alt="Kyozo" width={48} height={48} />
                     </div>
                 </div>
                 

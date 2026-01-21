@@ -86,12 +86,7 @@ const SelectContent = React.forwardRef<
       {...props}
     >
       {useSidebarTheme && (
-        <div 
-          className="absolute inset-0 z-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('/bg/light_app_bg.png')` }}
-        >
-          <div className="absolute inset-0 z-10" style={{ backgroundColor: 'var(--sidebar-active-bg)' }}></div>
-        </div>
+        <div className="absolute inset-0 z-0" style={{ backgroundColor: 'var(--sidebar-active-bg)' }}></div>
       )}
       <div className="relative z-20 h-full">
         <SelectScrollUpButton />

@@ -56,16 +56,6 @@ export const SignupDialog: React.FC<SignupDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/bg/light_app_bg.png"
-            alt="Background"
-            fill
-            className="object-cover"
-          />
-        </div>
-
         {/* Close Button */}
         <button
           onClick={onClose}

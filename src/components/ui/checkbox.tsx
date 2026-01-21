@@ -43,10 +43,10 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             {...props}
           />
           <div className={cn("checkbox")} style={{ 
-            borderColor: checked ? '#C170CF' : '#C170CF', 
-            backgroundColor: checked ? '#C170CF' : 'transparent' 
+            borderColor: 'hsl(var(--primary))', 
+            backgroundColor: checked ? 'hsl(var(--primary))' : 'transparent' 
           }}>
-            <Check className="checkIcon" style={{ color: 'white', width: '14px', height: '14px' }} />
+            <Check className="checkIcon" style={{ color: checked ? 'hsl(var(--primary-foreground))' : 'transparent', width: '14px', height: '14px' }} />
           </div>
           {label && (
             <label htmlFor={id} className="checkboxLabel">
