@@ -15,7 +15,7 @@ import { Logo } from '../icons/logo';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-card px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-card px-4 sm:static sm:h-auto sm:border-0 sm:bg-background sm:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
@@ -24,7 +24,7 @@ export default function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
-          <nav className="grid gap-6 text-lg font-medium">
+          <nav className="grid gap-4 text-lg font-medium p-4">
             <Link
               href="#"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
@@ -34,25 +34,25 @@ export default function Header() {
             </Link>
             <Link
               href="#"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary-foreground"
             >
               Dashboard
             </Link>
             <Link
               href="#"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary-foreground"
             >
               Communities
             </Link>
              <Link
               href="#"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary-foreground"
             >
               Subscriptions
             </Link>
             <Link
               href="#"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary-foreground"
             >
               Settings
             </Link>

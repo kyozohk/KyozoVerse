@@ -10,7 +10,7 @@ export function CommunityCard({ community }: { community: Community }) {
   const displayTags = community.tags?.slice(0, 2) || [];
   const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
+    <Card className="hover:bg-accent transition-colors h-full">
       <CardHeader>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
