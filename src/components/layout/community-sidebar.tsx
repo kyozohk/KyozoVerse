@@ -15,7 +15,7 @@ import {
   AvatarFallback,
   AvatarImage,
   Skeleton,
-  CustomButton
+  Button
 } from '@/components/ui';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
@@ -71,7 +71,7 @@ export default function CommunitySidebar() {
       // Firestore 'in' query has a limit of 10 items, so batch the queries
       const memberCommunities: Community[] = [];
       if (nonOwnedMemberIds.length > 0) {
-        const batchSize = 10;
+        const batchSize = 30;
         const batches = [];
         
         for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
@@ -126,20 +126,16 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
+      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden bg-sidebar-background`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
         borderColor: activeColor,
       }}
     >
-      {/* Background with light_app_bg.png and color overlay */}
       <div 
-        className="absolute inset-0 z-0"
-        style={{
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{ 
           backgroundImage: `url('/bg/light_app_bg.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
         }}
       />
       <div 
@@ -148,23 +144,18 @@ export default function CommunitySidebar() {
           backgroundColor: activeBgColor,
         }}
       />
-
-      {/* Community List View (Full Height) */}
       {showCommunityList && (
-        <div className="absolute inset-0 z-20 flex flex-col" style={{ padding: '8px' }}>
-          {/* Header */}
-          <div className="flex h-[88px] items-center justify-between border-b px-2" style={{ borderColor: activeColor }}>
+        <div className="absolute inset-0 z-20 flex flex-col p-2">
+          <div className="flex h-[72px] items-center justify-between border-b px-2" style={{ borderColor: activeColor }}>
             <h2 className="text-xl font-bold text-foreground">Communities</h2>
-            <CustomButton 
-              variant="rounded-rect" 
-              size="small"
+            <Button 
+              variant="default"
+              size="sm"
               onClick={() => setIsCreateDialogOpen(true)}
             >
               <PlusCircle className="h-5 w-5" />
-            </CustomButton>
+            </Button>
           </div>
-
-          {/* Communities List */}
           <div className="flex-1 overflow-y-auto py-2">
             {loading ? (
               <div className="space-y-2 px-2">
@@ -181,31 +172,25 @@ export default function CommunitySidebar() {
                       className="w-full p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] relative group"
                       style={{
                         border: `2px solid ${isSelected ? activeColor : 'transparent'}`,
-                        backgroundColor: isSelected ? activeBgColor : 'transparent',
+                        backgroundColor: isSelected ? 'var(--accent)' : 'transparent',
                       }}
                     >
-                      {/* Hover effect */}
                       <div 
                         className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                         style={{
-                          backgroundColor: activeBgColor,
+                          backgroundColor: 'var(--accent)',
                           border: `2px solid ${activeColor}`,
                         }}
                       />
-                      
                       <div className="flex items-center gap-3 relative z-10">
                         <div className="relative rounded-full h-14 w-14 flex items-center justify-center flex-shrink-0">
-                          <div 
-                            className="absolute inset-0 rounded-full"
-                            style={{ backgroundColor: activeBgColor }}
-                          />
-                          <Avatar className="h-12 w-12 border-2 relative z-10">
+                          <Avatar className="h-12 w-12 border-2 relative z-10" style={{borderColor: activeColor}}>
                             <AvatarImage src={community.communityProfileImage} />
                             <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
                           </Avatar>
                           {isSelected && (
                             <span className="absolute -top-1 -left-1 bg-white rounded-full p-0.5 z-20">
-                              <Check className="h-4 w-4 text-black" />
+                              <Check className="h-4 w-4" style={{color: activeColor}}/>
                             </span>
                           )}
                         </div>
@@ -226,48 +211,37 @@ export default function CommunitySidebar() {
           </div>
         </div>
       )}
-
-      {/* Navigation View (Default) */}
       {!showCommunityList && (
-        <div className="relative z-10 flex h-full max-h-screen flex-col" style={{ padding: '0 8px' }}>
-          {/* Selected Community Header (Clickable) */}
-          <div className="flex h-[76px] items-center " style={{ borderColor: activeColor, padding: '0 8px' }}>
+        <div className="relative z-10 flex h-full max-h-screen flex-col">
+          <div className="flex h-[88px] items-center p-2">
             {loading ? (
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
               <button
                 onClick={() => setShowCommunityList(true)}
                 className="w-full h-full p-0 bg-transparent hover:opacity-80 transition-opacity"
               >
-                <div className="flex items-center gap-2 truncate min-h-20">
-                  <div className="relative rounded-full h-16 w-16 flex items-center justify-center">
-                    <div 
-                      className="absolute inset-0 rounded-full"
-                      style={{ backgroundColor: activeBgColor }}
-                    />
-                    <Avatar className="h-14 w-14 border-2 relative z-10">
-                      <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                      <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                    </Avatar>
-                  </div>
+                <div className="flex items-center gap-3 truncate px-2">
+                  <Avatar className="h-12 w-12 border-2" style={{borderColor: activeColor}}>
+                    <AvatarImage src={selectedCommunity?.communityProfileImage} />
+                    <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
+                  </Avatar>
                   <span className="font-semibold text-lg text-foreground truncate">
                     {selectedCommunity?.name}
                   </span>
                 </div>
               </button>
             ) : (
-              <div className="w-full">
-                <CustomButton variant="rounded-rect" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
-                  <PlusCircle className="mr-2 h-12 w-12" />
+              <div className="w-full px-2">
+                <Button variant="default" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
                   Create Community
-                </CustomButton>
+                </Button>
               </div>
             )}
           </div>
-
-          {/* Navigation Items */}
-          <div className="flex-1 py-2">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          <div className="flex-1 overflow-y-auto">
+            <nav className="grid items-start px-2 text-sm font-medium">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -276,8 +250,6 @@ export default function CommunitySidebar() {
                     href={item.href(selectedCommunityHandle)}
                     icon={<Icon />}
                     isActive={pathname === item.href(selectedCommunityHandle)}
-                    activeColor={activeColor}
-                    activeBgColor={activeBgColor}
                     className="my-1"
                   >
                     {item.label}
@@ -288,7 +260,6 @@ export default function CommunitySidebar() {
           </div>
         </div>
       )}
-
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
   );

@@ -7,7 +7,7 @@ import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { CustomButton } from "@/components/ui/CustomButton"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -263,7 +263,7 @@ const Sidebar = React.forwardRef<
            side === "right" && "border-r-0 border-l",
            variant === 'floating' && 'rounded-lg border shadow',
            variant === 'inset' && 'bg-transparent',
-           variant !== 'inset' && 'bg-[--sidebar-active-bg]',
+           variant !== 'inset' && 'bg-sidebar-background',
            className
            )}
            style={{borderColor: 'var(--sidebar-active-border)'}}
@@ -277,13 +277,13 @@ const Sidebar = React.forwardRef<
 Sidebar.displayName = "Sidebar"
 
 const SidebarTrigger = React.forwardRef<
-  React.ElementRef<typeof CustomButton>,
-  React.ComponentProps<typeof CustomButton>
+  React.ElementRef<typeof Button>,
+  React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <CustomButton
+    <Button
       ref={ref}
       data-sidebar="trigger"
       variant="default"
@@ -296,7 +296,7 @@ const SidebarTrigger = React.forwardRef<
     >
       <PanelLeft />
       <span className="sr-only">Toggle Sidebar</span>
-    </CustomButton>
+    </Button>
   )
 })
 SidebarTrigger.displayName = "SidebarTrigger"

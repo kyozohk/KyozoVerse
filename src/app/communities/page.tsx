@@ -86,10 +86,10 @@ export default function CommunitiesDashboardPage() {
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-foreground">Communities</h1>
+          <h1 className="text-4xl font-bold" style={{ color: 'hsl(var(--heading-color))' }}>Communities</h1>
           <p className="text-muted-foreground mt-1">Manage your communities or create a new one.</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Create Community
         </Button>
       </div>

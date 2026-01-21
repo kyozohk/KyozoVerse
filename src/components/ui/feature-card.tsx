@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { CustomButton } from './CustomButton';
+import { CustomButton } from '@/components/ui';
 import { hexToRgba } from '@/lib/theme-colors';
 
 interface FeatureCardProps {

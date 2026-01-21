@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, User, Bell, Shield, Palette } from 'lucide-react';
 import { Header } from '@/components/ui/header';
-import { CustomButton } from '@/components/ui/CustomButton';
+import { CustomButton } from '@/components/ui';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';

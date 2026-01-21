@@ -5,25 +5,34 @@
 @layer base {
   :root {
     --background: 40 30% 98%;
-    --foreground: 40 20% 25%;
+    --foreground: 30 11% 25%;
     --card: 40 30% 99%;
-    --card-foreground: 40 20% 25%;
+    --card-foreground: 30 11% 25%;
     --popover: 40 30% 98%;
-    --popover-foreground: 40 20% 25%;
-    --primary: 39 31% 78%;
-    --primary-foreground: 40 20% 20%;
-    --secondary: 39 27% 90%;
-    --secondary-foreground: 40 20% 30%;
+    --popover-foreground: 30 11% 25%;
+    --primary: 290 44% 35%; /* Purple for active sidebar text */
+    --primary-foreground: 210 20% 98%;
+    
+    /* Buttons use secondary colors */
+    --secondary: 39 31% 88%; /* #E5DFD1 */
+    --secondary-foreground: 30 11% 30%; /* #5E4B3B */
+    
     --muted: 39 27% 90%;
-    --muted-foreground: 40 20% 45%;
-    --accent: 39 27% 94%;
-    --accent-foreground: 40 20% 25%;
+    --muted-foreground: 29 21% 47%; /* Subheading color */
+    
+    --accent: 258 43% 92%; /* Light purple for active sidebar bg */
+    --accent-foreground: 290 44% 35%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 39 27% 85%;
     --input: 39 27% 85%;
-    --ring: 39 31% 78%;
+    --ring: 290 44% 35%;
     --radius: 0.75rem;
+
+    /* Custom variables */
+    --heading-color: 28 7% 51%; /* #88796E */
+    --sidebar-background: 258 43% 95%; /* #F0EEF3 */
   }
 
   .dark {
@@ -33,19 +42,21 @@
     --card-foreground: 210 20% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 39 31% 78%;
-    --primary-foreground: 40 20% 20%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
+    --primary: 290 44% 35%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 39 31% 88%;
+    --secondary-foreground: 30 11% 30%;
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 15.8% 54.9%;
-    --accent: 215 27.9% 20%;
+    --accent: 258 43% 92%;
     --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 85.7% 97.3%;
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 39 31% 78%;
+    --ring: 290 44% 35%;
+    --heading-color: 210 20% 98%;
+    --sidebar-background: 224 71.4% 6%;
   }
 }
 

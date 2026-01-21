@@ -8,12 +8,12 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors font-dm-sans',
+  'group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
   {
     variants: {
       state: {
-        default: 'text-[#3B3B3B] hover:text-[var(--active-color)] hover:bg-[var(--active-color-bg)]',
-        active: 'text-[var(--active-color)] bg-[var(--active-color-bg)]',
+        default: 'text-[hsl(var(--foreground))] hover:text-primary hover:bg-accent',
+        active: 'text-primary bg-accent',
       },
     },
     defaultVariants: {
@@ -27,8 +27,8 @@ const iconVariants = cva(
     {
         variants: {
             state: {
-                default: 'text-[#3B3B3B] group-hover:text-[var(--active-color)]',
-                active: 'text-[var(--active-color)]',
+                default: 'text-[hsl(var(--foreground))] group-hover:text-primary',
+                active: 'text-primary',
             }
         },
         defaultVariants: {
@@ -42,12 +42,10 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLAnchorElem
     icon: React.ReactElement;
     children: React.ReactNode;
     isActive?: boolean;
-    activeColor?: string;
-    activeBgColor?: string;
 }
 
 const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
-  ({ className, href, icon, children, isActive: isActiveProp, activeColor = '#763182', activeBgColor = 'rgba(132, 52, 132, 0.1)', ...props }, ref) => {
+  ({ className, href, icon, children, isActive: isActiveProp, ...props }, ref) => {
     const pathname = usePathname();
     const isActive = isActiveProp !== undefined ? isActiveProp : pathname === href;
 
@@ -56,10 +54,6 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
         <Link
           href={href}
           className={cn(sidebarNavItemVariants({ state: isActive ? 'active' : 'default' }), className)}
-          style={{ 
-              '--active-color': activeColor,
-              '--active-color-bg': activeBgColor
-          } as React.CSSProperties}
           ref={ref}
           {...props}
         >
