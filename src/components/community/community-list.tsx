@@ -8,6 +8,7 @@ import { CommunityCard } from './community-card';
 import { CreateCommunityDialog } from './create-community-dialog';
 import { CommunityBanner } from './community-banner';
 import { ListView } from '@/components/ui/list-view';
+import { IconListView } from '../ui/IconListView';
 
 interface CommunityListProps {
   communities: Community[];
@@ -31,7 +32,7 @@ export function CommunityList({ communities }: CommunityListProps) {
         onCreateClick={() => setIsCreateDialogOpen(true)} 
       />
       
-      <ListView
+      {/* <ListView
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         viewMode={viewMode}
@@ -45,7 +46,7 @@ export function CommunityList({ communities }: CommunityListProps) {
             <CommunityCard community={community} />
           </Link>
         ))}
-      </ListView>
+      </ListView> */}
       
       <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
     </div>
