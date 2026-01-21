@@ -22,31 +22,36 @@ export function CommunityListItem({ community }: { community: Community }) {
     return (
         <Link href={`/${community.handle}`}>
             <Card className="hover:bg-accent/50 transition-colors">
-                <CardContent className="p-4 flex items-center gap-4">
-                <Avatar className="h-16 w-16 rounded-lg">
-                    <AvatarImage src={community.communityProfileImage} alt={community.name} />
-                    <AvatarFallback>{community.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                    <div className="col-span-1">
+                <CardContent className="p-4 grid grid-cols-12 gap-4 items-center">
+                    {/* Community Info (4 columns) */}
+                    <div className="col-span-12 md:col-span-4 flex items-center gap-4">
+                        <Avatar className="h-16 w-16 rounded-lg flex-shrink-0">
+                            <AvatarImage src={community.communityProfileImage} alt={community.name} />
+                            <AvatarFallback>{community.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
                         <p className="font-semibold text-md">{community.name}</p>
                     </div>
-                    <div className="col-span-1 flex items-center text-sm text-muted-foreground">
+
+                    {/* Member Count (2 columns) */}
+                    <div className="col-span-6 md:col-span-2 flex items-center text-sm text-muted-foreground">
                         <Users className="h-4 w-4 mr-2" />
                         <span>{community.memberCount || 0} members</span>
                     </div>
-                    <div className="col-span-1 flex items-center gap-2 text-sm text-muted-foreground">
+
+                    {/* Tags (3 columns) */}
+                    <div className="col-span-6 md:col-span-3 flex items-center gap-2 text-sm text-muted-foreground">
                         {displayTags.length > 0 && <Tag className="h-4 w-4" />}
                         <div className="flex flex-wrap gap-1">
                             {displayTags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                             {remainingTags > 0 && <Badge variant="outline">+{remainingTags}</Badge>}
                         </div>
                     </div>
-                    <div className="col-span-1 flex items-center text-sm text-muted-foreground justify-self-end">
+
+                    {/* Created Date (3 columns) */}
+                    <div className="col-span-12 md:col-span-3 flex items-center justify-start md:justify-end text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4 mr-2" />
-                        Created {safeFormat(community.createdAt, 'MMM dd, yyyy')}
+                        <span>Created {safeFormat(community.createdAt, 'MMM dd, yyyy')}</span>
                     </div>
-                </div>
                 </CardContent>
             </Card>
         </Link>
