@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 import { CommunityGridItem } from '../community/community-grid-item';
 import { CommunityListItem } from '../community/community-list-item';
 import { Community } from '@/lib/types';
+import { usePathname } from 'next/navigation';
+import { getThemeForPath, hexToRgba } from '@/lib/theme-utils';
 
 interface CustomListViewProps<T> {
   items: T[];
@@ -28,6 +30,8 @@ export function CustomListView<T extends { id: string }>({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const pathname = usePathname();
+  const { activeColor } = getThemeForPath(pathname);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return items;
@@ -59,12 +63,12 @@ export function CustomListView<T extends { id: string }>({
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex items-center gap-4 p-6 bg-background">
         <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
+           <Input
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full"
+              icon={<Search className="h-4 w-4" style={{ color: activeColor }} />}
+              style={{ '--input-border-color': activeColor, color: activeColor, '--placeholder-color': hexToRgba(activeColor, 0.7) } as React.CSSProperties}
             />
         </div>
         <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
@@ -105,7 +109,7 @@ export function CustomListView<T extends { id: string }>({
             )}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             {filteredItems.map((item) =>
               renderListItem(
                 item,

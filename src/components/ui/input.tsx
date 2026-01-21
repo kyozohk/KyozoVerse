@@ -25,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={cn("input", icon ? "input-with-icon" : "", error ? "hasError" : "", className)}
             ref={ref}
-            placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
+            placeholder={label ? " " : props.placeholder}
             style={style}
             {...props}
           />

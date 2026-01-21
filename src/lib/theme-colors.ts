@@ -21,8 +21,8 @@ export const THEME_COLORS = {
       border: 'rgba(207, 119, 112, 0.2)',
     },
     communities: {
-        primary: '#843484',
-        border: 'rgba(132, 52, 132, 0.2)',
+        primary: '#C170CF',
+        border: 'rgba(193, 112, 207, 0.2)',
     },
     analytics: {
         primary: '#06C4B5',
