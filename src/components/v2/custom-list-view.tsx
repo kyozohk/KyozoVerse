@@ -64,31 +64,34 @@ export function CustomListView<T>({
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-end p-4">
-        <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
+        <div className="flex items-center gap-1 rounded-full p-1" style={{ border: '2px solid var(--page-content-border)', backgroundColor: 'var(--page-content-bg)' }}>
           <button
             onClick={() => setViewMode('list')}
             className={cn(
-              'h-8 w-8 flex items-center justify-center rounded-md',
-              viewMode === 'list' ? 'bg-background text-foreground' : 'text-muted-foreground'
+              'h-8 w-8 flex items-center justify-center rounded-full transition-all',
+              viewMode === 'list' ? 'text-foreground' : 'text-muted-foreground'
             )}
+            style={viewMode === 'list' ? { backgroundColor: 'var(--page-content-border)' } : {}}
           >
             <List className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode('grid')}
             className={cn(
-              'h-8 w-8 flex items-center justify-center rounded-md',
-              viewMode === 'grid' ? 'bg-background text-foreground' : 'text-muted-foreground'
+              'h-8 w-8 flex items-center justify-center rounded-full transition-all',
+              viewMode === 'grid' ? 'text-foreground' : 'text-muted-foreground'
             )}
+            style={viewMode === 'grid' ? { backgroundColor: 'var(--page-content-border)' } : {}}
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode('compact')}
             className={cn(
-              'h-8 w-8 flex items-center justify-center rounded-md',
-              viewMode === 'compact' ? 'bg-background text-foreground' : 'text-muted-foreground'
+              'h-8 w-8 flex items-center justify-center rounded-full transition-all',
+              viewMode === 'compact' ? 'text-foreground' : 'text-muted-foreground'
             )}
+            style={viewMode === 'compact' ? { backgroundColor: 'var(--page-content-border)' } : {}}
           >
             <Rows3 className="h-4 w-4" />
           </button>

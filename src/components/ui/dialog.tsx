@@ -132,16 +132,20 @@ export function CustomFormDialog({
         <DialogOverlay />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg border-0 shadow-2xl focus:outline-none",
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl focus:outline-none",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
               : "w-full max-w-md max-h-[85vh]"
           )}
+          style={{ 
+            backgroundColor: 'var(--page-content-bg)',
+            border: '2px solid var(--page-content-border)'
+          }}
         >
           <div className={`grid h-full w-full grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''}`}>
-            <div className="relative flex flex-col h-full overflow-hidden bg-card text-card-foreground">
-              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50">
+            <div className="relative flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50" style={{ border: '2px solid var(--page-content-border)' }}>
                 <X className="h-5 w-5" />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
