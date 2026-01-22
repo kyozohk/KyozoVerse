@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Grid, List, CircleUser, Check } from 'lucide-react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ interface EnhancedListViewProps<T> {
   isLoading?: boolean;
   loadingComponent?: React.ReactNode;
   urlField?: string;
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
 export function EnhancedListView<T extends { id: string }>({
@@ -27,6 +28,7 @@ export function EnhancedListView<T extends { id: string }>({
   isLoading = false,
   loadingComponent,
   urlField = 'id',
+  onSelectionChange,
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,16 +56,17 @@ export function EnhancedListView<T extends { id: string }>({
       } else {
         newSet.add(id);
       }
+      onSelectionChange?.(Array.from(newSet));
       return newSet;
     });
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.size === filteredItems.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredItems.map(item => item.id)));
-    }
+    const newSet = selectedIds.size === filteredItems.length 
+      ? new Set<string>() 
+      : new Set(filteredItems.map(item => item.id));
+    setSelectedIds(newSet);
+    onSelectionChange?.(Array.from(newSet));
   };
 
   const renderContent = () => {
@@ -135,12 +138,28 @@ export function EnhancedListView<T extends { id: string }>({
           <div className="flex items-center gap-2">
             {selectable && !isLoading && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleSelectAll}
                 disabled={filteredItems.length === 0}
+                className="gap-2"
+                style={{ 
+                  borderColor: 'var(--page-content-border)',
+                  backgroundColor: 'var(--page-content-bg)',
+                  color: '#6B5D52'
+                }}
               >
-                {selectedIds.size === filteredItems.length ? 'Deselect All' : 'Select All'}
+                {selectedIds.size === filteredItems.length ? (
+                  <>
+                    <CheckSquare className="h-4 w-4" />
+                    Deselect All
+                  </>
+                ) : (
+                  <>
+                    <Square className="h-4 w-4" />
+                    Select All
+                  </>
+                )}
               </Button>
             )}
             <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
