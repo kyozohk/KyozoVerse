@@ -11,7 +11,7 @@ export default function CommunityLayout({
   return (
     <div className="flex h-full">
       <CommunitySidebar />
-      <main className="flex-1">
+      <main className="flex-1" style={{ marginLeft: '260px' }}>
         {children}
       </main>
     </div>

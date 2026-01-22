@@ -41,11 +41,11 @@ export default function MainSidebar() {
             <div className="flex h-full flex-col p-2">
                 <div className="flex h-[76px] items-center justify-center">
                     <div className="flex items-center justify-center">
-                        <Image src="/favicon.svg" alt="Kyozo" width={48} height={48} />
+                        <Image src="/favicon.svg" alt="Kyozo" width={58} height={58} />
                     </div>
                 </div>
                 
-                <nav className="flex flex-1 flex-col items-center gap-y-2">
+                <nav className="flex flex-1 flex-col items-center gap-y-2 py-5">
                     {navItems.map((item) => (
                         <SidebarNavItem 
                             key={item.label} 

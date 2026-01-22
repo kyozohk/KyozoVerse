@@ -38,7 +38,7 @@ interface CommunityNavItem {
 
 export const communityNavItems: CommunityNavItem[] = [
     { href: (handle) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
-    { href: (handle) => `/${handle}/members`, icon: Users, label: 'Members', section: 'communities' },
+    { href: (handle) => `/${handle}/members`, icon: Users, label: 'Audience', section: 'communities' },
     { href: (handle) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
     { href: (handle) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
     { href: (handle) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },

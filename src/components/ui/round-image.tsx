@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CSSProperties } from 'react';
 
@@ -34,19 +35,30 @@ export function RoundImage({
     }),
   };
 
+  // Check if image is a placeholder or missing
+  const isPlaceholder = !src || src.includes('placeholder-avatar') || src.includes('placeholder-community');
+  const iconSize = Math.floor(size * 0.5); // Icon is 50% of container size
+
   return (
     <div
-      className={cn('relative rounded-full overflow-hidden flex-shrink-0', className)}
+      className={cn('relative rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center', className)}
       style={containerStyle}
     >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={`${size}px`}
-        className="object-cover rounded-full"
-        priority={priority}
-      />
+      {isPlaceholder ? (
+        <User 
+          className="text-muted-foreground" 
+          style={{ width: `${iconSize}px`, height: `${iconSize}px`, color: '#A07856' }}
+        />
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={`${size}px`}
+          className="object-cover rounded-full"
+          priority={priority}
+        />
+      )}
     </div>
   );
 }
