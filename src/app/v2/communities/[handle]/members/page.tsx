@@ -6,7 +6,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { db } from '@/firebase/firestore';
 import { Community, CommunityMember } from '@/lib/types';
 import { Loader2, UserPlus, Mail } from 'lucide-react';
-import Image from 'next/image';
+import { CommunityImage } from '@/components/ui/community-image';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/v2/page-header';
 import { CustomListView } from '@/components/v2/custom-list-view';
@@ -64,14 +64,18 @@ export default function MembersPage() {
           {/* Community Header */}
           <div style={{ backgroundColor: 'var(--page-content-bg)' }}>
             {community.communityBackgroundImage && (
-              <div className="relative h-32">
-                <Image src={community.communityBackgroundImage} alt={community.name} fill className="object-cover" />
-              </div>
+              <CommunityImage 
+                src={community.communityBackgroundImage} 
+                alt={community.name} 
+                fill 
+                containerClassName="relative h-32"
+                className="object-cover" 
+              />
             )}
             <div className="p-6 border-b">
               <div className="flex items-start gap-4">
                 {community.communityProfileImage && (
-                  <Image src={community.communityProfileImage} alt={community.name} width={80} height={80} className="rounded-full" />
+                  <CommunityImage src={community.communityProfileImage} alt={community.name} width={80} height={80} containerClassName="rounded-full" />
                 )}
                 <div className="flex-1">
                   <h1 className="text-2xl font-bold">{community.name}</h1>

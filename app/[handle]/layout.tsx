@@ -1,6 +1,5 @@
 import React from 'react';
-import MainSidebar from '@/components/layout/main-sidebar';
-import CommunitySidebar from '@/components/v2/community-sidebar';
+import CommunitySidebar from '@/components/layout/community-sidebar';
 
 export default function CommunityLayout({
   children,
@@ -10,10 +9,9 @@ export default function CommunityLayout({
   params: { handle: string };
 }) {
   return (
-    <div className="flex h-screen">
-      <MainSidebar />
-      <CommunitySidebar handle={params.handle} />
-      <main className="flex-1 ml-20">
+    <div className="flex h-full">
+      <CommunitySidebar />
+      <main className="flex-1">
         {children}
       </main>
     </div>

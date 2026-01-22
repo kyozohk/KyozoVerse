@@ -5,14 +5,17 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, Edit } from 'lucide-react';
+import { CommunityImage } from '@/components/ui/community-image';
+import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
+import { Button } from '@/components/ui/button';
 
 export default function CommunityPage() {
   const params = useParams();
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchCommunity = async () => {
@@ -47,14 +50,27 @@ export default function CommunityPage() {
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           {community.communityBackgroundImage && (
-            <div className="relative h-48">
-              <Image src={community.communityBackgroundImage} alt={community.name} fill className="object-cover" />
-            </div>
+            <CommunityImage 
+              src={community.communityBackgroundImage} 
+              alt={community.name} 
+              fill 
+              containerClassName="relative h-48"
+              className="object-cover" 
+            />
           )}
           <div className="p-8">
             <div className="flex items-start gap-6">
               {community.communityProfileImage && (
-                <Image src={community.communityProfileImage} alt={community.name} width={120} height={120} className="rounded-full" />
+                <div className="relative">
+                  <CommunityImage 
+                    src={community.communityProfileImage} 
+                    alt={community.name} 
+                    fill
+                    sizes="120px"
+                    containerClassName="rounded-full"
+                    containerStyle={{ width: '120px', height: '120px' }}
+                  />
+                </div>
               )}
               <div className="flex-1">
                 <h1 className="text-3xl font-bold">{community.name}</h1>
@@ -69,9 +85,22 @@ export default function CommunityPage() {
                   </div>
                 )}
               </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                onClick={() => setIsEditDialogOpen(true)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
+        <CreateCommunityDialog 
+          isOpen={isEditDialogOpen} 
+          setIsOpen={setIsEditDialogOpen}
+          existingCommunity={community}
+        />
       </div>
     </div>
   );

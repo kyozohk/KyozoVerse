@@ -1,9 +1,9 @@
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Users } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CommunityImage } from '@/components/ui/community-image';
 
 interface Community {
   id: string;
@@ -31,15 +31,14 @@ export const CommunityGridItem = ({ item, isSelected, urlField = 'id' }: Communi
       )}
       style={{ borderColor: 'var(--page-content-border)' }}
     >
-    <div className="relative" style={{ paddingTop: '75%', backgroundColor: '#E2D9C9' }}>
-      <Image 
-        src={item.imageUrl} 
-        alt={item.name} 
-        fill
-        className="object-cover" 
-        data-ai-hint={item.imageHint} 
-      />
-    </div>
+    <CommunityImage 
+      src={item.imageUrl} 
+      alt={item.name} 
+      fill
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+      containerClassName="relative" 
+      containerStyle={{ paddingTop: '75%' }}
+    />
     <div className="p-6">
       <h3 className="text-lg font-semibold">{item.name}</h3>
     </div>
@@ -76,16 +75,14 @@ export const CommunityListItem = ({ item, isSelected, urlField = 'id' }: Communi
       )}
       style={{ borderColor: 'var(--page-content-border)' }}
     >
-    <div className="rounded-md overflow-hidden" style={{ backgroundColor: '#E2D9C9' }}>
-      <Image 
-        src={item.imageUrl} 
-        alt={item.name} 
-        width={64} 
-        height={64} 
-        className="aspect-square object-cover" 
-        data-ai-hint={item.imageHint} 
-      />
-    </div>
+    <CommunityImage 
+      src={item.imageUrl} 
+      alt={item.name} 
+      width={64} 
+      height={64} 
+      containerClassName="rounded-md overflow-hidden"
+      className="aspect-square object-cover" 
+    />
     <div className="ml-4 flex-grow">
       <h3 className="text-lg font-semibold">{item.name}</h3>
       <div className="flex items-center text-sm text-muted-foreground">
@@ -121,15 +118,14 @@ export const CommunityCircleItem = ({ item, isSelected, urlField = 'id' }: Commu
       style={{ borderColor: 'var(--page-content-border)' }}
     >
     <div className="p-6 pt-6">
-      <div className="relative flex h-28 w-28 flex-shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: '#E2D9C9' }}>
-        <Image 
-          src={item.imageUrl} 
-          alt={item.name} 
-          fill
-          className="object-cover" 
-          data-ai-hint={item.imageHint} 
-        />
-      </div>
+      <CommunityImage 
+        src={item.imageUrl} 
+        alt={item.name} 
+        fill
+        sizes="112px"
+        containerClassName="relative flex h-28 w-28 flex-shrink-0 overflow-hidden rounded-full"
+        className="object-cover" 
+      />
     </div>
     <div className="p-6 pt-0 flex-grow">
       <h3 className="text-xl font-bold">{item.name}</h3>

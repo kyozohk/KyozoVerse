@@ -10,7 +10,7 @@ import { db } from '@/firebase/firestore';
 import { type Community } from '@/lib/types';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { communityNavItems } from '@/lib/theme-utils';
-import Image from 'next/image';
+import { CommunityImage } from '@/components/ui/community-image';
 
 interface CommunitySidebarProps {
   handle: string;
@@ -54,7 +54,7 @@ export default function CommunitySidebar({ handle }: CommunitySidebarProps) {
         <div className="flex h-[80px] items-center justify-between border-b px-2 mb-4">
           <div className="flex items-center gap-2">
             {community.communityProfileImage && (
-              <Image src={community.communityProfileImage} alt={community.name} width={32} height={32} className="rounded-full" />
+              <CommunityImage src={community.communityProfileImage} alt={community.name} width={32} height={32} containerClassName="rounded-full" />
             )}
             <h2 className="text-sm font-bold text-foreground truncate">{community.name}</h2>
           </div>

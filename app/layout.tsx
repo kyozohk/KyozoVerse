@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { getFirebase } from '@/firebase';
+import { AppLayoutWrapper } from './app-layout-wrapper';
 
 export const metadata: Metadata = {
   title: 'Kyozo Pro',
@@ -25,7 +26,9 @@ export default function RootLayout({
         style={{ fontFamily: "'PT Sans', sans-serif" }}
       >
         <FirebaseClientProvider firebase={getFirebase()}>
+          <AppLayoutWrapper>
             {children}
+          </AppLayoutWrapper>
         </FirebaseClientProvider>
         <Toaster />
       </body>

@@ -115,15 +115,25 @@ function CommunitiesContent() {
         }
       />
       <EnhancedListView
-        items={communities.map(c => ({
-          id: c.communityId,
-          handle: c.handle,
-          name: c.name,
-          memberCount: c.memberCount || 0,
-          imageUrl: c.communityProfileImage || '/placeholder-community.png',
-          imageHint: c.name,
-          tags: Array.isArray(c.mantras) ? c.mantras : [],
-        }))}
+        items={communities.map(c => {
+          const mappedItem = {
+            id: c.communityId,
+            handle: c.handle,
+            name: c.name,
+            memberCount: c.memberCount || 0,
+            imageUrl: c.communityProfileImage || '/placeholder-community.png',
+            imageHint: c.name,
+            tags: Array.isArray(c.mantras) ? c.mantras : [],
+          };
+          console.log('Community item:', {
+            name: c.name,
+            handle: c.handle,
+            mantras: c.mantras,
+            tags: mappedItem.tags,
+            rawCommunity: c
+          });
+          return mappedItem;
+        })}
         renderGridItem={(item, isSelected, onSelect, urlField) => (
           <CommunityGridItem item={item} isSelected={isSelected} urlField={urlField} />
         )}

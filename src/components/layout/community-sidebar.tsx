@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSidebar } from '@/components/ui/enhanced-sidebar';
 import { usePathname, useRouter } from 'next/navigation';
 import { PlusCircle, Check } from 'lucide-react';
 import {
@@ -19,10 +18,10 @@ import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { communityNavItems } from '@/lib/theme-utils';
+import { CommunityImage } from '@/components/ui/community-image';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
-  const { open: mainSidebarOpen } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -121,7 +120,6 @@ export default function CommunitySidebar() {
     <div
       className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
       style={{
-        marginLeft: mainSidebarOpen ? '0' : '0',
         backgroundColor: 'hsl(var(--sidebar-background))',
       }}
     >
@@ -156,11 +154,14 @@ export default function CommunitySidebar() {
                       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-accent"/>
                       
                       <div className="flex items-center gap-3 relative z-10">
-                        <div className="relative rounded-full h-14 w-14 flex items-center justify-center flex-shrink-0">
-                           <Avatar className="h-12 w-12 border-2 relative z-10">
-                            <AvatarImage src={community.communityProfileImage} />
-                            <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
-                          </Avatar>
+                        <div className="relative h-14 w-14 flex items-center justify-center flex-shrink-0">
+                          <CommunityImage 
+                            src={community.communityProfileImage || '/placeholder-community.png'} 
+                            alt={community.name}
+                            width={48}
+                            height={48}
+                            containerClassName="rounded-full border-2"
+                          />
                           {isSelected && (
                             <span className="absolute -top-1 -left-1 bg-background rounded-full p-0.5 z-20">
                               <Check className="h-4 w-4 text-foreground" />
@@ -195,10 +196,13 @@ export default function CommunitySidebar() {
                 onClick={() => setShowCommunityList(true)}
                 className="w-full h-full px-2 bg-transparent hover:opacity-80 transition-opacity flex items-center gap-3"
               >
-                <Avatar className="h-10 w-10 border-2">
-                  <AvatarImage src={selectedCommunity?.communityProfileImage} />
-                  <AvatarFallback>{selectedCommunity?.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                </Avatar>
+                <CommunityImage 
+                  src={selectedCommunity?.communityProfileImage || '/placeholder-community.png'} 
+                  alt={selectedCommunity?.name || 'Community'}
+                  width={40}
+                  height={40}
+                  containerClassName="rounded-full border-2"
+                />
                 <span className="font-semibold text-lg text-foreground truncate">
                   {selectedCommunity?.name}
                 </span>
