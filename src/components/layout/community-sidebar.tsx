@@ -34,7 +34,7 @@ export default function CommunitySidebar() {
 
   useEffect(() => {
     const pathParts = pathname.split('/');
-    const handleFromPath = pathParts[1];
+    const handleFromPath = pathParts.length > 2 && pathParts[1] === 'v2' ? pathParts[2] : pathParts[1];
 
     if (!user) {
       setLoading(false);
@@ -110,9 +110,9 @@ export default function CommunitySidebar() {
   const handleCommunitySelect = (handle: string) => {
     setSelectedCommunityHandle(handle);
     setShowCommunityList(false);
-    const currentSubPath = pathname.split('/').slice(2).join('/');
-    const targetItem = communityNavItems.find(item => item.href(handle).endsWith(currentSubPath)) || communityNavItems[0];
-    router.push(targetItem.href(handle));
+    const isV2 = pathname.startsWith('/v2');
+    const newPath = isV2 ? `/v2/${handle}` : `/${handle}`;
+    router.push(newPath);
   };
 
   const selectedCommunity = communities.find(c => c.handle === selectedCommunityHandle);
@@ -217,12 +217,15 @@ export default function CommunitySidebar() {
             <nav className="grid items-start px-2 text-sm font-medium">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
+                const isV2 = pathname.startsWith('/v2');
+                const href = isV2 ? `/v2${item.href(selectedCommunityHandle)}` : item.href(selectedCommunityHandle);
+
                 return (
                   <SidebarNavItem
                     key={item.label}
-                    href={item.href(selectedCommunityHandle)}
+                    href={href}
                     icon={<Icon />}
-                    isActive={pathname === item.href(selectedCommunityHandle)}
+                    isActive={pathname === href}
                     className="my-1 py-3"
                   >
                     {item.label}

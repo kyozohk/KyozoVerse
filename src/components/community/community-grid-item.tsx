@@ -7,13 +7,13 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
 export function CommunityGridItem({ community }: { community: Community }) {
-  const displayTags = community.tags?.slice(0, 2) || [];
-  const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
+  const displayTags = community.tags?.slice(0, 3) || [];
+  const remainingTags = community.tags?.length ? community.tages.length - displayTags.length : 0;
   return (
     <Link href={`/${community.handle}`}>
       <Card className="hover:bg-accent/50 transition-colors h-full text-center group">
         <CardContent className="p-6 flex flex-col items-center justify-center">
-          <Avatar className="h-28 w-28 mb-4 transition-transform duration-300 group-hover:scale-110">
+          <Avatar className="h-28 w-28 mb-4 transition-transform duration-300 group-hover:scale-110 rounded-full">
             <AvatarImage src={community.communityProfileImage} alt={community.name} />
             <AvatarFallback>{community.name?.charAt(0) || 'C'}</AvatarFallback>
           </Avatar>

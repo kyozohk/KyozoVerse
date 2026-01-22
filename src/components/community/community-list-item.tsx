@@ -16,7 +16,7 @@ function safeFormat(date: any, formatString: string) {
 }
 
 export function CommunityListItem({ community }: { community: Community }) {
-    const displayTags = community.tags?.slice(0, 3) || [];
+    const displayTags = community.tags?.slice(0, 5) || [];
     const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
   
     return (
@@ -25,7 +25,7 @@ export function CommunityListItem({ community }: { community: Community }) {
                 <CardContent className="p-6 grid grid-cols-12 gap-4 items-center">
                     {/* Community Info (4 columns) */}
                     <div className="col-span-12 md:col-span-4 flex items-center gap-4">
-                        <Avatar className="h-20 w-20 rounded-lg flex-shrink-0">
+                        <Avatar className="h-20 w-20 rounded-full flex-shrink-0">
                             <AvatarImage src={community.communityProfileImage} alt={community.name} />
                             <AvatarFallback>{community.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
