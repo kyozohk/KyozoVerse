@@ -119,13 +119,14 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden bg-background`}
+      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow relative overflow-hidden`}
       style={{
         marginLeft: mainSidebarOpen ? '0' : '0',
+        backgroundColor: 'hsl(var(--sidebar-background))',
       }}
     >
       {showCommunityList && (
-        <div className="absolute inset-0 z-20 flex flex-col p-2 bg-background">
+        <div className="absolute inset-0 z-20 flex flex-col p-2" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}>
           <div className="flex h-[80px] items-center justify-between border-b px-2">
             <h2 className="text-xl font-bold text-foreground">Communities</h2>
             <Button 

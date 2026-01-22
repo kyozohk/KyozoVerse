@@ -19,7 +19,7 @@ export default function MainSidebar() {
     ];
 
     return (
-        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r sm:flex bg-background">
+        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r sm:flex" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}>
             <div className="flex h-full flex-col p-2">
                 <div className="flex h-[76px] items-center justify-center">
                     <div className="flex items-center justify-center">

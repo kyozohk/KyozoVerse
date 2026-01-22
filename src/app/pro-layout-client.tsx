@@ -84,7 +84,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full overflow-hidden">
-        <Sidebar className="sidebar-shadow bg-secondary">
+        <Sidebar className="sidebar-shadow" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}>
           <SidebarHeader>
             <div className="flex h-[80px] items-center justify-center p-2">
               <Link href="/communities" className="flex items-center justify-center" onClick={handleLogoClick}>

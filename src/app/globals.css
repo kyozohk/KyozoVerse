@@ -36,6 +36,7 @@
     --radius: 0.5rem;
 
     --heading-color: #88796E;
+    --sidebar-background: 40 33% 99%; /* #FDFCFA - matches communes page background */
   }
 
   .dark {

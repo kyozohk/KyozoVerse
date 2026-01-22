@@ -264,7 +264,7 @@ export default function CommunitiesPage() {
     .hover\\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
 
     /* Header Banner */
-    .header-banner { background-color: #FDFCFA; border-bottom: 1px solid #8A7255; }
+    .header-banner { background-color: #FDFCFA; }
     .header-content { display: flex; flex-direction: column; }
     @media (min-width: 768px) { .header-content { flex-direction: row; align-items: center; justify-content: space-between; } }
     
@@ -277,7 +277,7 @@ export default function CommunitiesPage() {
     .scroll-area { flex: 1; overflow-y: auto; }
     
     /* Input */
-    .input { display: flex; height: 2.5rem; width: 100%; border-radius: 0.375rem; border: 1px solid #8A7255; background-color: #FDFCFA; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #5B4A3A; }
+    .input { display: flex; height: 2.5rem; width: 100%; border-radius: 0.375rem; border: 1px solid #8A7255; background-color: #FDFCFA; padding: 0.5rem 0.75rem 0.5rem 2.5rem; font-size: 0.875rem; color: #5B4A3A; }
     .input::placeholder { color: #8A7255; }
     .input:focus { outline: none; box-shadow: 0 0 0 2px #8A7255; }
 
