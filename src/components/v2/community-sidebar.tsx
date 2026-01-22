@@ -64,12 +64,12 @@ export default function CommunitySidebar({ handle }: CommunitySidebarProps) {
           {communityNavItems.map((item) => {
             const Icon = item.icon;
             const itemPath = item.href(handle);
-            const isActive = pathname === `/v2/communities${itemPath}`;
+            const isActive = pathname === itemPath;
             
             return (
               <SidebarNavItem
                 key={item.label}
-                href={`/v2/communities${itemPath}`}
+                href={itemPath}
                 icon={<Icon className="h-4 w-4" />}
                 isActive={isActive}
               >

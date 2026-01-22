@@ -7,7 +7,7 @@ interface PageLayoutProps {
 export function PageLayout({ children }: PageLayoutProps) {
   return (
     <div 
-      className="font-body antialiased min-h-screen" 
+      className="min-h-screen" 
       style={{ backgroundColor: 'var(--page-bg-color)' }}
     >
       <div className="p-8">
