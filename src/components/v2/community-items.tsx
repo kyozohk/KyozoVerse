@@ -23,7 +23,7 @@ export const CommunityGridItem = ({ item, isSelected }: { item: Community; isSel
       )}
       style={{ borderColor: 'var(--page-content-border)' }}
     >
-    <div className="relative" style={{ paddingTop: '75%' }}>
+    <div className="relative" style={{ paddingTop: '75%', backgroundColor: '#E2D9C9' }}>
       <Image 
         src={item.imageUrl} 
         alt={item.name} 
@@ -68,14 +68,16 @@ export const CommunityListItem = ({ item, isSelected }: { item: Community; isSel
       )}
       style={{ borderColor: 'var(--page-content-border)' }}
     >
-    <Image 
-      src={item.imageUrl} 
-      alt={item.name} 
-      width={64} 
-      height={64} 
-      className="aspect-square rounded-md object-cover" 
-      data-ai-hint={item.imageHint} 
-    />
+    <div className="rounded-md overflow-hidden" style={{ backgroundColor: '#E2D9C9' }}>
+      <Image 
+        src={item.imageUrl} 
+        alt={item.name} 
+        width={64} 
+        height={64} 
+        className="aspect-square object-cover" 
+        data-ai-hint={item.imageHint} 
+      />
+    </div>
     <div className="ml-4 flex-grow">
       <h3 className="text-lg font-semibold">{item.name}</h3>
       <div className="flex items-center text-sm text-muted-foreground">
@@ -97,7 +99,7 @@ export const CommunityCircleItem = ({ item, isSelected }: { item: Community; isS
       style={{ borderColor: 'var(--page-content-border)' }}
     >
     <div className="p-6 pt-6">
-      <div className="relative flex h-28 w-28 flex-shrink-0 overflow-hidden rounded-full">
+      <div className="relative flex h-28 w-28 flex-shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: '#E2D9C9' }}>
         <Image 
           src={item.imageUrl} 
           alt={item.name} 
