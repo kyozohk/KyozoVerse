@@ -37,6 +37,9 @@
 
     --heading-color: #88796E;
     --sidebar-background: 40 33% 99%; /* #FDFCFA - matches communes page background */
+    --page-bg-color: #F9FAFB; /* Page background color */
+    --page-content-bg: #FDFCFA; /* Content area background color */
+    --page-content-border: #E7E7E6; /* Content area border color */
   }
 
   .dark {

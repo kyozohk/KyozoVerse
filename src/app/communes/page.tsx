@@ -258,7 +258,7 @@ export default function CommunitiesPage() {
     .btn-icon { padding: 0; width: 2rem; height: 2rem; }
 
     /* Card */
-    .card { border-radius: 0.5rem; border: 1px solid #8A7255; background-color: #FDFCFA; color: #5B4A3A; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+    .card { border-radius: 0.5rem; border: 1px solid var(--page-content-border); background-color: #FDFCFA; color: #5B4A3A; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
     .card-selected { box-shadow: 0 0 0 2px #E8DFD1, 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
     .hover\\:bg-page-hover:hover { background-color: #f7f5f2; }
     .hover\\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
@@ -274,7 +274,7 @@ export default function CommunitiesPage() {
     .search-input { position: relative; width: 100%; }
      @media (min-width: 768px) { .search-input { flex: 1 1 0%; } }
     .view-toggle { display: flex; align-items: center; border-radius: 0.375rem; background-color: #F2EDE8; padding: 0.25rem; }
-    .scroll-area { flex: 1; overflow-y: auto; }
+    .scroll-area { flex: 1; overflow-y: auto; overflow-x: visible; }
     
     /* Input */
     .input { display: flex; height: 2.5rem; width: 100%; border-radius: 0.375rem; border: 1px solid #8A7255; background-color: #FDFCFA; padding: 0.5rem 0.75rem 0.5rem 2.5rem; font-size: 0.875rem; color: #5B4A3A; }
@@ -485,66 +485,70 @@ export default function CommunitiesPage() {
   return (
     <>
       <style>{cssStyles}</style>
-      <div className="font-body antialiased bg-page text-main min-h-screen">
-        <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="header-banner">
-            <div className="p-6 md:p-8">
-              <div className="header-content">
-                <div className="flex-grow">
-                  <h1 className="text-3xl font-bold tracking-tight">Communities</h1>
-                  <p className="mt-1 text-muted">Manage your communities or create a new one.</p>
-                </div>
-                <div className="flex items-center gap-2 mt-4 md:mt-0">
-                  <button className="btn btn-primary" onClick={() => setDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Community
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Custom List View */}
-          <div className="list-view-container">
-            <div className="list-view-header">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="search-input">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                  <input
-                    placeholder="Search..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="input pl-10"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="view-toggle">
-                    <button onClick={() => setViewMode('list')} className={`btn btn-ghost btn-icon ${viewMode === 'list' ? 'bg-page shadow-sm' : ''}`}>
-                      <ListIcon className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => setViewMode('grid')} className={`btn btn-ghost btn-icon ${viewMode === 'grid' ? 'bg-page shadow-sm' : ''}`}>
-                      <GridIcon className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => setViewMode('circle')} className={`btn btn-ghost btn-icon ${viewMode === 'circle' ? 'bg-page shadow-sm' : ''}`}>
-                      <CircleUser className="h-4 w-4" />
-                    </button>
+      <div className="font-body antialiased min-h-screen" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8">
+          <div className="rounded-2xl overflow-visible" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <div className="flex flex-col">
+              {/* Header */}
+              <div className="header-banner">
+                <div className="p-6 md:p-8">
+                  <div className="header-content">
+                    <div className="flex-grow">
+                      <h1 className="text-3xl font-bold tracking-tight">Communities</h1>
+                      <p className="mt-1 text-muted">Manage your communities or create a new one.</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 md:mt-0">
+                      <button className="btn btn-primary" onClick={() => setDialogOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Community
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-              {!isLoading && (
-                <div className="mt-4 flex items-center">
-                  <button className="btn btn-ghost btn-sm" onClick={handleSelectAll} disabled={filteredItems.length === 0}>
-                    {selection.size === filteredItems.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                  {selection.size > 0 && (
-                    <span className="ml-4 text-sm text-muted">{selection.size} of {filteredItems.length} selected</span>
+              
+              {/* Custom List View */}
+              <div className="list-view-container">
+                <div className="list-view-header">
+                  <div className="flex flex-col md:flex-row gap-4 items-center">
+                    <div className="search-input">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+                      <input
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="input pl-10"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="view-toggle">
+                        <button onClick={() => setViewMode('list')} className={`btn btn-ghost btn-icon ${viewMode === 'list' ? 'bg-page shadow-sm' : ''}`}>
+                          <ListIcon className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setViewMode('grid')} className={`btn btn-ghost btn-icon ${viewMode === 'grid' ? 'bg-page shadow-sm' : ''}`}>
+                          <GridIcon className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setViewMode('circle')} className={`btn btn-ghost btn-icon ${viewMode === 'circle' ? 'bg-page shadow-sm' : ''}`}>
+                          <CircleUser className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  {!isLoading && (
+                    <div className="mt-4 flex items-center">
+                      <button className="btn btn-ghost btn-sm" onClick={handleSelectAll} disabled={filteredItems.length === 0}>
+                        {selection.size === filteredItems.length ? 'Deselect All' : 'Select All'}
+                      </button>
+                      {selection.size > 0 && (
+                        <span className="ml-4 text-sm text-muted">{selection.size} of {filteredItems.length} selected</span>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-            <div className="scroll-area">
-              <div className="px-6 pb-8">{renderContent()}</div>
+                <div className="scroll-area">
+                  <div className="px-6 pb-8">{renderContent()}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
