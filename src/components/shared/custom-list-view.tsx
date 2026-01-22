@@ -6,11 +6,6 @@ import { Search, Grid, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { CommunityGridItem } from '../community/community-grid-item';
-import { CommunityListItem } from '../community/community-list-item';
-import { Community } from '@/lib/types';
-import { usePathname } from 'next/navigation';
-import { getThemeForPath, hexToRgba } from '@/lib/theme-utils';
 
 interface CustomListViewProps<T> {
   items: T[];
@@ -30,8 +25,6 @@ export function CustomListView<T extends { id: string }>({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const pathname = usePathname();
-  const { activeColor } = getThemeForPath(pathname);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return items;
@@ -64,21 +57,21 @@ export function CustomListView<T extends { id: string }>({
       <div className="flex items-center gap-4 p-6 bg-background">
         <div className="relative flex-1">
            <Input
-              placeholder="Search..."
+              placeholder="Search Community..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              icon={<Search className="h-4 w-4" style={{ color: activeColor }} />}
-              style={{ '--input-border-color': activeColor, color: activeColor, '--placeholder-color': hexToRgba(activeColor, 0.7) } as React.CSSProperties}
+              className="bg-transparent border-[#FF0000] text-[#5E4B3B] placeholder:text-[#5E4B3B]"
+              icon={<Search className="h-4 w-4 text-[#5E4B3B]" />}
             />
         </div>
-        <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
+        <div className="flex items-center gap-1 rounded-md bg-[#E5DFD1] p-1">
           <Button
             variant={'ghost'}
             size="icon"
             onClick={() => setViewMode('list')}
             className={cn(
-              "h-8 w-8 text-secondary-foreground",
-              viewMode === 'list' && "bg-background shadow-sm"
+              "h-8 w-8 text-[#5E4B3B]",
+              viewMode === 'list' && "bg-white shadow-sm"
             )}
           >
             <List className="h-4 w-4" />
@@ -88,8 +81,8 @@ export function CustomListView<T extends { id: string }>({
             size="icon"
             onClick={() => setViewMode('grid')}
             className={cn(
-              "h-8 w-8 text-secondary-foreground",
-              viewMode === 'grid' && "bg-background shadow-sm"
+              "h-8 w-8 text-[#5E4B3B]",
+              viewMode === 'grid' && "bg-white shadow-sm"
             )}
           >
             <Grid className="h-4 w-4" />
