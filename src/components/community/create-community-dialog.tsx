@@ -101,6 +101,16 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
     
     useEffect(() => {
         if (existingCommunity) {
+            console.log('=== CREATE COMMUNITY DIALOG - EDIT MODE ===');
+            console.log('Existing Community Data:', existingCommunity);
+            console.log('Community ID:', existingCommunity.communityId);
+            console.log('Community Name:', existingCommunity.name);
+            console.log('Profile Image:', existingCommunity.communityProfileImage);
+            console.log('Background Image:', existingCommunity.communityBackgroundImage);
+            console.log('Tags:', existingCommunity.tags);
+            console.log('Mantras:', (existingCommunity as any).mantras);
+            console.log('==========================================');
+            
             setFormData({
                 name: existingCommunity.name || '',
                 lore: (existingCommunity as any).lore || '',

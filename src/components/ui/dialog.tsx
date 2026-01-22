@@ -154,23 +154,25 @@ export function CustomFormDialog({
                 "flex flex-col h-full",
                 rightComponent ? "p-8 md:p-12 lg:p-16" : "p-8 md:p-10"
               )}>
-                <div className={cn(
-                  "flex-shrink-0",
-                  rightComponent ? "mb-8" : "mb-6"
-                )}>
-                  <h2 
-                    className={cn(
-                      "font-normal text-left mb-3 text-foreground",
-                      rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
+                <DialogPrimitive.Title asChild>
+                  <div className={cn(
+                    "flex-shrink-0",
+                    rightComponent ? "mb-8" : "mb-6"
+                  )}>
+                    <h2 
+                      className={cn(
+                        "font-normal text-left mb-3 text-foreground",
+                        rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
+                      )}
+                      style={{ fontFamily: 'Canicule Display, serif' }}
+                    >
+                      {title}
+                    </h2>
+                    {description && (
+                      <p className="text-left text-base text-muted-foreground">{description}</p>
                     )}
-                    style={{ fontFamily: 'Canicule Display, serif' }}
-                  >
-                    {title}
-                  </h2>
-                  {description && (
-                    <p className="text-left text-base text-muted-foreground">{description}</p>
-                  )}
-                </div>
+                  </div>
+                </DialogPrimitive.Title>
                 
                 <div className="flex-1 min-h-0 overflow-y-auto">
                   {children}

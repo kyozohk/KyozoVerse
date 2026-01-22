@@ -18,7 +18,7 @@ import { type Community } from '@/lib/types';
 import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { communityNavItems } from '@/lib/theme-utils';
-import { CommunityImage } from '@/components/ui/community-image';
+import { RoundImage } from '@/components/ui/round-image';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
@@ -154,13 +154,12 @@ export default function CommunitySidebar() {
                       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-accent"/>
                       
                       <div className="flex items-center gap-3 relative z-10">
-                        <div className="relative h-14 w-14 flex items-center justify-center flex-shrink-0">
-                          <CommunityImage 
+                        <div className="relative flex items-center justify-center flex-shrink-0">
+                          <RoundImage 
                             src={community.communityProfileImage || '/placeholder-community.png'} 
                             alt={community.name}
-                            width={48}
-                            height={48}
-                            containerClassName="rounded-full border-2"
+                            size={48}
+                            border={true}
                           />
                           {isSelected && (
                             <span className="absolute -top-1 -left-1 bg-background rounded-full p-0.5 z-20">
@@ -196,12 +195,11 @@ export default function CommunitySidebar() {
                 onClick={() => setShowCommunityList(true)}
                 className="w-full h-full px-2 bg-transparent hover:opacity-80 transition-opacity flex items-center gap-3"
               >
-                <CommunityImage 
+                <RoundImage 
                   src={selectedCommunity?.communityProfileImage || '/placeholder-community.png'} 
                   alt={selectedCommunity?.name || 'Community'}
-                  width={40}
-                  height={40}
-                  containerClassName="rounded-full border-2"
+                  size={40}
+                  border={true}
                 />
                 <span className="font-semibold text-lg text-foreground truncate">
                   {selectedCommunity?.name}

@@ -123,12 +123,11 @@ function CommunitiesContent() {
             memberCount: c.memberCount || 0,
             imageUrl: c.communityProfileImage || '/placeholder-community.png',
             imageHint: c.name,
-            tags: Array.isArray(c.mantras) ? c.mantras : [],
+            tags: Array.isArray((c as any).tags) ? (c as any).tags : [],
           };
           console.log('Community item:', {
             name: c.name,
             handle: c.handle,
-            mantras: c.mantras,
             tags: mappedItem.tags,
             rawCommunity: c
           });

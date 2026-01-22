@@ -7,6 +7,7 @@ import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Loader2, Edit } from 'lucide-react';
 import { CommunityImage } from '@/components/ui/community-image';
+import { RoundImage } from '@/components/ui/round-image';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { Button } from '@/components/ui/button';
 
@@ -61,16 +62,12 @@ export default function CommunityPage() {
           <div className="p-8">
             <div className="flex items-start gap-6">
               {community.communityProfileImage && (
-                <div className="relative">
-                  <CommunityImage 
-                    src={community.communityProfileImage} 
-                    alt={community.name} 
-                    fill
-                    sizes="120px"
-                    containerClassName="rounded-full"
-                    containerStyle={{ width: '120px', height: '120px' }}
-                  />
-                </div>
+                <RoundImage 
+                  src={community.communityProfileImage} 
+                  alt={community.name} 
+                  size={120}
+                  border={true}
+                />
               )}
               <div className="flex-1">
                 <h1 className="text-3xl font-bold">{community.name}</h1>
