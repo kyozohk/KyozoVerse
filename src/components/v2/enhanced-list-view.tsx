@@ -111,7 +111,7 @@ export function EnhancedListView<T extends { id: string }>({
                 </div>
               </div>
             )}
-            {ItemComponent(item, selectedIds.has(item.id), () => toggleSelection(item.id))}
+            {ItemComponent(item, selectedIds.has(item.id), () => toggleSelection(item.id), urlField)}
           </div>
         ))}
       </div>
