@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -17,8 +17,10 @@ export default function CommunityPage() {
   useEffect(() => {
     const fetchCommunity = async () => {
       try {
-        const communityDoc = await getDoc(doc(db, 'communities', handle));
-        if (communityDoc.exists()) {
+        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
+        const snapshot = await getDocs(communityQuery);
+        if (!snapshot.empty) {
+          const communityDoc = snapshot.docs[0];
           setCommunity({ communityId: communityDoc.id, ...communityDoc.data() } as Community);
         }
       } catch (error) {
@@ -32,7 +34,7 @@ export default function CommunityPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -43,7 +45,7 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           {community.communityBackgroundImage && (

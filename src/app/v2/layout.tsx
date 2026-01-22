@@ -9,7 +9,7 @@ export default function V2Layout({
   return (
     <div className="flex h-screen">
       <MainSidebar />
-      <main className="flex-1 ml-20">
+      <main className="flex flex-1 ml-20">
         {children}
       </main>
     </div>

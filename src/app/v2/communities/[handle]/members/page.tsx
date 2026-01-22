@@ -47,7 +47,7 @@ export default function MembersPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -58,7 +58,7 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-auto flex flex-col">
         <div className="rounded-2xl flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           {/* Community Header */}

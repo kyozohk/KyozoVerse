@@ -103,7 +103,7 @@ function CommunitiesContent() {
   );
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-hidden flex flex-col">
         <div className="rounded-2xl flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           <PageHeader
@@ -117,27 +117,27 @@ function CommunitiesContent() {
             }
           />
           <EnhancedListView
-        items={communities.map(c => ({
-          id: c.communityId,
-          name: c.name,
-          memberCount: c.memberCount || 0,
-          imageUrl: c.communityProfileImage || '/placeholder-community.png',
-          imageHint: c.name,
-          tags: Array.isArray(c.mantras) ? c.mantras : [],
-        }))}
-        renderGridItem={(item, isSelected, onSelect) => (
-          <CommunityGridItem item={item} isSelected={isSelected} />
-        )}
-        renderListItem={(item, isSelected, onSelect) => (
-          <CommunityListItem item={item} isSelected={isSelected} />
-        )}
-        renderCircleItem={(item, isSelected, onSelect) => (
-          <CommunityCircleItem item={item} isSelected={isSelected} />
-        )}
-        searchKeys={['name']}
-        selectable={true}
-        isLoading={isLoading}
-        loadingComponent={<LoadingSkeleton />}
+            items={communities.map(c => ({
+              id: c.handle,
+              name: c.name,
+              memberCount: c.memberCount || 0,
+              imageUrl: c.communityProfileImage || '/placeholder-community.png',
+              imageHint: c.name,
+              tags: Array.isArray(c.mantras) ? c.mantras : [],
+            }))}
+            renderGridItem={(item, isSelected, onSelect) => (
+              <CommunityGridItem item={item} isSelected={isSelected} />
+            )}
+            renderListItem={(item, isSelected, onSelect) => (
+              <CommunityListItem item={item} isSelected={isSelected} />
+            )}
+            renderCircleItem={(item, isSelected, onSelect) => (
+              <CommunityCircleItem item={item} isSelected={isSelected} />
+            )}
+            searchKeys={['name']}
+            selectable={true}
+            isLoading={isLoading}
+            loadingComponent={<LoadingSkeleton />}
       />
         </div>
       </div>
