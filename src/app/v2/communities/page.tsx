@@ -1,0 +1,158 @@
+'use client';
+
+import { Plus, Loader2 } from 'lucide-react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { PageLayout } from '@/components/v2/page-layout';
+import { PageHeader } from '@/components/v2/page-header';
+import { EnhancedListView } from '@/components/v2/enhanced-list-view';
+import { CommunityGridItem, CommunityListItem, CommunityCircleItem } from '@/components/v2/community-items';
+import { Button } from '@/components/ui/button';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/firebase/firestore';
+import { useAuth } from '@/hooks/use-auth';
+import { Community } from '@/lib/types';
+
+type CommunityWithId = Community & { id: string };
+
+function CommunitiesContent() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [communities, setCommunities] = useState<CommunityWithId[]>([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchCommunities = async () => {
+      try {
+        setIsLoading(true);
+
+        const communitiesRef = collection(db, 'communities');
+        const ownedCommunitiesQuery = query(communitiesRef, where('ownerId', '==', user.uid));
+        
+        const ownedSnapshot = await getDocs(ownedCommunitiesQuery);
+        const ownedCommunities = ownedSnapshot.docs.map(doc => ({
+          communityId: doc.id,
+          id: doc.id,
+          ...doc.data(),
+        } as CommunityWithId));
+
+        const membersRef = collection(db, 'communityMembers');
+        const memberQuery = query(membersRef, where('userId', '==', user.uid));
+        
+        const memberSnapshot = await getDocs(memberQuery);
+        const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
+        
+        const nonOwnedMemberIds = memberCommunityIds.filter(
+          id => !ownedCommunities.find(c => c.communityId === id)
+        );
+        
+        const memberCommunities: CommunityWithId[] = [];
+        if (nonOwnedMemberIds.length > 0) {
+          const batchSize = 30;
+          const batches = [];
+          
+          for (let i = 0; i < nonOwnedMemberIds.length; i += batchSize) {
+            const batch = nonOwnedMemberIds.slice(i, i + batchSize);
+            if (batch.length > 0) {
+              const communitiesQuery = query(collection(db, 'communities'), where('communityId', 'in', batch));
+              batches.push(getDocs(communitiesQuery));
+            }
+          }
+          
+          const batchResults = await Promise.all(batches);
+          batchResults.forEach(snap => {
+            snap.docs.forEach(doc => {
+              memberCommunities.push({
+                communityId: doc.id,
+                id: doc.id,
+                ...doc.data(),
+              } as CommunityWithId);
+            });
+          });
+        }
+        
+        const allCommunities = [...ownedCommunities, ...memberCommunities];
+        const uniqueCommunities = Array.from(
+          new Map(allCommunities.map(item => [item.communityId, item])).values()
+        );
+        
+        setCommunities(uniqueCommunities);
+      } catch (error) {
+        console.error("Error fetching communities:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCommunities();
+  }, [user]);
+
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="rounded-lg border border-input bg-card p-6 animate-pulse">
+          <div className="aspect-[4/3] bg-muted rounded-md mb-4" />
+          <div className="h-5 bg-muted rounded w-3/4 mb-2" />
+          <div className="h-4 bg-muted rounded w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-hidden flex flex-col">
+        <div className="rounded-2xl flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          <PageHeader
+            title="Communities"
+            description="Manage your communities or create a new one."
+            actions={
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Community
+              </Button>
+            }
+          />
+          <EnhancedListView
+        items={communities.map(c => ({
+          id: c.communityId,
+          name: c.name,
+          memberCount: c.memberCount || 0,
+          imageUrl: c.communityProfileImage || '/placeholder-community.png',
+          imageHint: c.name,
+          tags: Array.isArray(c.mantras) ? c.mantras : [],
+        }))}
+        renderGridItem={(item, isSelected, onSelect) => (
+          <CommunityGridItem item={item} isSelected={isSelected} />
+        )}
+        renderListItem={(item, isSelected, onSelect) => (
+          <CommunityListItem item={item} isSelected={isSelected} />
+        )}
+        renderCircleItem={(item, isSelected, onSelect) => (
+          <CommunityCircleItem item={item} isSelected={isSelected} />
+        )}
+        searchKeys={['name']}
+        selectable={true}
+        isLoading={isLoading}
+        loadingComponent={<LoadingSkeleton />}
+      />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CommunitiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <CommunitiesContent />
+    </Suspense>
+  );
+}
