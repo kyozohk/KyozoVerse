@@ -4,33 +4,45 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { Community } from '@/lib/types';
+import { Community, CommunityMember } from '@/lib/types';
 import { Loader2, UserPlus, Mail } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/v2/page-header';
+import { CustomListView } from '@/components/v2/custom-list-view';
+import { MemberListItem } from '@/components/members/member-list-item';
+import { MemberGridItem } from '@/components/members/member-grid-item';
 
 export default function MembersPage() {
   const params = useParams();
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
+  const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
-    const fetchCommunity = async () => {
+    const fetchCommunityAndMembers = async () => {
       try {
         const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
-        const snapshot = await getDocs(communityQuery);
-        if (!snapshot.empty) {
-          setCommunity({ communityId: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Community);
+        const communitySnapshot = await getDocs(communityQuery);
+        
+        if (!communitySnapshot.empty) {
+          const communityData = { communityId: communitySnapshot.docs[0].id, ...communitySnapshot.docs[0].data() } as Community;
+          setCommunity(communityData);
+
+          const membersQuery = query(collection(db, 'communityMembers'), where('communityId', '==', communityData.communityId));
+          const membersSnapshot = await getDocs(membersQuery);
+          const membersData = membersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as CommunityMember);
+          setMembers(membersData);
         }
       } catch (error) {
-        console.error('Error fetching community:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchCommunity();
+    fetchCommunityAndMembers();
   }, [handle]);
 
   if (loading) {
@@ -89,9 +101,14 @@ export default function MembersPage() {
 
           {/* Members Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="text-center py-16 text-muted-foreground">
-              <p>Members list will be displayed here</p>
-            </div>
+            <CustomListView
+              items={members}
+              renderListItem={(member) => <MemberListItem key={member.id} member={member} />}
+              renderGridItem={(member) => <MemberGridItem key={member.id} member={member} />}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              itemClassName={{ list: 'mb-4', grid: '' }}
+            />
           </div>
         </div>
       </div>
