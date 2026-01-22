@@ -123,7 +123,7 @@ function CommunitiesContent() {
               memberCount: c.memberCount || 0,
               imageUrl: c.communityProfileImage || '/placeholder-community.png',
               imageHint: c.name,
-              tags: Array.isArray(c.mantras) ? c.mantras : [],
+              tags: Array.isArray(c.tags) ? c.tags : [],
             }))}
             renderGridItem={(item, isSelected, onSelect) => (
               <CommunityGridItem item={item} isSelected={isSelected} />
