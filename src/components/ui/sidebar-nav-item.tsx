@@ -12,8 +12,8 @@ const sidebarNavItemVariants = cva(
   {
     variants: {
       state: {
-        default: 'text-secondary-foreground/80 hover:text-secondary-foreground hover:bg-accent',
-        active: 'text-accent-foreground bg-accent',
+        default: 'text-secondary-foreground/80 hover:text-secondary-foreground hover:bg-[#E5DFD1]',
+        active: 'text-accent-foreground bg-[#E5DFD1]',
       },
     },
     defaultVariants: {
