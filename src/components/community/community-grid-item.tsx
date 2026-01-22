@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 export function CommunityGridItem({ community }: { community: Community }) {
   const displayTags = community.tags?.slice(0, 3) || [];
-  const remainingTags = community.tags?.length ? community.tages.length - displayTags.length : 0;
+  const remainingTags = community.tags?.length ? community.tags.length - displayTags.length : 0;
   return (
     <Link href={`/${community.handle}`}>
       <Card className="hover:bg-accent/50 transition-colors h-full text-center group">
