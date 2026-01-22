@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 
 interface EnhancedListViewProps<T> {
   items: T[];
-  renderGridItem: (item: T, isSelected: boolean, onSelect: () => void) => React.ReactNode;
-  renderListItem: (item: T, isSelected: boolean, onSelect: () => void) => React.ReactNode;
-  renderCircleItem: (item: T, isSelected: boolean, onSelect: () => void) => React.ReactNode;
+  renderGridItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string) => React.ReactNode;
+  renderListItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string) => React.ReactNode;
+  renderCircleItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string) => React.ReactNode;
   searchKeys: (keyof T)[];
   selectable?: boolean;
   isLoading?: boolean;
   loadingComponent?: React.ReactNode;
+  urlField?: string;
 }
 
 export function EnhancedListView<T extends { id: string }>({
@@ -25,6 +26,7 @@ export function EnhancedListView<T extends { id: string }>({
   selectable = false,
   isLoading = false,
   loadingComponent,
+  urlField = 'id',
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,7 +129,7 @@ export function EnhancedListView<T extends { id: string }>({
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 rounded-full border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-colors"
+              className="w-full h-11 pl-11 pr-4 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">

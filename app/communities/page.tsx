@@ -117,25 +117,27 @@ function CommunitiesContent() {
       <EnhancedListView
         items={communities.map(c => ({
           id: c.communityId,
+          handle: c.handle,
           name: c.name,
           memberCount: c.memberCount || 0,
           imageUrl: c.communityProfileImage || '/placeholder-community.png',
           imageHint: c.name,
           tags: Array.isArray(c.mantras) ? c.mantras : [],
         }))}
-        renderGridItem={(item, isSelected, onSelect) => (
-          <CommunityGridItem item={item} isSelected={isSelected} />
+        renderGridItem={(item, isSelected, onSelect, urlField) => (
+          <CommunityGridItem item={item} isSelected={isSelected} urlField={urlField} />
         )}
-        renderListItem={(item, isSelected, onSelect) => (
-          <CommunityListItem item={item} isSelected={isSelected} />
+        renderListItem={(item, isSelected, onSelect, urlField) => (
+          <CommunityListItem item={item} isSelected={isSelected} urlField={urlField} />
         )}
-        renderCircleItem={(item, isSelected, onSelect) => (
-          <CommunityCircleItem item={item} isSelected={isSelected} />
+        renderCircleItem={(item, isSelected, onSelect, urlField) => (
+          <CommunityCircleItem item={item} isSelected={isSelected} urlField={urlField} />
         )}
         searchKeys={['name']}
         selectable={false}
         isLoading={isLoading}
         loadingComponent={<LoadingSkeleton />}
+        urlField="handle"
       />
     </PageLayout>
   );
