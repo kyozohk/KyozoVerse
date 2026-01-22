@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -171,8 +172,7 @@ export default function CommunityFeedPage() {
   const renderPost = (post: Post & { id: string }) => {
     const canEditThisPost = canManageContent || (user && post.authorId === user.uid);
     
-    const commonProps = {
-      key: post.id,
+    const postProps = {
       post: {
         ...post,
         _canEdit: canEditThisPost,
@@ -184,13 +184,13 @@ export default function CommunityFeedPage() {
     const postContent = (
       <>
         {post.type === 'audio' ? (
-          <ListenCard {...commonProps} category="Audio" episode="Listen" duration="0:00" title={post.title || 'Untitled Audio'} summary={post.content.text} isPrivate={post.visibility === 'private'} />
+          <ListenCard {...postProps} category="Audio" episode="Listen" duration="0:00" title={post.title || 'Untitled Audio'} summary={post.content.text} isPrivate={post.visibility === 'private'} />
         ) : post.type === 'video' ? (
-          <WatchCard {...commonProps} category="Video" title={post.title || 'Untitled Video'} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'} imageHint="video content" isPrivate={post.visibility === 'private'} />
+          <WatchCard {...postProps} category="Video" title={post.title || 'Untitled Video'} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'} imageHint="video content" isPrivate={post.visibility === 'private'} />
         ) : post.type === 'image' ? (
-          <ImageCard {...commonProps} category="Image" readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`} date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'} title={post.title || 'Untitled'} summary={post.content.text} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/image-placeholder/800/600'} isPrivate={post.visibility === 'private'} />
+          <ImageCard {...postProps} category="Image" readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`} date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'} title={post.title || 'Untitled'} summary={post.content.text} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/image-placeholder/800/600'} isPrivate={post.visibility === 'private'} />
         ) : (
-          <ReadCard {...commonProps} category="Text" readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`} date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'} title={post.title || 'Untitled'} summary={post.content.text} isPrivate={post.visibility === 'private'} />
+          <ReadCard {...postProps} category="Text" readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`} date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'} title={post.title || 'Untitled'} summary={post.content.text} isPrivate={post.visibility === 'private'} />
         )}
       </>
     );
@@ -247,7 +247,9 @@ export default function CommunityFeedPage() {
           }
         />
       )}
-      <div className="min-h-screen relative">
+      {/* style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }} */}
+      <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" >
+        {/* 70% gray overlay */}        
         {/* Content Area */}
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 pt-8 pb-12">
           <FeedStats posts={posts} />

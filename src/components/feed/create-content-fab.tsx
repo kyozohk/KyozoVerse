@@ -60,6 +60,7 @@ export function CreateContentFAB({ communityId, communityHandle }: CreateContent
         onClose={handleCloseDialog}
         title="Create Text Post"
         description="Share your thoughts with the community"
+        backgroundImage="/bg/light_app_bg.png"
       >
         <CreateTextPostForm 
           communityId={communityId} 
@@ -75,6 +76,7 @@ export function CreateContentFAB({ communityId, communityHandle }: CreateContent
         onClose={handleCloseDialog}
         title="Create Audio Post"
         description="Share audio with the community"
+        backgroundImage="/bg/light_app_bg.png"
       >
         <CreateAudioPostForm 
           communityId={communityId} 
@@ -90,6 +92,7 @@ export function CreateContentFAB({ communityId, communityHandle }: CreateContent
         onClose={handleCloseDialog}
         title="Create Video Post"
         description="Share video with the community"
+        backgroundImage="/bg/light_app_bg.png"
       >
         <CreateVideoPostForm 
           communityId={communityId} 

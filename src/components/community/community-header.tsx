@@ -36,7 +36,7 @@ interface CommunityHeaderProps {
 export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMember, onInvite, memberCount, customActions }: CommunityHeaderProps) {
   const canManage = userRole === 'owner' || userRole === 'admin';
   const pathname = usePathname();
-  const { activeBgColor } = getThemeForPath(pathname);
+  const { activeColor } = getThemeForPath(pathname);
   const [ownerInfo, setOwnerInfo] = useState<{ displayName: string; email: string; avatarUrl?: string } | null>(null);
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                 <div className="flex-shrink-0 relative">
                   <div 
                     className="absolute inset-0 rounded-full"
-                    style={{ backgroundColor: activeBgColor }}
+                    style={{ backgroundColor: activeColor }}
                   />
                   <Avatar className="h-24 w-24 border-4 border-background/10 relative z-10">
                       <AvatarImage src={community.communityProfileImage} />
@@ -122,13 +122,13 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
             </div>
         </div>
 
-        {canManage && (
+        {(canManage || customActions) && (
             <div className="mt-4 flex items-center gap-2 md:gap-4 w-full">
               {customActions ? (
                 <div className="flex items-center gap-2 md:gap-4 w-full">
                   {customActions}
                 </div>
-              ) : (
+              ) : canManage ? (
                 <>
                   <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     {onAddMember && (
@@ -175,7 +175,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                     </div>
                   )}
                 </>
-              )}
+              ) : null}
             </div>
           )}
       </div>

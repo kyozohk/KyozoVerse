@@ -42,8 +42,8 @@ export const communityNavItems: CommunityNavItem[] = [
     { href: (handle) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
     { href: (handle) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
     { href: (handle) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
-    { href: (handle) => `/${handle}/ticketing`, icon: Ticket, label: 'subscription' },
-    { href: (handle) => `/${handle}/integrations`, icon: Plug, label: 'settings' },
+    { href: (handle) => `/${handle}/ticketing`, icon: Ticket, label: 'Subscription', section: 'communities' },
+    { href: (handle) => `/${handle}/integrations`, icon: Plug, label: 'Settings', section: 'communities' },
     { href: (handle) => `/${handle}/analytics`, icon: BarChart3, label: 'Analytics', section: 'analytics' },
 ];
 
