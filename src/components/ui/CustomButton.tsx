@@ -13,9 +13,10 @@ const customButtonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        outline: "border border-input bg-transparent hover:bg-accent",
+        outline: "border-2 bg-transparent hover:opacity-80",
+        selected: "border-2 hover:opacity-90 shadow-sm",
         "rounded-rect": "border border-white/30 text-white/80 hover:text-white hover:bg-white/10 backdrop-blur-sm",
-        waitlist: "bg-[var(--waitlist-color)] text-white hover:bg-[var(--waitlist-color)]/90",
+        waitlist: "text-white hover:opacity-90 shadow-md",
       },
       size: {
         default: "h-11 px-6 py-2.5",
@@ -39,14 +40,21 @@ export interface CustomButtonProps
 }
 
 const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, isLoading, children, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+
+    const buttonStyle = variant === 'waitlist' 
+      ? { backgroundColor: 'var(--page-content-bg)', color: '#6B5D52', border: '2px solid var(--page-content-border)', ...style }
+      : variant === 'selected'
+      ? { backgroundColor: 'var(--page-content-bg)', color: '#6B5D52', borderColor: 'var(--page-content-border)', ...style }
+      : style;
 
     return (
       <Comp
         className={cn(customButtonVariants({ variant, size, className }))}
         ref={ref}
         disabled={isLoading || props.disabled}
+        style={buttonStyle}
         {...props}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

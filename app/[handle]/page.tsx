@@ -80,10 +80,18 @@ export default function CommunityPage() {
               )}
               <div className="flex-1">
                 <h1 className="text-3xl font-bold tracking-tight">{community.name}</h1>
-                <p className="text-muted-foreground mt-2">{community.tagline}</p>
-                {Array.isArray(community.mantras) && community.mantras.length > 0 && (
+                {community.tagline && (
+                  <p className="text-muted-foreground mt-2">{community.tagline}</p>
+                )}
+                {(community as any).location && (
+                  <p className="text-sm text-muted-foreground mt-1">📍 {(community as any).location}</p>
+                )}
+                {(community as any).mantras && (
+                  <p className="text-sm mt-3 whitespace-pre-wrap">{(community as any).mantras}</p>
+                )}
+                {Array.isArray((community as any).tags) && (community as any).tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {community.mantras.map((tag: string) => (
+                    {(community as any).tags.map((tag: string) => (
                       <span key={tag} className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-sm font-semibold">
                         {tag}
                       </span>

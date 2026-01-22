@@ -14,15 +14,15 @@
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: 400;
-  border-radius: var(--button-radius);
-  color: var(--button-text-color, var(--primary-purple));
-  border: 1px solid var(--button-border-color, var(--button-border));
+  border-radius: 8px;
+  color: hsl(var(--foreground));
+  border: 2px solid var(--page-content-border);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
   overflow: hidden;
-  background-color: #EDEDED;
+  background-color: var(--page-content-bg);
 }
 
 .button::before {
@@ -148,7 +148,7 @@
 
 .input {
   background-color: transparent;
-  border: 1px solid var(--input-border-color, #C170CF);
+  border: 2px solid var(--page-content-border);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   width: 100%;
@@ -159,18 +159,18 @@
 }
 
 .input::placeholder {
-  color: var(--input-border-color, var(--text-secondary));
+  color: hsl(var(--muted-foreground));
   opacity: 0.7;
 }
 
 input::placeholder {
-  color: var(--placeholder-color, var(--text-secondary));
+  color: hsl(var(--muted-foreground));
   opacity: 0.7;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--input-border-color, #843484);
+  border-color: var(--page-content-border);
 }
 
 .input-with-icon {
@@ -192,7 +192,7 @@ input::placeholder {
   top: 0.7rem;
   left: 0.75rem;
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: #A07856;
   pointer-events: none;
   transition: all 0.2s ease;
   background-color: transparent;
@@ -208,8 +208,8 @@ input::placeholder {
   top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  color: var(--input-border-color, #C170CF); /* Use theme color for focused label */
-  background-color: #EDEDED;
+  color: #A07856;
+  background-color: hsl(var(--sidebar-background));
 }
 
 /* Select trigger styled like input, used in FloatingSelect */
@@ -230,8 +230,8 @@ input::placeholder {
   top: -0.5rem;
   left: 0.75rem;
   font-size: 0.75rem;
-  color: var(--input-border-color, #C170CF);
-  background-color: #EDEDED;
+  color: #A07856;
+  background-color: hsl(var(--sidebar-background));
 }
 
 

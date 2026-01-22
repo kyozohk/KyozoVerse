@@ -47,11 +47,11 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
 
     return (
         <div className="inputWrapper relative">
-            <div className="flex flex-wrap items-center gap-2 p-2 border rounded-lg input" style={{ borderColor: 'var(--input-border-color, var(--button-border))' }}>
+            <div className="flex flex-wrap items-start gap-2 p-2 border rounded-lg overflow-y-auto" style={{ borderColor: 'var(--page-content-border)', minHeight: '88px', maxHeight: '88px' }}>
                 {tags.map((tag, index) => (
-                    <div key={index} className="flex items-center gap-1 bg-muted rounded-full px-3 py-1 text-sm" style={{ color: 'var(--primary-purple)' }}>
+                    <div key={index} className="flex items-center gap-1 rounded-full px-3 py-1 text-sm" style={{ backgroundColor: 'var(--page-content-bg)', color: '#6B5D52', border: '1px solid var(--page-content-border)' }}>
                         <span className="font-medium">{tag}</span>
-                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-foreground" style={{ color: 'var(--primary-purple)' }}>
+                        <button type="button" onClick={() => removeTag(tag)} className="hover:opacity-70" style={{ color: '#6B5D52' }}>
                             <X className="h-3 w-3" />
                         </button>
                     </div>
@@ -62,10 +62,11 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder=" "
-                    className="flex-grow bg-transparent focus:outline-none p-1 text-foreground"
+                    className="flex-grow bg-transparent focus:outline-none p-1"
+                    style={{ color: '#6B5D52' }}
                 />
             </div>
-            <label className="floatingLabel" style={{ top: tags.length > 0 ? '-0.5rem' : '0.7rem', fontSize: tags.length > 0 ? '0.75rem' : '1rem', backgroundColor: tags.length > 0 ? '#EDEDED' : 'transparent', color: tags.length > 0 ? 'var(--input-border-color, #C170CF)' : 'var(--text-secondary)' }}>
+            <label className="floatingLabel" style={{ top: tags.length > 0 ? '-0.5rem' : '0.7rem', fontSize: tags.length > 0 ? '0.75rem' : '1rem', backgroundColor: tags.length > 0 ? 'hsl(var(--sidebar-background))' : 'transparent', color: '#A07856' }}>
                 Tags
             </label>
         </div>
@@ -327,7 +328,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                     {currentStep === 0 && (
                         <div className="space-y-4">
                             <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
-                            <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={4} />
+                            <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
                             <TagInput tags={tags} setTags={setTags} />
                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} />
@@ -395,7 +396,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                         <CustomButton 
                             onClick={handleNext} 
                             className="w-full py-3 text-base font-medium"
-                            variant="waitlist"
+                            variant="selected"
                         >
                             Next
                             <ArrowRight className="h-4 w-4 ml-2" />
@@ -405,7 +406,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                             onClick={handleFormSubmit} 
                             disabled={isSubmitting} 
                             className="w-full py-3 text-base font-medium"
-                            variant="waitlist"
+                            variant="selected"
                         >
                             {isSubmitting ? 'Saving...' : 'Finish'}
                         </CustomButton>

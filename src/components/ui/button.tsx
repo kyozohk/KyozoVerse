@@ -15,7 +15,9 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border-2 bg-transparent hover:opacity-80",
+        selected:
+          "border-2 hover:opacity-90 shadow-sm",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -43,13 +45,19 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, isLoading, children, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
+    const buttonStyle = variant === 'selected'
+      ? { backgroundColor: 'var(--page-content-bg)', color: '#6B5D52', borderColor: 'var(--page-content-border)', ...style }
+      : style;
+    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={isLoading || props.disabled}
+        style={buttonStyle}
         {...props}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

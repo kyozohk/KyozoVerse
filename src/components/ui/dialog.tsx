@@ -136,17 +136,17 @@ export function CustomFormDialog({
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             rightComponent 
               ? "w-full max-w-[90vw] h-[90vh]" 
-              : "w-full max-w-md max-h-[85vh]"
+              : "w-full max-w-2xl max-h-[85vh]"
           )}
           style={{ 
-            backgroundColor: 'var(--page-content-bg)',
+            backgroundColor: 'hsl(var(--sidebar-background))',
             border: '2px solid var(--page-content-border)'
           }}
         >
           <div className={`grid h-full w-full grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''}`}>
-            <div className="relative flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)' }}>
-              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50" style={{ border: '2px solid var(--page-content-border)' }}>
-                <X className="h-5 w-5" />
+            <div className="relative flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}>
+              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50 p-2" style={{ border: '2px solid var(--page-content-border)', backgroundColor: 'var(--page-content-bg)' }}>
+                <X className="h-5 w-5" style={{ color: '#6B5D52' }} />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
 
@@ -161,15 +161,15 @@ export function CustomFormDialog({
                   )}>
                     <h2 
                       className={cn(
-                        "font-normal text-left mb-3 text-foreground",
+                        "font-normal text-left mb-3",
                         rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
                       )}
-                      style={{ fontFamily: 'Canicule Display, serif' }}
+                      style={{ fontFamily: "'PT Sans', sans-serif", color: '#6B5D52' }}
                     >
                       {title}
                     </h2>
                     {description && (
-                      <p className="text-left text-base text-muted-foreground">{description}</p>
+                      <p className="text-left text-base" style={{ color: '#A07856' }}>{description}</p>
                     )}
                   </div>
                 </DialogPrimitive.Title>
