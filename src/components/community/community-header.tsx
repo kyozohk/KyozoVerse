@@ -13,10 +13,12 @@ import {
   Trash2,
   Crown,
   Megaphone,
+  MapPin,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CustomButton } from '@/components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { RoundImage } from '@/components/ui/round-image';
 import { Community, UserRole } from '@/lib/types';
 import { getThemeForPath } from '@/lib/theme-utils';
 import { doc, getDoc } from 'firebase/firestore';
@@ -93,15 +95,15 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
             )}
             
             <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-shrink-0 relative">
-                  <div 
-                    className="absolute inset-0 rounded-full"
-                    style={{ backgroundColor: activeColor }}
+                <div className="flex-shrink-0">
+                  <RoundImage 
+                    src={community.communityProfileImage || '/placeholder-community.png'} 
+                    alt={community.name}
+                    size={96}
+                    border={true}
+                    borderColor="rgba(255, 255, 255, 0.2)"
+                    borderWidth={3}
                   />
-                  <Avatar className="h-24 w-24 border-4 border-background/10 relative z-10">
-                      <AvatarImage src={community.communityProfileImage} />
-                      <AvatarFallback>{community.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
                 </div>
 
                 <div className="flex-grow">
@@ -110,14 +112,30 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
 
                     <div className="flex flex-wrap gap-2 mt-4">
                         <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
-                        <Globe className="h-3 w-3 mr-1.5" />
-                        {community.isPrivate ? 'Private' : 'Public'}
+                          <Globe className="h-3 w-3 mr-1.5" />
+                          {community.isPrivate ? 'Private' : 'Public'}
                         </Badge>
                         <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
-                        <Users className="h-3 w-3 mr-1.5" />
-                        {memberCount !== undefined ? memberCount : community.memberCount || 0} members
+                          <Users className="h-3 w-3 mr-1.5" />
+                          {memberCount !== undefined ? memberCount : community.memberCount || 0} members
                         </Badge>
+                        {(community as any).location && (
+                          <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
+                            <MapPin className="h-3 w-3 mr-1.5" />
+                            {(community as any).location}
+                          </Badge>
+                        )}
                     </div>
+                    
+                    {Array.isArray((community as any).tags) && (community as any).tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {(community as any).tags.map((tag: string) => (
+                          <span key={tag} className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                 </div>
             </div>
         </div>
