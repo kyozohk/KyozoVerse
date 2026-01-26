@@ -4,8 +4,7 @@ import { Badge } from './badge';
 import { Button } from './button';
 import { Card } from './card';
 import { Input } from '../input';
-import { ChevronDown, Grid3x3, List, MessageSquare, Search, TrendingUp, Users, Plus, X, Send, Sparkles, Mail, Heart, Share2, UserPlus, Settings, Pencil, Trash2, Globe } from 'lucide-react';
-// import { HourglassGauge } from '/hourglass-gauge';
+import { ChevronDown, Grid3x3, List, MessageSquare, Search, TrendingUp, Users, Plus, X, Send, Mail, Heart, Share2, UserPlus, Settings, Pencil, Trash2, Globe, Bot, Sparkles } from 'lucide-react';
 
 interface Member {
   id: string;
@@ -250,70 +249,13 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
   const canApply = isSavedTag && selectedMemberIds.length > 0;
 
   return (
-    <div className="flex-1 h-screen overflow-auto bg-[#F5F1E8]">
-      {/* Hero Banner */}
-      <div 
-        className="relative px-8 py-8 overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${currentHeroUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="relative z-10 flex items-center justify-between max-w-full">
-          {/* Left - Logo and Info */}
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center overflow-hidden">
-            </div>
-            <div>
-              <h1 className="text-white text-3xl font-bold mb-2">Spin Sum</h1>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                  <Globe className="w-3 h-3 text-white" />
-                  <span className="text-white text-xs font-semibold">Public</span>
-                </div>
-                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                  <Users className="w-3 h-3 text-white" />
-                  <span className="text-white text-xs font-semibold">{members.length} members</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Center - Action Buttons */}
-          <div className="flex items-center gap-3">
-            <Button className="bg-[#D4B5D4] hover:bg-[#C4A5C4] text-[#2F363C] gap-2 px-6 rounded-full font-semibold shadow-lg">
-              <UserPlus className="w-4 h-4" />
-              Add Members
-            </Button>
-            <Button className="bg-[#D4B5D4] hover:bg-[#C4A5C4] text-[#2F363C] gap-2 px-6 rounded-full font-semibold shadow-lg">
-              <Mail className="w-4 h-4" />
-              Invite
-            </Button>
-            <Button className="bg-[#D4B5D4] hover:bg-[#C4A5C4] text-[#2F363C] gap-2 px-6 rounded-full font-semibold shadow-lg">
-              <Send className="w-4 h-4" />
-              Broadcast
-            </Button>
-          </div>
-
-          {/* Right - Settings Buttons */}
-          <div className="flex items-center gap-2">
-            <Button 
-              size="icon"
-              onClick={() => setDisplaySettingsOpen(true)}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-full w-12 h-12"
-            >
-              <Pencil className="w-4 h-4 text-white" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <div className="flex-1 overflow-auto">
+     
       {/* AI Command Input */}
-      <div className="bg-gradient-to-br from-[#4A5568] to-[#3A3630] border-b px-8 py-8 shadow-md">
+      <div className="px-8 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="relative">
-            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#D4A574]" />
+            <Bot className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#D4A574]" />
             <Input
               value={aiQuery}
               onChange={(e) => setAiQuery(e.target.value)}
@@ -327,7 +269,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
               <Send className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-xs text-[#E8DFD0] mt-3 text-center">
+          <p className="text-xs text-[#000000] mt-3 text-center">
             AI-powered assistance to help you manage your community
           </p>
         </div>
@@ -345,7 +287,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
                 onClick={() => setRightBrainExpanded(!rightBrainExpanded)}
               >
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#D4A574]" />
+                  <Bot className="w-5 h-5 text-[#D4A574]" />
                   <h3 className="text-lg font-bold text-[#3A3630]">Right Brain Metrics</h3>
                 </div>
                 <ChevronDown className={`w-5 h-5 text-[#8B7355] transition-transform ${rightBrainExpanded ? 'rotate-180' : ''}`} />

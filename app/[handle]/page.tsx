@@ -165,8 +165,8 @@ export default function CommunityPage() {
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          {/* Banner with overlay content */}
-          <div className="relative h-64">
+          {/* Banner with overlay content - full height banner */}
+          <div className="relative h-80">
             {community.communityBackgroundImage && (
               <CommunityImage 
                 src={community.communityBackgroundImage} 
@@ -179,14 +179,8 @@ export default function CommunityPage() {
             {/* Dark overlay for better text visibility */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
             
-            {/* Top-right: Profile image, name, location */}
-            <div className="absolute top-4 right-4 flex items-center gap-4">
-              <div className="text-right">
-                <h1 className="text-2xl font-bold text-white drop-shadow-lg">{community.name}</h1>
-                {(community as any).location && (
-                  <p className="text-sm text-white/90 mt-1">📍 {(community as any).location}</p>
-                )}
-              </div>
+            {/* Top-left: Profile image, name, location, and mantra */}
+            <div className="absolute top-4 left-4 flex items-start gap-4">
               {community.communityProfileImage && (
                 <RoundImage 
                   src={community.communityProfileImage} 
@@ -196,30 +190,56 @@ export default function CommunityPage() {
                   className="border-2 border-white/50"
                 />
               )}
+              <div>
+                <h1 className="text-2xl font-bold text-white drop-shadow-lg">{community.name}</h1>
+                {(community as any).location && (
+                  <p className="text-sm text-white/90 mt-1">📍 {(community as any).location}</p>
+                )}
+                {(community.tagline || (community as any).mantras) && (
+                  <p className="text-sm text-white/80 mt-2 max-w-md">
+                    {community.tagline || (community as any).mantras}
+                  </p>
+                )}
+              </div>
             </div>
+            
+            {/* Bottom-left: Tags */}
+            {Array.isArray((community as any).tags) && (community as any).tags.length > 0 && (
+              <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 max-w-md">
+                {(community as any).tags.map((tag: string) => (
+                  <span 
+                    key={tag} 
+                    className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold"
+                    style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
             
             {/* Bottom-right: CTA Buttons */}
             {canManage && (
               <div className="absolute bottom-4 right-4 flex items-center gap-3">
-                <CustomButton
-                  variant="rounded-rect"
-                  size="small"
+                <button
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2"
+                  style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
                   onClick={() => setIsAddMemberOpen(true)}
                 >
-                  <UserPlus className="h-4 w-4 mr-2" />
+                  <UserPlus className="h-4 w-4" />
                   Add Members
-                </CustomButton>
-                <CustomButton
-                  variant="rounded-rect"
-                  size="small"
+                </button>
+                <button
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2"
+                  style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
                   onClick={() => setIsInviteDialogOpen(true)}
                 >
-                  <Mail className="h-4 w-4 mr-2" />
+                  <Mail className="h-4 w-4" />
                   Invite Members
-                </CustomButton>
-                <CustomButton
-                  variant="rounded-rect"
-                  size="small"
+                </button>
+                <button
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2"
+                  style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
                   onClick={() => {
                     toast({
                       title: 'Broadcast',
@@ -227,39 +247,23 @@ export default function CommunityPage() {
                     });
                   }}
                 >
-                  <Radio className="h-4 w-4 mr-2" />
+                  <Radio className="h-4 w-4" />
                   Broadcast Message
-                </CustomButton>
-                <CustomButton
-                  variant="rounded-rect"
-                  size="small"
+                </button>
+                <button
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2"
+                  style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
                   onClick={() => setIsEditDialogOpen(true)}
                 >
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="h-4 w-4" />
                   Edit
-                </CustomButton>
+                </button>
               </div>
             )}
           </div>
           
-          {/* Content below banner */}
-          <div className="p-6">
-            {community.tagline && (
-              <p className="text-muted-foreground">{community.tagline}</p>
-            )}
-            {(community as any).mantras && (
-              <p className="text-sm mt-3 whitespace-pre-wrap">{(community as any).mantras}</p>
-            )}
-            {Array.isArray((community as any).tags) && (community as any).tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {(community as any).tags.map((tag: string) => (
-                  <span key={tag} className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-sm font-semibold">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Content below banner - empty since mantra moved to banner */}
+          <div className="p-4" />
         </div>
         
         {/* Overview Screen Component */}
