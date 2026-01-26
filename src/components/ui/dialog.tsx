@@ -115,6 +115,7 @@ interface CustomFormDialogProps {
   description?: string;
   children: React.ReactNode;
   rightComponent?: React.ReactNode;
+  size?: 'default' | 'large';
 }
 
 export function CustomFormDialog({
@@ -124,6 +125,7 @@ export function CustomFormDialog({
   description,
   children,
   rightComponent,
+  size = 'default',
 }: CustomFormDialogProps) {
 
   const handleOpenChange = React.useCallback((isOpen: boolean) => {
@@ -131,6 +133,13 @@ export function CustomFormDialog({
       onClose();
     }
   }, [onClose]);
+
+  // Size classes: large is 20% bigger than default
+  const sizeClasses = rightComponent 
+    ? "w-full max-w-[90vw] h-[90vh]" 
+    : size === 'large' 
+      ? "w-full max-w-3xl max-h-[90vh]"  // 20% bigger: 3xl instead of 2xl, 90vh instead of 85vh
+      : "w-full max-w-2xl max-h-[85vh]";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -142,9 +151,7 @@ export function CustomFormDialog({
           className={cn(
             "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl focus:outline-none",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-            rightComponent 
-              ? "w-full max-w-[90vw] h-[90vh]" 
-              : "w-full max-w-2xl max-h-[85vh]"
+            sizeClasses
           )}
           style={{ 
             backgroundColor: 'hsl(var(--sidebar-background))',

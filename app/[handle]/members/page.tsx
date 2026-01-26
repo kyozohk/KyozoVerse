@@ -263,14 +263,12 @@ function MembersContent() {
     });
   };
 
-  // Handle applying tags to selected members
-  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
+  // Handle applying tags to selected members (now receives memberIds from dialog)
+  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[], memberIds: string[]) => {
     if (!community?.communityId) {
       console.error('No community ID available');
       return;
     }
-
-    const memberIds = selectedMembers.map(m => m.id);
     
     try {
       // Save new tags to community's tags subcollection
@@ -310,22 +308,26 @@ function MembersContent() {
       }));
       
       setSelectedMembers([]); // Clear selection after applying
-      
-      toast({
-        title: 'Tags Applied',
-        description: `Tags have been updated for ${memberIds.length} member(s).`,
-      });
     } catch (error) {
       console.error('Error applying tags:', error);
-      toast({
-        title: 'Error',
-        description: 'Could not apply tags. Please try again.',
-        variant: 'destructive',
-      });
+      throw error; // Re-throw so dialog can show error
     }
   };
 
   // Convert MemberData to CommunityMember format for TagMembersDialog
+  const allMembersForDialog = members.map(m => ({
+    id: m.id,
+    userId: m.userId,
+    communityId: community?.communityId || '',
+    role: m.role || 'member',
+    tags: m.tags || [],
+    userDetails: {
+      displayName: m.name,
+      email: m.email || '',
+      avatarUrl: m.imageUrl,
+    },
+  }));
+
   const selectedMembersForDialog = selectedMembers.map(m => ({
     id: m.id,
     userId: m.userId,
@@ -470,7 +472,8 @@ function MembersContent() {
             setIsTaggingOpen(false);
             setSelectedMembers([]);
           }}
-          members={selectedMembersForDialog as any}
+          allMembers={allMembersForDialog as any}
+          initialSelectedMembers={selectedMembersForDialog as any}
           communityId={community.communityId}
           onApplyTags={handleApplyTags}
         />
