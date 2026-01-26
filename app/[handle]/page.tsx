@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Edit, UserPlus, Mail, Radio } from 'lucide-react';
+import { Loader2, Edit, UserPlus, Mail, Radio, Globe, Lock } from 'lucide-react';
 import { CommunityBanner, BannerCTA } from '@/components/ui/community-banner';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
@@ -168,6 +168,15 @@ export default function CommunityPage() {
             iconImage={community.communityProfileImage}
             title={community.name}
             location={(community as any).location}
+            locationExtra={
+              <span className="flex items-center gap-1 text-sm text-white/90">
+                {(community as any).visibility === 'private' ? (
+                  <><Lock className="h-3.5 w-3.5" /> Private</>
+                ) : (
+                  <><Globe className="h-3.5 w-3.5" /> Public</>
+                )}
+              </span>
+            }
             subtitle={community.tagline || (community as any).mantras}
             tags={(community as any).tags || []}
             ctas={canManage ? [

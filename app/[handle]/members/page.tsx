@@ -5,9 +5,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc, orderBy, limit, startAfter, DocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, UserPlus, Mail } from 'lucide-react';
-import { PageLayout } from '@/components/v2/page-layout';
-import { PageHeader } from '@/components/v2/page-header';
+import { Loader2, UserPlus, Mail, Globe, Lock } from 'lucide-react';
+import { CommunityBanner } from '@/components/ui/community-banner';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
@@ -260,33 +259,56 @@ function MembersContent() {
 
   if (!community && !isLoading) {
     return (
-      <PageLayout>
-        <div className="p-8">Community not found</div>
-      </PageLayout>
+      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8">
+          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <p>Community not found</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <PageLayout>
-      <PageHeader
-        title={community ? `${community.name} - Members` : 'Members'}
-        description="Manage your community members"
-        actions={
-          canManage ? (
-            <>
-              <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
-                <Mail className="mr-2 h-4 w-4" />
-                Invite Member
-              </Button>
-              <Button onClick={() => setIsAddMemberOpen(true)}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Member
-              </Button>
-            </>
-          ) : null
-        }
-      />
-      <EnhancedListView
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-auto">
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          {community && (
+            <CommunityBanner
+              backgroundImage={community.communityBackgroundImage}
+              iconImage={community.communityProfileImage}
+              title={community.name}
+              location={(community as any).location}
+              locationExtra={
+                <span className="flex items-center gap-1 text-sm text-white/90">
+                  {(community as any).visibility === 'private' ? (
+                    <><Lock className="h-3.5 w-3.5" /> Private</>
+                  ) : (
+                    <><Globe className="h-3.5 w-3.5" /> Public</>
+                  )}
+                </span>
+              }
+              subtitle={community.tagline || (community as any).mantras}
+              tags={(community as any).tags || []}
+              ctas={canManage ? [
+                {
+                  label: 'Invite Member',
+                  icon: <Mail className="h-4 w-4" />,
+                  onClick: () => setIsInviteDialogOpen(true),
+                },
+                {
+                  label: 'Add Member',
+                  icon: <UserPlus className="h-4 w-4" />,
+                  onClick: () => setIsAddMemberOpen(true),
+                },
+              ] : []}
+              height="16rem"
+            />
+          )}
+        </div>
+        
+        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          <EnhancedListView
         items={members}
         renderGridItem={(item, isSelected) => (
           <MemberGridItem item={item} isSelected={isSelected} />
@@ -305,7 +327,9 @@ function MembersContent() {
         hasMore={hasMore}
         onLoadMore={loadMoreMembers}
         isLoadingMore={isLoadingMore}
-      />
+          />
+        </div>
+      </div>
       
       {/* Add Member Dialog */}
       {community && (
@@ -326,7 +350,7 @@ function MembersContent() {
           community={community}
         />
       )}
-    </PageLayout>
+    </div>
   );
 }
 

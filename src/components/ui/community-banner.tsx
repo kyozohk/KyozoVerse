@@ -17,6 +17,7 @@ export interface CommunityBannerProps {
   iconSize?: number;
   title: string;
   location?: string;
+  locationExtra?: ReactNode;
   subtitle?: string;
   tags?: string[];
   ctas?: BannerCTA[];
@@ -30,6 +31,7 @@ export function CommunityBanner({
   iconSize = 80,
   title,
   location,
+  locationExtra,
   subtitle,
   tags = [],
   ctas = [],
@@ -77,8 +79,13 @@ export function CommunityBanner({
         )}
         <div className="flex flex-col">
           <h1 className="text-2xl font-bold text-white drop-shadow-lg">{title}</h1>
-          {location && (
-            <p className="text-sm text-white/90 mt-1">📍 {location}</p>
+          {(location || locationExtra) && (
+            <div className="flex items-center gap-3 mt-1">
+              {location && (
+                <span className="text-sm text-white/90">📍 {location}</span>
+              )}
+              {locationExtra}
+            </div>
           )}
           {subtitle && (
             <p className="text-sm text-white/80 mt-2 max-w-md">{subtitle}</p>
@@ -101,14 +108,20 @@ export function CommunityBanner({
         </div>
       )}
       
-      {/* Top-right: CTA Buttons */}
+      {/* Bottom-right: CTA Buttons */}
       {ctas.length > 0 && (
-        <div className="absolute top-8 right-8 flex items-center gap-3">
+        <div className="absolute bottom-8 right-8 flex items-center gap-3">
           {ctas.map((cta, index) => (
             <button
               key={index}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-colors hover:opacity-90"
-              style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1]"
+              style={{ borderColor: '#E8DFD1', color: '#E8DFD1' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#5B4A3A';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#E8DFD1';
+              }}
               onClick={cta.onClick}
             >
               {cta.icon}
