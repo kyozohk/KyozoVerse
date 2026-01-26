@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Loader2, UserPlus, Mail, Globe, Lock } from 'lucide-react';
-import { CommunityBanner } from '@/components/ui/community-banner';
+import { Banner } from '@/components/ui/banner';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
@@ -370,7 +370,7 @@ function MembersContent() {
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           {community && (
-            <CommunityBanner
+            <Banner
               backgroundImage={community.communityBackgroundImage}
               iconImage={community.communityProfileImage}
               title={community.name}

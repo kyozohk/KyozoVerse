@@ -138,7 +138,7 @@ Looking forward to seeing you there!`;
         },
         body: JSON.stringify({
           to: email,
-          from: 'dev@kyozo.com', // Use verified sender from SendGrid
+          from: 'Kyozo <onboarding@resend.dev>', // Use Resend test domain (verify kyozo.com at resend.com/domains for production)
           subject: `Join ${community.name} on KyozoVerse`,
           html: `
             <!DOCTYPE html>

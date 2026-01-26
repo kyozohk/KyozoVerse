@@ -20,6 +20,7 @@ interface MemberData {
   role?: string;
   userId: string;
   joinedDate?: any;
+  tags?: string[];
 }
 
 function BroadcastContent() {
@@ -27,7 +28,7 @@ function BroadcastContent() {
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -50,47 +51,29 @@ function BroadcastContent() {
         } as Community;
         setCommunity(communityData);
 
-        // Fetch community members
+        // Fetch community members - use userDetails embedded in the member doc (same as members page)
         const membersQuery = query(
           collection(db, 'communityMembers'),
           where('communityId', '==', communityData.communityId)
         );
         const membersSnapshot = await getDocs(membersQuery);
 
-        // Fetch user details for each member
-        const memberPromises = membersSnapshot.docs.map(async (memberDoc) => {
+        // Transform member docs using userDetails from the member document
+        const membersData = membersSnapshot.docs.map((memberDoc) => {
           const memberData = memberDoc.data();
-          const userId = memberData.userId;
-
-          // Fetch user profile
-          const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
-          const userSnapshot = await getDocs(userQuery);
-
-          if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data();
-            return {
-              id: memberDoc.id,
-              userId: userId,
-              name: userData.displayName || userData.email || 'Unknown User',
-              email: userData.email,
-              imageUrl: userData.photoURL || '/placeholder-avatar.png',
-              role: memberData.role || 'Member',
-              joinedDate: memberData.joinedAt,
-            };
-          }
-
+          const userDetails = memberData.userDetails || {};
+          
           return {
             id: memberDoc.id,
-            userId: userId,
-            name: 'Unknown User',
-            email: '',
-            imageUrl: '/placeholder-avatar.png',
-            role: memberData.role || 'Member',
+            userId: memberData.userId,
+            name: userDetails.displayName || userDetails.email || 'Unknown User',
+            email: userDetails.email || '',
+            imageUrl: userDetails.avatarUrl || userDetails.photoURL || '/placeholder-avatar.png',
+            role: memberData.role || 'member',
             joinedDate: memberData.joinedAt,
+            tags: memberData.tags || [],
           };
         });
-
-        const membersData = await Promise.all(memberPromises);
         
         console.log('=== BROADCAST MEMBERS DATA ===');
         console.log('Total members:', membersData.length);
@@ -136,7 +119,7 @@ function BroadcastContent() {
     <PageLayout>
       <PageHeader
         title={community ? `${community.name} - Broadcast` : 'Broadcast'}
-        description={`Select members to send a broadcast message (${selectedMembers.length} selected)`}
+        description={`Select members to send a broadcast message`}
         actions={
           <Button 
             variant="selected" 
@@ -150,24 +133,18 @@ function BroadcastContent() {
       />
       <EnhancedListView
         items={members}
-        renderGridItem={(item, isSelected, onSelect) => (
-          <div onClick={onSelect}>
-            <MemberGridItem item={item} isSelected={isSelected} />
-          </div>
+        renderGridItem={(item, isSelected) => (
+          <MemberGridItem item={item} isSelected={isSelected} />
         )}
-        renderListItem={(item, isSelected, onSelect) => (
-          <div onClick={onSelect}>
-            <MemberListItem item={item} isSelected={isSelected} />
-          </div>
+        renderListItem={(item, isSelected) => (
+          <MemberListItem item={item} isSelected={isSelected} />
         )}
-        renderCircleItem={(item, isSelected, onSelect) => (
-          <div onClick={onSelect}>
-            <MemberCircleItem item={item} isSelected={isSelected} />
-          </div>
+        renderCircleItem={(item, isSelected) => (
+          <MemberCircleItem item={item} isSelected={isSelected} />
         )}
         searchKeys={['name', 'email']}
         selectable={true}
-        onSelectionChange={setSelectedMembers}
+        onSelectionChange={(ids, items) => setSelectedMembers(items)}
         isLoading={isLoading}
         loadingComponent={<LoadingSkeleton />}
       />

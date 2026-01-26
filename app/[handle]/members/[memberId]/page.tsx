@@ -23,7 +23,7 @@ import {
   MessageCircle,
   User
 } from 'lucide-react';
-import { CommunityBanner } from '@/components/ui/community-banner';
+import { Banner } from '@/components/ui/banner';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -275,7 +275,7 @@ export default function MemberProfilePage() {
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           {/* Member Banner */}
-          <CommunityBanner
+          <Banner
             backgroundImage={userDetails.coverUrl || getDefaultBanner(memberId)}
             iconImage={userDetails.avatarUrl}
             iconSize={100}
@@ -295,29 +295,23 @@ export default function MemberProfilePage() {
               </Badge>
             }
             subtitle={userDetails.email}
+            leftCta={{
+              label: 'Back to Members',
+              icon: <ArrowLeft className="h-4 w-4" />,
+              onClick: () => router.push(`/${handle}/members`),
+            }}
             ctas={canManage ? [
               {
-                label: 'Back to Members',
-                icon: <ArrowLeft className="h-4 w-4" />,
-                onClick: () => router.push(`/${handle}/members`),
-              },
-              {
-                label: 'Edit Member',
+                label: 'Edit',
                 icon: <Edit className="h-4 w-4" />,
                 onClick: () => setIsEditDialogOpen(true),
               },
               {
-                label: 'Delete Member',
+                label: 'Delete',
                 icon: <Trash2 className="h-4 w-4" />,
                 onClick: () => setIsDeleteConfirmOpen(true),
               },
-            ] : [
-              {
-                label: 'Back to Members',
-                icon: <ArrowLeft className="h-4 w-4" />,
-                onClick: () => router.push(`/${handle}/members`),
-              },
-            ]}
+            ] : []}
             height="16rem"
           />
         </div>

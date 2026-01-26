@@ -11,7 +11,7 @@ export interface BannerCTA {
   onClick: () => void;
 }
 
-export interface CommunityBannerProps {
+export interface BannerProps {
   backgroundImage?: string;
   iconImage?: string;
   iconSize?: number;
@@ -21,11 +21,12 @@ export interface CommunityBannerProps {
   subtitle?: string;
   tags?: string[];
   ctas?: BannerCTA[];
+  leftCta?: BannerCTA;  // Single CTA for bottom-left (e.g., Back button)
   height?: string;
   className?: string;
 }
 
-export function CommunityBanner({
+export function Banner({
   backgroundImage,
   iconImage,
   iconSize = 80,
@@ -35,9 +36,10 @@ export function CommunityBanner({
   subtitle,
   tags = [],
   ctas = [],
+  leftCta,
   height = '20rem',
   className,
-}: CommunityBannerProps) {
+}: BannerProps) {
   const bannerStyle: CSSProperties = {
     height,
   };
@@ -93,8 +95,25 @@ export function CommunityBanner({
         </div>
       </div>
       
-      {/* Bottom-left: Tags */}
-      {tags.length > 0 && (
+      {/* Bottom-left: Left CTA or Tags */}
+      {leftCta ? (
+        <div className="absolute bottom-8 left-8">
+          <button
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1]"
+            style={{ borderColor: '#E8DFD1', color: '#E8DFD1' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#5B4A3A';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#E8DFD1';
+            }}
+            onClick={leftCta.onClick}
+          >
+            {leftCta.icon}
+            {leftCta.label}
+          </button>
+        </div>
+      ) : tags.length > 0 ? (
         <div className="absolute bottom-8 left-8 flex flex-wrap gap-2 max-w-md">
           {tags.map((tag) => (
             <span 
@@ -106,7 +125,7 @@ export function CommunityBanner({
             </span>
           ))}
         </div>
-      )}
+      ) : null}
       
       {/* Bottom-right: CTA Buttons */}
       {ctas.length > 0 && (
@@ -133,3 +152,7 @@ export function CommunityBanner({
     </div>
   );
 }
+
+// Backward compatibility alias
+export const CommunityBanner = Banner;
+export type CommunityBannerProps = BannerProps;

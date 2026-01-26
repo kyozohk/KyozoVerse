@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Loader2, Edit, UserPlus, Mail, Radio, Globe, Lock } from 'lucide-react';
-import { CommunityBanner, BannerCTA } from '@/components/ui/community-banner';
+import { Banner } from '@/components/ui/banner';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
@@ -163,7 +163,7 @@ export default function CommunityPage() {
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          <CommunityBanner
+          <Banner
             backgroundImage={community.communityBackgroundImage}
             iconImage={community.communityProfileImage}
             title={community.name}
