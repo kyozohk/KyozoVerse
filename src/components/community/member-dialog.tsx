@@ -79,8 +79,12 @@ export function MemberDialog({
     setExistingUser(null);
   };
 
+  // Track if we've already initialized for this open state
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (open) {
+    if (open && !hasInitialized.current) {
+        hasInitialized.current = true;
         if (mode === 'edit' && initialMember) {
             const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
             setFirstName(nameParts[0] || "");
@@ -94,8 +98,11 @@ export function MemberDialog({
         } else {
             resetForm();
         }
+    } else if (!open) {
+        // Reset the flag when dialog closes
+        hasInitialized.current = false;
     }
-}, [open, mode, initialMember]);
+  }, [open, mode, initialMember]);
 
   const handleClose = () => {
     onClose();
@@ -278,7 +285,6 @@ export function MemberDialog({
       onClose={handleClose}
       title={existingUser ? 'User Found' : title}
       description={description}
-      color={THEME_COLORS.members.primary}
     >
       <div className="flex flex-col h-full">
         {existingUser ? (
@@ -299,7 +305,7 @@ export function MemberDialog({
                  </div>
                  <div className="mt-8 flex flex-row justify-end gap-3 pt-4">
                      <CustomButton variant="outline" onClick={() => setExistingUser(null)} disabled={submitting}>Back to form</CustomButton>
-                     <CustomButton variant="primary" onClick={handleConfirmAddExistingUser} disabled={submitting}>
+                     <CustomButton variant="default" onClick={handleConfirmAddExistingUser} disabled={submitting}>
                          {submitting ? 'Adding...' : 'Add to Community'}
                      </CustomButton>
                  </div>

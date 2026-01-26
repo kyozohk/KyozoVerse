@@ -23,6 +23,7 @@ import {
   MessageCircle,
   User
 } from 'lucide-react';
+import { CommunityBanner } from '@/components/ui/community-banner';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -166,17 +167,9 @@ export default function MemberProfilePage() {
     if (!member) return;
     
     try {
-      // Update the user document in Firestore (like app1)
-      const userDocRef = doc(db, 'users', memberId);
-      await updateDoc(userDocRef, {
-        displayName: data.displayName,
-        email: data.email,
-        phone: data.phone || '',
-        avatarUrl: data.avatarUrl || '',
-        coverUrl: data.coverUrl || '',
-      });
-      
-      // Also update the userDetails in the communityMember document
+      // Update the userDetails in the communityMember document
+      // Note: We only update communityMembers, not the users collection directly
+      // because Firebase rules may not allow admins to update other users' documents
       const memberDocRef = doc(db, 'communityMembers', member.id);
       await updateDoc(memberDocRef, {
         'userDetails.displayName': data.displayName,
@@ -268,93 +261,69 @@ export default function MemberProfilePage() {
   
   const { userDetails } = member;
 
+  // Format role for display
+  const getRoleLabel = (role?: string) => {
+    switch (role?.toLowerCase()) {
+      case 'owner': return 'Owner';
+      case 'admin': return 'Admin';
+      default: return 'Member';
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          {/* Banner */}
-          <div className="relative h-48 bg-gradient-to-r from-purple-600 to-blue-600">
-            <Image 
-              src={userDetails.coverUrl || getDefaultBanner(memberId)} 
-              alt={`${userDetails.displayName}'s cover`} 
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/30"></div>
-            
-            {/* Back button */}
-            <div className="absolute top-4 left-4 z-10">
-              <Button 
-                variant="ghost" 
-                onClick={() => router.push(`/${handle}/members`)} 
-                className="text-white/90 hover:text-white hover:bg-white/20 backdrop-blur-sm"
+          {/* Member Banner */}
+          <CommunityBanner
+            backgroundImage={userDetails.coverUrl || getDefaultBanner(memberId)}
+            iconImage={userDetails.avatarUrl}
+            iconSize={100}
+            title={userDetails.displayName || 'Unknown User'}
+            location={community?.name ? `Member of ${community.name}` : undefined}
+            locationExtra={
+              <Badge 
+                variant="outline" 
+                className={`capitalize text-white border-white/50 bg-white/10 ${
+                  member.role === 'owner' ? 'bg-amber-500/30' :
+                  member.role === 'admin' ? 'bg-purple-500/30' :
+                  ''
+                }`}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Members
-              </Button>
-            </div>
-            
-          </div>
-
-          {/* Profile section */}
-          <div className="px-8 pb-8">
-            {/* Avatar - overlapping banner */}
-            <div className="-mt-16 mb-4">
-              <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
-                <AvatarImage src={userDetails.avatarUrl} />
-                <AvatarFallback className="text-3xl bg-secondary">
-                  {userDetails.displayName?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-
-            {/* Name and role */}
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">{userDetails.displayName}</h1>
-                <div className="flex items-center gap-3 mt-2">
-                  <Badge 
-                    variant="outline" 
-                    className={`capitalize ${
-                      member.role === 'owner' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                      member.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200' :
-                      'bg-secondary'
-                    }`}
-                  >
-                    <Shield className="h-3 w-3 mr-1" />
-                    {member.role || 'Member'}
-                  </Badge>
-                  {community && (
-                    <span className="text-sm text-muted-foreground">
-                      in {community.name}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Action buttons - Edit and Delete CTAs */}
-              {canManage && (
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => setIsEditDialogOpen(true)}
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Member
-                  </Button>
-                  <Button 
-                    variant="destructive"
-                    className="gap-2"
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete Member
-                  </Button>
-                </div>
-              )}
-            </div>
+                <Shield className="h-3 w-3 mr-1" />
+                {getRoleLabel(member.role)}
+              </Badge>
+            }
+            subtitle={userDetails.email}
+            ctas={canManage ? [
+              {
+                label: 'Back to Members',
+                icon: <ArrowLeft className="h-4 w-4" />,
+                onClick: () => router.push(`/${handle}/members`),
+              },
+              {
+                label: 'Edit Member',
+                icon: <Edit className="h-4 w-4" />,
+                onClick: () => setIsEditDialogOpen(true),
+              },
+              {
+                label: 'Delete Member',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: () => setIsDeleteConfirmOpen(true),
+              },
+            ] : [
+              {
+                label: 'Back to Members',
+                icon: <ArrowLeft className="h-4 w-4" />,
+                onClick: () => router.push(`/${handle}/members`),
+              },
+            ]}
+            height="16rem"
+          />
+        </div>
+        
+        {/* Profile Details */}
+        <div className="mt-6 rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
 
             {/* Details grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -457,8 +426,7 @@ export default function MemberProfilePage() {
             )}
           </div>
         </div>
-      </div>
-
+      
       {/* Edit Member Dialog */}
       <MemberDialog
         open={isEditDialogOpen}
