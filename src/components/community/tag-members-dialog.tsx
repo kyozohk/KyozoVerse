@@ -241,7 +241,6 @@ export function TagMembersDialog({
       onClose={onClose}
       title="Tag Members"
       description={`Apply tags to ${members.length} selected member(s).`}
-      color={THEME_COLORS.members.primary}
       rightComponent={rightPanel}
     >
       <div className="flex flex-col h-full">

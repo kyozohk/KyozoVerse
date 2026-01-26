@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +15,9 @@ interface EnhancedListViewProps<T> {
   isLoading?: boolean;
   loadingComponent?: React.ReactNode;
   urlField?: string;
-  onSelectionChange?: (selectedIds: string[]) => void;
+  onSelectionChange?: (selectedIds: string[], selectedItems: T[]) => void;
+  // Selection action buttons (shown when items are selected)
+  selectionActions?: React.ReactNode;
   // Infinite scroll props
   pageSize?: number;
   hasMore?: boolean;
@@ -34,6 +36,7 @@ export function EnhancedListView<T extends { id: string }>({
   loadingComponent,
   urlField = 'id',
   onSelectionChange,
+  selectionActions,
   pageSize = 20,
   hasMore = false,
   onLoadMore,
@@ -87,7 +90,8 @@ export function EnhancedListView<T extends { id: string }>({
       } else {
         newSet.add(id);
       }
-      onSelectionChange?.(Array.from(newSet));
+      const selectedItems = items.filter(item => newSet.has(item.id));
+      onSelectionChange?.(Array.from(newSet), selectedItems);
       return newSet;
     });
   };
@@ -97,7 +101,8 @@ export function EnhancedListView<T extends { id: string }>({
       ? new Set<string>() 
       : new Set(filteredItems.map(item => item.id));
     setSelectedIds(newSet);
-    onSelectionChange?.(Array.from(newSet));
+    const selectedItems = items.filter(item => newSet.has(item.id));
+    onSelectionChange?.(Array.from(newSet), selectedItems);
   };
 
   const renderContent = () => {
@@ -247,8 +252,15 @@ export function EnhancedListView<T extends { id: string }>({
           </div>
         </div>
         {selectable && selectedIds.size > 0 && !isLoading && (
-          <div className="mt-4 text-sm text-muted-foreground">
-            {selectedIds.size} of {filteredItems.length} selected
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {selectedIds.size} of {filteredItems.length} selected
+            </span>
+            {selectionActions && (
+              <div className="flex items-center gap-2">
+                {selectionActions}
+              </div>
+            )}
           </div>
         )}
       </div>

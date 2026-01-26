@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc, orderBy, limit, startAfter, DocumentSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc, orderBy, limit, startAfter, DocumentSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Loader2, UserPlus, Mail, Globe, Lock } from 'lucide-react';
@@ -12,7 +12,10 @@ import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v
 import { Button } from '@/components/ui/button';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
+import { TagMembersDialog } from '@/components/community/tag-members-dialog';
+import { addTagsToCommunity } from '@/lib/community-tags';
 import { useAuth } from '@/hooks/use-auth';
+import { Tag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserRoleInCommunity } from '@/lib/community-utils';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -26,6 +29,7 @@ interface MemberData {
   imageUrl: string;
   role?: string;
   joinedDate?: any;
+  tags?: string[];
 }
 
 const PAGE_SIZE = 20;
@@ -40,6 +44,8 @@ function MembersContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isTaggingOpen, setIsTaggingOpen] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   
   // Pagination state
@@ -60,6 +66,7 @@ function MembersContent() {
       imageUrl: userDetails.avatarUrl || userDetails.photoURL || '/placeholder-avatar.png',
       role: memberData.role || 'member',
       joinedDate: memberData.joinedAt,
+      tags: memberData.tags || [],
     };
   };
 
@@ -245,6 +252,93 @@ function MembersContent() {
 
   const canManage = userRole === 'owner' || userRole === 'admin';
 
+  // Handle member selection toggle
+  const handleToggleMemberSelection = (member: MemberData) => {
+    setSelectedMembers((prevSelected) => {
+      if (prevSelected.some(m => m.id === member.id)) {
+        return prevSelected.filter(m => m.id !== member.id);
+      } else {
+        return [...prevSelected, member];
+      }
+    });
+  };
+
+  // Handle applying tags to selected members
+  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
+    if (!community?.communityId) {
+      console.error('No community ID available');
+      return;
+    }
+
+    const memberIds = selectedMembers.map(m => m.id);
+    
+    try {
+      // Save new tags to community's tags subcollection
+      if (tagsToAdd.length > 0) {
+        await addTagsToCommunity(community.communityId, tagsToAdd);
+      }
+
+      // Update all selected members
+      const updates = memberIds.map(async (id) => {
+        const memberRef = doc(db, 'communityMembers', id);
+        
+        // Add new tags if any
+        if (tagsToAdd.length > 0) {
+          await updateDoc(memberRef, {
+            tags: arrayUnion(...tagsToAdd),
+          });
+        }
+        
+        // Remove tags if any
+        if (tagsToRemove.length > 0) {
+          await updateDoc(memberRef, {
+            tags: arrayRemove(...tagsToRemove),
+          });
+        }
+      });
+    
+      await Promise.all(updates);
+      
+      // Update local state to reflect tag changes
+      setMembers(prevMembers => prevMembers.map(m => {
+        if (memberIds.includes(m.id)) {
+          const currentTags = m.tags || [];
+          const newTags = [...currentTags.filter(t => !tagsToRemove.includes(t)), ...tagsToAdd.filter(t => !currentTags.includes(t))];
+          return { ...m, tags: newTags };
+        }
+        return m;
+      }));
+      
+      setSelectedMembers([]); // Clear selection after applying
+      
+      toast({
+        title: 'Tags Applied',
+        description: `Tags have been updated for ${memberIds.length} member(s).`,
+      });
+    } catch (error) {
+      console.error('Error applying tags:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not apply tags. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Convert MemberData to CommunityMember format for TagMembersDialog
+  const selectedMembersForDialog = selectedMembers.map(m => ({
+    id: m.id,
+    userId: m.userId,
+    communityId: community?.communityId || '',
+    role: m.role || 'member',
+    tags: m.tags || [],
+    userDetails: {
+      displayName: m.name,
+      email: m.email || '',
+      avatarUrl: m.imageUrl,
+    },
+  }));
+
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, i) => (
@@ -309,24 +403,41 @@ function MembersContent() {
         
         <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           <EnhancedListView
-        items={members}
-        renderGridItem={(item, isSelected) => (
-          <MemberGridItem item={item} isSelected={isSelected} />
-        )}
-        renderListItem={(item, isSelected) => (
-          <MemberListItem item={item} isSelected={isSelected} />
-        )}
-        renderCircleItem={(item, isSelected) => (
-          <MemberCircleItem item={item} isSelected={isSelected} />
-        )}
-        searchKeys={['name', 'email']}
-        selectable={false}
-        isLoading={isLoading}
-        loadingComponent={<LoadingSkeleton />}
-        pageSize={PAGE_SIZE}
-        hasMore={hasMore}
-        onLoadMore={loadMoreMembers}
-        isLoadingMore={isLoadingMore}
+            items={members}
+            renderGridItem={(item, isSelected) => (
+              <MemberGridItem item={item} isSelected={isSelected} />
+            )}
+            renderListItem={(item, isSelected) => (
+              <MemberListItem item={item} isSelected={isSelected} />
+            )}
+            renderCircleItem={(item, isSelected) => (
+              <MemberCircleItem item={item} isSelected={isSelected} />
+            )}
+            searchKeys={['name', 'email']}
+            selectable={canManage}
+            onSelectionChange={(ids, items) => setSelectedMembers(items)}
+            selectionActions={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTaggingOpen(true)}
+                className="gap-2"
+                style={{ 
+                  borderColor: '#E8DFD1',
+                  backgroundColor: '#E8DFD1',
+                  color: '#5B4A3A'
+                }}
+              >
+                <Tag className="h-4 w-4" />
+                Add Tags ({selectedMembers.length})
+              </Button>
+            }
+            isLoading={isLoading}
+            loadingComponent={<LoadingSkeleton />}
+            pageSize={PAGE_SIZE}
+            hasMore={hasMore}
+            onLoadMore={loadMoreMembers}
+            isLoadingMore={isLoadingMore}
           />
         </div>
       </div>
@@ -348,6 +459,20 @@ function MembersContent() {
           isOpen={isInviteDialogOpen}
           onClose={() => setIsInviteDialogOpen(false)}
           community={community}
+        />
+      )}
+      
+      {/* Tag Members Dialog */}
+      {community && (
+        <TagMembersDialog
+          isOpen={isTaggingOpen}
+          onClose={() => {
+            setIsTaggingOpen(false);
+            setSelectedMembers([]);
+          }}
+          members={selectedMembersForDialog as any}
+          communityId={community.communityId}
+          onApplyTags={handleApplyTags}
         />
       )}
     </div>

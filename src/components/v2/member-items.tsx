@@ -1,8 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { Mail, Calendar, Shield } from 'lucide-react';
+import { Mail, Calendar, Shield, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RoundImage } from '@/components/ui/round-image';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface Member {
   imageHint?: string;
   role?: string;
   joinedDate?: any;
+  tags?: string[];
   [key: string]: any;
 }
 
@@ -59,9 +61,18 @@ const getRoleBadgeColor = (role?: string) => {
   }
 };
 
+// Check if image URL is valid (not a placeholder)
+const isValidImageUrl = (url: string) => {
+  if (!url) return false;
+  if (url === '/placeholder-avatar.png') return false;
+  if (url.includes('placeholder')) return false;
+  return true;
+};
+
 export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
+  const hasValidImage = isValidImageUrl(item.imageUrl);
   
   return (
     <Link href={`/${handle}/members/${item.userId}`}>
@@ -73,14 +84,21 @@ export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
         style={{ borderColor: 'var(--page-content-border)' }}
       >
         <div className="relative" style={{ paddingTop: '60%', backgroundColor: '#E2D9C9' }}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <RoundImage 
-              src={item.imageUrl} 
-              alt={item.name} 
-              size={80}
-              border={true}
+          {hasValidImage ? (
+            <Image
+              src={item.imageUrl}
+              alt={item.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
-          </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-white/50 flex items-center justify-center border-2 border-white/80">
+                <User className="h-10 w-10 text-[#8A7A6A]" />
+              </div>
+            </div>
+          )}
         </div>
         <div className="p-4 flex-1 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-2">
@@ -95,6 +113,20 @@ export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
               <Mail className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{item.email}</span>
+            </div>
+          )}
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {item.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs px-2 py-0.5" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                  {tag}
+                </Badge>
+              ))}
+              {item.tags.length > 3 && (
+                <Badge variant="secondary" className="text-xs px-2 py-0.5" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                  +{item.tags.length - 3}
+                </Badge>
+              )}
             </div>
           )}
           {item.joinedDate && (
@@ -143,6 +175,20 @@ export const MemberListItem = ({ item, isSelected }: MemberItemProps) => {
               <span className="truncate">{item.email}</span>
             </div>
           )}
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {item.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs px-2 py-0.5" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                  {tag}
+                </Badge>
+              ))}
+              {item.tags.length > 3 && (
+                <Badge variant="secondary" className="text-xs px-2 py-0.5" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                  +{item.tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
         <div className="hidden sm:flex flex-col items-end text-xs text-muted-foreground ml-4">
           {item.joinedDate && (
@@ -189,6 +235,20 @@ export const MemberCircleItem = ({ item, isSelected }: MemberItemProps) => {
           </div>
           {item.email && (
             <p className="text-xs text-muted-foreground truncate mt-2">{item.email}</p>
+          )}
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1 mt-2">
+              {item.tags.slice(0, 2).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs px-2 py-0.5" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                  {tag}
+                </Badge>
+              ))}
+              {item.tags.length > 2 && (
+                <Badge variant="secondary" className="text-xs px-2 py-0.5" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                  +{item.tags.length - 2}
+                </Badge>
+              )}
+            </div>
           )}
         </div>
       </Card>
