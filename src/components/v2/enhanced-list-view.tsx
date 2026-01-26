@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Search, Grid, List, CircleUser, Check, CheckSquare, Square } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +16,11 @@ interface EnhancedListViewProps<T> {
   loadingComponent?: React.ReactNode;
   urlField?: string;
   onSelectionChange?: (selectedIds: string[]) => void;
+  // Infinite scroll props
+  pageSize?: number;
+  hasMore?: boolean;
+  onLoadMore?: () => Promise<void>;
+  isLoadingMore?: boolean;
 }
 
 export function EnhancedListView<T extends { id: string }>({
@@ -29,10 +34,36 @@ export function EnhancedListView<T extends { id: string }>({
   loadingComponent,
   urlField = 'id',
   onSelectionChange,
+  pageSize = 20,
+  hasMore = false,
+  onLoadMore,
+  isLoadingMore = false,
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  // Infinite scroll observer
+  const lastItemRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isLoading || isLoadingMore) return;
+      if (observerRef.current) observerRef.current.disconnect();
+      
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore && onLoadMore) {
+          onLoadMore();
+        }
+      }, {
+        rootMargin: '100px',
+        threshold: 0.1
+      });
+      
+      if (node) observerRef.current.observe(node);
+    },
+    [isLoading, isLoadingMore, hasMore, onLoadMore]
+  );
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return items;
@@ -93,30 +124,46 @@ export function EnhancedListView<T extends { id: string }>({
 
     return (
       <div className={className}>
-        {filteredItems.map((item) => (
-          <div key={item.id} className="relative">
-            {selectable && (
-              <div 
-                className="absolute top-2 left-2 z-10 cursor-pointer"
-                onClick={() => toggleSelection(item.id)}
-              >
+        {filteredItems.map((item, index) => {
+          const isLastItem = index === filteredItems.length - 1;
+          return (
+            <div 
+              key={item.id} 
+              className="relative"
+              ref={isLastItem ? lastItemRef : null}
+            >
+              {selectable && (
                 <div 
-                  className={cn(
-                    "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                    selectedIds.has(item.id) 
-                      ? "bg-primary border-primary" 
-                      : "bg-background border-input"
-                  )}
+                  className="absolute top-2 left-2 z-10 cursor-pointer"
+                  onClick={() => toggleSelection(item.id)}
                 >
-                  {selectedIds.has(item.id) && (
-                    <Check className="h-3 w-3 text-primary-foreground" />
-                  )}
+                  <div 
+                    className={cn(
+                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                      selectedIds.has(item.id) 
+                        ? "bg-primary border-primary" 
+                        : "bg-background border-input"
+                    )}
+                  >
+                    {selectedIds.has(item.id) && (
+                      <Check className="h-3 w-3 text-primary-foreground" />
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-            {ItemComponent(item, selectedIds.has(item.id), () => toggleSelection(item.id), urlField)}
+              )}
+              {ItemComponent(item, selectedIds.has(item.id), () => toggleSelection(item.id), urlField)}
+            </div>
+          );
+        })}
+        {/* Load more indicator */}
+        {isLoadingMore && (
+          <div className="col-span-full flex justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ))}
+        )}
+        {hasMore && !isLoadingMore && (
+          <div ref={loadMoreRef} className="col-span-full h-4" />
+        )}
       </div>
     );
   };

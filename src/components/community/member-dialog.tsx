@@ -16,6 +16,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { joinCommunity } from "@/lib/community-utils";
 import { doc, updateDoc, increment, getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
+import Image from "next/image";
+import { Check } from "lucide-react";
+
+// Default banner options
+const DEFAULT_BANNERS = [
+  { id: 'banner1', url: '/banner1.png', label: 'Banner 1' },
+  { id: 'banner2', url: '/banner2.png', label: 'Banner 2' },
+  { id: 'banner3', url: '/banner3.png', label: 'Banner 3' },
+];
 
 interface MemberDialogProps {
   open: boolean;
@@ -327,14 +336,56 @@ export function MemberDialog({
                 onSelectFile={setAvatarFile}
               />
               
+              {/* Banner Selection */}
               <div className="my-2">
+                <Label className="text-sm font-medium mb-2 block">Profile Banner</Label>
+                
+                {/* Default Banner Options */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {DEFAULT_BANNERS.map((banner) => (
+                    <button
+                      key={banner.id}
+                      type="button"
+                      onClick={() => {
+                        setCoverUrl(banner.url);
+                        setCoverFile(null);
+                      }}
+                      className={`relative h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        coverUrl === banner.url && !coverFile
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-muted hover:border-primary/50'
+                      }`}
+                    >
+                      <Image
+                        src={banner.url}
+                        alt={banner.label}
+                        fill
+                        className="object-cover"
+                      />
+                      {coverUrl === banner.url && !coverFile && (
+                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                          <div className="bg-primary rounded-full p-1">
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Custom Upload */}
                 <Dropzone 
-                  label="Profile Banner"
+                  label="Or upload custom banner"
                   file={coverFile} 
-                  onFileChange={setCoverFile}
+                  onFileChange={(file) => {
+                    setCoverFile(file);
+                    if (file) {
+                      setCoverUrl(null); // Clear preset selection when uploading custom
+                    }
+                  }}
                   fileType="image"
-                  existingImageUrl={coverUrl}
-                  className="h-24"
+                  existingImageUrl={coverFile ? undefined : (coverUrl && !DEFAULT_BANNERS.some(b => b.url === coverUrl) ? coverUrl : undefined)}
+                  className="h-20"
                 />
               </div>
               
