@@ -5,12 +5,24 @@ import { useEffect, useState, Suspense } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Mail } from 'lucide-react';
 import { PageLayout } from '@/components/v2/page-layout';
 import { PageHeader } from '@/components/v2/page-header';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface MemberData {
   id: string;
@@ -30,6 +42,11 @@ function BroadcastContent() {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBroadcastDialogOpen, setIsBroadcastDialogOpen] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState('');
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCommunityAndMembers = async () => {
@@ -90,9 +107,103 @@ function BroadcastContent() {
     fetchCommunityAndMembers();
   }, [handle]);
 
-  const handleSendBroadcast = () => {
-    console.log('Sending broadcast to:', selectedMembers);
-    // TODO: Implement broadcast functionality
+  const handleOpenBroadcastDialog = () => {
+    if (selectedMembers.length === 0) return;
+    setIsBroadcastDialogOpen(true);
+  };
+
+  const handleSendBroadcast = async () => {
+    if (!community || selectedMembers.length === 0 || !broadcastSubject.trim() || !broadcastMessage.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in subject and message',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Filter members with valid emails
+    const membersWithEmail = selectedMembers.filter(m => m.email && m.email.trim());
+    if (membersWithEmail.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No selected members have email addresses',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSending(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    // Send emails to each member
+    for (const member of membersWithEmail) {
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: member.email,
+            from: 'Kyozo <dev@contact.kyozo.com>',
+            subject: broadcastSubject,
+            html: `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f3f4f6;">
+                  <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                      <h1 style="color: #5B4A3A; margin: 0; font-size: 24px;">${community.name}</h1>
+                    </div>
+                    <div style="color: #374151; font-size: 16px; line-height: 1.6;">
+                      <p>Hi ${member.name},</p>
+                      <div style="white-space: pre-wrap;">${broadcastMessage}</div>
+                    </div>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+                      <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent from ${community.name} via Kyozo</p>
+                    </div>
+                  </div>
+                </body>
+              </html>
+            `,
+          }),
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+          console.error(`Failed to send to ${member.email}`);
+        }
+      } catch (error) {
+        failCount++;
+        console.error(`Error sending to ${member.email}:`, error);
+      }
+    }
+
+    setIsSending(false);
+    setIsBroadcastDialogOpen(false);
+    setBroadcastSubject('');
+    setBroadcastMessage('');
+
+    if (successCount > 0) {
+      toast({
+        title: 'Broadcast Sent',
+        description: `Successfully sent to ${successCount} member${successCount > 1 ? 's' : ''}${failCount > 0 ? `. ${failCount} failed.` : ''}`,
+      });
+    } else {
+      toast({
+        title: 'Broadcast Failed',
+        description: 'Failed to send emails. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const LoadingSkeleton = () => (
@@ -123,11 +234,11 @@ function BroadcastContent() {
         actions={
           <Button 
             variant="selected" 
-            onClick={handleSendBroadcast}
+            onClick={handleOpenBroadcastDialog}
             disabled={selectedMembers.length === 0}
           >
-            <Send className="mr-2 h-4 w-4" />
-            Send to {selectedMembers.length} {selectedMembers.length === 1 ? 'Member' : 'Members'}
+            <Mail className="mr-2 h-4 w-4" />
+            Email {selectedMembers.length} {selectedMembers.length === 1 ? 'Member' : 'Members'}
           </Button>
         }
       />
@@ -148,6 +259,61 @@ function BroadcastContent() {
         isLoading={isLoading}
         loadingComponent={<LoadingSkeleton />}
       />
+      {/* Broadcast Email Dialog */}
+      <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]" style={{ backgroundColor: '#F5F0E8' }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: '#5B4A3A' }}>Send Broadcast Email</DialogTitle>
+            <DialogDescription>
+              Send an email to {selectedMembers.filter(m => m.email).length} selected member{selectedMembers.filter(m => m.email).length !== 1 ? 's' : ''} with email addresses
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="subject" style={{ color: '#5B4A3A' }}>Subject</Label>
+              <Input
+                id="subject"
+                placeholder="Enter email subject..."
+                value={broadcastSubject}
+                onChange={(e) => setBroadcastSubject(e.target.value)}
+                style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="message" style={{ color: '#5B4A3A' }}>Message</Label>
+              <Textarea
+                id="message"
+                placeholder="Enter your message..."
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                rows={8}
+                style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBroadcastDialogOpen(false)}
+              disabled={isSending}
+              style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendBroadcast}
+              disabled={isSending || !broadcastSubject.trim() || !broadcastMessage.trim()}
+              style={{ backgroundColor: '#5B4A3A', color: 'white' }}
+            >
+              {isSending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+              ) : (
+                <><Send className="mr-2 h-4 w-4" /> Send Broadcast</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }
