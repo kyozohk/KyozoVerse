@@ -112,7 +112,7 @@ function CommunitiesContent() {
         actions={
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Community now
+            Create Community
           </Button>
         }
       />
@@ -152,7 +152,7 @@ function CommunitiesContent() {
       />
       <CreateCommunityDialog 
         isOpen={isCreateDialogOpen} 
-        setIsOpen={setIsCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
         onCommunityUpdated={() => {
           // Refresh communities list after creating a new one
           if (user) {
