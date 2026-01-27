@@ -95,14 +95,8 @@ export function MemberDialog({
           resetForm();
       }
     }
-  }, [open, mode, initialMember, resetForm]);
-
-  useEffect(() => {
-    if (!open) {
-      const timer = setTimeout(() => resetForm(), 300); // Reset after closing animation
-      return () => clearTimeout(timer);
-    }
-  }, [open, resetForm]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mode, initialMember?.id]); // Only re-run if the member ID changes, not the whole object
 
   const handleFileUpload = async (file: File | null, userId: string | null | undefined, type: 'avatar' | 'cover') => {
     if (!file) {
@@ -249,8 +243,7 @@ export function MemberDialog({
         avatarUrl: finalAvatarUrl || undefined,
         coverUrl: finalCoverUrl || undefined
       });
-      // The parent component is now responsible for closing the dialog
-      // onOpenChange(false);
+      onOpenChange(false);
     } catch (e: any) {
       if (e.code === 'auth/user-already-exists' && e.existingUser) {
         setExistingUser(e.existingUser);
@@ -261,7 +254,7 @@ export function MemberDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleConfirmAddExistingUser]);
+  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleConfirmAddExistingUser, onOpenChange]);
 
 
   const title = mode === "add" ? "Add member" : "Edit member";

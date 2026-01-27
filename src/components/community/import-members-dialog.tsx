@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ImportMembersDialogProps {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   community: Community;
   onSuccess: () => void;
 }
@@ -27,7 +27,7 @@ interface MemberRow {
 
 export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
   isOpen,
-  onClose,
+  onOpenChange,
   community,
   onSuccess
 }) => {
@@ -263,7 +263,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
       });
 
       onSuccess();
-      onClose();
+      onOpenChange(false);
     } catch (err: any) {
       setError(err.message || 'Failed to import members');
       toast({
@@ -306,7 +306,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       title="Import Members"
       description={`Import members to ${community.name}`}
       color="#843484"
@@ -478,7 +478,7 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({
           <div className="flex gap-3 pt-6 mt-4">
             <Button
               type="button"
-              onClick={onClose}
+              onClick={() => onOpenChange(false)}
               variant="outline"
               className="flex-1"
               disabled={loading}

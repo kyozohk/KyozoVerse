@@ -7,14 +7,14 @@ import { Send } from 'lucide-react';
 
 interface WhatsAppMessageDialogProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   recipientName: string;
   recipientPhone: string;
 }
 
 export function WhatsAppMessageDialog({
   open,
-  onClose,
+  onOpenChange,
   recipientName,
   recipientPhone,
 }: WhatsAppMessageDialogProps) {
@@ -40,19 +40,19 @@ export function WhatsAppMessageDialog({
     setTimeout(() => {
       setMessage('');
       setSending(false);
-      onClose();
+      onOpenChange(false);
     }, 500);
   };
 
   const handleClose = () => {
     setMessage('');
-    onClose();
+    onOpenChange(false);
   };
 
   return (
     <CustomFormDialog
       open={open}
-      onClose={handleClose}
+      onOpenChange={onOpenChange}
       title="Send WhatsApp Message"
       description={`Send a message to ${recipientName}`}
       color="#25D366" // WhatsApp green

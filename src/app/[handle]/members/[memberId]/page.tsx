@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -165,7 +164,7 @@ export default function MemberProfilePage() {
     avatarUrl?: string;
     coverUrl?: string;
   }) => {
-    if (!member) return;
+    if (!member?.id) return;
     
     try {
       const memberDocRef = doc(db, 'communityMembers', member.id);
@@ -196,7 +195,7 @@ export default function MemberProfilePage() {
         variant: 'destructive',
       });
     }
-  }, [member, toast]);
+  }, [member?.id, toast]);
 
 
   const canManage = userRole === 'owner' || userRole === 'admin';

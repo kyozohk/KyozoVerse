@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -419,7 +420,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
             memberId: memberId,
             name: memberDisplayName || 'Unknown',
             status: 'failed',
-            phone: memberPhone,
+            phone: undefined, // phone might not be available here
             error: error instanceof Error ? error.message : 'Unknown error'
           });
         }

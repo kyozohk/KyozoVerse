@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -101,37 +102,30 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     useEffect(() => {
-        if (existingCommunity) {
-            console.log('=== CREATE COMMUNITY DIALOG - EDIT MODE ===');
-            console.log('Existing Community Data:', existingCommunity);
-            console.log('Community ID:', existingCommunity.communityId);
-            console.log('Community Name:', existingCommunity.name);
-            console.log('Profile Image:', existingCommunity.communityProfileImage);
-            console.log('Background Image:', existingCommunity.communityBackgroundImage);
-            console.log('Tags:', existingCommunity.tags);
-            console.log('Mantras:', (existingCommunity as any).mantras);
-            console.log('==========================================');
-            
-            setFormData({
-                name: existingCommunity.name || '',
-                lore: (existingCommunity as any).lore || '',
-                mantras: (existingCommunity as any).mantras || '',
-                location: (existingCommunity as any).location || '',
-                communityPrivacy: (existingCommunity as any).communityPrivacy || 'public',
-            });
-            setTags(existingCommunity.tags || []);
-            setProfileImageUrl(existingCommunity.communityProfileImage || null);
-            setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
-        } else {
-            // Reset form when creating a new community
-            setFormData({ name: '', lore: '', mantras: '', location: '', communityPrivacy: 'public' });
-            setTags([]);
-            setProfileImageFile(null);
-            setBackgroundImageFile(null);
-            setProfileImageUrl(null);
-            setBackgroundImageUrl(null);
+        if (isOpen) {
+            if (existingCommunity) {
+                setFormData({
+                    name: existingCommunity.name || '',
+                    lore: (existingCommunity as any).lore || '',
+                    mantras: (existingCommunity as any).mantras || '',
+                    location: (existingCommunity as any).location || '',
+                    communityPrivacy: (existingCommunity as any).communityPrivacy || 'public',
+                });
+                setTags(existingCommunity.tags || []);
+                setProfileImageUrl(existingCommunity.communityProfileImage || null);
+                setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
+            } else {
+                // Reset form when creating a new community
+                setFormData({ name: '', lore: '', mantras: '', location: '', communityPrivacy: 'public' });
+                setTags([]);
+                setProfileImageFile(null);
+                setBackgroundImageFile(null);
+                setProfileImageUrl(null);
+                setBackgroundImageUrl(null);
+            }
         }
-    }, [existingCommunity, isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, existingCommunity?.communityId]);
 
     const colors = ['#843484', '#06C4B5', '#E1B327', '#CF7770', '#699FE5'];
     const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
