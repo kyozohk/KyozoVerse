@@ -80,6 +80,15 @@ export function EnhancedListView<T extends { id: string }>({
     );
   }, [items, searchTerm, searchKeys]);
 
+  // Effect to call onSelectionChange when selectedIds changes
+  useEffect(() => {
+    if (onSelectionChange) {
+      const selectedItems = items.filter(item => selectedIds.has(item.id));
+      onSelectionChange(Array.from(selectedIds), selectedItems);
+    }
+  }, [selectedIds, items, onSelectionChange]);
+
+
   const toggleSelection = (id: string) => {
     if (!selectable) return;
     
@@ -90,19 +99,16 @@ export function EnhancedListView<T extends { id: string }>({
       } else {
         newSet.add(id);
       }
-      const selectedItems = items.filter(item => newSet.has(item.id));
-      onSelectionChange?.(Array.from(newSet), selectedItems);
       return newSet;
     });
   };
 
   const handleSelectAll = () => {
-    const newSet = selectedIds.size === filteredItems.length 
-      ? new Set<string>() 
-      : new Set(filteredItems.map(item => item.id));
-    setSelectedIds(newSet);
-    const selectedItems = items.filter(item => newSet.has(item.id));
-    onSelectionChange?.(Array.from(newSet), selectedItems);
+    if (selectedIds.size === filteredItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+    }
   };
 
   const renderContent = () => {

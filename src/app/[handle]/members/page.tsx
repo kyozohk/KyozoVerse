@@ -1,526 +1,454 @@
-
-
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  doc, 
-  getDoc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  serverTimestamp,
-  increment,
-  setDoc,
-  arrayUnion,
-  arrayRemove,
-  deleteDoc
-} from "firebase/firestore";
-import { db } from "@/firebase/firestore";
-import { useAuth } from "@/hooks/use-auth";
-import { type Community, type User } from "@/lib/types";
-import { getUserRoleInCommunity, getCommunityByHandle, getCommunityMembers, joinCommunity } from "@/lib/community-utils";
-import { MembersList } from "@/components/community/members-list";
-import { MemberDialog } from "@/components/community/member-dialog";
-import { ListView } from '@/components/ui/list-view';
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { communityAuth } from "@/firebase/community-auth";
-import { CommunityMember } from "@/lib/types";
-import { TagMembersDialog } from "@/components/community/tag-members-dialog";
-import { RemoveTagDialog } from "@/components/community/remove-tag-dialog";
-import { addTagsToCommunity, getCommunityTags, type CommunityTag } from "@/lib/community-tags";
-import { InviteMemberDialog } from "@/components/community/invite-member-dialog";
-import { ImportMembersDialog } from "@/components/community/import-members-dialog";
-import { UserPlus, Mail, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { CommunityHeader } from "@/components/community/community-header";
-import { CustomButton } from "@/components/ui";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
-// A simple debounce hook
-function useDebounce(value: string, delay: number) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-    return debouncedValue;
+import { useParams } from 'next/navigation';
+import { useEffect, useState, Suspense, useCallback } from 'react';
+import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc, orderBy, limit, startAfter, DocumentSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { db } from '@/firebase/firestore';
+import { Community } from '@/lib/types';
+import { Loader2, UserPlus, Mail, Globe, Lock } from 'lucide-react';
+import { Banner } from '@/components/ui/banner';
+import { EnhancedListView } from '@/components/v2/enhanced-list-view';
+import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
+import { Button } from '@/components/ui/button';
+import { MemberDialog } from '@/components/community/member-dialog';
+import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
+import { TagMembersDialog } from '@/components/community/tag-members-dialog';
+import { addTagsToCommunity } from '@/lib/community-tags';
+import { useAuth } from '@/hooks/use-auth';
+import { Tag } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { communityAuth } from '@/firebase/community-auth';
+
+interface MemberData {
+  id: string;
+  userId: string;
+  name: string;
+  email?: string;
+  imageUrl: string;
+  role?: string;
+  joinedDate?: any;
+  tags?: string[];
 }
 
+const PAGE_SIZE = 20;
 
-export default function CommunityMembersPage() {
-  const { user } = useAuth();
+function MembersContent() {
   const params = useParams();
   const handle = params.handle as string;
-  const router = useRouter();
-  
-  const [members, setMembers] = useState<CommunityMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>("guest");
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [community, setCommunity] = useState<Community | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [members, setMembers] = useState<MemberData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<CommunityMember | null>(null);
-  const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
-  const [isTaggingOpen, setIsTaggingOpen] = useState(false);
-  const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [memberToDelete, setMemberToDelete] = useState<CommunityMember | null>(null);
-
-  // State for remove tag confirmation
-  const [tagToRemove, setTagToRemove] = useState<{ memberId: string; tag: string } | null>(null);
-  const [isRemoveTagDialogOpen, setIsRemoveTagDialogOpen] = useState(false);
+  const [isTaggingOpen, setIsTaggingOpen] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  // Pagination state
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  useEffect(() => {
-    async function fetchCommunityAndRole() {
-      if (!handle) return;
-      
-      try {
-        const communityData = await getCommunityByHandle(handle);
-        
-        if (communityData) {
-          setCommunity(communityData);
-          
-          if (user) {
-            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-            setUserRole(role);
-          }
-          
-          // Fetch available tags for this community
-          const tags = await getCommunityTags(communityData.communityId);
-          setAvailableTags(tags);
-        }
-      } catch (error) {
-        console.error("Error fetching community data:", error);
-      }
-    }
+  // Helper function to transform member docs to MemberData
+  const transformMemberDoc = (memberDoc: any): MemberData => {
+    const memberData = memberDoc.data();
+    const userDetails = memberData.userDetails || {};
     
-    fetchCommunityAndRole();
-  }, [handle, user]);
-  
-  useEffect(() => {
-    if (!community?.communityId) {
-      setLoading(false);
-      return;
-    }
+    return {
+      id: memberDoc.id,
+      userId: memberData.userId,
+      name: userDetails.displayName || userDetails.email || 'Unknown User',
+      email: userDetails.email || '',
+      imageUrl: userDetails.avatarUrl || userDetails.photoURL || '/placeholder-avatar.png',
+      role: memberData.role || 'member',
+      joinedDate: memberData.joinedAt,
+      tags: memberData.tags || [],
+    };
+  };
 
-    async function fetchMembers() {
-      setLoading(true);
+  // Initial load - fetch community and first page of members
+  useEffect(() => {
+    const fetchCommunityAndMembers = async () => {
       try {
-        const membersData = await getCommunityMembers(community!.communityId, { type: 'name', value: debouncedSearchTerm });
-        console.log('✅ [Members Page] - Fetched members data:', JSON.stringify(membersData, null, 2));
+        setIsLoading(true);
+        setMembers([]);
+        setLastDoc(null);
+        setHasMore(true);
+
+        // Fetch community by handle
+        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
+        const communitySnapshot = await getDocs(communityQuery);
+        
+        if (communitySnapshot.empty) {
+          setIsLoading(false);
+          return;
+        }
+
+        const communityData = {
+          communityId: communitySnapshot.docs[0].id,
+          ...communitySnapshot.docs[0].data()
+        } as Community;
+        setCommunity(communityData);
+
+        // Fetch first page of community members using userDetails from the member doc
+        const membersQuery = query(
+          collection(db, 'communityMembers'),
+          where('communityId', '==', communityData.communityId),
+          orderBy('joinedAt', 'desc'),
+          limit(PAGE_SIZE)
+        );
+        const membersSnapshot = await getDocs(membersQuery);
+
+        // Transform member docs - use userDetails embedded in the member document
+        const membersData = membersSnapshot.docs.map(transformMemberDoc);
+        
         setMembers(membersData);
-      } catch (error) {
-        console.error("Error fetching members:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchMembers();
-  }, [community?.communityId, debouncedSearchTerm]);
-
-  const handleToggleMemberSelection = (member: CommunityMember) => {
-    setSelectedMembers((prevSelected) => {
-      if (prevSelected.some(m => m.id === member.id)) {
-        return prevSelected.filter(m => m.id !== member.id);
-      } else {
-        return [...prevSelected, member];
-      }
-    });
-  };
-
-  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[]) => {
-    if (!community?.communityId) {
-      console.error('❌ [Applying Tags] No community ID available');
-      return;
-    }
-
-    const memberIds = selectedMembers.map(m => m.id);
-    console.log(`🏷️ [Applying Tags] Updating ${memberIds.length} members.`);
-    console.log(`🏷️ [Applying Tags] Tags to add:`, tagsToAdd);
-    console.log(`🏷️ [Applying Tags] Tags to remove:`, tagsToRemove);
-    
-    try {
-      // First, save any new tags to the community's tags subcollection
-      if (tagsToAdd.length > 0) {
-        console.log(`🏷️ [Applying Tags] Saving new tags to community subcollection...`);
-        await addTagsToCommunity(community.communityId, tagsToAdd);
-        console.log(`✅ [Applying Tags] Tags saved to community`);
-      }
-
-      // Then update all selected members
-      const updates = memberIds.map(async (id) => {
-        const memberRef = doc(db, 'communityMembers', id);
-        console.log(`  - Updating member ${id}: ADD [${tagsToAdd.join(', ')}], REMOVE [${tagsToRemove.join(', ')}]`);
+        setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1] || null);
+        setHasMore(membersSnapshot.docs.length === PAGE_SIZE);
         
-        try {
-          // Add new tags if any
-          if (tagsToAdd.length > 0) {
-            await updateDoc(memberRef, {
-              tags: arrayUnion(...tagsToAdd),
-            });
-            console.log(`  ✅ Added tags to member ${id}`);
-          }
-          
-          // Remove tags if any (only from member, not from community)
-          if (tagsToRemove.length > 0) {
-            await updateDoc(memberRef, {
-              tags: arrayRemove(...tagsToRemove),
-            });
-            console.log(`  ✅ Removed tags from member ${id}`);
-          }
-        } catch (error) {
-          console.error(`  ❌ Error updating member ${id}:`, error);
-          throw error;
+        // Fetch user role
+        if (user && communityData) {
+          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+          setUserRole(role);
         }
-      });
-    
-      await Promise.all(updates);
-      console.log('✅ [Applying Tags] - All members updated in database.');
-      
-      // Refresh members data
-      const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
-      console.log('✅ [Applying Tags] - Refreshed members data:', membersData.map(m => ({ id: m.id, tags: m.tags })));
-      setMembers(membersData);
-      setSelectedMembers([]); // Clear selection after applying
-    } catch (error) {
-      console.error("❌ [Applying Tags] Error:", error);
-    }
-  };
-
-  const handleRemoveTag = async () => {
-    if (!tagToRemove) return;
-    try {
-      const memberRef = doc(db, 'communityMembers', tagToRemove.memberId);
-      await updateDoc(memberRef, {
-        tags: arrayRemove(tagToRemove.tag),
-      });
-
-      // Refresh local state
-      setMembers(prevMembers => prevMembers.map(m => {
-        if (m.id === tagToRemove.memberId) {
-          return { ...m, tags: m.tags?.filter(t => t !== tagToRemove.tag) };
-        }
-        return m;
-      }));
-    } catch (error) {
-      console.error("Error removing tag:", error);
-    } finally {
-      setIsRemoveTagDialogOpen(false);
-      setTagToRemove(null);
-    }
-  };
-
-  const openRemoveTagDialog = (memberId: string, tag: string) => {
-    setTagToRemove({ memberId, tag });
-    setIsRemoveTagDialogOpen(true);
-  };
-
-  const handleToggleTag = (tagName: string) => {
-    setSelectedTags(prev => {
-      if (prev.includes(tagName)) {
-        return prev.filter(t => t !== tagName);
-      } else {
-        return [...prev, tagName];
+      } catch (error) {
+        console.error('Error fetching community and members:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+
+    fetchCommunityAndMembers();
+  }, [handle, user]);
+
+  // Load more members (infinite scroll)
+  const loadMoreMembers = async () => {
+    if (!community || !lastDoc || isLoadingMore || !hasMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const membersQuery = query(
+        collection(db, 'communityMembers'),
+        where('communityId', '==', community.communityId),
+        orderBy('joinedAt', 'desc'),
+        startAfter(lastDoc),
+        limit(PAGE_SIZE)
+      );
+      const membersSnapshot = await getDocs(membersQuery);
+      
+      const newMembers = membersSnapshot.docs.map(transformMemberDoc);
+      
+      setMembers(prev => [...prev, ...newMembers]);
+      setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1] || null);
+      setHasMore(membersSnapshot.docs.length === PAGE_SIZE);
+    } catch (error) {
+      console.error('Error loading more members:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
-  // Filter members based on selected tags
-  const filteredMembers = useMemo(() => {
-    if (selectedTags.length === 0) {
-      return members;
-    }
-    return members.filter(member => {
-      const memberTags = member.tags || [];
-      return selectedTags.every(selectedTag => memberTags.includes(selectedTag));
-    });
-  }, [members, selectedTags]);
-  
-  const handleAddMemberSubmit = async (data: {
-    displayName: string;
-    email: string;
-    phone?: string;
-    avatarUrl?: string;
-    coverUrl?: string;
-  }) => {
+  const handleAddMember = async (data: { displayName: string; email: string; phone?: string; avatarUrl?: string }) => {
     if (!community?.communityId) {
       throw new Error("Community is not loaded yet.");
     }
     if (!data.email || !data.email.includes('@')) {
-      throw new Error("A valid email address is required to create a new user.");
+      throw new Error("A valid email address is required.");
     }
-  
-    // Validate and normalize phone number
-    let normalizedPhone = data.phone?.trim().replace(/\s+/g, '') || '';
-    if (normalizedPhone && !normalizedPhone.startsWith('+')) {
+    if (!data.phone) {
+      throw new Error("Phone number is required.");
+    }
+    
+    // Normalize phone number
+    let normalizedPhone = data.phone.trim().replace(/\s+/g, '');
+    if (!normalizedPhone.startsWith('+')) {
       normalizedPhone = '+' + normalizedPhone;
     }
-  
+    
+    // Create wa_id (WhatsApp ID) - phone without + and spaces
     const wa_id = normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '');
-  
+    
     const usersRef = collection(db, "users");
     
-    // Check if user exists by email or phone number
+    // Check if user exists
     const emailQuery = query(usersRef, where("email", "==", data.email));
-    let existingUserQuery = emailQuery;
-
-    if (normalizedPhone) {
-        const phoneQuery = query(usersRef, where("phone", "==", normalizedPhone));
-        const phoneQuery2 = query(usersRef, where("phoneNumber", "==", normalizedPhone));
-        // This is not a valid way to create an OR query in Firestore client SDK
-        // but for the logic, we will check them sequentially
-        const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
-          getDocs(emailQuery),
-          getDocs(phoneQuery),
-          getDocs(phoneQuery2),
-        ]);
-        const existingUserDoc = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
-        if (existingUserDoc) {
-          const existingUserData = existingUserDoc.data() as User;
-          const error: any = new Error("User already exists");
-          error.code = "auth/user-already-exists";
-          error.existingUser = {
-            userId: existingUserDoc.id,
-            ...existingUserData,
-          };
-          throw error;
-        }
-    } else {
-        const emailSnap = await getDocs(emailQuery);
-        if(!emailSnap.empty) {
-            const existingUserDoc = emailSnap.docs[0];
-            const existingUserData = existingUserDoc.data() as User;
-            const error: any = new Error("User already exists");
-            error.code = "auth/user-already-exists";
-            error.existingUser = {
-              userId: existingUserDoc.id,
-              ...existingUserData,
-            };
-            throw error;
-        }
+    const phoneQuery = query(usersRef, where("phoneNumber", "==", normalizedPhone));
+    const phoneQuery2 = query(usersRef, where("phone", "==", normalizedPhone));
+    
+    const [emailSnap, phoneSnap, phoneSnap2] = await Promise.all([
+      getDocs(emailQuery),
+      getDocs(phoneQuery),
+      getDocs(phoneQuery2)
+    ]);
+    
+    const existingByEmail = !emailSnap.empty;
+    const existingByPhone = !phoneSnap.empty || !phoneSnap2.empty;
+    
+    if (existingByEmail || existingByPhone) {
+      const existingUser = emailSnap.docs[0] || phoneSnap.docs[0] || phoneSnap2.docs[0];
+      const userData = existingUser.data();
+      throw new Error(
+        `A user with this ${existingByEmail ? 'email' : 'phone number'} already exists (${userData.displayName || userData.email}).`
+      );
     }
-  
-    return createUserWithEmailAndPassword(communityAuth, data.email, Math.random().toString(36).slice(-8))
-      .then(userCredential => {
-        const userId = userCredential.user.uid;
-        const userDetails = {
-          userId: userId,
-          displayName: data.displayName,
-          email: data.email,
-          phone: normalizedPhone,
-          phoneNumber: normalizedPhone,
-          wa_id: wa_id,
-          avatarUrl: data.avatarUrl || '',
-          coverUrl: data.coverUrl || '',
-          createdAt: serverTimestamp(),
-        };
-
-        const userDocRef = doc(db, "users", userId);
-        return setDoc(userDocRef, userDetails)
-          .then(() => ({ userId, userDetails }));
-      })
-      .then(({ userId, userDetails }) => {
-        return joinCommunity(userId, community!.communityId, {
-            displayName: data.displayName,
-            email: data.email,
-            avatarUrl: data.avatarUrl,
-            phone: normalizedPhone
-        });
-      })
-      .then(() => {
-        const communityRef = doc(db, "communities", community!.communityId);
-        return updateDoc(communityRef, { memberCount: increment(1) });
-      })
-      .catch(error => {
-        if (error.code !== "auth/user-already-exists") {
-            console.error("Error adding member:", error);
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-              path: '/users or /communityMembers',
-              operation: 'create',
-              requestResourceData: data
-            }));
-        }
-        throw error;
-      });
+    
+    // Create new user
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const userCredential = await createUserWithEmailAndPassword(communityAuth, data.email, tempPassword);
+    const userId = userCredential.user.uid;
+    
+    await setDoc(doc(db, "users", userId), {
+      userId,
+      displayName: data.displayName,
+      email: data.email,
+      phone: normalizedPhone,
+      phoneNumber: normalizedPhone,
+      wa_id: wa_id,
+      avatarUrl: data.avatarUrl || '',
+      createdAt: serverTimestamp(),
+    });
+    
+    // Add to community members
+    await addDoc(collection(db, "communityMembers"), {
+      userId,
+      communityId: community.communityId,
+      role: "member",
+      status: "active",
+      joinedAt: serverTimestamp(),
+      userDetails: {
+        displayName: data.displayName,
+        email: data.email,
+        avatarUrl: data.avatarUrl || null,
+        phone: normalizedPhone,
+      },
+    });
+    
+    // Increment member count
+    await updateDoc(doc(db, "communities", community.communityId), {
+      memberCount: increment(1),
+    });
+    
+    toast({
+      title: 'Member Added',
+      description: `${data.displayName} has been added to the community.`,
+    });
+    
+    // Add new member to the list immediately (at the beginning since sorted by joinedAt desc)
+    const newMember: MemberData = {
+      id: 'temp-' + Date.now(), // Will be replaced on next full fetch
+      userId: userId,
+      name: data.displayName,
+      email: data.email,
+      imageUrl: data.avatarUrl || '/placeholder-avatar.png',
+      role: 'member',
+      joinedDate: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
+    };
+    setMembers(prev => [newMember, ...prev]);
   };
 
-  const handleEditMemberSubmit = async (data: {
-    displayName: string;
-    email: string;
-    phone?: string;
-    avatarUrl?: string;
-    coverUrl?: string;
-  }) => {
-    if (!editingMember?.userId) {
-      throw new Error("No member selected to edit or member is missing user ID.");
-    }
+  const canManage = userRole === 'owner' || userRole === 'admin';
 
+  // Handle applying tags to selected members (now receives memberIds from dialog)
+  const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[], memberIds: string[]) => {
+    if (!community?.communityId) {
+      console.error('No community ID available');
+      return;
+    }
+    
     try {
-      // Only update the communityMembers collection
-      // Community owners/admins can update member details here
-      const memberRef = doc(db, "communityMembers", editingMember.id);
+      // Save new tags to community's tags subcollection
+      if (tagsToAdd.length > 0) {
+        await addTagsToCommunity(community.communityId, tagsToAdd);
+      }
+
+      // Update all selected members
+      const updates = memberIds.map(async (id) => {
+        const memberRef = doc(db, 'communityMembers', id);
+        
+        // Add new tags if any
+        if (tagsToAdd.length > 0) {
+          await updateDoc(memberRef, {
+            tags: arrayUnion(...tagsToAdd),
+          });
+        }
+        
+        // Remove tags if any
+        if (tagsToRemove.length > 0) {
+          await updateDoc(memberRef, {
+            tags: arrayRemove(...tagsToRemove),
+          });
+        }
+      });
+    
+      await Promise.all(updates);
       
-      // Build update object with only defined values
-      const updateData: any = {
-        'userDetails.displayName': data.displayName,
-        'userDetails.email': data.email,
-      };
-
-      // Only add phone if it has a value
-      if (data.phone) {
-        updateData['userDetails.phone'] = data.phone;
-      }
-
-      // Only add avatarUrl if it has a value
-      const finalAvatarUrl = data.avatarUrl || editingMember.userDetails?.avatarUrl;
-      if (finalAvatarUrl) {
-        updateData['userDetails.avatarUrl'] = finalAvatarUrl;
-      }
-
-      // Only add coverUrl if it has a value
-      const finalCoverUrl = data.coverUrl || editingMember.userDetails?.coverUrl;
-      if (finalCoverUrl) {
-        updateData['userDetails.coverUrl'] = finalCoverUrl;
-      }
-
-      await updateDoc(memberRef, updateData);
-
-      // Refresh the members list to show updated data
-      if (community?.communityId) {
-        const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
-        setMembers(membersData);
-      }
-
-    } catch (error: any) {
-      console.error("Error updating member:", error);
-      throw new Error(error?.message || "Unable to update member. Please try again.");
+      // Update local state to reflect tag changes
+      setMembers(prevMembers => prevMembers.map(m => {
+        if (memberIds.includes(m.id)) {
+          const currentTags = m.tags || [];
+          const newTags = [...currentTags.filter(t => !tagsToRemove.includes(t)), ...tagsToAdd.filter(t => !currentTags.includes(t))];
+          return { ...m, tags: newTags };
+        }
+        return m;
+      }));
+      
+      setSelectedMembers([]); // Clear selection after applying
+    } catch (error) {
+      console.error('Error applying tags:', error);
+      throw error; // Re-throw so dialog can show error
     }
   };
 
-  // Calculate member count excluding owner
-  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
-  const memberCountExcludingOwner = nonOwnerMembers.length;
+  const handleSelectionChange = useCallback((ids: string[], items: MemberData[]) => {
+    setSelectedMembers(items);
+  }, []);
+
+  // Convert MemberData to CommunityMember format for TagMembersDialog
+  const allMembersForDialog = members.map(m => ({
+    id: m.id,
+    userId: m.userId,
+    communityId: community?.communityId || '',
+    role: m.role || 'member',
+    tags: m.tags || [],
+    userDetails: {
+      displayName: m.name,
+      email: m.email || '',
+      avatarUrl: m.imageUrl,
+    },
+  }));
+
+  const selectedMembersForDialog = selectedMembers.map(m => ({
+    id: m.id,
+    userId: m.userId,
+    communityId: community?.communityId || '',
+    role: m.role || 'member',
+    tags: m.tags || [],
+    userDetails: {
+      displayName: m.name,
+      email: m.email || '',
+      avatarUrl: m.imageUrl,
+    },
+  }));
+
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="rounded-lg border border-input bg-card p-6 animate-pulse">
+          <div className="aspect-square bg-muted rounded-full mb-4 mx-auto w-20 h-20" />
+          <div className="h-5 bg-muted rounded w-3/4 mb-2 mx-auto" />
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
+        </div>
+      ))}
+    </div>
+  );
+
+  if (!community && !isLoading) {
+    return (
+      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8">
+          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <p>Community not found</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {community && (
-        <CommunityHeader 
-          community={community} 
-          userRole={userRole as any} 
-          onEdit={() => router.push(`/communities/${community.handle}/edit`)}
-          onDelete={() => setIsDeleteConfirmOpen(true)}
-          onAddMember={() => setIsAddMemberOpen(true)}
-          onInvite={() => setIsInviteDialogOpen(true)}
-          memberCount={memberCountExcludingOwner}
-          customActions={
-            <>
-              <CustomButton 
-                variant="rounded-rect" 
-                className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={() => setIsInviteDialogOpen(true)}
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Invite
-              </CustomButton>
-              <CustomButton 
-                variant="rounded-rect" 
-                className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={() => setIsAddMemberOpen(true)}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add
-              </CustomButton>
-              <CustomButton 
-                variant="rounded-rect" 
-                className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={() => {
-                  console.log('Import button clicked');
-                  setIsImportDialogOpen(true);
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-auto">
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          {community && (
+            <Banner
+              backgroundImage={community.communityBackgroundImage}
+              iconImage={community.communityProfileImage}
+              title={community.name}
+              location={(community as any).location}
+              locationExtra={
+                <span className="flex items-center gap-1 text-sm text-white/90">
+                  {(community as any).visibility === 'private' ? (
+                    <><Lock className="h-3.5 w-3.5" /> Private</>
+                  ) : (
+                    <><Globe className="h-3.5 w-3.5" /> Public</>
+                  )}
+                </span>
+              }
+              subtitle={community.tagline || (community as any).mantras}
+              tags={(community as any).tags || []}
+              ctas={canManage ? [
+                {
+                  label: 'Invite Member',
+                  icon: <Mail className="h-4 w-4" />,
+                  onClick: () => setIsInviteDialogOpen(true),
+                },
+                {
+                  label: 'Add Member',
+                  icon: <UserPlus className="h-4 w-4" />,
+                  onClick: () => setIsAddMemberOpen(true),
+                },
+              ] : []}
+              height="16rem"
+            />
+          )}
+        </div>
+        
+        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          <EnhancedListView
+            items={members}
+            renderGridItem={(item, isSelected) => (
+              <MemberGridItem item={item} isSelected={isSelected} />
+            )}
+            renderListItem={(item, isSelected) => (
+              <MemberListItem item={item} isSelected={isSelected} />
+            )}
+            renderCircleItem={(item, isSelected) => (
+              <MemberCircleItem item={item} isSelected={isSelected} />
+            )}
+            searchKeys={['name', 'email']}
+            selectable={canManage}
+            onSelectionChange={handleSelectionChange}
+            selectionActions={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTaggingOpen(true)}
+                className="gap-2"
+                style={{ 
+                  borderColor: '#E8DFD1',
+                  backgroundColor: '#E8DFD1',
+                  color: '#5B4A3A'
                 }}
               >
-                <Upload className="h-4 w-4 mr-2" />
-                Import
-              </CustomButton>
-            </>
-          }
+                <Tag className="h-4 w-4" />
+                Add Tags ({selectedMembers.length})
+              </Button>
+            }
+            isLoading={isLoading}
+            loadingComponent={<LoadingSkeleton />}
+            pageSize={PAGE_SIZE}
+            hasMore={hasMore}
+            onLoadMore={loadMoreMembers}
+            isLoadingMore={isLoadingMore}
+          />
+        </div>
+      </div>
+      
+      {/* Add Member Dialog */}
+      {community && (
+        <MemberDialog
+          open={isAddMemberOpen}
+          mode="add"
+          communityName={community.name}
+          onOpenChange={setIsAddMemberOpen}
+          onSubmit={handleAddMember}
         />
       )}
-      <ListView
-        title="Members"
-        subtitle="Browse and manage community members."
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        loading={loading}
-        onAddTags={() => setIsTaggingOpen(true)}
-        selectedCount={selectedMembers.length}
-        availableTags={availableTags}
-        selectedTags={selectedTags}
-        onToggleTag={handleToggleTag}
-      >
-        <MembersList 
-          members={filteredMembers} 
-          userRole={userRole as any}
-          viewMode={viewMode}
-          onMemberClick={handleToggleMemberSelection}
-          selectedMembers={selectedMembers}
-          selectable={true}
-          onEditMember={(member) => setEditingMember(member)}
-          onRemoveTag={openRemoveTagDialog}
-          onDeleteMember={(member) => {
-            setMemberToDelete(member);
-            setIsDeleteConfirmOpen(true);
-          }}
-        />
-      </ListView>
-      <MemberDialog
-        open={isAddMemberOpen}
-        mode="add"
-        communityName={community?.name as string | undefined}
-        onClose={() => setIsAddMemberOpen(false)}
-        onSubmit={handleAddMemberSubmit}
-      />
-      <MemberDialog
-        open={!!editingMember}
-        mode="edit"
-        communityName={community?.name as string | undefined}
-        initialMember={editingMember}
-        onClose={() => setEditingMember(null)}
-        onSubmit={handleEditMemberSubmit}
-      />
-      <TagMembersDialog
-        isOpen={isTaggingOpen}
-        onClose={() => setIsTaggingOpen(false)}
-        members={selectedMembers}
-        communityId={community?.communityId || ''}
-        onApplyTags={handleApplyTags}
-      />
-      <RemoveTagDialog
-        isOpen={isRemoveTagDialogOpen}
-        onClose={() => setIsRemoveTagDialogOpen(false)}
-        onConfirm={handleRemoveTag}
-        tagName={tagToRemove?.tag || ''}
-      />
+      
+      {/* Invite Member Dialog */}
       {community && (
         <InviteMemberDialog
           isOpen={isInviteDialogOpen}
@@ -528,68 +456,33 @@ export default function CommunityMembersPage() {
           community={community}
         />
       )}
+      
+      {/* Tag Members Dialog */}
       {community && (
-        <ImportMembersDialog
-          isOpen={isImportDialogOpen}
-          onClose={() => setIsImportDialogOpen(false)}
-          community={community}
-          onSuccess={async () => {
-            const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
-            setMembers(membersData);
+        <TagMembersDialog
+          isOpen={isTaggingOpen}
+          onClose={() => {
+            setIsTaggingOpen(false);
+            setSelectedMembers([]);
           }}
+          allMembers={allMembersForDialog as any}
+          initialSelectedMembers={selectedMembersForDialog as any}
+          communityId={community.communityId}
+          onApplyTags={handleApplyTags}
         />
       )}
-      
-      {/* Delete Member Confirmation Dialog */}
-      {isDeleteConfirmOpen && memberToDelete && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Delete Member</h2>
-            <p className="mb-6">
-              Are you sure you want to remove <strong>{memberToDelete.userDetails?.displayName}</strong> from this community? This action cannot be undone.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setIsDeleteConfirmOpen(false);
-                  setMemberToDelete(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={async () => {
-                  try {
-                    if (!community?.communityId || !memberToDelete.id) return;
-                    
-                    // Delete the community member document
-                    await deleteDoc(doc(db, 'communityMembers', memberToDelete.id));
-                    
-                    // Decrement member count
-                    const communityRef = doc(db, 'communities', community.communityId);
-                    await updateDoc(communityRef, {
-                      memberCount: increment(-1),
-                    });
-                    
-                    // Refresh members list
-                    const membersData = await getCommunityMembers(community.communityId, { type: 'name', value: debouncedSearchTerm });
-                    setMembers(membersData);
-                    
-                    setIsDeleteConfirmOpen(false);
-                    setMemberToDelete(null);
-                  } catch (error) {
-                    console.error('Error deleting member:', error);
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <MembersContent />
+    </Suspense>
   );
 }
