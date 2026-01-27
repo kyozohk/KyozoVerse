@@ -113,7 +113,7 @@ interface CustomFormDialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  size?: 'default' | 'large';
+  size?: 'default' | 'large' | 'xl';
 }
 
 export function CustomFormDialog({
@@ -125,7 +125,9 @@ export function CustomFormDialog({
   size = 'default',
 }: CustomFormDialogProps) {
 
-  const sizeClasses = size === 'large' 
+  const sizeClasses = size === 'xl'
+      ? "w-full max-w-3xl max-h-[90vh]"
+      : size === 'large' 
       ? "w-full max-w-2xl max-h-[90vh]"
       : "w-full max-w-md max-h-[85vh]";
 

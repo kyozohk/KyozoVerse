@@ -46,6 +46,7 @@ interface EnhancedBroadcastDialogProps {
   members: MemberData[];
   initialSelectedMembers?: MemberData[];
   communityName?: string;
+  communityHandle?: string;
   fromEmail?: string;
 }
 
@@ -57,8 +58,13 @@ export function EnhancedBroadcastDialog({
   members,
   initialSelectedMembers,
   communityName,
-  fromEmail = 'message@contact.kyozo.com'
+  communityHandle,
+  fromEmail,
 }: EnhancedBroadcastDialogProps) {
+  // Use community-specific email domain if handle is provided, otherwise fallback
+  const effectiveFromEmail = fromEmail || (communityHandle 
+    ? `message@${communityHandle}.kyozo.com` 
+    : 'message@contact.kyozo.com');
   const { toast } = useToast();
   const [mode, setMode] = useState<BroadcastMode>('email');
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
@@ -260,7 +266,7 @@ export function EnhancedBroadcastDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: member.email,
-          from: `Kyozo <${fromEmail}>`,
+          from: `${communityName || 'Kyozo'} <${effectiveFromEmail}>`,
           subject: personalizedSubject,
           html: `
             <!DOCTYPE html>

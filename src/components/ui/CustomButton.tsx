@@ -15,6 +15,7 @@ const customButtonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         outline: "border-2 bg-transparent hover:opacity-80",
         selected: "border-2 hover:opacity-90 shadow-sm",
+        filled: "hover:opacity-90 shadow-sm",
         "rounded-rect": "border border-white/30 text-white/80 hover:text-white hover:bg-white/10 backdrop-blur-sm",
         waitlist: "text-white hover:opacity-90 shadow-md",
       },
@@ -47,6 +48,8 @@ const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProps>(
       ? { backgroundColor: 'var(--page-content-bg)', color: '#6B5D52', border: '2px solid var(--page-content-border)', ...style }
       : variant === 'selected'
       ? { backgroundColor: 'var(--page-content-bg)', color: '#6B5D52', borderColor: 'var(--page-content-border)', ...style }
+      : variant === 'filled'
+      ? { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', ...style }
       : style;
 
     return (

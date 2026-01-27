@@ -112,7 +112,7 @@ function CommunitiesContent() {
         actions={
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Community
+            Create Community now
           </Button>
         }
       />

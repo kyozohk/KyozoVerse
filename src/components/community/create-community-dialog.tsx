@@ -87,7 +87,9 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
         mantras: '',
         location: '',
         communityPrivacy: 'public',
+        leaderName: '',
     });
+    const [formErrors, setFormErrors] = useState<{name?: string}>({});
     
     const [tags, setTags] = useState<string[]>([]);
     
@@ -110,13 +112,15 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     mantras: (existingCommunity as any).mantras || '',
                     location: (existingCommunity as any).location || '',
                     communityPrivacy: (existingCommunity as any).communityPrivacy || 'public',
+                    leaderName: (existingCommunity as any).leaderName || '',
                 });
                 setTags(existingCommunity.tags || []);
                 setProfileImageUrl(existingCommunity.communityProfileImage || null);
                 setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
             } else {
                 // Reset form when creating a new community
-                setFormData({ name: '', lore: '', mantras: '', location: '', communityPrivacy: 'public' });
+                setFormData({ name: '', lore: '', mantras: '', location: '', communityPrivacy: 'public', leaderName: '' });
+                setFormErrors({});
                 setTags([]);
                 setProfileImageFile(null);
                 setBackgroundImageFile(null);
@@ -131,6 +135,20 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
 
     const handleNext = () => {
+        // Validate required fields on step 1
+        if (currentStep === 0) {
+            if (!formData.name.trim()) {
+                setFormErrors({ name: 'Community name is required' });
+                toast({
+                    title: "Required Field",
+                    description: "Please enter a community name.",
+                    variant: "destructive",
+                });
+                return;
+            }
+            setFormErrors({});
+        }
+        
         if (currentStep < STEPS.length - 1) {
             setCurrentStep(currentStep + 1);
         }
@@ -269,6 +287,31 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 },
             });
 
+            // Setup community email subdomain (GoDaddy + Resend)
+            const handle = formData.name.toLowerCase().replace(/\s+/g, '-');
+            try {
+                const domainResponse = await fetch('/api/setup-community-domain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ handle }),
+                });
+                
+                if (domainResponse.ok) {
+                    const domainData = await domainResponse.json();
+                    // Update community with email domain info
+                    await updateDoc(docRef, {
+                        emailDomain: `${handle}.kyozo.com`,
+                        emailAddress: domainData.emailAddress,
+                    });
+                    console.log(`Community email domain setup: ${domainData.emailAddress}`);
+                } else {
+                    console.warn('Failed to setup community email domain, but community was created');
+                }
+            } catch (domainError) {
+                console.warn('Error setting up community email domain:', domainError);
+                // Don't fail community creation if domain setup fails
+            }
+
             toast({
                 title: "Success",
                 description: "Community created successfully.",
@@ -315,6 +358,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             onOpenChange={onOpenChange}
             title={existingCommunity ? 'Edit Community' : 'Create a New Community'}
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
+            size="xl"
         >
             <div className="flex flex-col h-full">
                 <div className="flex-grow space-y-4 pt-4 overflow-y-auto">
@@ -322,6 +366,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     {currentStep === 0 && (
                         <div className="space-y-4">
                             <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
+                            <Input label="Community Leader Name" value={formData.leaderName} onChange={(e) => handleValueChange('leaderName', e.target.value)} />
                             <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
                             <TagInput tags={tags} setTags={setTags} />
@@ -338,21 +383,21 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                          <div className="space-y-6">
                             <div>
                                 <label className="text-sm text-muted-foreground mb-1 block">Background Image</label>
-                                <Dropzone file={backgroundImageFile} onFileChange={setBackgroundImageFile} fileType="image" existingImageUrl={backgroundImageUrl} />
+                                <Dropzone file={backgroundImageFile} onFileChange={setBackgroundImageFile} fileType="image" existingImageUrl={backgroundImageUrl} className="h-32" />
                             </div>
                             <div>
                                 <label className="text-sm text-muted-foreground mb-1 block">Profile Image</label>
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
                                     {profileImageOptions.map(src => (
-                                        <div key={src} className="w-12 h-12 rounded-full overflow-hidden border-2 cursor-pointer hover:border-primary" style={{ borderColor: profileImageUrl === src ? 'var(--input-border-color, #C170CF)' : 'transparent' }} onClick={() => handlePresetImageClick(src)}>
-                                            <Image src={src} alt="profile option" width={48} height={48} className="w-full h-full object-cover" />
+                                        <div key={src} className="w-10 h-10 rounded-full overflow-hidden border-2 cursor-pointer hover:border-primary flex-shrink-0" style={{ borderColor: profileImageUrl === src ? 'var(--input-border-color, #C170CF)' : 'transparent' }} onClick={() => handlePresetImageClick(src)}>
+                                            <Image src={src} alt="profile option" width={40} height={40} className="w-full h-full object-cover" />
                                         </div>
                                     ))}
-                                    <div onClick={handleBrowseClick} className="w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary overflow-hidden">
+                                    <div onClick={handleBrowseClick} className="w-10 h-10 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary overflow-hidden flex-shrink-0" style={{ borderColor: 'var(--page-content-border)' }}>
                                         {profileImageFile || (profileImageUrl && !profileImageOptions.includes(profileImageUrl)) ? (
-                                            <Image src={profileImageUrl!} alt="profile preview" width={48} height={48} className="w-full h-full object-cover" />
+                                            <Image src={profileImageUrl!} alt="profile preview" width={40} height={40} className="w-full h-full object-cover" />
                                         ) : (
-                                            <PlusCircle className="h-6 w-6 text-muted-foreground" />
+                                            <PlusCircle className="h-5 w-5 text-muted-foreground" />
                                         )}
                                     </div>
                                     <input
@@ -378,19 +423,19 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
 
                  <div className="mt-8 grid grid-cols-2 gap-4 flex-shrink-0">
                     {currentStep > 0 ? (
-                        <CustomButton variant="outline" onClick={handlePrev} className="w-full py-3 text-base font-medium">
+                        <CustomButton variant="filled" onClick={handlePrev} className="w-full py-3 text-base font-medium">
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Previous
                         </CustomButton>
                     ) : (
-                        <CustomButton variant="outline" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium">Cancel</CustomButton>
+                        <CustomButton variant="filled" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium">Cancel</CustomButton>
                     )}
                     
                     {currentStep < STEPS.length - 1 ? (
                         <CustomButton 
                             onClick={handleNext} 
                             className="w-full py-3 text-base font-medium"
-                            variant="selected"
+                            variant="filled"
                         >
                             Next
                             <ArrowRight className="h-4 w-4 ml-2" />
@@ -400,7 +445,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                             onClick={handleFormSubmit} 
                             disabled={isSubmitting} 
                             className="w-full py-3 text-base font-medium"
-                            variant="selected"
+                            variant="filled"
                         >
                             {isSubmitting ? 'Saving...' : 'Finish'}
                         </CustomButton>

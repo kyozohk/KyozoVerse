@@ -16,8 +16,8 @@ const Switch = React.forwardRef<
       className
     )}
     style={{
-      backgroundColor: props.checked ? 'var(--page-content-border)' : 'transparent',
-      borderColor: 'var(--page-content-border)',
+      backgroundColor: props.checked ? 'hsl(var(--primary))' : 'transparent',
+      borderColor: 'hsl(var(--primary))',
     }}
     {...props}
     ref={ref}
@@ -26,7 +26,7 @@ const Switch = React.forwardRef<
       className={cn(
         "pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
       )}
-      style={{ backgroundColor: 'var(--page-content-bg)' }}
+      style={{ backgroundColor: 'hsl(var(--primary-foreground))' }}
     />
   </SwitchPrimitives.Root>
 ))

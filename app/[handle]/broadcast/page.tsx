@@ -178,6 +178,7 @@ function BroadcastContent() {
           members={members}
           initialSelectedMembers={selectedMembers}
           communityName={community.name}
+          communityHandle={community.handle}
         />
       )}
     </div>
