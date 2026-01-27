@@ -96,7 +96,7 @@ export function MemberDialog({
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mode, initialMember?.id]); // Only re-run if the member ID changes, not the whole object
+  }, [open, mode, initialMember?.id]);
 
   const handleFileUpload = async (file: File | null, userId: string | null | undefined, type: 'avatar' | 'cover') => {
     if (!file) {
