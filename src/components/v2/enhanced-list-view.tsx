@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -48,10 +48,10 @@ export function EnhancedListView<T extends { id: string }>({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const isControlled = controlledSelection !== undefined;
+  const isControlled = controlledSelection !== undefined && onSelectionChange !== undefined;
   const selectedIds = isControlled ? controlledSelection : internalSelection;
-  const setSelectedIds = isControlled && onSelectionChange ? onSelectionChange : setInternalSelection;
-
+  const setSelectedIds = isControlled ? onSelectionChange : setInternalSelection;
+  
   const lastItemRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (isLoading || isLoadingMore) return;

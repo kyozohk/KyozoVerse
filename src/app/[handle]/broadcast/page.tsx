@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState, Suspense, useMemo } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { Community, CommunityMember } from '@/lib/types';
+import { Community } from '@/lib/types';
 import { Loader2, Send, Mail, Tag } from 'lucide-react';
 import { PageLayout } from '@/components/v2/page-layout';
 import { PageHeader } from '@/components/v2/page-header';
@@ -110,33 +110,11 @@ function BroadcastContent() {
 
     fetchCommunityAndMembers();
   }, [handle]);
-  
-  useEffect(() => {
-    if (selectedTags.size === 0) {
-      // When no tags are selected, we don't automatically change the selection
-      // to preserve manual choices.
-      return;
-    }
-  
-    const memberIdsWithSelectedTags = new Set<string>();
-    members.forEach(member => {
-      if (Array.from(selectedTags).some(tag => member.tags?.includes(tag))) {
-        memberIdsWithSelectedTags.add(member.id);
-      }
-    });
-  
-    // We add the members from tags to the existing selection
-    setSelectedIds(prev => new Set([...prev, ...memberIdsWithSelectedTags]));
-  
-  // We only want this to run when tags change, not when manual selection (selectedIds) changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTags, members]);
-  
 
   const handleToggleTag = (tagName: string) => {
     const newSelectedTags = new Set(selectedTags);
     const memberIdsForTag = new Set(members.filter(m => m.tags?.includes(tagName)).map(m => m.id));
-  
+
     if (newSelectedTags.has(tagName)) {
       newSelectedTags.delete(tagName);
       // Deselect members that had this tag, but only if they don't have other selected tags
@@ -159,7 +137,6 @@ function BroadcastContent() {
   
     setSelectedTags(newSelectedTags);
   };
-  
 
   const handleOpenBroadcastDialog = () => {
     if (selectedMembers.length === 0) return;
@@ -201,7 +178,29 @@ function BroadcastContent() {
             to: member.email,
             from: 'Kyozo <dev@contact.kyozo.com>',
             subject: broadcastSubject,
-            html: `...`, // Email HTML body
+            html: `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f3f4f6;">
+                  <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                      <h1 style="color: #5B4A3A; margin: 0; font-size: 24px;">${community.name}</h1>
+                    </div>
+                    <div style="color: #374151; font-size: 16px; line-height: 1.6;">
+                      <p>Hi ${member.name},</p>
+                      <div style="white-space: pre-wrap;">${broadcastMessage}</div>
+                    </div>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+                      <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent from ${community.name} via Kyozo</p>
+                    </div>
+                  </div>
+                </body>
+              </html>
+            `,
           }),
         });
 
@@ -209,9 +208,11 @@ function BroadcastContent() {
           successCount++;
         } else {
           failCount++;
+          console.error(`Failed to send to ${member.email}`);
         }
       } catch (error) {
         failCount++;
+        console.error(`Error sending to ${member.email}:`, error);
       }
     }
 
@@ -223,11 +224,12 @@ function BroadcastContent() {
     if (successCount > 0) {
       toast({
         title: 'Broadcast Sent',
-        description: `Successfully sent to ${successCount} member(s).`,
+        description: `Successfully sent to ${successCount} member${successCount > 1 ? 's' : ''}${failCount > 0 ? `. ${failCount} failed.` : ''}`,
       });
     } else {
       toast({
         title: 'Broadcast Failed',
+        description: 'Failed to send emails. Please try again.',
         variant: 'destructive',
       });
     }
@@ -286,9 +288,15 @@ function BroadcastContent() {
         </div>
         <EnhancedListView
           items={members}
-          renderGridItem={(item, isSelected) => <MemberGridItem item={item} isSelected={isSelected} />}
-          renderListItem={(item, isSelected) => <MemberListItem item={item} isSelected={isSelected} />}
-          renderCircleItem={(item, isSelected) => <MemberCircleItem item={item} isSelected={isSelected} />}
+          renderGridItem={(item, isSelected) => (
+            <MemberGridItem item={item} isSelected={isSelected} />
+          )}
+          renderListItem={(item, isSelected) => (
+            <MemberListItem item={item} isSelected={isSelected} />
+          )}
+          renderCircleItem={(item, isSelected) => (
+            <MemberCircleItem item={item} isSelected={isSelected} />
+          )}
           searchKeys={['name', 'email']}
           selectable={true}
           selection={selectedIds}
@@ -297,12 +305,13 @@ function BroadcastContent() {
           loadingComponent={<LoadingSkeleton />}
         />
       </div>
+      
       <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
         <DialogContent className="sm:max-w-[600px]" style={{ backgroundColor: '#F5F0E8' }}>
           <DialogHeader>
-            <DialogTitle style={{ color: '#5B4A3A' }}>Send Broadcast Message</DialogTitle>
+            <DialogTitle style={{ color: '#5B4A3A' }}>Send Broadcast Email</DialogTitle>
             <DialogDescription>
-              Send a message to {selectedMembers.length} selected member(s).
+              Send an email to {selectedMembers.filter(m => m.email).length} selected member{selectedMembers.filter(m => m.email).length !== 1 ? 's' : ''} with email addresses
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -310,7 +319,7 @@ function BroadcastContent() {
               <Label htmlFor="subject" style={{ color: '#5B4A3A' }}>Subject</Label>
               <Input
                 id="subject"
-                placeholder="Enter message subject..."
+                placeholder="Enter email subject..."
                 value={broadcastSubject}
                 onChange={(e) => setBroadcastSubject(e.target.value)}
                 style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
