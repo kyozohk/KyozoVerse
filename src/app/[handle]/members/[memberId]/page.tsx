@@ -1,39 +1,78 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, deleteDoc, updateDoc, collection, query, where, getDocs, increment } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { User, CommunityMember } from '@/lib/types';
+import { CommunityMember, Community } from '@/lib/types';
 import Image from 'next/image';
-import { Avatar, AvatarFallback, AvatarImage, Button, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Skeleton, Badge } from '@/components/ui';
-import { Mail, Phone, Edit, Trash2, MessageCircle, Users, Heart, Eye, ArrowLeft, Tag } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Mail, 
+  Phone, 
+  Edit, 
+  Trash2, 
+  ArrowLeft, 
+  Tag, 
+  Calendar,
+  Shield,
+  MessageCircle,
+  User
+} from 'lucide-react';
+import { Banner } from '@/components/ui/banner';
 import { MemberDialog } from '@/components/community/member-dialog';
-import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { getUserRoleInCommunity } from '@/lib/community-utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+// Default banner images
+const DEFAULT_BANNERS = [
+  '/banner1.png',
+  '/banner2.png',
+  '/banner3.png',
+];
+
+// Get a random default banner based on member ID for consistency
+const getDefaultBanner = (memberId: string): string => {
+  const hash = memberId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return DEFAULT_BANNERS[hash % DEFAULT_BANNERS.length];
+};
 
 export default function MemberProfilePage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { handle, memberId } = params as { handle: string, memberId: string };
+  const { handle, memberId } = params as { handle: string; memberId: string };
   
   const [member, setMember] = useState<CommunityMember | null>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isBroadcastDialogOpen, setIsBroadcastDialogOpen] = useState(false);
-  const [templates, setTemplates] = useState([]);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (memberId && handle) {
-      const fetchMember = async () => {
+      const fetchMemberAndCommunity = async () => {
         setLoading(true);
         try {
+          // Fetch community by handle
           const communitiesRef = collection(db, 'communities');
           const communityQuery = query(communitiesRef, where('handle', '==', handle));
           const communitySnap = await getDocs(communityQuery);
@@ -41,15 +80,36 @@ export default function MemberProfilePage() {
           if (communitySnap.empty) {
             throw new Error("Community not found");
           }
-          const communityId = communitySnap.docs[0].id;
           
+          const communityDoc = communitySnap.docs[0];
+          const communityData = { communityId: communityDoc.id, ...communityDoc.data() } as Community;
+          setCommunity(communityData);
+          
+          // Fetch user role
+          if (user) {
+            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+            setUserRole(role);
+          }
+          
+          // Fetch member by userId and communityId (like app1)
           const membersRef = collection(db, "communityMembers");
-          const q = query(membersRef, where("userId", "==", memberId), where("communityId", "==", communityId));
-          const memberSnap = await getDocs(q);
+          const memberQuery = query(
+            membersRef, 
+            where("userId", "==", memberId), 
+            where("communityId", "==", communityData.communityId)
+          );
+          const memberSnap = await getDocs(memberQuery);
 
           if (!memberSnap.empty) {
             const memberDoc = memberSnap.docs[0];
-            setMember({ id: memberDoc.id, ...memberDoc.data() } as CommunityMember);
+            const memberData = memberDoc.data();
+            
+            // Use userDetails from the member document (like app1)
+            // This is the embedded user details stored when member was added
+            setMember({ 
+              id: memberDoc.id, 
+              ...memberData,
+            } as CommunityMember);
           } else {
             console.log('No such member in this community!');
           }
@@ -60,322 +120,360 @@ export default function MemberProfilePage() {
         }
       };
 
-      fetchMember();
+      fetchMemberAndCommunity();
     }
-  }, [memberId, handle]);
+  }, [memberId, handle, user]);
+
+  const handleDeleteMember = async () => {
+    if (!member || !community) return;
+    
+    setIsDeleting(true);
+    try {
+      // Delete the member document
+      await deleteDoc(doc(db, 'communityMembers', member.id));
+      
+      // Decrement member count
+      await updateDoc(doc(db, 'communities', community.communityId), {
+        memberCount: increment(-1)
+      });
+      
+      toast({
+        title: 'Member Removed',
+        description: `${member.userDetails?.displayName || 'Member'} has been removed from the community.`,
+      });
+      
+      // Navigate back to members list
+      router.push(`/${handle}/members`);
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove member. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteConfirmOpen(false);
+    }
+  };
+  
+  const handleCloseEditDialog = useCallback(() => {
+    setIsEditDialogOpen(false);
+  }, []);
+
+  const handleEditSubmit = useCallback(async (data: {
+    displayName: string;
+    email: string;
+    phone?: string;
+    avatarUrl?: string;
+    coverUrl?: string;
+  }) => {
+    if (!member) return;
+    
+    try {
+      // Update the userDetails in the communityMember document
+      // Note: We only update communityMembers, not the users collection directly
+      // because Firebase rules may not allow admins to update other users' documents
+      const memberDocRef = doc(db, 'communityMembers', member.id);
+      await updateDoc(memberDocRef, {
+        'userDetails.displayName': data.displayName,
+        'userDetails.email': data.email,
+        'userDetails.phone': data.phone || '',
+        'userDetails.avatarUrl': data.avatarUrl || '',
+        'userDetails.coverUrl': data.coverUrl || '',
+      });
+
+      // Refresh member data from Firestore
+      const memberSnap = await getDoc(memberDocRef);
+      if (memberSnap.exists()) {
+        setMember({ id: memberSnap.id, ...memberSnap.data() } as CommunityMember);
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Member profile updated successfully',
+      });
+
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating member:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update member profile',
+        variant: 'destructive',
+      });
+    }
+  }, [member, toast]);
+
+  const canManage = userRole === 'owner' || userRole === 'admin';
+
+  const formatDate = (date: any): string => {
+    if (!date) return 'Unknown';
+    if (date?.seconds) {
+      return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return 'Unknown';
+    return d.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
   if (loading) {
     return (
-      <div className="space-y-4 p-8">
-        <Skeleton className="h-48 w-full" />
-        <div className="flex items-end -mt-16 ml-8">
-          <Skeleton className="h-24 w-24 rounded-full border-4 border-background" />
-        </div>
-        <Skeleton className="h-8 w-1/4 mt-4 ml-8" />
-        <Skeleton className="h-4 w-1/2 ml-8" />
-        <div className="p-8">
-          <Skeleton className="h-96 w-full" />
+      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8 flex-1 overflow-auto">
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <Skeleton className="h-48 w-full" />
+            <div className="p-8">
+              <div className="flex items-start gap-6">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <div className="flex-1 space-y-3">
+                  <Skeleton className="h-8 w-1/3" />
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   if (!member || !member.userDetails) {
-    return <div className="p-8 text-center">Member not found.</div>;
+    return (
+      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8">
+          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <p className="text-center text-muted-foreground">Member not found.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
   
   const { userDetails } = member;
 
+  // Format role for display
+  const getRoleLabel = (role?: string) => {
+    switch (role?.toLowerCase()) {
+      case 'owner': return 'Owner';
+      case 'admin': return 'Admin';
+      default: return 'Member';
+    }
+  };
+
   return (
-    <div className="flex-1">
-      {/* Banner with transparent overlay - matching community header style */}
-      <div className="relative w-full h-64">
-        {/* Background Image */}
-        {userDetails.coverUrl ? (
-          <Image 
-            src={userDetails.coverUrl} 
-            alt={`${userDetails.displayName}'s cover image`} 
-            fill
-            className="object-cover"
-            priority
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-auto">
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          {/* Member Banner */}
+          <Banner
+            backgroundImage={userDetails.coverUrl || getDefaultBanner(memberId)}
+            iconImage={userDetails.avatarUrl}
+            iconSize={100}
+            title={userDetails.displayName || 'Unknown User'}
+            location={community?.name ? `Member of ${community.name}` : undefined}
+            locationExtra={
+              <Badge 
+                variant="outline" 
+                className={`capitalize text-white border-white/50 bg-white/10 ${
+                  member.role === 'owner' ? 'bg-amber-500/30' :
+                  member.role === 'admin' ? 'bg-purple-500/30' :
+                  ''
+                }`}
+              >
+                <Shield className="h-3 w-3 mr-1" />
+                {getRoleLabel(member.role)}
+              </Badge>
+            }
+            subtitle={userDetails.email}
+            leftCta={{
+              label: 'Back to Members',
+              icon: <ArrowLeft className="h-4 w-4" />,
+              onClick: () => router.push(`/${handle}/members`),
+            }}
+            ctas={canManage ? [
+              {
+                label: 'Edit',
+                icon: <Edit className="h-4 w-4" />,
+                onClick: () => setIsEditDialogOpen(true),
+              },
+              {
+                label: 'Delete',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: () => setIsDeleteConfirmOpen(true),
+              },
+            ] : []}
+            height="16rem"
           />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600" />
-        )}
+        </div>
         
-        {/* 50% transparent overlay for better text visibility */}
-        <div className="absolute inset-0 bg-black/50"></div>
-        
-        {/* Content - positioned absolutely inside banner */}
-        <div className="absolute inset-0 z-10 p-6 md:p-8 flex flex-col justify-between">
-          {/* Back button */}
-          <div className="mb-4">
-            <Button variant="ghost" onClick={() => router.back()} className="text-white/80 hover:text-white hover:bg-white/10">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Members
-            </Button>
-          </div>
+        {/* Profile Details */}
+        <div className="mt-6 rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
 
-          <div className="flex justify-between items-end h-full">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-shrink-0">
-                <Avatar className="h-24 w-24 border-4 border-white/10">
-                  <AvatarImage src={userDetails.avatarUrl} />
-                  <AvatarFallback className="text-2xl">{userDetails.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
-              </div>
+            {/* Details grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Contact Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {userDetails.email && (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-secondary">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="font-medium">{userDetails.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  {userDetails.phone && (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-secondary">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="font-medium">{userDetails.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  {!userDetails.email && !userDetails.phone && (
+                    <p className="text-sm text-muted-foreground">No contact information available</p>
+                  )}
+                </CardContent>
+              </Card>
 
-              <div className="flex-grow">
-                <h1 className="text-3xl md:text-4xl font-bold text-white">{userDetails.displayName}</h1>
-                <p className="text-lg text-white/70 mt-1">{member.role || 'Member'}</p>
-                
-                {member.tags && member.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {member.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="bg-white/20 text-white backdrop-blur-sm">
-                        <Tag className="h-3 w-3 mr-1.5" />
+              {/* Membership Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Membership Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-secondary">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Joined</p>
+                      <p className="font-medium">{formatDate(member.joinedAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-secondary">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Role</p>
+                      <p className="font-medium capitalize">{member.role || 'Member'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-secondary">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Status</p>
+                      <p className="font-medium capitalize">{member.status || 'Active'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tags */}
+            {member.tags && member.tags.length > 0 && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Tag className="h-5 w-5" />
+                    Tags
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {member.tags.map((tag: string) => (
+                      <Badge key={tag} variant="secondary" className="text-sm">
                         {tag}
                       </Badge>
                     ))}
                   </div>
-                )}
-                
-                <div className="flex flex-wrap gap-4 mt-4 text-sm">
-                  {userDetails.email && (
-                    <div className="flex items-center gap-2 text-white/80">
-                      <Mail className="h-4 w-4" /> 
-                      <span>{userDetails.email}</span>
-                    </div>
-                  )}
-                  {(userDetails.phone) && (
-                    <div className="flex items-center gap-2 text-white/80">
-                      <Phone className="h-4 w-4" /> 
-                      <span>{userDetails.phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Action buttons - matching community header style */}
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={() => setIsEditDialogOpen(true)}
-                title="Edit member"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={async () => {
-                  // Fetch templates before opening broadcast dialog
-                  setLoadingTemplates(true);
-                  try {
-                    const response = await fetch('/api/whatsapp/templates');
-                    const data = await response.json();
-                    if (data.success && data.templates) {
-                      setTemplates(data.templates);
-                    }
-                  } catch (error) {
-                    console.error('Error fetching templates:', error);
-                  } finally {
-                    setLoadingTemplates(false);
-                    setIsBroadcastDialogOpen(true);
-                  }
-                }}
-                title="Send WhatsApp message"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white/80 hover:text-red-400 hover:bg-white/10"
-                onClick={() => setIsDeleteConfirmOpen(true)}
-                title="Delete member"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
-      </div>
+      
+      {/* Edit Member Dialog */}
+      <MemberDialog
+        open={isEditDialogOpen}
+        mode="edit"
+        communityName={community?.name}
+        initialMember={member}
+        onClose={handleCloseEditDialog}
+        onSubmit={handleEditSubmit}
+      />
 
-      {/* Main Content */}
-      <div className="p-8">
-        {/* Edit Member Dialog */}
-        <MemberDialog
-          open={isEditDialogOpen}
-          mode="edit"
-          communityName={handle}
-          initialMember={member}
-          onClose={() => setIsEditDialogOpen(false)}
-          onSubmit={async (data) => {
-            try {
-              // Update the user document in Firestore
-              const userDocRef = doc(db, 'users', memberId);
-              await updateDoc(userDocRef, {
-                displayName: data.displayName,
-                email: data.email,
-                phone: data.phone || '',
-                avatarUrl: data.avatarUrl || '',
-                coverUrl: data.coverUrl || '',
-              });
-
-              // Refresh member data after edit
-              const memberSnap = await getDoc(doc(db, "communityMembers", member.id));
-              if (memberSnap.exists()) {
-                setMember({ id: memberSnap.id, ...memberSnap.data() } as CommunityMember);
-              }
-
-              toast({
-                title: 'Success',
-                description: 'Member profile updated successfully',
-              });
-
-              setIsEditDialogOpen(false);
-            } catch (error) {
-              console.error('Error updating member:', error);
-              toast({
-                title: 'Error',
-                description: 'Failed to update member profile',
-                variant: 'destructive',
-              });
-            }
-          }}
-        />
-
-        {/* Broadcast Dialog for single member */}
-        {member && (
-          <BroadcastDialog
-            isOpen={isBroadcastDialogOpen}
-            onClose={() => setIsBroadcastDialogOpen(false)}
-            members={[member]}
-            templates={templates}
-            loadingTemplates={loadingTemplates}
-          />
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        {isDeleteConfirmOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <Card className="max-w-md w-full">
-              <CardHeader>
-                <CardTitle>Delete Member</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4">Are you sure you want to delete this member? This action cannot be undone.</p>
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={async () => {
-                      try {
-                        // First get community by handle
-                        const communitiesRef = collection(db, 'communities');
-                        const communityQuery = query(communitiesRef, where('handle', '==', handle));
-                        const communitySnap = await getDocs(communityQuery);
-                        
-                        if (communitySnap.empty) {
-                          throw new Error('Community not found');
-                        }
-                        
-                        const communityId = communitySnap.docs[0].id;
-                        
-                        // Find and delete the member document from communityMembers
-                        const membersRef = collection(db, 'communityMembers');
-                        const memberQuery = query(
-                          membersRef,
-                          where('userId', '==', memberId),
-                          where('communityId', '==', communityId)
-                        );
-                        const memberSnapshot = await getDocs(memberQuery);
-                        
-                        if (!memberSnapshot.empty) {
-                          // Delete the community member document
-                          await deleteDoc(memberSnapshot.docs[0].ref);
-                          console.log('Member removed from community');
-                          
-                          // Decrement member count
-                          const communityRef = doc(db, 'communities', communityId);
-                          await updateDoc(communityRef, {
-                            memberCount: increment(-1),
-                          });
-                          
-                          toast({
-                            title: "Member Removed",
-                            description: "The member has been removed from the community.",
-                          });
-                        }
-                        
-                        setIsDeleteConfirmOpen(false);
-                        router.push(`/${handle}/members`);
-                      } catch (error) {
-                        console.error('Error deleting member:', error);
-                        toast({
-                          title: "Error",
-                          description: "Failed to remove member. Please try again.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <Tabs defaultValue="activity">
-          <TabsList>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="communities">Communities</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-          </TabsList>
-          <TabsContent value="activity">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground py-12">
-                <Heart className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>Activity feed coming soon.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="communities">
-             <Card>
-              <CardHeader>
-                <CardTitle>Member Of</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground py-12">
-                <Users className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>Community list coming soon.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="messages">
-             <Card>
-              <CardHeader>
-                <CardTitle>Messages</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground py-12">
-                <MessageCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>Messaging history coming soon.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Delete Member
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Are you sure you want to permanently delete <strong>{userDetails.displayName}</strong> from {community?.name}?
+              </p>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm">
+                <p className="font-semibold text-destructive mb-2">⚠️ Warning: This will permanently delete:</p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li>Member profile and all personal data</li>
+                  <li>All inbox messages and conversations</li>
+                  <li>Activity history and engagement data</li>
+                  <li>Tags and group memberships</li>
+                  <li>Any uploaded files or media</li>
+                </ul>
+              </div>
+              <p className="text-sm font-medium text-destructive">
+                This action cannot be undone.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteMember}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Member'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
