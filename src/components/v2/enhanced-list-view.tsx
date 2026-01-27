@@ -16,12 +16,14 @@ interface EnhancedListViewProps<T> {
   loadingComponent?: React.ReactNode;
   urlField?: string;
   selection?: Set<string>;
+  initialSelection?: Set<string>;
   onSelectionChange?: (ids: Set<string>, items: T[]) => void;
   selectionActions?: React.ReactNode;
   pageSize?: number;
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   isLoadingMore?: boolean;
+  defaultViewMode?: 'grid' | 'list' | 'circle';
 }
 
 export function EnhancedListView<T extends { id: string; tags?: string[] }>({
@@ -35,16 +37,31 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   loadingComponent,
   urlField = 'id',
   selection: controlledSelection,
+  initialSelection,
   onSelectionChange,
   selectionActions,
   pageSize = 20,
   hasMore = false,
   onLoadMore,
   isLoadingMore = false,
+  defaultViewMode = 'grid',
 }: EnhancedListViewProps<T>) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>(defaultViewMode);
   const [searchTerm, setSearchTerm] = useState('');
-  const [internalSelection, setInternalSelection] = useState<Set<string>>(new Set());
+  const [internalSelection, setInternalSelection] = useState<Set<string>>(initialSelection || new Set());
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Initialize selection from initialSelection prop
+  useEffect(() => {
+    if (initialSelection && !hasInitialized && items.length > 0) {
+      setInternalSelection(initialSelection);
+      if (onSelectionChange) {
+        const selectedItems = items.filter(item => initialSelection.has(item.id));
+        onSelectionChange(initialSelection, selectedItems);
+      }
+      setHasInitialized(true);
+    }
+  }, [initialSelection, items, hasInitialized, onSelectionChange]);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [showAllTags, setShowAllTags] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);

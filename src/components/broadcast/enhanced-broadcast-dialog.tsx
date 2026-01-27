@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Mail, MessageSquare, Send, Loader2, Plus, FileText, Check } from 'lucide-react';
+import { Mail, MessageSquare, Send, Loader2, Plus, FileText, Check, Variable } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,8 +16,6 @@ import {
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { useToast } from '@/hooks/use-toast';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -72,18 +70,37 @@ export function EnhancedBroadcastDialog({
   const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<BroadcastTemplate | null>(null);
+  const [initialSelectionIds, setInitialSelectionIds] = useState<Set<string>>(new Set());
 
-  // Fetch templates from Firebase
+  // Available variables for templates
+  const availableVariables = [
+    { key: '{firstName}', label: 'First Name', description: 'Member\'s first name' },
+    { key: '{lastName}', label: 'Last Name', description: 'Member\'s last name' },
+    { key: '{fullName}', label: 'Full Name', description: 'Member\'s full name' },
+    { key: '{email}', label: 'Email', description: 'Member\'s email address' },
+    { key: '{communityName}', label: 'Community Name', description: 'Name of the community' },
+    { key: '{communityOwner}', label: 'Community Owner', description: 'Owner of the community' },
+  ];
+
+  // Insert variable at cursor position
+  const insertVariable = (variable: string, field: 'subject' | 'message') => {
+    if (field === 'subject') {
+      setSubject(prev => prev + variable);
+    } else {
+      setMessage(prev => prev + variable);
+    }
+  };
+
+  // Fetch templates from API (uses Admin SDK)
   const fetchTemplates = useCallback(async () => {
     setIsLoadingTemplates(true);
     try {
-      const templatesRef = collection(db, 'broadcastTemplates');
-      const snapshot = await getDocs(templatesRef);
-      const templatesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as BroadcastTemplate[];
-      setTemplates(templatesData);
+      const response = await fetch('/api/broadcast-templates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      const data = await response.json();
+      setTemplates(data.templates || []);
     } catch (error) {
       console.error('Error fetching templates:', error);
     } finally {
@@ -94,7 +111,9 @@ export function EnhancedBroadcastDialog({
   // Initialize when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedMembers(initialSelectedMembers || members);
+      const selected = initialSelectedMembers || members;
+      setSelectedMembers(selected);
+      setInitialSelectionIds(new Set(selected.map(m => m.id)));
       setSubject('');
       setMessage('');
       setSelectedTemplate(null);
@@ -109,7 +128,7 @@ export function EnhancedBroadcastDialog({
     setMessage(template.message);
   };
 
-  // Save current message as template
+  // Save current message as template (uses Admin SDK via API)
   const handleSaveAsTemplate = async () => {
     if (!newTemplateName.trim() || !message.trim()) {
       toast({
@@ -121,13 +140,20 @@ export function EnhancedBroadcastDialog({
     }
 
     try {
-      await addDoc(collection(db, 'broadcastTemplates'), {
-        name: newTemplateName,
-        subject: subject,
-        message: message,
-        type: mode,
-        createdAt: serverTimestamp(),
+      const response = await fetch('/api/broadcast-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newTemplateName,
+          subject: subject,
+          message: message,
+          type: mode,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to save template');
+      }
 
       toast({
         title: 'Template Saved',
@@ -202,6 +228,21 @@ export function EnhancedBroadcastDialog({
     }
   };
 
+  // Replace template variables with actual values
+  const replaceVariables = (text: string, member: MemberData) => {
+    const nameParts = member.name.split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
+    return text
+      .replace(/\{firstName\}/g, firstName)
+      .replace(/\{lastName\}/g, lastName)
+      .replace(/\{fullName\}/g, member.name)
+      .replace(/\{email\}/g, member.email || '')
+      .replace(/\{communityName\}/g, communityName || 'Community')
+      .replace(/\{communityOwner\}/g, communityName || 'Community'); // TODO: Get actual owner name
+  };
+
   const sendEmailBroadcast = async () => {
     const membersWithEmail = selectedMembers.filter(m => m.email && m.email.trim());
     
@@ -210,13 +251,17 @@ export function EnhancedBroadcastDialog({
     }
 
     for (const member of membersWithEmail) {
+      // Replace variables in subject and message for each member
+      const personalizedSubject = replaceVariables(subject, member);
+      const personalizedMessage = replaceVariables(message, member);
+      
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: member.email,
           from: `Kyozo <${fromEmail}>`,
-          subject: subject,
+          subject: personalizedSubject,
           html: `
             <!DOCTYPE html>
             <html>
@@ -230,8 +275,7 @@ export function EnhancedBroadcastDialog({
                     <h1 style="color: #5B4A3A; margin: 0; font-size: 24px;">${communityName || 'Community'}</h1>
                   </div>
                   <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-                    <p>Hi ${member.name},</p>
-                    <div style="white-space: pre-wrap;">${message}</div>
+                    <div style="white-space: pre-wrap;">${personalizedMessage}</div>
                   </div>
                   <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
                     <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent from ${communityName || 'Community'} via Kyozo</p>
@@ -405,13 +449,39 @@ export function EnhancedBroadcastDialog({
                 )}
               </div>
 
+              {/* Variables Section */}
+              <div className="mb-4">
+                <Label className="text-sm font-medium mb-2 block" style={{ color: '#5B4A3A' }}>
+                  Insert Variables
+                </Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {availableVariables.map((v) => (
+                    <Button
+                      key={v.key}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertVariable(v.key, 'message')}
+                      className="h-7 text-xs gap-1"
+                      style={{ borderColor: '#E8DFD1', backgroundColor: 'white' }}
+                      title={v.description}
+                    >
+                      <Variable className="h-3 w-3" />
+                      {v.label}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Click to insert variable into message. Variables will be replaced with actual values when sending.
+                </p>
+              </div>
+
               {/* Subject (Email only) */}
               {mode === 'email' && (
                 <div className="mb-4">
                   <Label htmlFor="subject" style={{ color: '#5B4A3A' }}>Subject</Label>
                   <Input
                     id="subject"
-                    placeholder="Enter email subject..."
+                    placeholder="Enter email subject... Use variables like {communityName}"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
@@ -424,7 +494,7 @@ export function EnhancedBroadcastDialog({
                 <Label htmlFor="message" style={{ color: '#5B4A3A' }}>Message</Label>
                 <Textarea
                   id="message"
-                  placeholder="Enter your message..."
+                  placeholder="Enter your message... Use variables like {firstName}, {communityName}"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={8}
@@ -464,7 +534,7 @@ export function EnhancedBroadcastDialog({
                 {selectedMembers.length} of {members.length} selected
               </p>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
               <EnhancedListView
                 items={members}
                 renderGridItem={(item, isSelected, onSelect, urlField, selectable) => (
@@ -479,6 +549,8 @@ export function EnhancedBroadcastDialog({
                 searchKeys={['name', 'email']}
                 selectable={true}
                 onSelectionChange={onSelectionChange}
+                initialSelection={initialSelectionIds}
+                defaultViewMode="list"
               />
             </div>
           </div>
