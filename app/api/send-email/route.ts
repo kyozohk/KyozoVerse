@@ -22,9 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the provided 'from' address or default to Resend's test domain
-    // Note: For production, you need to verify your domain at resend.com/domains
-    const fromAddress = from || 'Kyozo <onboarding@resend.dev>';
+    // Use the verified Kyozo domain for sending emails
+    const fromAddress = from || 'Kyozo <message@contact.kyozo.com>';
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',

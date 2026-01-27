@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Mail, MessageSquare, Send, Loader2, Plus, FileText, Check, Variable } from 'lucide-react';
+import { Mail, MessageSquare, Send, Loader2, Plus, Variable, FileText, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,7 +57,7 @@ export function EnhancedBroadcastDialog({
   members,
   initialSelectedMembers,
   communityName,
-  fromEmail = 'dev@kyozo.com'
+  fromEmail = 'message@contact.kyozo.com'
 }: EnhancedBroadcastDialogProps) {
   const { toast } = useToast();
   const [mode, setMode] = useState<BroadcastMode>('email');
@@ -391,17 +391,17 @@ export function EnhancedBroadcastDialog({
                         ))}
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="icon"
                           onClick={() => setIsCreatingTemplate(true)}
-                          className="shrink-0 gap-1.5"
+                          className="shrink-0 h-8 w-8"
                           style={{ 
                             borderColor: '#5B4A3A',
                             backgroundColor: '#5B4A3A',
                             color: 'white'
                           }}
+                          title="Create new template"
                         >
-                          <Plus className="h-3.5 w-3.5" />
-                          New Template
+                          <Plus className="h-4 w-4" />
                         </Button>
                       </>
                     )}
