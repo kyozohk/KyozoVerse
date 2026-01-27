@@ -1,271 +1,368 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
-import { usePathname, useParams } from 'next/navigation';
-import { CustomButton } from '@/components/ui';
-import { MessageSquare, CopyCheck, CopyX, Mail } from 'lucide-react';
-import BroadcastDialog from '@/components/broadcast/broadcast-dialog';
-import { EmailSendDialog } from '@/components/broadcast/email-send-dialog';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useParams } from 'next/navigation';
+import { useEffect, useState, Suspense, useMemo } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { type CommunityMember, type User, type Community } from '@/lib/types';
-import { Member } from '@/components/broadcast/broadcast-types';
-import { getCommunityByHandle } from '@/lib/community-utils';
-import { getCommunityTags, type CommunityTag } from '@/lib/community-tags';
-import { ListView } from '@/components/ui/list-view';
-import { MembersList } from '@/components/community/members-list';
+import { Community, CommunityMember } from '@/lib/types';
+import { Loader2, Send, Mail, Tag } from 'lucide-react';
+import { PageLayout } from '@/components/v2/page-layout';
+import { PageHeader } from '@/components/v2/page-header';
+import { EnhancedListView } from '@/components/v2/enhanced-list-view';
+import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
-import { CommunityHeader } from '@/components/community/community-header';
-import { useAuth } from '@/hooks/use-auth';
-import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { getCommunityTags, type CommunityTag } from '@/lib/community-tags';
 
-export default function CommunityBroadcastPage() {
-  const { user } = useAuth();
+interface MemberData {
+  id: string;
+  name: string;
+  email?: string;
+  imageUrl: string;
+  role?: string;
+  userId: string;
+  joinedDate?: any;
+  tags?: string[];
+}
+
+function BroadcastContent() {
   const params = useParams();
   const handle = params.handle as string;
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [members, setMembers] = useState<CommunityMember[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [userRole, setUserRole] = useState<string>('guest');
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [members, setMembers] = useState<MemberData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isBroadcastDialogOpen, setIsBroadcastDialogOpen] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState('');
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
 
-  // Fetch community and members data
+  const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const selectedMembers = useMemo(() => {
+    return members.filter(m => selectedIds.has(m.id));
+  }, [members, selectedIds]);
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!handle) return;
+    const fetchCommunityAndMembers = async () => {
       try {
-        setLoading(true);
-        const communityData = await getCommunityByHandle(handle);
-        if (!communityData) {
-          console.error('Community not found');
-          setLoading(false);
+        setIsLoading(true);
+
+        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
+        const communitySnapshot = await getDocs(communityQuery);
+        
+        if (communitySnapshot.empty) {
+          setIsLoading(false);
           return;
         }
+
+        const communityData = {
+          communityId: communitySnapshot.docs[0].id,
+          ...communitySnapshot.docs[0].data()
+        } as Community;
         setCommunity(communityData);
 
-        if (user) {
-          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-          setUserRole(role);
-        }
-
-        // Fetch available tags for this community
         const tags = await getCommunityTags(communityData.communityId);
         setAvailableTags(tags);
 
-        const membersQuery = query(collection(db, "communityMembers"), where("communityId", "==", communityData.communityId));
+        const membersQuery = query(
+          collection(db, 'communityMembers'),
+          where('communityId', '==', communityData.communityId)
+        );
         const membersSnapshot = await getDocs(membersQuery);
 
-        const membersData = await Promise.all(membersSnapshot.docs.map(async (memberDoc) => {
-          const data = memberDoc.data();
-          const userDocRef = doc(db, 'users', data.userId);
-          const userSnap = await getDoc(userDocRef);
+        const membersData = membersSnapshot.docs.map((memberDoc) => {
+          const memberData = memberDoc.data();
+          const userDetails = memberData.userDetails || {};
           
-          const memberData: CommunityMember = {
+          return {
             id: memberDoc.id,
-            userId: data.userId,
-            communityId: data.communityId,
-            role: data.role || 'member',
-            joinedAt: data.joinedAt,
-            status: data.status || 'active',
-            tags: data.tags || [],
-            userDetails: userSnap.exists() ? userSnap.data() as User : undefined
+            userId: memberData.userId,
+            name: userDetails.displayName || userDetails.email || 'Unknown User',
+            email: userDetails.email || '',
+            imageUrl: userDetails.avatarUrl || userDetails.photoURL || '/placeholder-avatar.png',
+            role: memberData.role || 'member',
+            joinedDate: memberData.joinedAt,
+            tags: memberData.tags || [],
           };
-          
-          return memberData;
-        }));
+        });
         
         setMembers(membersData);
-        setSelectedMembers(membersData);
-        
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching community and members:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    
-    fetchData();
-  }, [handle, user]);
 
-  // Fetch WhatsApp templates from backend, similar to reference project
+    fetchCommunityAndMembers();
+  }, [handle]);
+  
   useEffect(() => {
-    const fetchTemplates = async () => {
-      console.log('[BroadcastPage] Fetching templates from 360dialog API...');
-      setLoadingTemplates(true);
-      try {
-        const res = await fetch('/api/whatsapp/templates');
-        const data = await res.json();
-        console.log('[BroadcastPage] Templates response:', data);
-
-        if (data.success && Array.isArray(data.templates) && data.templates.length > 0) {
-          setTemplates(data.templates);
-          console.log('[BroadcastPage] Processed templates count:', data.templates.length);
-        } else {
-          console.warn('[BroadcastPage] No templates returned from /api/whatsapp/templates, keeping fallback behavior');
-          setTemplates([]);
-        }
-      } catch (err) {
-        console.error('[BroadcastPage] Error fetching templates:', err);
-        setTemplates([]);
-      } finally {
-        setLoadingTemplates(false);
-      }
-    };
-
-    fetchTemplates();
-  }, []);
-
-  const handleNewBroadcast = () => {
-    if (selectedMembers.length === 0) {
-      alert('Please select at least one member to send a message to.');
+    if (selectedTags.size === 0) {
+      // When no tags are selected, we don't automatically change the selection
+      // to preserve manual choices.
       return;
     }
-    setIsDialogOpen(true);
-  };
   
-  const handleToggleMember = (member: CommunityMember) => {
-    const memberId = member.userId;
-    
-    setSelectedMembers(prev => 
-        prev.some(m => m.userId === memberId)
-            ? prev.filter(m => m.userId !== memberId)
-            : [...prev, member]
-    );
-  };
-
-  const handleToggleTag = (tagName: string) => {
-    setSelectedTags(prev => {
-      if (prev.includes(tagName)) {
-        return prev.filter(t => t !== tagName);
-      } else {
-        return [...prev, tagName];
+    const memberIdsWithSelectedTags = new Set<string>();
+    members.forEach(member => {
+      if (Array.from(selectedTags).some(tag => member.tags?.includes(tag))) {
+        memberIdsWithSelectedTags.add(member.id);
       }
     });
+  
+    // We add the members from tags to the existing selection
+    setSelectedIds(prev => new Set([...prev, ...memberIdsWithSelectedTags]));
+  
+  // We only want this to run when tags change, not when manual selection (selectedIds) changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTags, members]);
+  
+
+  const handleToggleTag = (tagName: string) => {
+    const newSelectedTags = new Set(selectedTags);
+    const memberIdsForTag = new Set(members.filter(m => m.tags?.includes(tagName)).map(m => m.id));
+  
+    if (newSelectedTags.has(tagName)) {
+      newSelectedTags.delete(tagName);
+      // Deselect members that had this tag, but only if they don't have other selected tags
+      setSelectedIds(prevIds => {
+        const newIds = new Set(prevIds);
+        memberIdsForTag.forEach(memberId => {
+          const member = members.find(m => m.id === memberId);
+          const hasOtherSelectedTags = Array.from(newSelectedTags).some(t => member?.tags?.includes(t));
+          if (!hasOtherSelectedTags) {
+            newIds.delete(memberId);
+          }
+        });
+        return newIds;
+      });
+    } else {
+      newSelectedTags.add(tagName);
+      // Add members with this tag to the selection
+      setSelectedIds(prevIds => new Set([...prevIds, ...memberIdsForTag]));
+    }
+  
+    setSelectedTags(newSelectedTags);
   };
   
-  // Filter members based on search term and selected tags
-  const filteredMembers = members.filter(member => {
-    // Search filter
-    const matchesSearch = !searchTerm || 
-      member.userDetails?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Tag filter
-    const matchesTags = selectedTags.length === 0 || 
-      selectedTags.every(selectedTag => (member.tags || []).includes(selectedTag));
-    
-    return matchesSearch && matchesTags;
-  });
 
-  const allSelected = filteredMembers.length > 0 && selectedMembers.length === filteredMembers.length;
+  const handleOpenBroadcastDialog = () => {
+    if (selectedMembers.length === 0) return;
+    setIsBroadcastDialogOpen(true);
+  };
 
-  const handleToggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedMembers([]);
+  const handleSendBroadcast = async () => {
+    if (!community || selectedMembers.length === 0 || !broadcastSubject.trim() || !broadcastMessage.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in subject and message',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const membersWithEmail = selectedMembers.filter(m => m.email && m.email.trim());
+    if (membersWithEmail.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No selected members have email addresses',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSending(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const member of membersWithEmail) {
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: member.email,
+            from: 'Kyozo <dev@contact.kyozo.com>',
+            subject: broadcastSubject,
+            html: `...`, // Email HTML body
+          }),
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        failCount++;
+      }
+    }
+
+    setIsSending(false);
+    setIsBroadcastDialogOpen(false);
+    setBroadcastSubject('');
+    setBroadcastMessage('');
+
+    if (successCount > 0) {
+      toast({
+        title: 'Broadcast Sent',
+        description: `Successfully sent to ${successCount} member(s).`,
+      });
     } else {
-      setSelectedMembers(filteredMembers);
+      toast({
+        title: 'Broadcast Failed',
+        variant: 'destructive',
+      });
     }
   };
-  
-  // Calculate member count excluding owner
-  const nonOwnerMembers = members.filter(m => m.role !== 'owner');
-  const memberCountExcludingOwner = nonOwnerMembers.length;
+
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="rounded-lg border border-input bg-card p-6 animate-pulse">
+          <div className="aspect-square bg-muted rounded-full mb-4 mx-auto w-20 h-20" />
+          <div className="h-5 bg-muted rounded w-3/4 mb-2 mx-auto" />
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
+        </div>
+      ))}
+    </div>
+  );
+
+  if (!community && !isLoading) {
+    return (
+      <PageLayout>
+        <div className="p-8">Community not found</div>
+      </PageLayout>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {community && (
-        <CommunityHeader 
-          community={community} 
-          userRole={userRole as any} 
-          memberCount={memberCountExcludingOwner}
-          customActions={
-            <>
-              <CustomButton 
-                variant="rounded-rect" 
-                className={selectedMembers.length > 0 
-                  ? "text-white/80 hover:text-white hover:bg-white/10" 
-                  : "text-white/30 cursor-not-allowed"
-                }
-                onClick={selectedMembers.length > 0 ? handleNewBroadcast : undefined}
-                disabled={selectedMembers.length === 0}
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Send Message {selectedMembers.length > 0 ? `(${selectedMembers.length})` : ''}
-              </CustomButton>
-              <CustomButton 
-                variant="rounded-rect" 
-                className={selectedMembers.length > 0 
-                  ? "text-white/80 hover:text-white hover:bg-white/10" 
-                  : "text-white/30 cursor-not-allowed"
-                }
-                onClick={selectedMembers.length > 0 ? () => {
-                  setIsEmailDialogOpen(true);
-                } : undefined}
-                disabled={selectedMembers.length === 0}
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Send E-mail {selectedMembers.length > 0 ? `(${selectedMembers.length})` : ''}
-              </CustomButton>
-            </>
-          }
-        />
-      )}
-      <ListView
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        loading={loading}
-        title="Broadcast"
-        subtitle="Select members to send a message to."
-        availableTags={availableTags}
-        selectedTags={selectedTags}
-        onToggleTag={handleToggleTag}
+    <PageLayout>
+      <PageHeader
+        title={community ? `${community.name} - Broadcast` : 'Broadcast'}
+        description={`Select members to send a broadcast message`}
         actions={
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={handleToggleSelectAll}>
-              {allSelected ? <CopyX className="h-5 w-5" /> : <CopyCheck className="h-5 w-5" />}
-            </Button>
-          </div>
+          <Button 
+            variant="selected" 
+            onClick={handleOpenBroadcastDialog}
+            disabled={selectedMembers.length === 0}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            Message {selectedMembers.length} {selectedMembers.length === 1 ? 'Member' : 'Members'}
+          </Button>
         }
-      >
-        <MembersList
-            members={filteredMembers}
-            onMemberClick={handleToggleMember}
-            selectedMembers={selectedMembers}
-            selectable={true}
-            viewMode={viewMode}
+      />
+      <div className="p-6">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {availableTags.map((tag) => (
+            <Button
+              key={tag.id}
+              variant={selectedTags.has(tag.name) ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleToggleTag(tag.name)}
+              className="gap-1.5"
+            >
+              <Tag className="h-3.5 w-3.5" />
+              {tag.name}
+            </Button>
+          ))}
+        </div>
+        <EnhancedListView
+          items={members}
+          renderGridItem={(item, isSelected) => <MemberGridItem item={item} isSelected={isSelected} />}
+          renderListItem={(item, isSelected) => <MemberListItem item={item} isSelected={isSelected} />}
+          renderCircleItem={(item, isSelected) => <MemberCircleItem item={item} isSelected={isSelected} />}
+          searchKeys={['name', 'email']}
+          selectable={true}
+          selection={selectedIds}
+          onSelectionChange={setSelectedIds}
+          isLoading={isLoading}
+          loadingComponent={<LoadingSkeleton />}
         />
-      </ListView>
-      
-      <BroadcastDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        members={selectedMembers}
-        templates={templates}
-        loadingTemplates={loadingTemplates}
-      />
-      
-      <EmailSendDialog
-        isOpen={isEmailDialogOpen}
-        onClose={() => setIsEmailDialogOpen(false)}
-        members={selectedMembers}
-        communityName={community?.name}
-      />
-    </div>
+      </div>
+      <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]" style={{ backgroundColor: '#F5F0E8' }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: '#5B4A3A' }}>Send Broadcast Message</DialogTitle>
+            <DialogDescription>
+              Send a message to {selectedMembers.length} selected member(s).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="subject" style={{ color: '#5B4A3A' }}>Subject</Label>
+              <Input
+                id="subject"
+                placeholder="Enter message subject..."
+                value={broadcastSubject}
+                onChange={(e) => setBroadcastSubject(e.target.value)}
+                style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="message" style={{ color: '#5B4A3A' }}>Message</Label>
+              <Textarea
+                id="message"
+                placeholder="Enter your message..."
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                rows={8}
+                style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBroadcastDialogOpen(false)}
+              disabled={isSending}
+              style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendBroadcast}
+              disabled={isSending || !broadcastSubject.trim() || !broadcastMessage.trim()}
+              style={{ backgroundColor: '#5B4A3A', color: 'white' }}
+            >
+              {isSending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+              ) : (
+                <><Send className="mr-2 h-4 w-4" /> Send Broadcast</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </PageLayout>
+  );
+}
+
+export default function BroadcastPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <BroadcastContent />
+    </Suspense>
   );
 }

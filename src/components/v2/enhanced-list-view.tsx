@@ -15,10 +15,9 @@ interface EnhancedListViewProps<T> {
   isLoading?: boolean;
   loadingComponent?: React.ReactNode;
   urlField?: string;
-  onSelectionChange?: (selectedIds: string[], selectedItems: T[]) => void;
-  // Selection action buttons (shown when items are selected)
+  selection?: Set<string>;
+  onSelectionChange?: (selectedIds: Set<string>) => void;
   selectionActions?: React.ReactNode;
-  // Infinite scroll props
   pageSize?: number;
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
@@ -35,6 +34,7 @@ export function EnhancedListView<T extends { id: string }>({
   isLoading = false,
   loadingComponent,
   urlField = 'id',
+  selection: controlledSelection,
   onSelectionChange,
   selectionActions,
   pageSize = 20,
@@ -44,11 +44,14 @@ export function EnhancedListView<T extends { id: string }>({
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [internalSelection, setInternalSelection] = useState<Set<string>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Infinite scroll observer
+  const isControlled = controlledSelection !== undefined;
+  const selectedIds = isControlled ? controlledSelection : internalSelection;
+  const setSelectedIds = isControlled && onSelectionChange ? onSelectionChange : setInternalSelection;
+
   const lastItemRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (isLoading || isLoadingMore) return;
@@ -80,27 +83,15 @@ export function EnhancedListView<T extends { id: string }>({
     );
   }, [items, searchTerm, searchKeys]);
 
-  // Effect to call onSelectionChange when selectedIds changes
-  useEffect(() => {
-    if (onSelectionChange) {
-      const selectedItems = items.filter(item => selectedIds.has(item.id));
-      onSelectionChange(Array.from(selectedIds), selectedItems);
-    }
-  }, [selectedIds, items, onSelectionChange]);
-
-
   const toggleSelection = (id: string) => {
     if (!selectable) return;
-    
-    setSelectedIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
+    const newSelection = new Set(selectedIds);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
+    } else {
+      newSelection.add(id);
+    }
+    setSelectedIds(newSelection);
   };
 
   const handleSelectAll = () => {
@@ -166,7 +157,6 @@ export function EnhancedListView<T extends { id: string }>({
             </div>
           );
         })}
-        {/* Load more indicator */}
         {isLoadingMore && (
           <div className="col-span-full flex justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
