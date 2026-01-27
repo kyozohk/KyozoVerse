@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { CustomFormDialog, Input, CustomButton, Label, Dropzone } from '@/components/ui';
 import type { CommunityMember, User } from "@/lib/types";
 import { ProfileImageSelector } from './profile-image-selector';
@@ -65,7 +65,7 @@ export function MemberDialog({
   
   const [existingUser, setExistingUser] = useState<User | null>(null);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFirstName('');
     setLastName('');
     setEmail('');
@@ -77,7 +77,7 @@ export function MemberDialog({
     setError(null);
     setSubmitting(false);
     setExistingUser(null);
-  };
+  }, []);
 
   // Track if we've already initialized for this open state
   const hasInitialized = useRef(false);
@@ -102,13 +102,13 @@ export function MemberDialog({
         // Reset the flag when dialog closes
         hasInitialized.current = false;
     }
-  }, [open, mode, initialMember]);
+  }, [open, mode, initialMember, resetForm]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onClose();
     // Delay reset to allow dialog to close gracefully
     setTimeout(resetForm, 300);
-  };
+  }, [onClose, resetForm]);
 
   const handleFileUpload = async (file: File | null, userId: string | null | undefined, type: 'avatar' | 'cover') => {
     if (!file) {
@@ -143,8 +143,63 @@ export function MemberDialog({
         return null;
     }
   };
+  
+  const handleConfirmAddExistingUser = useCallback(async () => {
+      if (!existingUser || !communityName) return;
 
-  const handleSubmit = async () => {
+      setSubmitting(true);
+      try {
+        const communitiesRef = collection(db, "communities");
+        const q = query(communitiesRef, where("name", "==", communityName));
+        const communitySnap = await getDocs(q);
+        if (communitySnap.empty) {
+          throw new Error('Community not found');
+        }
+        const communityId = communitySnap.docs[0].id;
+        
+        await joinCommunity(existingUser.userId, communityId, {
+            displayName: existingUser.displayName,
+            email: existingUser.email,
+        });
+
+        await updateDoc(doc(db, "communities", communityId), {
+          memberCount: increment(1)
+        });
+        
+        let finalAvatarUrl = avatarUrl;
+        let finalCoverUrl = coverUrl;
+
+        if (avatarFile) {
+          console.log('Uploading new avatar for existing user...');
+          finalAvatarUrl = await handleFileUpload(avatarFile, existingUser.userId, 'avatar');
+        }
+        if (coverFile) {
+          console.log('Uploading new cover for existing user...');
+          finalCoverUrl = await handleFileUpload(coverFile, existingUser.userId, 'cover');
+        }
+
+        // Update user profile if new images were provided
+        if ((finalAvatarUrl && finalAvatarUrl !== existingUser.avatarUrl) || (finalCoverUrl && finalCoverUrl !== existingUser.coverUrl)) {
+            const userRef = doc(db, 'users', existingUser.userId);
+            const updates: {avatarUrl?: string, coverUrl?: string} = {};
+            if (finalAvatarUrl) updates.avatarUrl = finalAvatarUrl;
+            if (finalCoverUrl) updates.coverUrl = finalCoverUrl;
+            await updateDoc(userRef, updates);
+        }
+
+        toast({
+          title: "Member Added",
+          description: `${existingUser.displayName} has been added to the community.`,
+        });
+        handleClose();
+      } catch (e: any) {
+        setError(e.message || "Failed to add existing member.");
+      } finally {
+        setSubmitting(false);
+      }
+  }, [existingUser, communityName, toast, handleClose, avatarFile, coverFile, avatarUrl, coverUrl]);
+
+  const handleSubmit = useCallback(async () => {
     if (existingUser) {
         handleConfirmAddExistingUser();
         return;
@@ -211,62 +266,7 @@ export function MemberDialog({
     } finally {
       setSubmitting(false);
     }
-  };
-  
-  const handleConfirmAddExistingUser = async () => {
-      if (!existingUser || !communityName) return;
-
-      setSubmitting(true);
-      try {
-        const communitiesRef = collection(db, "communities");
-        const q = query(communitiesRef, where("name", "==", communityName));
-        const communitySnap = await getDocs(q);
-        if (communitySnap.empty) {
-          throw new Error('Community not found');
-        }
-        const communityId = communitySnap.docs[0].id;
-        
-        await joinCommunity(existingUser.userId, communityId, {
-            displayName: existingUser.displayName,
-            email: existingUser.email,
-        });
-
-        await updateDoc(doc(db, "communities", communityId), {
-          memberCount: increment(1)
-        });
-        
-        let finalAvatarUrl = avatarUrl;
-        let finalCoverUrl = coverUrl;
-
-        if (avatarFile) {
-          console.log('Uploading new avatar for existing user...');
-          finalAvatarUrl = await handleFileUpload(avatarFile, existingUser.userId, 'avatar');
-        }
-        if (coverFile) {
-          console.log('Uploading new cover for existing user...');
-          finalCoverUrl = await handleFileUpload(coverFile, existingUser.userId, 'cover');
-        }
-
-        // Update user profile if new images were provided
-        if ((finalAvatarUrl && finalAvatarUrl !== existingUser.avatarUrl) || (finalCoverUrl && finalCoverUrl !== existingUser.coverUrl)) {
-            const userRef = doc(db, 'users', existingUser.userId);
-            const updates: {avatarUrl?: string, coverUrl?: string} = {};
-            if (finalAvatarUrl) updates.avatarUrl = finalAvatarUrl;
-            if (finalCoverUrl) updates.coverUrl = finalCoverUrl;
-            await updateDoc(userRef, updates);
-        }
-
-        toast({
-          title: "Member Added",
-          description: `${existingUser.displayName} has been added to the community.`,
-        });
-        handleClose();
-      } catch (e: any) {
-        setError(e.message || "Failed to add existing member.");
-      } finally {
-        setSubmitting(false);
-      }
-  };
+  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleClose, handleConfirmAddExistingUser]);
 
 
   const title = mode === "add" ? "Add member" : "Edit member";
