@@ -156,10 +156,6 @@ export default function MemberProfilePage() {
       setIsDeleteConfirmOpen(false);
     }
   };
-  
-  const handleCloseEditDialog = useCallback(() => {
-    setIsEditDialogOpen(false);
-  }, []);
 
   const handleEditSubmit = useCallback(async (data: {
     displayName: string;
@@ -428,7 +424,7 @@ export default function MemberProfilePage() {
         mode="edit"
         communityName={community?.name}
         initialMember={member}
-        onClose={handleCloseEditDialog}
+        onOpenChange={setIsEditDialogOpen}
         onSubmit={handleEditSubmit}
       />
 

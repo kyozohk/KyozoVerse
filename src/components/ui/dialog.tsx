@@ -110,7 +110,7 @@ DialogDescription.displayName = DialogPrimitive.Description.displayName
 
 interface CustomFormDialogProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -120,19 +120,13 @@ interface CustomFormDialogProps {
 
 export function CustomFormDialog({
   open,
-  onClose,
+  onOpenChange,
   title,
   description,
   children,
   rightComponent,
   size = 'default',
 }: CustomFormDialogProps) {
-
-  const handleOpenChange = React.useCallback((isOpen: boolean) => {
-    if (!isOpen) {
-      onClose();
-    }
-  }, [onClose]);
 
   // Size classes: large is 20% bigger than default
   const sizeClasses = rightComponent 
@@ -142,7 +136,7 @@ export function CustomFormDialog({
       : "w-full max-w-2xl max-h-[85vh]";
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay 
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"

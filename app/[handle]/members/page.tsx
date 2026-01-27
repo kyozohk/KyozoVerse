@@ -450,7 +450,7 @@ function MembersContent() {
           open={isAddMemberOpen}
           mode="add"
           communityName={community.name}
-          onClose={() => setIsAddMemberOpen(false)}
+          onOpenChange={setIsAddMemberOpen}
           onSubmit={handleAddMember}
         />
       )}

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CustomFormDialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,6 +27,19 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
   const [isSuccess, setIsSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!open) {
+      const timer = setTimeout(() => {
+        setIsSuccess(false);
+        setUserEmail('');
+        setNewsletter(false);
+        setWhatsapp(false);
+        setAgreedToPrivacy(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -93,23 +106,12 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
   const handleOpenEmail = () => {
     window.open('https://mail.google.com', '_blank');
   };
-
-  const handleClose = () => {
-    onOpenChange(false);
-    // Reset state after dialog closes
-    setTimeout(() => {
-      setIsSuccess(false);
-      setUserEmail('');
-      setNewsletter(false);
-      setWhatsapp(false);
-    }, 300);
-  };
   
   return (
     <>
     <CustomFormDialog
         open={open}
-        onClose={handleClose}
+        onOpenChange={onOpenChange}
         title={isSuccess ? "Request Submitted! ✅" : "Join the Waitlist"}
         description={isSuccess ? "Your request is being reviewed by our team." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
         color="#843484"
@@ -149,7 +151,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
 
           <div className="mt-auto flex-shrink-0">
             <CustomButton 
-              onClick={handleClose}
+              onClick={() => onOpenChange(false)}
               variant="waitlist" 
               className="w-full"
             >
@@ -190,7 +192,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
             <div className="space-y-2 pt-2">
               <Checkbox
                 checked={agreedToPrivacy}
-                onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                onCheckedChange={(checked) => setAgreedToPrivacy(checked as boolean)}
                 label={
                   <span className="text-sm text-gray-700">
                     I agree to the{' '}
@@ -210,7 +212,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
               
               <Checkbox
                 checked={newsletter}
-                onCheckedChange={(checked) => setNewsletter(checked === true)}
+                onCheckedChange={(checked) => setNewsletter(checked as boolean)}
                 label={
                   <span className="text-sm text-gray-700">Sign me up to the CreativeLab newsletter</span>
                 }
@@ -218,7 +220,7 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
               
               <Checkbox
                 checked={whatsapp}
-                onCheckedChange={(checked) => setWhatsapp(checked === true)}
+                onCheckedChange={(checked) => setWhatsapp(checked as boolean)}
                 label={
                   <span className="text-sm text-gray-700">By submitting this form I agree to be contacted via WhatsApp</span>
                 }

@@ -225,7 +225,7 @@ export default function CommunityPage() {
           open={isAddMemberOpen}
           mode="add"
           communityName={community.name}
-          onClose={() => setIsAddMemberOpen(false)}
+          onOpenChange={setIsAddMemberOpen}
           onSubmit={handleAddMember}
         />
       )}

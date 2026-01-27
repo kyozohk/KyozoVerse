@@ -553,7 +553,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={onClose}
+      onOpenChange={(open) => {if (!open) onClose()}}
       title={title}
       description={subtitle}
       color={THEME_COLORS.broadcast.primary}

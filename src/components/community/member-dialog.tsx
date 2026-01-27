@@ -31,7 +31,7 @@ interface MemberDialogProps {
   mode: "add" | "edit";
   communityName?: string;
   initialMember?: CommunityMember | null;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onSubmit: (data: {
     displayName: string;
     email: string;
@@ -46,7 +46,7 @@ export function MemberDialog({
   mode,
   communityName,
   initialMember,
-  onClose,
+  onOpenChange,
   onSubmit,
 }: MemberDialogProps) {
   const { toast } = useToast();
@@ -79,36 +79,34 @@ export function MemberDialog({
     setExistingUser(null);
   }, []);
 
-  // Track if we've already initialized for this open state
-  const hasInitialized = useRef(false);
-
   useEffect(() => {
-    if (open && !hasInitialized.current) {
-        hasInitialized.current = true;
-        if (mode === 'edit' && initialMember) {
-            const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
-            setFirstName(nameParts[0] || "");
-            setLastName(nameParts.slice(1).join(' ') || "");
-            setEmail(initialMember.userDetails?.email || "");
-            setPhone(initialMember.userDetails?.phone || "");
-            setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
-            setCoverUrl(initialMember.userDetails?.coverUrl || null);
-            setAvatarFile(null);
-            setCoverFile(null);
-        } else {
-            resetForm();
-        }
-    } else if (!open) {
-        // Reset the flag when dialog closes
-        hasInitialized.current = false;
+    if (open) {
+      if (mode === 'edit' && initialMember) {
+          const nameParts = initialMember.userDetails?.displayName?.split(' ') || [''];
+          setFirstName(nameParts[0] || "");
+          setLastName(nameParts.slice(1).join(' ') || "");
+          setEmail(initialMember.userDetails?.email || "");
+          setPhone(initialMember.userDetails?.phone || "");
+          setAvatarUrl(initialMember.userDetails?.avatarUrl || null);
+          setCoverUrl(initialMember.userDetails?.coverUrl || null);
+          setAvatarFile(null);
+          setCoverFile(null);
+      } else {
+          resetForm();
+      }
     }
   }, [open, mode, initialMember, resetForm]);
 
+  useEffect(() => {
+    if (!open) {
+      const timer = setTimeout(() => resetForm(), 300); // Reset after closing animation
+      return () => clearTimeout(timer);
+    }
+  }, [open, resetForm]);
+
   const handleClose = useCallback(() => {
-    onClose();
-    // Delay reset to allow dialog to close gracefully
-    setTimeout(resetForm, 300);
-  }, [onClose, resetForm]);
+    onOpenChange(false);
+  }, [onOpenChange]);
 
   const handleFileUpload = async (file: File | null, userId: string | null | undefined, type: 'avatar' | 'cover') => {
     if (!file) {
@@ -255,7 +253,8 @@ export function MemberDialog({
         avatarUrl: finalAvatarUrl || undefined,
         coverUrl: finalCoverUrl || undefined
       });
-      handleClose();
+      // The parent component is now responsible for closing the dialog
+      // handleClose();
     } catch (e: any) {
       if (e.code === 'auth/user-already-exists' && e.existingUser) {
         setExistingUser(e.existingUser);
@@ -266,7 +265,7 @@ export function MemberDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleClose, handleConfirmAddExistingUser]);
+  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleConfirmAddExistingUser]);
 
 
   const title = mode === "add" ? "Add member" : "Edit member";
@@ -282,7 +281,7 @@ export function MemberDialog({
   return (
     <CustomFormDialog
       open={open}
-      onClose={handleClose}
+      onOpenChange={onOpenChange}
       title={existingUser ? 'User Found' : title}
       description={description}
     >

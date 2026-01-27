@@ -237,7 +237,7 @@ export default function Home() {
       
       <CustomFormDialog 
         open={isSignInOpen} 
-        onClose={() => setIsSignInOpen(false)}
+        onOpenChange={setIsSignInOpen}
         title="Welcome Back"
         description="Sign in to access your Kyozo dashboard and community."
         color={THEME_COLORS.overview.primary}
@@ -283,7 +283,7 @@ export default function Home() {
 
       <CustomFormDialog 
         open={isSignUpOpen} 
-        onClose={() => setIsSignUpOpen(false)}
+        onOpenChange={setIsSignUpOpen}
         title="Create Your Account"
         description="Sign up to create and manage your own communities on Kyozo."
         color="#843484"
@@ -369,7 +369,7 @@ export default function Home() {
 
       <ResetPasswordDialog
         open={isResetPasswordOpen}
-        onClose={() => setIsResetPasswordOpen(false)}
+        onOpenChange={setIsResetPasswordOpen}
         onGoBack={openSignIn}
       />
 

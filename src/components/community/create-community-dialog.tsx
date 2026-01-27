@@ -318,7 +318,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
     return (
         <CustomFormDialog
             open={isOpen} 
-            onClose={() => setIsOpen(false)}
+            onOpenChange={setIsOpen}
             title={existingCommunity ? 'Edit Community' : 'Create a New Community'}
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
         >

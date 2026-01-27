@@ -151,7 +151,7 @@ export function EmailSendDialog({
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={onClose}
+      onOpenChange={(open) => {if (!open) onClose()}}
       title="Send Email"
       description={`Send email to ${selectedMembers.length} selected member${selectedMembers.length !== 1 ? 's' : ''}`}
       color={THEME_COLORS.broadcast.primary}

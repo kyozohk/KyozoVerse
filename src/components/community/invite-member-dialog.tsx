@@ -219,7 +219,7 @@ Looking forward to seeing you there!`;
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={onClose}
+      onOpenChange={(open) => !open && onClose()}
       title="Invite Member"
       description={`Invite someone to join ${community.name}`}
     >
