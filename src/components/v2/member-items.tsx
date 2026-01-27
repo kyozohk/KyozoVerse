@@ -1,5 +1,4 @@
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
@@ -25,6 +24,7 @@ interface MemberItemProps {
   item: Member;
   isSelected: boolean;
   urlField?: string;
+  onSelect?: () => void;
 }
 
 const formatDate = (date: any): string => {
@@ -69,20 +69,23 @@ const isValidImageUrl = (url: string) => {
   return true;
 };
 
-export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
+export const MemberGridItem = ({ item, isSelected, onSelect }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
   const hasValidImage = isValidImageUrl(item.imageUrl);
   
   return (
-    <Link href={`/${handle}/members/${item.userId}`}>
-      <Card 
-        className={cn(
-          "flex h-full flex-col overflow-hidden cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
-          isSelected && "ring-2 ring-ring"
-        )}
-        style={{ borderColor: 'var(--page-content-border)' }}
-      >
+    <Card 
+      className={cn(
+        "flex h-full flex-col overflow-hidden cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
+        isSelected && "ring-2 ring-ring"
+      )}
+      style={{ borderColor: 'var(--page-content-border)' }}
+      onClick={(e) => {
+        e.preventDefault();
+        onSelect?.();
+      }}
+    >
         <div className="relative" style={{ paddingTop: '60%', backgroundColor: '#E2D9C9' }}>
           {hasValidImage ? (
             <Image
@@ -137,17 +140,19 @@ export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
           )}
         </div>
       </Card>
-    </Link>
   );
 };
 
-export const MemberListItem = ({ item, isSelected }: MemberItemProps) => {
+export const MemberListItem = ({ item, isSelected, onSelect }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
   
   return (
-    <Link href={`/${handle}/members/${item.userId}`}>
-      <Card 
+    <Card 
+      onClick={(e) => {
+        e.preventDefault();
+        onSelect?.();
+      }} 
         className={cn(
           "flex items-center p-4 cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
           isSelected && "ring-2 ring-ring bg-accent/50"
@@ -199,17 +204,19 @@ export const MemberListItem = ({ item, isSelected }: MemberItemProps) => {
           )}
         </div>
       </Card>
-    </Link>
   );
 };
 
-export const MemberCircleItem = ({ item, isSelected }: MemberItemProps) => {
+export const MemberCircleItem = ({ item, isSelected, onSelect }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
   
   return (
-    <Link href={`/${handle}/members/${item.userId}`}>
-      <Card 
+    <Card 
+      onClick={(e) => {
+        e.preventDefault();
+        onSelect?.();
+      }} 
         className={cn(
           "flex h-full w-full flex-col items-center justify-start text-center overflow-hidden cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
           isSelected && "ring-2 ring-ring"
@@ -252,6 +259,5 @@ export const MemberCircleItem = ({ item, isSelected }: MemberItemProps) => {
           )}
         </div>
       </Card>
-    </Link>
   );
 };

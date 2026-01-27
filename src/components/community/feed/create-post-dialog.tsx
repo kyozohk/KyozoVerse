@@ -212,7 +212,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 updatedAt: serverTimestamp()
             });
         } else {
-            const newPostData = {
+            // First create the document to get the ID
+            const docRef = await addDoc(collection(db, 'blogs'), {
                 title,
                 content: contentPayload,
                 authorId: user.uid,
@@ -223,8 +224,23 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 likes: 0,
                 comments: 0,
                 visibility: isPublic ? 'public' : 'private'
+            });
+            
+            // Then create the complete post object with postId
+            const newPostData = {
+                postId: docRef.id, // Add the missing postId property
+                title,
+                content: contentPayload,
+                authorId: user.uid,
+                communityId: communityId,
+                communityHandle: communityHandle,
+                type: postType,
+                createdAt: serverTimestamp(),
+                likes: 0,
+                comments: 0,
+                visibility: (isPublic ? 'public' : 'private') as 'public' | 'private' | 'members-only'
             };
-            const docRef = await addDoc(collection(db, 'blogs'), newPostData);
+            
             if (isPublic) {
               sendNewPostEmails({ ...newPostData, id: docRef.id, author: { userId: user.uid, displayName: user.displayName || '' } });
             }

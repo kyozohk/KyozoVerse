@@ -5,9 +5,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Send, Mail } from 'lucide-react';
-import { PageLayout } from '@/components/v2/page-layout';
-import { PageHeader } from '@/components/v2/page-header';
+import { Loader2, Send, Mail, Globe, Lock } from 'lucide-react';
+import { Banner } from '@/components/ui/banner';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
@@ -147,7 +146,7 @@ function BroadcastContent() {
           },
           body: JSON.stringify({
             to: member.email,
-            from: 'Kyozo <dev@contact.kyozo.com>',
+            from: 'Kyozo <dev@kyozo.com>',
             subject: broadcastSubject,
             html: `
               <!DOCTYPE html>
@@ -220,27 +219,45 @@ function BroadcastContent() {
 
   if (!community && !isLoading) {
     return (
-      <PageLayout>
-        <div className="p-8">Community not found</div>
-      </PageLayout>
+      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8">
+          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <p>Community not found</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <PageLayout>
-      <PageHeader
-        title={community ? `${community.name} - Broadcast` : 'Broadcast'}
-        description={`Select members to send a broadcast message`}
-        actions={
-          <Button 
-            variant="selected" 
-            onClick={handleOpenBroadcastDialog}
-            disabled={selectedMembers.length === 0}
-          >
-            <Mail className="mr-2 h-4 w-4" />
-            Email {selectedMembers.length} {selectedMembers.length === 1 ? 'Member' : 'Members'}
-          </Button>
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-auto">
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          <Banner
+        backgroundImage={community?.communityBackgroundImage}
+        iconImage={community?.communityProfileImage}
+        title={community?.name || 'Broadcast'}
+        location={(community as any)?.location}
+        locationExtra={
+          <span className="flex items-center gap-1 text-sm text-white/90">
+            {(community as any)?.visibility === 'private' ? (
+              <><Lock className="h-3.5 w-3.5" /> Private</>
+            ) : (
+              <><Globe className="h-3.5 w-3.5" /> Public</>
+            )}
+          </span>
         }
+        subtitle={community?.tagline || (community as any)?.mantras || "Select members to send a broadcast message"}
+        tags={(community as any)?.tags || []}
+        ctas={[
+          {
+            label: `Broadcast ${selectedMembers.length} ${selectedMembers.length === 1 ? 'Member' : 'Members'}`,
+            icon: <Mail className="h-4 w-4" />,
+            onClick: handleOpenBroadcastDialog,
+            disabled: selectedMembers.length === 0
+          }
+        ]}
+        height="16rem"
       />
       <EnhancedListView
         items={members}
@@ -255,19 +272,53 @@ function BroadcastContent() {
         )}
         searchKeys={['name', 'email']}
         selectable={true}
-        onSelectionChange={(ids, items) => setSelectedMembers(items)}
+        onSelectionChange={(ids, items) => {
+        console.log('Selection changed:', { ids, items });
+        setSelectedMembers(items);
+      }}
         isLoading={isLoading}
         loadingComponent={<LoadingSkeleton />}
+        tagKey="tags"
+        showTags={true}
       />
       {/* Broadcast Email Dialog */}
       <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]" style={{ backgroundColor: '#F5F0E8' }}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto" style={{ backgroundColor: '#F5F0E8' }}>
           <DialogHeader>
-            <DialogTitle style={{ color: '#5B4A3A' }}>Send Broadcast Email</DialogTitle>
+            <DialogTitle style={{ color: '#5B4A3A' }}>Send Broadcast Message</DialogTitle>
             <DialogDescription>
-              Send an email to {selectedMembers.filter(m => m.email).length} selected member{selectedMembers.filter(m => m.email).length !== 1 ? 's' : ''} with email addresses
+              Review and fine-tune selected members before sending broadcast to {selectedMembers.filter(m => m.email).length} members with email addresses
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Members List in Dialog */}
+          <div className="max-h-96 overflow-y-auto border rounded-lg p-4" style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}>
+            <div className="mb-4">
+              <h4 className="font-medium" style={{ color: '#5B4A3A' }}>Selected Members ({selectedMembers.length})</h4>
+              <p className="text-sm text-muted-foreground">You can remove members by unselecting them</p>
+            </div>
+            <EnhancedListView
+              items={selectedMembers}
+              renderGridItem={(item, isSelected) => (
+                <MemberGridItem item={item} isSelected={isSelected} />
+              )}
+              renderListItem={(item, isSelected) => (
+                <MemberListItem item={item} isSelected={isSelected} />
+              )}
+              renderCircleItem={(item, isSelected) => (
+                <MemberCircleItem item={item} isSelected={isSelected} />
+              )}
+              searchKeys={['name', 'email']}
+              selectable={true}
+              onSelectionChange={(ids, items) => {
+                // Update selected members when deselected in dialog
+                setSelectedMembers(items);
+              }}
+              tagKey="tags"
+              showTags={true}
+            />
+          </div>
+          
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="subject" style={{ color: '#5B4A3A' }}>Subject</Label>
@@ -314,7 +365,9 @@ function BroadcastContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+        </div>
+      </div>
+    </div>
   );
 }
 

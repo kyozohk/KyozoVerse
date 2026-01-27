@@ -23,6 +23,9 @@ interface EnhancedListViewProps<T> {
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   isLoadingMore?: boolean;
+  // Tags support
+  tagKey?: keyof T; // Key to extract tags from item
+  showTags?: boolean; // Whether to show tags above search
 }
 
 export function EnhancedListView<T extends { id: string }>({
@@ -41,10 +44,13 @@ export function EnhancedListView<T extends { id: string }>({
   hasMore = false,
   onLoadMore,
   isLoadingMore = false,
+  tagKey,
+  showTags = false,
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -68,19 +74,50 @@ export function EnhancedListView<T extends { id: string }>({
     [isLoading, isLoadingMore, hasMore, onLoadMore]
   );
 
+  // Extract all unique tags from items
+  const allTags = useMemo(() => {
+    if (!tagKey || !showTags) return [];
+    const tagSet = new Set<string>();
+    items.forEach(item => {
+      const tags = item[tagKey];
+      if (Array.isArray(tags)) {
+        tags.forEach(tag => tagSet.add(String(tag)));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [items, tagKey, showTags]);
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return items;
+    let filtered = items;
     
-    const lowerSearch = searchTerm.toLowerCase();
-    return items.filter((item) =>
-      searchKeys.some((key) => {
-        const value = item[key];
-        return String(value).toLowerCase().includes(lowerSearch);
-      })
-    );
-  }, [items, searchTerm, searchKeys]);
+    // Filter by selected tags first
+    if (selectedTags.size > 0 && tagKey) {
+      filtered = filtered.filter(item => {
+        const tags = item[tagKey];
+        if (!Array.isArray(tags)) return false;
+        // Show items that have ANY of the selected tags
+        return Array.from(selectedTags).some(selectedTag => 
+          tags.some(tag => String(tag) === selectedTag)
+        );
+      });
+    }
+    
+    // Then filter by search term
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter((item) =>
+        searchKeys.some((key) => {
+          const value = item[key];
+          return String(value).toLowerCase().includes(lowerSearch);
+        })
+      );
+    }
+    
+    return filtered;
+  }, [items, searchTerm, searchKeys, selectedTags, tagKey]);
 
   const toggleSelection = (id: string) => {
+    console.log('toggleSelection called:', { id, selectable });
     if (!selectable) return;
     
     setSelectedIds((prev) => {
@@ -91,6 +128,7 @@ export function EnhancedListView<T extends { id: string }>({
         newSet.add(id);
       }
       const selectedItems = items.filter(item => newSet.has(item.id));
+      console.log('Calling onSelectionChange with:', { ids: Array.from(newSet), selectedItems });
       onSelectionChange?.(Array.from(newSet), selectedItems);
       return newSet;
     });
@@ -103,6 +141,21 @@ export function EnhancedListView<T extends { id: string }>({
     setSelectedIds(newSet);
     const selectedItems = items.filter(item => newSet.has(item.id));
     onSelectionChange?.(Array.from(newSet), selectedItems);
+  };
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTags(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tag)) {
+        newSet.delete(tag);
+      } else {
+        newSet.add(tag);
+      }
+      return newSet;
+    });
+    // Clear selection when tags change
+    setSelectedIds(new Set());
+    onSelectionChange?.([], []);
   };
 
   const renderContent = () => {
@@ -176,12 +229,55 @@ export function EnhancedListView<T extends { id: string }>({
   return (
     <div className="flex-1 flex flex-col">
       <div className="p-6">
+        {/* Tags Section */}
+        {showTags && allTags.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-2">
+              {allTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagClick(tag)}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors",
+                    selectedTags.has(tag)
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  <Tag className="h-3 w-3" />
+                  {tag}
+                  {selectedTags.has(tag) && (
+                    <span className="ml-1 text-xs">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            {selectedTags.size > 0 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Filtered by tags: <strong>{Array.from(selectedTags).join(', ')}</strong> ({filteredItems.length} items)
+                </span>
+                <button
+                  onClick={() => {
+                    setSelectedTags(new Set());
+                    setSelectedIds(new Set());
+                    onSelectionChange?.([], []);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={selectedTags.size > 0 ? `Search within selected tags...` : "Search..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-11 pl-11 pr-4 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-colors"
