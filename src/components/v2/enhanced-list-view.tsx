@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ interface EnhancedListViewProps<T> {
   loadingComponent?: React.ReactNode;
   urlField?: string;
   selection?: Set<string>;
-  onSelectionChange?: (selectedIds: Set<string>) => void;
+  onSelectionChange?: (ids: Set<string>, items: T[]) => void;
   selectionActions?: React.ReactNode;
   pageSize?: number;
   hasMore?: boolean;
@@ -50,8 +50,16 @@ export function EnhancedListView<T extends { id: string }>({
 
   const isControlled = controlledSelection !== undefined && onSelectionChange !== undefined;
   const selectedIds = isControlled ? controlledSelection : internalSelection;
-  const setSelectedIds = isControlled ? onSelectionChange : setInternalSelection;
   
+  const setSelectedIds = useCallback((newIds: Set<string>) => {
+    if (isControlled) {
+      const selectedItems = items.filter(item => newIds.has(item.id));
+      onSelectionChange(newIds, selectedItems);
+    } else {
+      setInternalSelection(newIds);
+    }
+  }, [isControlled, onSelectionChange, items]);
+
   const lastItemRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (isLoading || isLoadingMore) return;
