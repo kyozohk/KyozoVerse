@@ -1,13 +1,12 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Send, Mail } from 'lucide-react';
-import { PageLayout } from '@/components/v2/page-layout';
-import { PageHeader } from '@/components/v2/page-header';
+import { Loader2, Send, Mail, Lock, Globe } from 'lucide-react';
+import { Banner } from '@/components/ui/banner';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { type CommunityTag, getCommunityTagNames } from '@/lib/community-tags';
 
 interface MemberData {
   id: string;
@@ -46,6 +46,10 @@ function BroadcastContent() {
   const [broadcastSubject, setBroadcastSubject] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [availableTags, setAvailableTags] = useState<{ id: string; name: string }[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,6 +71,9 @@ function BroadcastContent() {
           ...communitySnapshot.docs[0].data()
         } as Community;
         setCommunity(communityData);
+
+        const tags = await getCommunityTagNames(communityData.communityId);
+        setAvailableTags(tags.map(t => ({ id: t, name: t })));
 
         // Fetch community members - use userDetails embedded in the member doc (same as members page)
         const membersQuery = query(
@@ -92,10 +99,6 @@ function BroadcastContent() {
           };
         });
         
-        console.log('=== BROADCAST MEMBERS DATA ===');
-        console.log('Total members:', membersData.length);
-        console.log('===================');
-        
         setMembers(membersData);
       } catch (error) {
         console.error('Error fetching community and members:', error);
@@ -106,11 +109,20 @@ function BroadcastContent() {
 
     fetchCommunityAndMembers();
   }, [handle]);
+  
+  useEffect(() => {
+    const newSelectedMembers = members.filter(m => selection.has(m.id));
+    setSelectedMembers(newSelectedMembers);
+  }, [selection, members]);
 
   const handleOpenBroadcastDialog = () => {
     if (selectedMembers.length === 0) return;
     setIsBroadcastDialogOpen(true);
   };
+  
+  const onSelectionChange = useCallback((ids: Set<string>, items: MemberData[]) => {
+    setSelection(ids);
+  }, []);
 
   const handleSendBroadcast = async () => {
     if (!community || selectedMembers.length === 0 || !broadcastSubject.trim() || !broadcastMessage.trim()) {
@@ -220,45 +232,51 @@ function BroadcastContent() {
 
   if (!community && !isLoading) {
     return (
-      <PageLayout>
-        <div className="p-8">Community not found</div>
-      </PageLayout>
+      <div className="p-8">Community not found</div>
     );
   }
 
   return (
-    <PageLayout>
-      <PageHeader
-        title={community ? `${community.name} - Broadcast` : 'Broadcast'}
-        description={`Select members to send a broadcast message`}
-        actions={
-          <Button 
-            variant="selected" 
-            onClick={handleOpenBroadcastDialog}
-            disabled={selectedMembers.length === 0}
-          >
-            <Mail className="mr-2 h-4 w-4" />
-            Email {selectedMembers.length} {selectedMembers.length === 1 ? 'Member' : 'Members'}
-          </Button>
-        }
-      />
-      <EnhancedListView
-        items={members}
-        renderGridItem={(item, isSelected) => (
-          <MemberGridItem item={item} isSelected={isSelected} />
-        )}
-        renderListItem={(item, isSelected) => (
-          <MemberListItem item={item} isSelected={isSelected} />
-        )}
-        renderCircleItem={(item, isSelected) => (
-          <MemberCircleItem item={item} isSelected={isSelected} />
-        )}
-        searchKeys={['name', 'email']}
-        selectable={true}
-        onSelectionChange={(ids, items) => setSelectedMembers(items)}
-        isLoading={isLoading}
-        loadingComponent={<LoadingSkeleton />}
-      />
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-auto">
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          {community && (
+            <Banner
+              backgroundImage={community.communityBackgroundImage}
+              iconImage={community.communityProfileImage}
+              title={`${community.name} - Broadcast`}
+              subtitle="Select members to send a broadcast message"
+              ctas={[{
+                label: `Message ${selectedMembers.length} ${selectedMembers.length === 1 ? 'Member' : 'Members'}`,
+                icon: <Mail className="mr-2 h-4 w-4" />,
+                onClick: handleOpenBroadcastDialog,
+                disabled: selectedMembers.length < 2,
+              }]}
+              height="16rem"
+            />
+          )}
+        </div>
+        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          <EnhancedListView
+            items={members}
+            renderGridItem={(item, isSelected) => (
+              <MemberGridItem item={item} isSelected={isSelected} />
+            )}
+            renderListItem={(item, isSelected) => (
+              <MemberListItem item={item} isSelected={isSelected} />
+            )}
+            renderCircleItem={(item, isSelected) => (
+              <MemberCircleItem item={item} isSelected={isSelected} />
+            )}
+            searchKeys={['name', 'email', 'tags']}
+            selectable={true}
+            onSelectionChange={onSelectionChange}
+            isLoading={isLoading}
+            loadingComponent={<LoadingSkeleton />}
+            availableTags={availableTags}
+          />
+        </div>
+      </div>
       {/* Broadcast Email Dialog */}
       <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
         <DialogContent className="sm:max-w-[600px]" style={{ backgroundColor: '#F5F0E8' }}>
@@ -314,7 +332,7 @@ function BroadcastContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+    </div>
   );
 }
 

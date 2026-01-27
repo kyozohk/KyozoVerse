@@ -9,9 +9,8 @@ import { Loader2, UserPlus, Mail } from 'lucide-react';
 import { CommunityImage } from '@/components/ui/community-image';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/v2/page-header';
-import { CustomListView } from '@/components/v2/custom-list-view';
-import { MemberListItem } from '@/components/members/member-list-item';
-import { MemberGridItem } from '@/components/members/member-grid-item';
+import { EnhancedListView } from '@/components/v2/enhanced-list-view';
+import { MemberListItem, MemberGridItem, MemberCircleItem } from '@/components/members/member-items';
 
 export default function MembersPage() {
   const params = useParams();
@@ -19,7 +18,6 @@ export default function MembersPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     const fetchCommunityAndMembers = async () => {
@@ -105,14 +103,27 @@ export default function MembersPage() {
 
           {/* Members Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            <CustomListView
-              items={members}
-              renderListItem={(member) => <MemberListItem key={member.id} member={member} />}
-              renderGridItem={(member) => <MemberGridItem key={member.id} member={member} />}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              itemClassName={{ list: 'mb-4', grid: '' }}
-            />
+          <EnhancedListView
+            items={members.map(m => ({
+              id: m.id,
+              name: m.displayName,
+              imageUrl: m.photoURL,
+              tags: m.tags || [],
+              // Other member-specific fields can be added here
+            }))}
+            renderGridItem={(item, isSelected, onSelect) => (
+              <MemberGridItem item={item} isSelected={isSelected} />
+            )}
+            renderListItem={(item, isSelected, onSelect) => (
+              <MemberListItem item={item} isSelected={isSelected} />
+            )}
+            renderCircleItem={(item, isSelected, onSelect) => (
+                <MemberCircleItem item={item} isSelected={isSelected} />
+            )}
+            searchKeys={['name']}
+            selectable={true}
+            isLoading={loading}
+          />
           </div>
         </div>
       </div>

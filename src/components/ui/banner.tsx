@@ -9,6 +9,7 @@ export interface BannerCTA {
   label: string;
   icon?: ReactNode;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 export interface BannerProps {
@@ -75,7 +76,7 @@ export function Banner({
             alt={title} 
             size={iconSize}
             border={true}
-            borderColor="rgba(255,255,255,0.5)"
+            borderColor="rgba(255, 255, 255, 0.5)"
             className="border-2 border-white/50"
           />
         )}
@@ -99,15 +100,20 @@ export function Banner({
       {leftCta ? (
         <div className="absolute bottom-8 left-8">
           <button
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1]"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1] disabled:opacity-50 disabled:pointer-events-none"
             style={{ borderColor: '#E8DFD1', color: '#E8DFD1' }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#5B4A3A';
+              if (!leftCta.disabled) {
+                e.currentTarget.style.color = '#5B4A3A';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#E8DFD1';
+              if (!leftCta.disabled) {
+                e.currentTarget.style.color = '#E8DFD1';
+              }
             }}
             onClick={leftCta.onClick}
+            disabled={leftCta.disabled}
           >
             {leftCta.icon}
             {leftCta.label}
@@ -133,15 +139,20 @@ export function Banner({
           {ctas.map((cta, index) => (
             <button
               key={index}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1]"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1] disabled:opacity-50 disabled:pointer-events-none"
               style={{ borderColor: '#E8DFD1', color: '#E8DFD1' }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#5B4A3A';
+                if (!cta.disabled) {
+                  e.currentTarget.style.color = '#5B4A3A';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = '#E8DFD1';
+                if (!cta.disabled) {
+                  e.currentTarget.style.color = '#E8DFD1';
+                }
               }}
               onClick={cta.onClick}
+              disabled={cta.disabled}
             >
               {cta.icon}
               {cta.label}

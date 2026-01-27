@@ -22,7 +22,6 @@ interface EnhancedListViewProps<T> {
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   isLoadingMore?: boolean;
-  availableTags?: { id: string; name: string }[];
 }
 
 export function EnhancedListView<T extends { id: string; tags?: string[] }>({
@@ -42,7 +41,6 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   hasMore = false,
   onLoadMore,
   isLoadingMore = false,
-  availableTags = [],
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,22 +61,41 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     }
   }, [isControlled, onSelectionChange, items]);
 
-  const handleToggleTag = (tagName: string) => {
-    setSelectedTags(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(tagName)) {
-        newSet.delete(tagName);
-      } else {
-        newSet.add(tagName);
+  const availableTags = useMemo(() => {
+    const allTags = new Set<string>();
+    items.forEach(item => {
+      if (item.tags) {
+        item.tags.forEach(tag => allTags.add(tag));
       }
-      return newSet;
     });
+    return Array.from(allTags).map(tag => ({ id: tag, name: tag }));
+  }, [items]);
+
+  const handleToggleTag = (tagName: string) => {
+    const newSelectedTags = new Set(selectedTags);
+    if (newSelectedTags.has(tagName)) {
+        newSelectedTags.delete(tagName);
+    } else {
+        newSelectedTags.add(tagName);
+    }
+    setSelectedTags(newSelectedTags);
+
+    const newSelectedIds = new Set<string>(selectedIds);
+    items.forEach(item => {
+        if (item.tags?.includes(tagName)) {
+            if (newSelectedTags.has(tagName)) {
+                newSelectedIds.add(item.id);
+            } else {
+                newSelectedIds.delete(item.id);
+            }
+        }
+    });
+    setSelectedIds(newSelectedIds);
   };
 
   const filteredItems = useMemo(() => {
     let filtered = items;
 
-    // Filter by search term
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter((item) =>
@@ -89,11 +106,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
       );
     }
 
-    // Filter by tags (AND logic)
     if (selectedTags.size > 0) {
       filtered = filtered.filter(item => {
         if (!item.tags || item.tags.length === 0) return false;
-        return Array.from(selectedTags).every(tag => item.tags!.includes(tag));
+        return Array.from(selectedTags).some(tag => item.tags!.includes(tag));
       });
     }
 
@@ -101,8 +117,6 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   }, [items, searchTerm, searchKeys, selectedTags]);
 
   useEffect(() => {
-    // When filters change, we need to update the parent's selection state
-    // to only include items that are still visible.
     const visibleIds = new Set(filteredItems.map(item => item.id));
     const newSelection = new Set([...selectedIds].filter(id => visibleIds.has(id)));
     if (newSelection.size !== selectedIds.size) {
@@ -177,24 +191,22 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
           return (
             <div 
               key={item.id} 
-              className="relative"
+              className={cn("relative", selectable && "cursor-pointer")}
               ref={isLastItem ? lastItemRef : null}
+              onClick={selectable ? () => toggleSelection(item.id) : undefined}
             >
               {selectable && (
-                <div 
-                  className="absolute top-2 left-2 z-10 cursor-pointer"
-                  onClick={() => toggleSelection(item.id)}
-                >
+                <div className="absolute top-2 left-2 z-10">
                   <div 
                     className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                      "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
                       selectedIds.has(item.id) 
-                        ? "bg-primary border-primary" 
-                        : "bg-background border-input"
+                        ? "bg-accent border-accent-foreground/30" 
+                        : "bg-card/50 border-muted-foreground/30"
                     )}
                   >
                     {selectedIds.has(item.id) && (
-                      <Check className="h-3 w-3 text-primary-foreground" />
+                      <Check className="h-3 w-3 text-accent-foreground" />
                     )}
                   </div>
                 </div>
