@@ -114,7 +114,6 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
         onOpenChange={onOpenChange}
         title={isSuccess ? "Request Submitted! ✅" : "Join the Waitlist"}
         description={isSuccess ? "Your request is being reviewed by our team." : "Join the exclusive club of creators, fill up the form and we will get back to you."}
-        color="#843484"
     >
       {isSuccess ? (
         // Success View - Pending Review

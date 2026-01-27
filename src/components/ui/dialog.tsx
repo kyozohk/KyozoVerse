@@ -4,7 +4,6 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
-import Image from 'next/image';
 
 import { cn } from "@/lib/utils"
 
@@ -23,7 +22,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}    
     {...props}
@@ -114,7 +113,6 @@ interface CustomFormDialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  rightComponent?: React.ReactNode;
   size?: 'default' | 'large';
 }
 
@@ -124,16 +122,12 @@ export function CustomFormDialog({
   title,
   description,
   children,
-  rightComponent,
   size = 'default',
 }: CustomFormDialogProps) {
 
-  // Size classes: large is 20% bigger than default
-  const sizeClasses = rightComponent 
-    ? "w-full max-w-[90vw] h-[90vh]" 
-    : size === 'large' 
-      ? "w-full max-w-3xl max-h-[90vh]"  // 20% bigger: 3xl instead of 2xl, 90vh instead of 85vh
-      : "w-full max-w-2xl max-h-[85vh]";
+  const sizeClasses = size === 'large' 
+      ? "w-full max-w-2xl max-h-[90vh]"
+      : "w-full max-w-md max-h-[85vh]";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,7 +137,7 @@ export function CustomFormDialog({
         />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl focus:outline-none",
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl focus:outline-none flex flex-col",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             sizeClasses
           )}
@@ -152,55 +146,35 @@ export function CustomFormDialog({
             border: '2px solid var(--page-content-border)'
           }}
         >
-          <div className={`grid h-full w-full grid-cols-1 ${rightComponent ? 'md:grid-cols-2' : ''}`}>
-            <div className="relative flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}>
-              <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50 p-2" style={{ border: '2px solid var(--page-content-border)', backgroundColor: 'var(--page-content-bg)' }}>
-                <X className="h-5 w-5" style={{ color: '#6B5D52' }} />
-                <span className="sr-only">Close</span>
-              </DialogPrimitive.Close>
+          <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50 p-2" style={{ border: '2px solid var(--page-content-border)', backgroundColor: 'var(--page-content-bg)' }}>
+            <X className="h-5 w-5" style={{ color: '#6B5D52' }} />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
 
-              <div className={cn(
-                "flex flex-col h-full",
-                rightComponent ? "p-8 md:p-12 lg:p-16" : "p-8 md:p-10"
-              )}>
-                <DialogPrimitive.Title asChild>
-                  <div className={cn(
-                    "flex-shrink-0",
-                    rightComponent ? "mb-8" : "mb-6"
-                  )}>
-                    <h2 
-                      className={cn(
-                        "font-normal text-left mb-3",
-                        rightComponent ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"
-                      )}
-                      style={{ fontFamily: "'PT Sans', sans-serif", color: '#6B5D52' }}
-                    >
-                      {title}
-                    </h2>
-                    {description && (
-                      <p className="text-left text-base" style={{ color: '#A07856' }}>{description}</p>
-                    )}
-                  </div>
-                </DialogPrimitive.Title>
-                
-                <div className="flex-1 min-h-0 overflow-y-auto">
-                  {children}
-                </div>
-              </div>
+          <div className="p-8 md:p-10 flex flex-col h-full overflow-hidden">
+            <DialogHeader className="flex-shrink-0 mb-6">
+              <DialogTitle 
+                className="font-normal text-left mb-3 text-3xl md:text-4xl"
+                style={{ fontFamily: "'PT Sans', sans-serif", color: '#6B5D52' }}
+              >
+                {title}
+              </DialogTitle>
+              {description && (
+                <DialogDescription className="text-left text-base" style={{ color: '#A07856' }}>
+                  {description}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {children}
             </div>
-
-            {rightComponent && (
-              <div className="relative hidden md:block overflow-hidden rounded-r-lg">
-                {rightComponent}
-              </div>
-            )}
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </Dialog>
   );
 }
-
 
 export {
   Dialog,

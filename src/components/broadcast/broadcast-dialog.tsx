@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/use-auth';
  */
 const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   isOpen,
-  onClose,
+  onOpenChange,
   members,
   onContinue,
   templates = [],
@@ -430,7 +430,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       
       // Close modal on success after delay
       if (results.failed === 0) {
-        setTimeout(() => onClose(), 5000);
+        setTimeout(() => onOpenChange(false), 5000);
       }
     } catch (error) {
       setBroadcastResults({
@@ -553,10 +553,9 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   return (
     <CustomFormDialog
       open={isOpen}
-      onOpenChange={(open) => {if (!open) onClose()}}
+      onOpenChange={onOpenChange}
       title={title}
       description={subtitle}
-      color={THEME_COLORS.broadcast.primary}
     >
       <div className="flex flex-col h-full">
         <div className="flex-grow overflow-y-auto mb-6">
@@ -605,7 +604,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
         <div className="grid grid-cols-2 gap-4 mt-auto">
           <CustomButton
             variant="outline"
-            onClick={currentStep === BroadcastStep.RECIPIENTS ? onClose : goToPreviousStep}
+            onClick={currentStep === BroadcastStep.RECIPIENTS ? () => onOpenChange(false) : goToPreviousStep}
             disabled={sendingBroadcast}
             className="w-full"
           >

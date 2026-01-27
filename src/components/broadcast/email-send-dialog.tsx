@@ -151,10 +151,10 @@ export function EmailSendDialog({
   return (
     <CustomFormDialog
       open={isOpen}
-      onOpenChange={(open) => {if (!open) onClose()}}
+      onOpenChange={onClose}
       title="Send Email"
       description={`Send email to ${selectedMembers.length} selected member${selectedMembers.length !== 1 ? 's' : ''}`}
-      color={THEME_COLORS.broadcast.primary}
+      size="large"
     >
       <div className="flex flex-col h-full">
         <div className="flex-grow grid grid-cols-2 gap-6 overflow-hidden">

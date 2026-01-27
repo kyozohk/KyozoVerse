@@ -1,113 +1,72 @@
+
 # CustomFormDialog Usage Guide
 
 ## Overview
-The `CustomFormDialog` component has been updated to support custom right-side components instead of hardcoded video animations.
+The `CustomFormDialog` component provides a consistent and themed modal experience for forms across the application. It is a single-panel dialog that adapts its size based on the content.
 
 ## Props
 
 ```typescript
 interface CustomFormDialogProps {
   open: boolean;              // Controls dialog visibility
-  onClose: () => void;        // Callback when dialog closes
+  onOpenChange: (open: boolean) => void; // State setter to control the dialog
   title: string;              // Dialog title
   description?: string;       // Optional subtitle/description
-  children: React.ReactNode;  // Main form content (left panel)
-  backgroundImage?: string;   // Background image for left panel (default: "/bg/light_app_bg.png")
-  rightComponent?: React.ReactNode;  // Optional custom component for right panel
-  color?: string;             // Theme color (default: "var(--primary-purple)")
+  children: React.ReactNode;  // Main form content
+  size?: 'default' | 'large'; // Optional size variant
 }
 ```
 
-## Usage Examples
+## Usage Example
 
-### 1. Dialog without right panel (full width)
 ```tsx
-<CustomFormDialog
-  open={isOpen}
-  onClose={onClose}
-  title="My Dialog"
-  description="Dialog description"
->
-  <div>
-    {/* Your form content here */}
-  </div>
-</CustomFormDialog>
-```
+import { useState } from 'react';
+import { CustomFormDialog, Input, CustomButton } from '@/components/ui';
 
-### 2. Dialog with custom image on right
-```tsx
-<CustomFormDialog
-  open={isOpen}
-  onClose={onClose}
-  title="My Dialog"
-  rightComponent={
-    <img 
-      src="/path/to/image.jpg" 
-      alt="Description"
-      className="w-full h-full object-cover"
-    />
-  }
->
-  <div>
-    {/* Your form content here */}
-  </div>
-</CustomFormDialog>
-```
+function MyFormComponent() {
+  const [isOpen, setIsOpen] = useState(false);
 
-### 3. Dialog with custom video on right
-```tsx
-<CustomFormDialog
-  open={isOpen}
-  onClose={onClose}
-  title="My Dialog"
-  rightComponent={
-    <video
-      className="absolute top-0 left-0 w-full h-full object-cover"
-      src="/videos/my-video.mp4"
-      autoPlay
-      loop
-      muted
-      playsInline
-    />
-  }
->
-  <div>
-    {/* Your form content here */}
-  </div>
-</CustomFormDialog>
-```
-
-### 4. Dialog with custom React component on right
-```tsx
-<CustomFormDialog
-  open={isOpen}
-  onClose={onClose}
-  title="My Dialog"
-  rightComponent={
-    <div className="flex items-center justify-center h-full bg-gradient-to-br from-purple-600 to-blue-600">
-      <div className="text-white text-center p-8">
-        <h3 className="text-2xl font-bold mb-4">Welcome!</h3>
-        <p>Custom content here</p>
-      </div>
+  return (
+    <div>
+      <CustomButton onClick={() => setIsOpen(true)}>Open Form</CustomButton>
+      
+      <CustomFormDialog
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        title="My Dialog"
+        description="This is a simple form dialog."
+        size="default" // Or "large" for a wider dialog
+      >
+        <div className="space-y-4">
+          <Input label="Name" />
+          <Input label="Email" type="email" />
+          <CustomButton className="w-full" onClick={() => setIsOpen(false)}>Submit</CustomButton>
+        </div>
+      </CustomFormDialog>
     </div>
-  }
->
-  <div>
-    {/* Your form content here */}
-  </div>
-</CustomFormDialog>
+  );
+}
 ```
+
+## Best Practices
+
+- **Controlled Component**: The dialog is a "controlled component". The parent component must manage the `open` state and pass the state setter function to `onOpenChange`.
+- **Content**: The `children` prop should contain the form fields and submission logic.
+- **Styling**: The dialog's colors and fonts are inherited from the global theme defined in `src/app/globals.css`. Avoid adding custom colors directly to the dialog or its children.
+- **Sizing**: Use the `size` prop to choose between a standard (`default`) or wider (`large`) dialog.
 
 ## Migration from Old API
+
+The previous API for this component included props like `rightComponent`, `showVideo`, `videoSrc`, and `color`. These have been removed to simplify the component and improve stability.
 
 ### Before (deprecated)
 ```tsx
 <CustomFormDialog
   open={isOpen}
-  onClose={onClose}
+  onClose={() => setIsOpen(false)} // Incorrect handler
   title="My Dialog"
-  showVideo={true}
-  videoSrc="/videos/form-right-no.mp4"
+  color="#C170CF" // Deprecated prop
+  rightComponent={<SomeComponent />} // Deprecated prop
 >
   {/* content */}
 </CustomFormDialog>
@@ -115,54 +74,11 @@ interface CustomFormDialogProps {
 
 ### After (current)
 ```tsx
-// Option 1: No right panel
 <CustomFormDialog
   open={isOpen}
-  onClose={onClose}
+  onOpenChange={setIsOpen} // Correct handler
   title="My Dialog"
->
-  {/* content */}
-</CustomFormDialog>
-
-// Option 2: With custom video component
-<CustomFormDialog
-  open={isOpen}
-  onClose={onClose}
-  title="My Dialog"
-  rightComponent={
-    <video
-      className="absolute top-0 left-0 w-full h-full object-cover"
-      src="/videos/form-right-no.mp4"
-      autoPlay
-      loop
-      muted
-      playsInline
-    />
-  }
 >
   {/* content */}
 </CustomFormDialog>
 ```
-
-## Notes
-
-- **Without right panel**: Dialog uses standard modal dimensions (`max-w-md` width, `max-h-[85vh]` height) - industry standard for form dialogs
-- **With right panel**: Dialog uses larger dimensions (`max-w-[90vw]` width, `h-[90vh]` height) to accommodate the two-column layout
-- The dialog automatically adjusts padding and title sizes based on whether a right panel is present
-- The right panel is hidden on mobile devices (< md breakpoint)
-- The right panel container has `overflow-hidden` and `relative` positioning by default
-- You can pass any valid React node as `rightComponent` (JSX, components, etc.)
-
-## Responsive Behavior
-
-### Without Right Panel
-- **Width**: Maximum 28rem (448px) - standard modal width
-- **Height**: Maximum 85vh - allows breathing room
-- **Padding**: Compact padding (p-6 md:p-8)
-- **Title**: Smaller size (text-3xl md:text-4xl)
-
-### With Right Panel
-- **Width**: Maximum 90vw - uses most of viewport
-- **Height**: Fixed 90vh - immersive experience
-- **Padding**: Generous padding (p-8 md:p-12 lg:p-16)
-- **Title**: Larger size (text-4xl md:text-5xl)
