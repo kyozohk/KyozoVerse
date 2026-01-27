@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag } from 'lucide-react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -46,8 +46,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   const [searchTerm, setSearchTerm] = useState('');
   const [internalSelection, setInternalSelection] = useState<Set<string>>(new Set());
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [showAllTags, setShowAllTags] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const tagsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const isControlled = controlledSelection !== undefined;
   const selectedIds = isControlled ? controlledSelection : internalSelection;
@@ -236,19 +238,39 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     <div className="flex-1 flex flex-col">
       <div className="p-6">
         {availableTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {availableTags.map((tag) => (
+            <div className="mb-4">
+              <div 
+                ref={tagsContainerRef}
+                className={cn(
+                  "flex flex-wrap gap-2",
+                  !showAllTags && "max-h-[38px] overflow-hidden"
+                )}
+              >
+                {availableTags.map((tag) => (
+                  <Button
+                    key={tag.id}
+                    variant={selectedTags.has(tag.name) ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleToggleTag(tag.name)}
+                    className="gap-1.5"
+                  >
+                    <Tag className="h-3.5 w-3.5" />
+                    {tag.name}
+                  </Button>
+                ))}
+              </div>
+              {availableTags.length > 5 && (
                 <Button
-                  key={tag.id}
-                  variant={selectedTags.has(tag.name) ? 'default' : 'outline'}
+                  variant="default"
                   size="sm"
-                  onClick={() => handleToggleTag(tag.name)}
-                  className="gap-1.5"
+                  onClick={() => setShowAllTags(!showAllTags)}
+                  className="mt-2 gap-1.5"
+                  style={{ backgroundColor: '#5B4A3A', color: 'white' }}
                 >
-                  <Tag className="h-3.5 w-3.5" />
-                  {tag.name}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showAllTags && "rotate-180")} />
+                  {showAllTags ? 'Show Less' : `Show More (${availableTags.length - 5}+)`}
                 </Button>
-              ))}
+              )}
             </div>
         )}
         <div className="flex flex-col md:flex-row gap-4 items-center">
