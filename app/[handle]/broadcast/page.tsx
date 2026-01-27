@@ -122,6 +122,7 @@ function BroadcastContent() {
   
   const onSelectionChange = useCallback((ids: Set<string>, items: MemberData[]) => {
     setSelection(ids);
+    setSelectedMembers(items);
   }, []);
 
   const handleSendBroadcast = async () => {
@@ -244,14 +245,24 @@ function BroadcastContent() {
             <Banner
               backgroundImage={community.communityBackgroundImage}
               iconImage={community.communityProfileImage}
-              title={`${community.name} - Broadcast`}
-              subtitle="Select members to send a broadcast message"
-              ctas={[{
+              title={community.name}
+              location={(community as any).location}
+              locationExtra={
+                <span className="flex items-center gap-1 text-sm text-white/90">
+                  {(community as any).visibility === 'private' ? (
+                    <><Lock className="h-3.5 w-3.5" /> Private</>
+                  ) : (
+                    <><Globe className="h-3.5 w-3.5" /> Public</>
+                  )}
+                </span>
+              }
+              subtitle={community.tagline || (community as any).mantras}
+              tags={(community as any).tags || []}
+              ctas={selectedMembers.length >= 1 ? [{
                 label: `Message ${selectedMembers.length} ${selectedMembers.length === 1 ? 'Member' : 'Members'}`,
-                icon: <Mail className="mr-2 h-4 w-4" />,
+                icon: <Mail className="h-4 w-4" />,
                 onClick: handleOpenBroadcastDialog,
-                disabled: selectedMembers.length < 2,
-              }]}
+              }] : []}
               height="16rem"
             />
           )}
@@ -259,21 +270,20 @@ function BroadcastContent() {
         <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           <EnhancedListView
             items={members}
-            renderGridItem={(item, isSelected) => (
-              <MemberGridItem item={item} isSelected={isSelected} />
+            renderGridItem={(item, isSelected, onSelect, urlField, selectable) => (
+              <MemberGridItem item={item} isSelected={isSelected} selectable={selectable} />
             )}
-            renderListItem={(item, isSelected) => (
-              <MemberListItem item={item} isSelected={isSelected} />
+            renderListItem={(item, isSelected, onSelect, urlField, selectable) => (
+              <MemberListItem item={item} isSelected={isSelected} selectable={selectable} />
             )}
-            renderCircleItem={(item, isSelected) => (
-              <MemberCircleItem item={item} isSelected={isSelected} />
+            renderCircleItem={(item, isSelected, onSelect, urlField, selectable) => (
+              <MemberCircleItem item={item} isSelected={isSelected} selectable={selectable} />
             )}
             searchKeys={['name', 'email', 'tags']}
             selectable={true}
             onSelectionChange={onSelectionChange}
             isLoading={isLoading}
             loadingComponent={<LoadingSkeleton />}
-            availableTags={availableTags}
           />
         </div>
       </div>

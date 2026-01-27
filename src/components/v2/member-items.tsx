@@ -25,6 +25,7 @@ interface MemberItemProps {
   item: Member;
   isSelected: boolean;
   urlField?: string;
+  selectable?: boolean;
 }
 
 const formatDate = (date: any): string => {
@@ -69,13 +70,12 @@ const isValidImageUrl = (url: string) => {
   return true;
 };
 
-export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
+export const MemberGridItem = ({ item, isSelected, selectable }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
   const hasValidImage = isValidImageUrl(item.imageUrl);
   
-  return (
-    <Link href={`/${handle}/members/${item.userId}`}>
+  const content = (
       <Card 
         className={cn(
           "flex h-full flex-col overflow-hidden cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
@@ -137,16 +137,24 @@ export const MemberGridItem = ({ item, isSelected }: MemberItemProps) => {
           )}
         </div>
       </Card>
+  );
+  
+  if (selectable) {
+    return content;
+  }
+  
+  return (
+    <Link href={`/${handle}/members/${item.userId}`}>
+      {content}
     </Link>
   );
 };
 
-export const MemberListItem = ({ item, isSelected }: MemberItemProps) => {
+export const MemberListItem = ({ item, isSelected, selectable }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
   
-  return (
-    <Link href={`/${handle}/members/${item.userId}`}>
+  const content = (
       <Card 
         className={cn(
           "flex items-center p-4 cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
@@ -199,16 +207,24 @@ export const MemberListItem = ({ item, isSelected }: MemberItemProps) => {
           )}
         </div>
       </Card>
+  );
+  
+  if (selectable) {
+    return content;
+  }
+  
+  return (
+    <Link href={`/${handle}/members/${item.userId}`}>
+      {content}
     </Link>
   );
 };
 
-export const MemberCircleItem = ({ item, isSelected }: MemberItemProps) => {
+export const MemberCircleItem = ({ item, isSelected, selectable }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
   
-  return (
-    <Link href={`/${handle}/members/${item.userId}`}>
+  const content = (
       <Card 
         className={cn(
           "flex h-full w-full flex-col items-center justify-start text-center overflow-hidden cursor-pointer transition-all hover:bg-accent/50 hover:shadow-md",
@@ -252,6 +268,15 @@ export const MemberCircleItem = ({ item, isSelected }: MemberItemProps) => {
           )}
         </div>
       </Card>
+  );
+  
+  if (selectable) {
+    return content;
+  }
+  
+  return (
+    <Link href={`/${handle}/members/${item.userId}`}>
+      {content}
     </Link>
   );
 };

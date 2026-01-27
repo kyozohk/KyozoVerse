@@ -7,9 +7,9 @@ import { cn } from '@/lib/utils';
 
 interface EnhancedListViewProps<T> {
   items: T[];
-  renderGridItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string) => React.ReactNode;
-  renderListItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string) => React.ReactNode;
-  renderCircleItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string) => React.ReactNode;
+  renderGridItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string, selectable?: boolean) => React.ReactNode;
+  renderListItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string, selectable?: boolean) => React.ReactNode;
+  renderCircleItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string, selectable?: boolean) => React.ReactNode;
   searchKeys: (keyof T)[];
   selectable?: boolean;
   isLoading?: boolean;
@@ -49,15 +49,20 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const isControlled = controlledSelection !== undefined && onSelectionChange !== undefined;
+  const isControlled = controlledSelection !== undefined;
   const selectedIds = isControlled ? controlledSelection : internalSelection;
   
   const setSelectedIds = useCallback((newIds: Set<string>) => {
     if (isControlled) {
       const selectedItems = items.filter(item => newIds.has(item.id));
-      onSelectionChange(newIds, selectedItems);
+      onSelectionChange?.(newIds, selectedItems);
     } else {
       setInternalSelection(newIds);
+      // Also call onSelectionChange in uncontrolled mode if provided
+      if (onSelectionChange) {
+        const selectedItems = items.filter(item => newIds.has(item.id));
+        onSelectionChange(newIds, selectedItems);
+      }
     }
   }, [isControlled, onSelectionChange, items]);
 
@@ -211,7 +216,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                   </div>
                 </div>
               )}
-              {ItemComponent(item, selectedIds.has(item.id), () => toggleSelection(item.id), urlField)}
+              {ItemComponent(item, selectedIds.has(item.id), () => toggleSelection(item.id), urlField, selectable)}
             </div>
           );
         })}
@@ -335,7 +340,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-8">
+      <div className="flex-1 overflow-y-auto px-6 pb-8 pt-1">
         {renderContent()}
       </div>
     </div>
