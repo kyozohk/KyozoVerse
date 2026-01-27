@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -66,6 +67,9 @@ export default function MemberProfilePage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [dataVersion, setDataVersion] = useState(0);
+
+  const forceRefetch = () => setDataVersion(v => v + 1);
 
   useEffect(() => {
     if (memberId && handle) {
@@ -122,7 +126,7 @@ export default function MemberProfilePage() {
 
       fetchMemberAndCommunity();
     }
-  }, [memberId, handle, user]);
+  }, [memberId, handle, user, dataVersion]);
 
   const handleDeleteMember = async () => {
     if (!member || !community) return;
@@ -176,17 +180,13 @@ export default function MemberProfilePage() {
         'userDetails.coverUrl': data.coverUrl || '',
       });
 
-      const memberSnap = await getDoc(memberDocRef);
-      if (memberSnap.exists()) {
-        setMember({ id: memberSnap.id, ...memberSnap.data() } as CommunityMember);
-      }
-
       toast({
         title: 'Success',
         description: 'Member profile updated successfully',
       });
 
       setIsEditDialogOpen(false);
+      forceRefetch(); // Trigger re-fetch instead of setting state directly
     } catch (error) {
       console.error('Error updating member:', error);
       toast({
@@ -470,3 +470,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    
