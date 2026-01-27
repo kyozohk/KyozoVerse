@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -22,9 +22,10 @@ interface EnhancedListViewProps<T> {
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   isLoadingMore?: boolean;
+  availableTags?: { id: string; name: string }[];
 }
 
-export function EnhancedListView<T extends { id: string }>({
+export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   items,
   renderGridItem,
   renderListItem,
@@ -41,10 +42,12 @@ export function EnhancedListView<T extends { id: string }>({
   hasMore = false,
   onLoadMore,
   isLoadingMore = false,
+  availableTags = [],
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [internalSelection, setInternalSelection] = useState<Set<string>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -59,6 +62,53 @@ export function EnhancedListView<T extends { id: string }>({
       setInternalSelection(newIds);
     }
   }, [isControlled, onSelectionChange, items]);
+
+  const handleToggleTag = (tagName: string) => {
+    setSelectedTags(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tagName)) {
+        newSet.delete(tagName);
+      } else {
+        newSet.add(tagName);
+      }
+      return newSet;
+    });
+  };
+
+  const filteredItems = useMemo(() => {
+    let filtered = items;
+
+    // Filter by search term
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter((item) =>
+        searchKeys.some((key) => {
+          const value = item[key] as string;
+          return value?.toLowerCase().includes(lowerSearch);
+        })
+      );
+    }
+
+    // Filter by tags (AND logic)
+    if (selectedTags.size > 0) {
+      filtered = filtered.filter(item => {
+        if (!item.tags || item.tags.length === 0) return false;
+        return Array.from(selectedTags).every(tag => item.tags!.includes(tag));
+      });
+    }
+
+    return filtered;
+  }, [items, searchTerm, searchKeys, selectedTags]);
+
+  useEffect(() => {
+    // When filters change, we need to update the parent's selection state
+    // to only include items that are still visible.
+    const visibleIds = new Set(filteredItems.map(item => item.id));
+    const newSelection = new Set([...selectedIds].filter(id => visibleIds.has(id)));
+    if (newSelection.size !== selectedIds.size) {
+      setSelectedIds(newSelection);
+    }
+  }, [filteredItems, selectedIds, setSelectedIds]);
 
   const lastItemRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -78,18 +128,6 @@ export function EnhancedListView<T extends { id: string }>({
     },
     [isLoading, isLoadingMore, hasMore, onLoadMore]
   );
-
-  const filteredItems = useMemo(() => {
-    if (!searchTerm) return items;
-    
-    const lowerSearch = searchTerm.toLowerCase();
-    return items.filter((item) =>
-      searchKeys.some((key) => {
-        const value = item[key];
-        return String(value).toLowerCase().includes(lowerSearch);
-      })
-    );
-  }, [items, searchTerm, searchKeys]);
 
   const toggleSelection = (id: string) => {
     if (!selectable) return;
@@ -180,6 +218,22 @@ export function EnhancedListView<T extends { id: string }>({
   return (
     <div className="flex-1 flex flex-col">
       <div className="p-6">
+        {availableTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {availableTags.map((tag) => (
+                <Button
+                  key={tag.id}
+                  variant={selectedTags.has(tag.name) ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleToggleTag(tag.name)}
+                  className="gap-1.5"
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  {tag.name}
+                </Button>
+              ))}
+            </div>
+        )}
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />

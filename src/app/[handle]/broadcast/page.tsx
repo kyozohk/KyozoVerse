@@ -1,11 +1,11 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState, Suspense, useMemo } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Send, Mail, Tag } from 'lucide-react';
+import { Loader2, Send, Mail } from 'lucide-react';
 import { PageLayout } from '@/components/v2/page-layout';
 import { PageHeader } from '@/components/v2/page-header';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
@@ -41,20 +41,14 @@ function BroadcastContent() {
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isBroadcastDialogOpen, setIsBroadcastDialogOpen] = useState(false);
   const [broadcastSubject, setBroadcastSubject] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
-
   const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const selectedMembers = useMemo(() => {
-    return members.filter(m => selectedIds.has(m.id));
-  }, [members, selectedIds]);
 
   useEffect(() => {
     const fetchCommunityAndMembers = async () => {
@@ -110,33 +104,6 @@ function BroadcastContent() {
 
     fetchCommunityAndMembers();
   }, [handle]);
-
-  const handleToggleTag = (tagName: string) => {
-    const newSelectedTags = new Set(selectedTags);
-    const memberIdsForTag = new Set(members.filter(m => m.tags?.includes(tagName)).map(m => m.id));
-
-    if (newSelectedTags.has(tagName)) {
-      newSelectedTags.delete(tagName);
-      // Deselect members that had this tag, but only if they don't have other selected tags
-      setSelectedIds(prevIds => {
-        const newIds = new Set(prevIds);
-        memberIdsForTag.forEach(memberId => {
-          const member = members.find(m => m.id === memberId);
-          const hasOtherSelectedTags = Array.from(newSelectedTags).some(t => member?.tags?.includes(t));
-          if (!hasOtherSelectedTags) {
-            newIds.delete(memberId);
-          }
-        });
-        return newIds;
-      });
-    } else {
-      newSelectedTags.add(tagName);
-      // Add members with this tag to the selection
-      setSelectedIds(prevIds => new Set([...prevIds, ...memberIdsForTag]));
-    }
-  
-    setSelectedTags(newSelectedTags);
-  };
 
   const handleOpenBroadcastDialog = () => {
     if (selectedMembers.length === 0) return;
@@ -271,41 +238,25 @@ function BroadcastContent() {
           </Button>
         }
       />
-      <div className="p-6">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {availableTags.map((tag) => (
-            <Button
-              key={tag.id}
-              variant={selectedTags.has(tag.name) ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleToggleTag(tag.name)}
-              className="gap-1.5"
-            >
-              <Tag className="h-3.5 w-3.5" />
-              {tag.name}
-            </Button>
-          ))}
-        </div>
-        <EnhancedListView
-          items={members}
-          renderGridItem={(item, isSelected) => (
-            <MemberGridItem item={item} isSelected={isSelected} />
-          )}
-          renderListItem={(item, isSelected) => (
-            <MemberListItem item={item} isSelected={isSelected} />
-          )}
-          renderCircleItem={(item, isSelected) => (
-            <MemberCircleItem item={item} isSelected={isSelected} />
-          )}
-          searchKeys={['name', 'email']}
-          selectable={true}
-          selection={selectedIds}
-          onSelectionChange={setSelectedIds}
-          isLoading={isLoading}
-          loadingComponent={<LoadingSkeleton />}
-        />
-      </div>
-      
+      <EnhancedListView
+        items={members}
+        availableTags={availableTags}
+        renderGridItem={(item, isSelected) => (
+          <MemberGridItem item={item} isSelected={isSelected} />
+        )}
+        renderListItem={(item, isSelected) => (
+          <MemberListItem item={item} isSelected={isSelected} />
+        )}
+        renderCircleItem={(item, isSelected) => (
+          <MemberCircleItem item={item} isSelected={isSelected} />
+        )}
+        searchKeys={['name', 'email']}
+        selectable={true}
+        onSelectionChange={(ids, items) => setSelectedMembers(items)}
+        isLoading={isLoading}
+        loadingComponent={<LoadingSkeleton />}
+      />
+      {/* Broadcast Email Dialog */}
       <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
         <DialogContent className="sm:max-w-[600px]" style={{ backgroundColor: '#F5F0E8' }}>
           <DialogHeader>

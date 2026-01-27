@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState, Suspense, useMemo } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc, orderBy, limit, startAfter, DocumentSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
 import { TagMembersDialog } from '@/components/community/tag-members-dialog';
-import { addTagsToCommunity } from '@/lib/community-tags';
+import { addTagsToCommunity, getCommunityTags, type CommunityTag } from '@/lib/community-tags';
 import { useAuth } from '@/hooks/use-auth';
 import { Tag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -45,17 +45,16 @@ function MembersContent() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<CommunityTag[]>([]);
   
-  const selectedMembers = useMemo(() => {
-    return members.filter(m => selectedIds.has(m.id));
-  }, [members, selectedIds]);
-
+  // Pagination state
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Helper function to transform member docs to MemberData
   const transformMemberDoc = (memberDoc: any): MemberData => {
     const memberData = memberDoc.data();
     const userDetails = memberData.userDetails || {};
@@ -72,6 +71,7 @@ function MembersContent() {
     };
   };
 
+  // Initial load - fetch community and first page of members
   useEffect(() => {
     const fetchCommunityAndMembers = async () => {
       try {
@@ -80,6 +80,7 @@ function MembersContent() {
         setLastDoc(null);
         setHasMore(true);
 
+        // Fetch community by handle
         const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
         const communitySnapshot = await getDocs(communityQuery);
         
@@ -94,6 +95,10 @@ function MembersContent() {
         } as Community;
         setCommunity(communityData);
 
+        const tags = await getCommunityTags(communityData.communityId);
+        setAvailableTags(tags);
+
+        // Fetch first page of community members using userDetails from the member doc
         const membersQuery = query(
           collection(db, 'communityMembers'),
           where('communityId', '==', communityData.communityId),
@@ -102,12 +107,14 @@ function MembersContent() {
         );
         const membersSnapshot = await getDocs(membersQuery);
 
+        // Transform member docs - use userDetails embedded in the member document
         const membersData = membersSnapshot.docs.map(transformMemberDoc);
         
         setMembers(membersData);
         setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1] || null);
         setHasMore(membersSnapshot.docs.length === PAGE_SIZE);
         
+        // Fetch user role
         if (user && communityData) {
           const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
           setUserRole(role);
@@ -122,6 +129,7 @@ function MembersContent() {
     fetchCommunityAndMembers();
   }, [handle, user]);
 
+  // Load more members (infinite scroll)
   const loadMoreMembers = async () => {
     if (!community || !lastDoc || isLoadingMore || !hasMore) return;
     
@@ -159,15 +167,18 @@ function MembersContent() {
       throw new Error("Phone number is required.");
     }
     
+    // Normalize phone number
     let normalizedPhone = data.phone.trim().replace(/\s+/g, '');
     if (!normalizedPhone.startsWith('+')) {
       normalizedPhone = '+' + normalizedPhone;
     }
     
+    // Create wa_id (WhatsApp ID) - phone without + and spaces
     const wa_id = normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '');
     
     const usersRef = collection(db, "users");
     
+    // Check if user exists
     const emailQuery = query(usersRef, where("email", "==", data.email));
     const phoneQuery = query(usersRef, where("phoneNumber", "==", normalizedPhone));
     const phoneQuery2 = query(usersRef, where("phone", "==", normalizedPhone));
@@ -189,6 +200,7 @@ function MembersContent() {
       );
     }
     
+    // Create new user
     const tempPassword = Math.random().toString(36).slice(-8);
     const userCredential = await createUserWithEmailAndPassword(communityAuth, data.email, tempPassword);
     const userId = userCredential.user.uid;
@@ -204,6 +216,7 @@ function MembersContent() {
       createdAt: serverTimestamp(),
     });
     
+    // Add to community members
     await addDoc(collection(db, "communityMembers"), {
       userId,
       communityId: community.communityId,
@@ -218,6 +231,7 @@ function MembersContent() {
       },
     });
     
+    // Increment member count
     await updateDoc(doc(db, "communities", community.communityId), {
       memberCount: increment(1),
     });
@@ -227,8 +241,9 @@ function MembersContent() {
       description: `${data.displayName} has been added to the community.`,
     });
     
+    // Add new member to the list immediately (at the beginning since sorted by joinedAt desc)
     const newMember: MemberData = {
-      id: 'temp-' + Date.now(),
+      id: 'temp-' + Date.now(), // Will be replaced on next full fetch
       userId: userId,
       name: data.displayName,
       email: data.email,
@@ -241,6 +256,7 @@ function MembersContent() {
 
   const canManage = userRole === 'owner' || userRole === 'admin';
 
+  // Handle applying tags to selected members (now receives memberIds from dialog)
   const handleApplyTags = async (tagsToAdd: string[], tagsToRemove: string[], memberIds: string[]) => {
     if (!community?.communityId) {
       console.error('No community ID available');
@@ -248,19 +264,23 @@ function MembersContent() {
     }
     
     try {
+      // Save new tags to community's tags subcollection
       if (tagsToAdd.length > 0) {
         await addTagsToCommunity(community.communityId, tagsToAdd);
       }
 
+      // Update all selected members
       const updates = memberIds.map(async (id) => {
         const memberRef = doc(db, 'communityMembers', id);
         
+        // Add new tags if any
         if (tagsToAdd.length > 0) {
           await updateDoc(memberRef, {
             tags: arrayUnion(...tagsToAdd),
           });
         }
         
+        // Remove tags if any
         if (tagsToRemove.length > 0) {
           await updateDoc(memberRef, {
             tags: arrayRemove(...tagsToRemove),
@@ -270,6 +290,7 @@ function MembersContent() {
     
       await Promise.all(updates);
       
+      // Update local state to reflect tag changes
       setMembers(prevMembers => prevMembers.map(m => {
         if (memberIds.includes(m.id)) {
           const currentTags = m.tags || [];
@@ -279,13 +300,14 @@ function MembersContent() {
         return m;
       }));
       
-      setSelectedIds(new Set());
+      setSelectedMembers([]); // Clear selection after applying
     } catch (error) {
       console.error('Error applying tags:', error);
-      throw error;
+      throw error; // Re-throw so dialog can show error
     }
   };
 
+  // Convert MemberData to CommunityMember format for TagMembersDialog
   const allMembersForDialog = members.map(m => ({
     id: m.id,
     userId: m.userId,
@@ -377,6 +399,7 @@ function MembersContent() {
         <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           <EnhancedListView
             items={members}
+            availableTags={availableTags}
             renderGridItem={(item, isSelected) => (
               <MemberGridItem item={item} isSelected={isSelected} />
             )}
@@ -388,8 +411,7 @@ function MembersContent() {
             )}
             searchKeys={['name', 'email']}
             selectable={canManage}
-            selection={selectedIds}
-            onSelectionChange={setSelectedIds}
+            onSelectionChange={(ids, items) => setSelectedMembers(items)}
             selectionActions={
               <Button
                 variant="outline"
@@ -416,6 +438,7 @@ function MembersContent() {
         </div>
       </div>
       
+      {/* Add Member Dialog */}
       {community && (
         <MemberDialog
           open={isAddMemberOpen}
@@ -426,6 +449,7 @@ function MembersContent() {
         />
       )}
       
+      {/* Invite Member Dialog */}
       {community && (
         <InviteMemberDialog
           isOpen={isInviteDialogOpen}
@@ -434,12 +458,13 @@ function MembersContent() {
         />
       )}
       
+      {/* Tag Members Dialog */}
       {community && (
         <TagMembersDialog
           isOpen={isTaggingOpen}
           onClose={() => {
             setIsTaggingOpen(false);
-            setSelectedIds(new Set());
+            setSelectedMembers([]);
           }}
           allMembers={allMembersForDialog as any}
           initialSelectedMembers={selectedMembersForDialog as any}
