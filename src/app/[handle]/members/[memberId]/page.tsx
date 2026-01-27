@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -156,10 +157,6 @@ export default function MemberProfilePage() {
       setIsDeleteConfirmOpen(false);
     }
   };
-  
-  const handleCloseEditDialog = useCallback(() => {
-    setIsEditDialogOpen(false);
-  }, []);
 
   const handleEditSubmit = useCallback(async (data: {
     displayName: string;
@@ -171,9 +168,6 @@ export default function MemberProfilePage() {
     if (!member) return;
     
     try {
-      // Update the userDetails in the communityMember document
-      // Note: We only update communityMembers, not the users collection directly
-      // because Firebase rules may not allow admins to update other users' documents
       const memberDocRef = doc(db, 'communityMembers', member.id);
       await updateDoc(memberDocRef, {
         'userDetails.displayName': data.displayName,
@@ -183,7 +177,6 @@ export default function MemberProfilePage() {
         'userDetails.coverUrl': data.coverUrl || '',
       });
 
-      // Refresh member data from Firestore
       const memberSnap = await getDoc(memberDocRef);
       if (memberSnap.exists()) {
         setMember({ id: memberSnap.id, ...memberSnap.data() } as CommunityMember);
@@ -204,6 +197,7 @@ export default function MemberProfilePage() {
       });
     }
   }, [member, toast]);
+
 
   const canManage = userRole === 'owner' || userRole === 'admin';
 
@@ -431,7 +425,7 @@ export default function MemberProfilePage() {
         mode="edit"
         communityName={community?.name}
         initialMember={member}
-        onClose={handleCloseEditDialog}
+        onOpenChange={setIsEditDialogOpen}
         onSubmit={handleEditSubmit}
       />
 

@@ -104,10 +104,6 @@ export function MemberDialog({
     }
   }, [open, resetForm]);
 
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
-
   const handleFileUpload = async (file: File | null, userId: string | null | undefined, type: 'avatar' | 'cover') => {
     if (!file) {
       console.log(`No ${type} file to upload`);
@@ -189,13 +185,13 @@ export function MemberDialog({
           title: "Member Added",
           description: `${existingUser.displayName} has been added to the community.`,
         });
-        handleClose();
+        onOpenChange(false);
       } catch (e: any) {
         setError(e.message || "Failed to add existing member.");
       } finally {
         setSubmitting(false);
       }
-  }, [existingUser, communityName, toast, handleClose, avatarFile, coverFile, avatarUrl, coverUrl]);
+  }, [existingUser, communityName, toast, onOpenChange, avatarFile, coverFile, avatarUrl, coverUrl]);
 
   const handleSubmit = useCallback(async () => {
     if (existingUser) {
@@ -254,7 +250,7 @@ export function MemberDialog({
         coverUrl: finalCoverUrl || undefined
       });
       // The parent component is now responsible for closing the dialog
-      // handleClose();
+      // onOpenChange(false);
     } catch (e: any) {
       if (e.code === 'auth/user-already-exists' && e.existingUser) {
         setExistingUser(e.existingUser);
@@ -399,7 +395,7 @@ export function MemberDialog({
             <div className="flex-shrink-0 mt-auto pt-6 flex flex-row justify-end gap-3">
                 <CustomButton
                 variant="outline"
-                onClick={handleClose}
+                onClick={() => onOpenChange(false)}
                 disabled={submitting}
                 className="w-full"
                 >

@@ -23,7 +23,7 @@ const STEPS = [
 
 interface CreateCommunityDialogProps {
     isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
+    onOpenChange: (open: boolean) => void;
     existingCommunity?: Community | null;
     onCommunityUpdated?: () => void;
 }
@@ -74,7 +74,7 @@ const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[])
 };
 
 
-export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, onCommunityUpdated }: CreateCommunityDialogProps) {
+export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity, onCommunityUpdated }: CreateCommunityDialogProps) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
@@ -203,7 +203,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
             });
 
             toast({ title: 'Success', description: 'Community updated successfully.' });
-            setIsOpen(false);
+            onOpenChange(false);
             onCommunityUpdated?.(); // Callback to refresh community data
         } catch (error) {
             console.error('Error updating community:', error);
@@ -279,7 +279,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                 title: "Success",
                 description: "Community created successfully.",
             });
-            setIsOpen(false);
+            onOpenChange(false);
             setCurrentStep(0);
         } catch (error) {
             console.error("Error creating community: ", error);
@@ -318,7 +318,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
     return (
         <CustomFormDialog
             open={isOpen} 
-            onOpenChange={setIsOpen}
+            onOpenChange={onOpenChange}
             title={existingCommunity ? 'Edit Community' : 'Create a New Community'}
             description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
         >
@@ -389,7 +389,7 @@ export function CreateCommunityDialog({ isOpen, setIsOpen, existingCommunity, on
                             Previous
                         </CustomButton>
                     ) : (
-                        <CustomButton variant="outline" onClick={() => setIsOpen(false)} className="w-full py-3 text-base font-medium">Cancel</CustomButton>
+                        <CustomButton variant="outline" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium">Cancel</CustomButton>
                     )}
                     
                     {currentStep < STEPS.length - 1 ? (
