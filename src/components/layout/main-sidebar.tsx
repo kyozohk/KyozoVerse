@@ -16,7 +16,11 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/firebase/auth';
 import { useRouter } from 'next/navigation';
 
-export default function MainSidebar() {
+interface MainSidebarProps {
+    expanded?: boolean;
+}
+
+export default function MainSidebar({ expanded = false }: MainSidebarProps) {
     const { user } = useAuth();
     const router = useRouter();
 
@@ -37,41 +41,45 @@ export default function MainSidebar() {
     };
 
     return (
-        <aside className="fixed inset-y-0 left-0 z-10 hidden w-20 flex-col border-r sm:flex" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}>
+        <aside 
+            className={`fixed inset-y-0 left-0 z-10 hidden flex-col border-r sm:flex transition-all duration-300 ${expanded ? 'w-64' : 'w-20'}`} 
+            style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}
+        >
             <div className="flex h-full flex-col p-2">
                 <div className="flex h-[76px] items-center justify-center">
-                    <div className="flex items-center justify-center">
+                    <div className={`flex items-center ${expanded ? 'gap-3' : 'justify-center'}`}>
                         <Image src="/favicon.svg" alt="Kyozo" width={50} height={50} />
+                        {expanded && <span className="text-xl font-bold" style={{ color: '#5B4A3A' }}>Kyozo</span>}
                     </div>
                 </div>
                 
-                <nav className="flex flex-1 flex-col items-center gap-y-2 py-5">
+                <nav className={`flex flex-1 flex-col gap-y-2 py-5 ${expanded ? 'items-stretch' : 'items-center'}`}>
                     {navItems.map((item) => (
                         <SidebarNavItem 
                             key={item.label} 
                             href={item.href} 
                             icon={item.icon}
-                            className="w-full justify-center"
+                            className={expanded ? 'w-full justify-start px-4' : 'w-full justify-center'}
                         >
-                            <span className="sr-only">{item.label}</span>
+                            {expanded ? <span className="ml-3">{item.label}</span> : <span className="sr-only">{item.label}</span>}
                         </SidebarNavItem>
                     ))}
                 </nav>
 
-                <div className="flex flex-col items-center gap-y-2 mt-auto pb-2">
+                <div className={`flex flex-col gap-y-2 mt-auto pb-2 ${expanded ? 'items-stretch' : 'items-center'}`}>
                     <SidebarNavItem 
                         href="/account" 
                         icon={<User />}
-                        className="w-full justify-center"
+                        className={expanded ? 'w-full justify-start px-4' : 'w-full justify-center'}
                     >
-                        <span className="sr-only">Account</span>
+                        {expanded ? <span className="ml-3">Account</span> : <span className="sr-only">Account</span>}
                     </SidebarNavItem>
                     <button
                         onClick={handleLogout}
-                        className="flex h-12 w-12 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                        className={`flex items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${expanded ? 'h-12 w-full justify-start px-4 gap-3' : 'h-12 w-12 justify-center'}`}
                     >
                         <LogOut className="h-5 w-5" />
-                        <span className="sr-only">Logout</span>
+                        {expanded ? <span>Logout</span> : <span className="sr-only">Logout</span>}
                     </button>
                 </div>
             </div>

@@ -256,10 +256,20 @@ export function EnhancedBroadcastDialog({
       throw new Error('No selected members have email addresses');
     }
 
+    // Get community branding - fetch from the broadcast page props or use defaults
+    const primaryColor = '#5B4A3A';
+
     for (const member of membersWithEmail) {
       // Replace variables in subject and message for each member
       const personalizedSubject = replaceVariables(subject, member);
       const personalizedMessage = replaceVariables(message, member);
+      
+      // Convert plain text message to HTML with proper formatting
+      // Split by double newlines for paragraphs, single newlines for line breaks
+      const formattedMessage = personalizedMessage
+        .split(/\n\n+/)
+        .map(paragraph => `<p style="margin: 0 0 16px 0; color: #374151; font-size: 16px; line-height: 1.7;">${paragraph.replace(/\n/g, '<br>')}</p>`)
+        .join('');
       
       const response = await fetch('/api/send-email', {
         method: 'POST',
@@ -275,16 +285,22 @@ export function EnhancedBroadcastDialog({
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
               </head>
-              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f3f4f6;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #5B4A3A; margin: 0; font-size: 24px;">${communityName || 'Community'}</h1>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto;">
+                  <!-- Header with community branding -->
+                  <div style="background: linear-gradient(135deg, ${primaryColor} 0%, #8B7355 100%); padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">${communityName || 'Community'}</h1>
                   </div>
-                  <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-                    <div style="white-space: pre-wrap;">${personalizedMessage}</div>
+                  
+                  <!-- Main content -->
+                  <div style="background-color: white; padding: 32px 24px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+                    ${formattedMessage}
                   </div>
-                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent from ${communityName || 'Community'} via Kyozo</p>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #f9fafb; padding: 20px 24px; text-align: center; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+                    <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px 0;">Sent from <strong>${communityName || 'Community'}</strong></p>
+                    <p style="color: #9ca3af; font-size: 11px; margin: 0;">Powered by Kyozo</p>
                   </div>
                 </div>
               </body>

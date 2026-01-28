@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CSSProperties } from 'react';
+import { Users } from 'lucide-react';
 
 interface CommunityImageProps {
   src: string;
@@ -29,6 +30,23 @@ export function CommunityImage({
   containerStyle,
   priority = false,
 }: CommunityImageProps) {
+  // Check if src is empty or invalid
+  const hasValidSrc = src && src.trim() !== '';
+
+  // Placeholder component when no image
+  const Placeholder = ({ size }: { size?: number }) => (
+    <div className="flex items-center justify-center w-full h-full">
+      <Users 
+        className="text-muted-foreground" 
+        style={{ 
+          width: size ? `${size * 0.4}px` : '40%', 
+          height: size ? `${size * 0.4}px` : '40%',
+          color: '#A07856' 
+        }}
+      />
+    </div>
+  );
+
   // For fill images, wrap in a container with background color
   if (fill) {
     return (
@@ -36,14 +54,18 @@ export function CommunityImage({
         className={cn('relative', containerClassName)} 
         style={{ backgroundColor, ...containerStyle }}
       >
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes={sizes}
-          className={cn('object-cover', className)}
-          priority={priority}
-        />
+        {hasValidSrc ? (
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            className={cn('object-cover', className)}
+            priority={priority}
+          />
+        ) : (
+          <Placeholder />
+        )}
       </div>
     );
   }
@@ -53,7 +75,7 @@ export function CommunityImage({
   
   return (
     <div
-      className={cn('relative inline-block overflow-hidden', containerClassName)}
+      className={cn('relative inline-block overflow-hidden flex items-center justify-center', containerClassName)}
       style={{
         backgroundColor,
         width: width ? `${width}px` : 'auto',
@@ -61,15 +83,19 @@ export function CommunityImage({
         ...containerStyle,
       }}
     >
-      <Image
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        className={cn(className, isRounded && 'rounded-full')}
-        style={{ width: width ? `${width}px` : 'auto', height: 'auto' }}
-        priority={priority}
-      />
+      {hasValidSrc ? (
+        <Image
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          className={cn(className, isRounded && 'rounded-full')}
+          style={{ width: width ? `${width}px` : 'auto', height: 'auto' }}
+          priority={priority}
+        />
+      ) : (
+        <Placeholder size={width || height} />
+      )}
     </div>
   );
 }

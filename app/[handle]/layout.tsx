@@ -11,7 +11,8 @@ export default function CommunityLayout({
   return (
     <div className="flex h-full">
       <CommunitySidebar />
-      <main className="flex-1" style={{ marginLeft: '260px' }}>
+      {/* CommunitySidebar is fixed at left-20 (80px) with w-64 (256px), so content needs ml-64 (256px) */}
+      <main className="flex-1 ml-64">
         {children}
       </main>
     </div>
