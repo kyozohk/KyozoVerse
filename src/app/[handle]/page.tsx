@@ -257,7 +257,7 @@ export default function CommunityPage() {
       {isEditDialogOpen && (
         <CreateCommunityDialog
           isOpen={isEditDialogOpen}
-          setIsOpen={setIsEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
           existingCommunity={community}
           onCommunityUpdated={handleCommunityUpdated}
         />

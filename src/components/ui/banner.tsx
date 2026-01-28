@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { RoundImage } from './round-image';
 import { CSSProperties, ReactNode } from 'react';
+import { Trash2 } from 'lucide-react';
 
 export interface BannerCTA {
   label: string;
@@ -25,6 +26,7 @@ export interface BannerProps {
   leftCta?: BannerCTA;  // Single CTA for bottom-left (e.g., Back button)
   height?: string;
   className?: string;
+  onDelete?: () => void;  // Optional delete handler for top-right delete button
 }
 
 export function Banner({
@@ -40,6 +42,7 @@ export function Banner({
   leftCta,
   height = '20rem',
   className,
+  onDelete,
 }: BannerProps) {
   const bannerStyle: CSSProperties = {
     height,
@@ -67,6 +70,17 @@ export function Banner({
       
       {/* Dark overlay for better text visibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
+      
+      {/* Delete Icon - Top Right (comment out to hide) */}
+      {onDelete && (
+        <button
+          onClick={onDelete}
+          className="absolute top-4 right-4 z-20 p-2.5 rounded-lg bg-red-600/70 backdrop-blur-sm hover:bg-red-600 transition-colors group shadow-lg"
+          title="Delete community"
+        >
+          <Trash2 className="h-50 w-50 text-white" />
+        </button>
+      )}
       
       {/* Top-left: Icon, Title, Location, Subtitle */}
       <div className="absolute top-8 left-8 flex items-start gap-4">

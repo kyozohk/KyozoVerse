@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertTriangle, Users, FileText, MessageSquare, X } from 'lucide-react';
+import { CustomButton } from '@/components/ui/CustomButton';
+import { CustomFormDialog } from '@/components/ui/dialog';
+import { AlertTriangle, Users, FileText, MessageSquare, Mail } from 'lucide-react';
 import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { type Community, type User } from '@/lib/types';
@@ -22,7 +22,6 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   onClose,
   onSuccess
 }) => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [members, setMembers] = useState<User[]>([]);
   const [postsCount, setPostsCount] = useState(0);
   const [confirmText, setConfirmText] = useState('');
@@ -32,6 +31,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   useEffect(() => {
     if (isOpen) {
       loadCommunityData();
+      setConfirmText('');
     }
   }, [isOpen, community.communityId]);
 
@@ -71,12 +71,33 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   };
 
   const handleDelete = async () => {
-    if (confirmText !== community.name) {
+    if (confirmText !== community.handle) {
       return;
     }
 
     setIsDeleting(true);
     try {
+      // Delete community subdomain from GoDaddy and Resend
+      try {
+        const domainResponse = await fetch('/api/delete-community-domain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ handle: community.handle }),
+        });
+        const domainResult = await domainResponse.json();
+        console.log('Community domain cleanup result:', domainResult);
+        
+        if (!domainResult.resend?.success) {
+          console.warn('Resend domain deletion failed:', domainResult.resend?.error);
+        }
+        if (!domainResult.godaddy?.success) {
+          console.warn('GoDaddy DNS deletion failed:', domainResult.godaddy?.error);
+        }
+      } catch (domainError) {
+        console.warn('Failed to cleanup community domain:', domainError);
+        // Continue with deletion even if domain cleanup fails
+      }
+
       // Delete all posts
       const postsRef = collection(db, 'blogs');
       const postsQuery = query(postsRef, where('communityId', '==', community.communityId));
@@ -105,198 +126,119 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <Card className="max-w-2xl w-full my-8">
-        <CardHeader className="relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <CardTitle className="text-xl">Delete Community</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Step {step} of 3
-              </p>
-            </div>
+    <CustomFormDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title="Delete Community"
+      description="This action cannot be undone"
+      size="xl"
+    >
+      <div className="space-y-6 pt-4">
+        {loadingData ? (
+          <div className="py-8 text-center">
+            <p style={{ color: '#6B5D52' }}>Loading community data...</p>
           </div>
-        </CardHeader>
-
-        <CardContent>
-          {loadingData ? (
-            <div className="py-8 text-center">
-              <p className="text-muted-foreground">Loading community data...</p>
+        ) : (
+          <>
+            {/* Warning Banner */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-red-900 mb-1">
+                    You are about to delete "{community.name}"
+                  </h3>
+                  <p className="text-sm text-red-800">
+                    This will permanently remove all data associated with this community.
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : (
-            <>
-              {/* Step 1: Warning */}
-              {step === 1 && (
-                <div className="space-y-6">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-red-900 mb-2">
-                      ⚠️ This action cannot be undone
-                    </h3>
-                    <p className="text-sm text-red-800">
-                      Deleting <strong>{community.name}</strong> will permanently remove:
-                    </p>
-                  </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <FileText className="h-5 w-5 text-gray-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium">All Posts & Content</p>
-                        <p className="text-sm text-muted-foreground">
-                          {postsCount} post{postsCount !== 1 ? 's' : ''} will be permanently deleted
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Users className="h-5 w-5 text-gray-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Community Members</p>
-                        <p className="text-sm text-muted-foreground">
-                          {members.length} member{members.length !== 1 ? 's' : ''} will be removed from this community
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <MessageSquare className="h-5 w-5 text-gray-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Messages & Interactions</p>
-                        <p className="text-sm text-muted-foreground">
-                          All community messages and interactions will be lost
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 justify-end pt-4">
-                    <Button variant="outline" onClick={onClose}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => setStep(2)}
-                    >
-                      Continue
-                    </Button>
-                  </div>
+            {/* What will be deleted */}
+            <div className="space-y-3">
+              <h4 className="font-medium" style={{ color: '#5B4A3A' }}>The following will be permanently deleted:</h4>
+              
+              <div className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--page-content-bg)', border: '1px solid var(--page-content-border)' }}>
+                <Users className="h-5 w-5 mt-0.5" style={{ color: '#6B5D52' }} />
+                <div>
+                  <p className="font-medium" style={{ color: '#5B4A3A' }}>{members.length} Members</p>
+                  <p className="text-sm" style={{ color: '#6B5D52' }}>All member associations will be removed</p>
                 </div>
-              )}
+              </div>
 
-              {/* Step 2: Members List */}
-              {step === 2 && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold mb-2">Community Members</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      The following {members.length} member{members.length !== 1 ? 's' : ''} will be removed from this community:
-                    </p>
-                  </div>
-
-                  <div className="max-h-64 overflow-y-auto border rounded-lg">
-                    {members.length === 0 ? (
-                      <div className="p-4 text-center text-muted-foreground">
-                        No members in this community
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {members.map((member, index) => (
-                          <div key={index} className="p-3 flex items-center gap-3 hover:bg-gray-50">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold">
-                              {member.displayName?.charAt(0) || 'U'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{member.displayName}</p>
-                              <p className="text-sm text-muted-foreground truncate">{member.email}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800">
-                      <strong>Note:</strong> Members will only be removed from this community. 
-                      Their accounts and memberships in other communities will remain intact.
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 justify-end pt-4">
-                    <Button variant="outline" onClick={() => setStep(1)}>
-                      Back
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => setStep(3)}
-                    >
-                      Continue
-                    </Button>
-                  </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--page-content-bg)', border: '1px solid var(--page-content-border)' }}>
+                <FileText className="h-5 w-5 mt-0.5" style={{ color: '#6B5D52' }} />
+                <div>
+                  <p className="font-medium" style={{ color: '#5B4A3A' }}>{postsCount} Posts & Content</p>
+                  <p className="text-sm" style={{ color: '#6B5D52' }}>All posts and media will be deleted</p>
                 </div>
-              )}
+              </div>
 
-              {/* Step 3: Final Confirmation */}
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-red-900 mb-2">
-                      Final Confirmation Required
-                    </h3>
-                    <p className="text-sm text-red-800">
-                      This is your last chance to cancel. Once deleted, all data will be permanently lost.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Type <span className="font-bold text-red-600">{community.name}</span> to confirm deletion:
-                    </label>
-                    <Input
-                      type="text"
-                      value={confirmText}
-                      onChange={(e) => setConfirmText(e.target.value)}
-                      placeholder={`Type "${community.name}" here`}
-                      className="w-full"
-                      autoFocus
-                    />
-                    {confirmText && confirmText !== community.name && (
-                      <p className="text-sm text-red-600 mt-2">
-                        Community name doesn't match
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2 justify-end pt-4">
-                    <Button variant="outline" onClick={() => setStep(2)} disabled={isDeleting}>
-                      Back
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      onClick={handleDelete}
-                      disabled={confirmText !== community.name || isDeleting}
-                    >
-                      {isDeleting ? 'Deleting...' : 'Delete Community Forever'}
-                    </Button>
-                  </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--page-content-bg)', border: '1px solid var(--page-content-border)' }}>
+                <MessageSquare className="h-5 w-5 mt-0.5" style={{ color: '#6B5D52' }} />
+                <div>
+                  <p className="font-medium" style={{ color: '#5B4A3A' }}>Messages & Interactions</p>
+                  <p className="text-sm" style={{ color: '#6B5D52' }}>All community messages will be lost</p>
                 </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--page-content-bg)', border: '1px solid var(--page-content-border)' }}>
+                <Mail className="h-5 w-5 mt-0.5" style={{ color: '#6B5D52' }} />
+                <div>
+                  <p className="font-medium" style={{ color: '#5B4A3A' }}>Email Domain</p>
+                  <p className="text-sm" style={{ color: '#6B5D52' }}>message@{community.handle}.kyozo.com will be removed</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Confirmation Input */}
+            <div className="pt-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#5B4A3A' }}>
+                Type <span className="font-bold text-red-600">{community.handle}</span> to confirm deletion:
+              </label>
+              <Input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={`Type "${community.handle}" here`}
+                className="w-full"
+                autoFocus
+              />
+              {confirmText && confirmText !== community.handle && (
+                <p className="text-sm text-red-600 mt-2">
+                  Handle doesn't match. Please type exactly: {community.handle}
+                </p>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-end pt-4">
+              <CustomButton 
+                variant="filled" 
+                onClick={onClose} 
+                disabled={isDeleting}
+                className="px-6"
+              >
+                Cancel
+              </CustomButton>
+              <CustomButton
+                onClick={handleDelete}
+                disabled={confirmText !== community.handle || isDeleting}
+                className="px-6"
+                style={{ 
+                  backgroundColor: confirmText === community.handle && !isDeleting ? '#DC2626' : '#FCA5A5',
+                  color: 'white',
+                  cursor: confirmText !== community.handle || isDeleting ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Community Forever'}
+              </CustomButton>
+            </div>
+          </>
+        )}
+      </div>
+    </CustomFormDialog>
   );
 };

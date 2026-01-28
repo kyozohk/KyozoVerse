@@ -13,6 +13,7 @@ interface DomainSetupResult {
   godaddy?: {
     dkimAdded: boolean;
     spfAdded: boolean;
+    mxAdded: boolean;
   };
   resend?: {
     domainId: string;
@@ -22,22 +23,37 @@ interface DomainSetupResult {
 }
 
 // Add DNS records to GoDaddy for Resend email sending
-async function addGoDaddyDNSRecords(handle: string): Promise<{ success: boolean; error?: string }> {
+async function addGoDaddyDNSRecords(handle: string, region: string = 'us-east-1'): Promise<{ success: boolean; error?: string; details?: any }> {
   if (!GO_DADDY_API_KEY || !GO_DADDY_API_SECRET) {
     return { success: false, error: 'GoDaddy API credentials not configured' };
   }
 
+  // Determine the correct SES endpoint based on region
+  const sesEndpoint = `feedback-smtp.${region}.amazonses.com`;
+
   const records = [
-    // SPF record for the subdomain
+    // SPF TXT record for the subdomain
     {
       type: 'TXT',
       name: `send.${handle}`,
       data: 'v=spf1 include:amazonses.com ~all',
       ttl: 600,
     },
+    // MX record for the subdomain (required by Resend)
+    {
+      type: 'MX',
+      name: `send.${handle}`,
+      data: sesEndpoint,
+      priority: 10,
+      ttl: 600,
+    },
   ];
 
+  const results: any[] = [];
+
   try {
+    console.log(`[setup-community-domain] Adding ${records.length} DNS records to GoDaddy for ${handle}.${BASE_DOMAIN}`);
+    
     const response = await fetch(`${GODADDY_BASE_URL}/domains/${BASE_DOMAIN}/records`, {
       method: 'PATCH',
       headers: {
@@ -50,11 +66,13 @@ async function addGoDaddyDNSRecords(handle: string): Promise<{ success: boolean;
     if (!response.ok) {
       const error = await response.text();
       console.error('[setup-community-domain] GoDaddy error:', error);
-      return { success: false, error: `GoDaddy API error: ${response.status}` };
+      return { success: false, error: `GoDaddy API error: ${response.status}`, details: error };
     }
 
-    console.log(`[setup-community-domain] Added DNS records for ${handle}.${BASE_DOMAIN}`);
-    return { success: true };
+    console.log(`[setup-community-domain] ✓ Added SPF TXT record: send.${handle}`);
+    console.log(`[setup-community-domain] ✓ Added MX record: send.${handle} -> ${sesEndpoint}`);
+    
+    return { success: true, details: { spfAdded: true, mxAdded: true } };
   } catch (error: any) {
     console.error('[setup-community-domain] GoDaddy error:', error);
     return { success: false, error: error.message };
@@ -124,6 +142,42 @@ async function getResendDomainRecords(domainId: string): Promise<any> {
     return response.json();
   } catch (error) {
     return null;
+  }
+}
+
+// Trigger domain verification with Resend
+async function verifyResendDomain(domainId: string): Promise<{ success: boolean; status?: string; error?: string }> {
+  if (!RESEND_API_KEY) {
+    return { success: false, error: 'Resend API key not configured' };
+  }
+
+  try {
+    console.log(`[setup-community-domain] Triggering verification for domain ID: ${domainId}`);
+    
+    const response = await fetch(`${RESEND_BASE_URL}/domains/${domainId}/verify`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[setup-community-domain] Resend verification error:', error);
+      return { success: false, error: `Verification failed: ${response.status}` };
+    }
+
+    const data = await response.json();
+    console.log(`[setup-community-domain] Verification triggered, status: ${data.status || 'pending'}`);
+    
+    return { 
+      success: true, 
+      status: data.status || 'verification_triggered',
+    };
+  } catch (error: any) {
+    console.error('[setup-community-domain] Verification error:', error);
+    return { success: false, error: error.message };
   }
 }
 
@@ -201,11 +255,12 @@ export async function POST(request: NextRequest) {
       status: resendResult.status || 'pending',
     };
 
-    // Step 2: Add initial SPF record to GoDaddy
+    // Step 2: Add SPF and MX records to GoDaddy
     const godaddyResult = await addGoDaddyDNSRecords(sanitizedHandle);
     result.godaddy = {
       dkimAdded: false,
-      spfAdded: godaddyResult.success,
+      spfAdded: godaddyResult.details?.spfAdded || godaddyResult.success,
+      mxAdded: godaddyResult.details?.mxAdded || godaddyResult.success,
     };
 
     // Step 3: If we have a domain ID, get the DKIM records and add them
@@ -214,12 +269,25 @@ export async function POST(request: NextRequest) {
       if (domainDetails?.records) {
         // Find the DKIM record
         const dkimRecord = domainDetails.records.find((r: any) => r.record_type === 'TXT' && r.name.includes('domainkey'));
-        if (dkimRecord) {
+        if (dkimRecord && result.godaddy) {
           result.godaddy.dkimAdded = await addDKIMRecord(sanitizedHandle, {
             name: dkimRecord.name,
             value: dkimRecord.value,
           });
         }
+      }
+      
+      // Step 4: Trigger domain verification with Resend
+      // Wait a bit for DNS propagation before triggering verification
+      console.log(`[setup-community-domain] Waiting 2 seconds before triggering verification...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const verifyResult = await verifyResendDomain(resendResult.domainId);
+      if (verifyResult.success) {
+        result.resend.status = verifyResult.status || 'verification_triggered';
+        console.log(`[setup-community-domain] Verification triggered for ${sanitizedHandle}.${BASE_DOMAIN}`);
+      } else {
+        console.warn(`[setup-community-domain] Verification trigger failed: ${verifyResult.error}`);
       }
     }
 

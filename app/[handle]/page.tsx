@@ -10,6 +10,8 @@ import { Banner } from '@/components/ui/banner';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { InviteMemberDialog } from '@/components/community/invite-member-dialog';
+import { DeleteCommunityDialog } from '@/components/community/delete-community-dialog';
+import { useRouter } from 'next/navigation';
 import { OverviewScreen } from '@/components/ui/figma/overview';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +22,7 @@ import { communityAuth } from '@/firebase/community-auth';
 export default function CommunityPage() {
   const params = useParams();
   const handle = params.handle as string;
+  const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
   const [community, setCommunity] = useState<Community | null>(null);
@@ -27,6 +30,7 @@ export default function CommunityPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -207,6 +211,7 @@ export default function CommunityPage() {
               },
             ] : []}
             height="20rem"
+              onDelete={canManage ? () => setIsDeleteDialogOpen(true) : undefined}
           />
         </div>
         
@@ -236,6 +241,22 @@ export default function CommunityPage() {
           isOpen={isInviteDialogOpen}
           onClose={() => setIsInviteDialogOpen(false)}
           community={community}
+        />
+      )}
+      
+      {/* Delete Community Dialog */}
+      {community && (
+        <DeleteCommunityDialog
+          community={community}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onSuccess={() => {
+            toast({
+              title: 'Community Deleted',
+              description: 'The community has been permanently deleted.',
+            });
+            router.push('/communities');
+          }}
         />
       )}
     </div>

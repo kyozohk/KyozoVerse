@@ -63,7 +63,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
   }, [community.ownerId]);
 
   return (
-    <div className="relative p-6 md:p-8 text-white bg-neutral-900">
+    <div className="relative p-6 md:p-8 text-white bg-neutral-900 overflow-visible">
       {community.communityBackgroundImage && (
         <Image
           src={community.communityBackgroundImage}
@@ -79,7 +79,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
         <div className="flex justify-between items-start">
             {/* Owner Info - Top Right */}
             {ownerInfo && (
-              <div className="absolute top-0 right-0 flex items-center gap-3 bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="absolute top-0 right-12 flex items-center gap-3 bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2">
                 <Avatar className="h-10 w-10 border-2 border-white/20">
                   <AvatarImage src={ownerInfo.avatarUrl} />
                   <AvatarFallback>{ownerInfo.displayName.charAt(0)}</AvatarFallback>
