@@ -97,7 +97,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
             <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-shrink-0">
                   <RoundImage 
-                    src={community.communityProfileImage || '/placeholder-community.png'} 
+                    src={community.communityProfileImage || ''} 
                     alt={community.name}
                     size={96}
                     border={true}

@@ -156,7 +156,7 @@ export default function CommunitySidebar() {
                       <div className="flex items-center gap-3 relative z-10">
                         <div className="relative flex items-center justify-center flex-shrink-0">
                           <RoundImage 
-                            src={community.communityProfileImage || '/placeholder-community.png'} 
+                            src={community.communityProfileImage || ''} 
                             alt={community.name}
                             size={48}
                             border={true}
@@ -196,7 +196,7 @@ export default function CommunitySidebar() {
                 className="w-full h-full px-2 bg-transparent hover:opacity-80 transition-opacity flex items-center gap-3"
               >
                 <RoundImage 
-                  src={selectedCommunity?.communityProfileImage || '/placeholder-community.png'} 
+                  src={selectedCommunity?.communityProfileImage || ''} 
                   alt={selectedCommunity?.name || 'Community'}
                   size={40}
                   border={true}

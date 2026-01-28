@@ -121,7 +121,7 @@ function CommunitiesContent() {
               id: c.handle,
               name: c.name,
               memberCount: c.memberCount || 0,
-              imageUrl: c.communityProfileImage || '/placeholder-community.png',
+              imageUrl: c.communityProfileImage || '',
               imageHint: c.name,
               tags: Array.isArray(c.tags) ? c.tags : [],
             }))}

@@ -130,7 +130,16 @@ Looking forward to seeing you there!`;
     }
 
     try {
-      // Send email via SendGrid API
+      // Use community handle domain for sending emails
+      // Format: Community Name <messages@handle.kyozo.com>
+      const senderEmail = `${community.name} <messages@${community.handle}.kyozo.com>`;
+      
+      // Get community branding colors (fallback to defaults)
+      const primaryColor = (community as any).primaryColor || '#843484';
+      const bannerImage = community.communityBackgroundImage;
+      const logoImage = community.communityProfileImage;
+      
+      // Send email via Resend API
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
@@ -138,7 +147,7 @@ Looking forward to seeing you there!`;
         },
         body: JSON.stringify({
           to: email,
-          from: 'Kyozo <dev@contact.kyozo.com>', // Verified Resend domain
+          from: senderEmail,
           subject: `Join ${community.name} on KyozoVerse`,
           html: `
             <!DOCTYPE html>
@@ -147,11 +156,29 @@ Looking forward to seeing you there!`;
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
               </head>
-              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f3f4f6;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  <h1 style="color: #1f2937; margin-bottom: 20px;">You're Invited!</h1>
-                  <div style="white-space: pre-wrap; color: #4b5563; line-height: 1.6; margin-bottom: 30px;">${inviteMessage}</div>
-                  <a href="${inviteUrl}" style="display: inline-block; background-color: #843484; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">Join ${community.name}</a>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  ${bannerImage ? `
+                  <div style="width: 100%; height: 180px; background-image: url('${bannerImage}'); background-size: cover; background-position: center; position: relative;">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));"></div>
+                    ${logoImage ? `
+                    <div style="position: absolute; bottom: -40px; left: 24px;">
+                      <img src="${logoImage}" alt="${community.name}" style="width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; object-fit: cover;" />
+                    </div>
+                    ` : ''}
+                  </div>
+                  ` : ''}
+                  <div style="padding: ${bannerImage ? '50px 24px 24px' : '24px'};">
+                    <h1 style="color: #1f2937; margin-bottom: 8px; font-size: 24px;">${community.name}</h1>
+                    ${community.tagline ? `<p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">${community.tagline}</p>` : ''}
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+                    <h2 style="color: #1f2937; margin-bottom: 16px; font-size: 20px;">You're Invited!</h2>
+                    <div style="white-space: pre-wrap; color: #4b5563; line-height: 1.6; margin-bottom: 24px; font-size: 14px;">${inviteMessage}</div>
+                    <a href="${inviteUrl}" style="display: inline-block; background-color: ${primaryColor}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Join ${community.name}</a>
+                  </div>
+                  <div style="background-color: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via KyozoVerse</p>
+                  </div>
                 </div>
               </body>
             </html>
@@ -160,7 +187,9 @@ Looking forward to seeing you there!`;
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        const errorData = await response.json();
+        console.error('Email send error:', errorData);
+        throw new Error(errorData.error || 'Failed to send email');
       }
 
       alert('Invitation email sent successfully!');

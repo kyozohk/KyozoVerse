@@ -266,14 +266,21 @@ export async function POST(request: NextRequest) {
     // Step 3: If we have a domain ID, get the DKIM records and add them
     if (resendResult.domainId) {
       const domainDetails = await getResendDomainRecords(resendResult.domainId);
+      console.log(`[setup-community-domain] Domain details:`, JSON.stringify(domainDetails, null, 2));
+      
       if (domainDetails?.records) {
-        // Find the DKIM record
-        const dkimRecord = domainDetails.records.find((r: any) => r.record_type === 'TXT' && r.name.includes('domainkey'));
+        // Find the DKIM record - Resend uses 'record' field with value 'DKIM'
+        const dkimRecord = domainDetails.records.find((r: any) => 
+          (r.record === 'DKIM' || r.type === 'TXT') && r.name?.includes('domainkey')
+        );
+        console.log(`[setup-community-domain] DKIM record found:`, dkimRecord);
+        
         if (dkimRecord && result.godaddy) {
           result.godaddy.dkimAdded = await addDKIMRecord(sanitizedHandle, {
             name: dkimRecord.name,
             value: dkimRecord.value,
           });
+          console.log(`[setup-community-domain] DKIM added: ${result.godaddy.dkimAdded}`);
         }
       }
       
