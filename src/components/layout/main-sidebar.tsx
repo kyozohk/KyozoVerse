@@ -42,7 +42,7 @@ export default function MainSidebar({ expanded = false }: MainSidebarProps) {
 
     return (
         <aside 
-            className={`fixed inset-y-0 left-0 z-10 hidden flex-col border-r sm:flex transition-all duration-300 ${expanded ? 'w-64' : 'w-20'}`} 
+            className={`fixed inset-y-0 left-0 z-10 hidden flex-col border-r sm:flex transition-all duration-300 ${expanded ? 'w-60' : 'w-20'}`} 
             style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}
         >
             <div className="flex h-full flex-col p-2">

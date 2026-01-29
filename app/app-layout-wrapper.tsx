@@ -18,9 +18,12 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="min-h-screen">
       <MainSidebar expanded={isMainRoute} />
-      <main className={`flex-1 overflow-auto ${isMainRoute ? 'ml-64' : 'ml-20'}`}>
+      <main 
+        className="min-h-screen overflow-auto"
+        style={{ marginLeft: isMainRoute ? '240px' : '80px' }}
+      >
         {children}
       </main>
     </div>

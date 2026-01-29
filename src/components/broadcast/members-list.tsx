@@ -29,12 +29,17 @@ export interface MembersListProps {
 
 const formatDate = (timestamp: any): string => {
   if (!timestamp) return '-';
-  const date = timestamp?.toDate?.() || new Date(timestamp);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+  try {
+    const date = timestamp?.toDate?.() || new Date(timestamp);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return '-';
+  }
 };
 
 export const MembersList: React.FC<MembersListProps> = ({

@@ -9,10 +9,10 @@ export default function CommunityLayout({
   params: { handle: string };
 }) {
   return (
-    <div className="flex h-full">
+    <div className="min-h-full">
       <CommunitySidebar />
-      {/* CommunitySidebar is fixed at left-20 (80px) with w-64 (256px), so content needs ml-64 (256px) */}
-      <main className="flex-1 ml-64">
+      {/* CommunitySidebar is fixed at left-20 (80px) with w-64 (256px), so content needs 256px margin */}
+      <main className="min-h-full" style={{ marginLeft: '256px' }}>
         {children}
       </main>
     </div>
