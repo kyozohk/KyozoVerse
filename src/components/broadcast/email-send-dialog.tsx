@@ -225,21 +225,22 @@ export function EmailSendDialog({
         </div>
 
         {/* Footer buttons */}
-        <div className="mt-6 grid grid-cols-2 gap-4 pt-4 border-t">
+        <div className="mt-6 grid grid-cols-2 gap-4 pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
           <CustomButton
             variant="outline"
             onClick={onClose}
             disabled={sending}
             className="w-full"
+            style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
           >
             Cancel
           </CustomButton>
           <CustomButton
-            variant="outline"
             onClick={handleSend}
             disabled={sending || !subject.trim() || !message.trim()}
             isLoading={sending}
             className="w-full"
+            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
           >
             {sending ? 'Sending...' : 'Send Email'}
           </CustomButton>

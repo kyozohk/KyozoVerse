@@ -214,12 +214,13 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 justify-end pt-4">
+            <div className="flex gap-3 justify-end pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
               <CustomButton 
-                variant="filled" 
+                variant="outline" 
                 onClick={onClose} 
                 disabled={isDeleting}
                 className="px-6"
+                style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
               >
                 Cancel
               </CustomButton>
