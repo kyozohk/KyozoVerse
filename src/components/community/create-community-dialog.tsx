@@ -206,21 +206,69 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 updatedBackgroundImageUrl = await handleFileUpload(backgroundImageFile, existingCommunity.communityId, 'background');
             }
 
+            const newHandle = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-');
+            const oldHandle = existingCommunity.handle;
+            const handleChanged = newHandle !== oldHandle;
+
+            console.log('[Community Update] Starting update for community:', existingCommunity.communityId);
+            console.log('[Community Update] Old handle:', oldHandle);
+            console.log('[Community Update] New handle:', newHandle);
+            console.log('[Community Update] Handle changed:', handleChanged);
+
             const communityRef = doc(db, 'communities', existingCommunity.communityId);
             await updateDoc(communityRef, {
                 ...formData,
                 tags,
-                handle: formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-'),
+                handle: newHandle,
                 communityProfileImage: updatedProfileImageUrl,
                 communityBackgroundImage: updatedBackgroundImageUrl,
                 updatedAt: serverTimestamp(),
             });
 
+            console.log('[Community Update] Community document updated successfully');
+
+            // Update email subdomain if handle changed
+            if (handleChanged) {
+                console.log('[Community Update] Handle changed, updating email subdomain...');
+                console.log('[Community Update] Calling /api/setup-community-domain with handle:', newHandle);
+                
+                try {
+                    const domainResponse = await fetch('/api/setup-community-domain', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ handle: newHandle }),
+                    });
+                    
+                    console.log('[Community Update] Domain API response status:', domainResponse.status);
+                    
+                    if (domainResponse.ok) {
+                        const domainData = await domainResponse.json();
+                        console.log('[Community Update] Domain API response data:', domainData);
+                        
+                        // Update community with new email domain info
+                        await updateDoc(communityRef, {
+                            emailDomain: `${newHandle}.kyozo.com`,
+                            emailAddress: domainData.emailAddress,
+                        });
+                        console.log('[Community Update] Email domain updated successfully:', `${newHandle}.kyozo.com`);
+                        console.log('[Community Update] New email address:', domainData.emailAddress);
+                    } else {
+                        const errorText = await domainResponse.text();
+                        console.warn('[Community Update] Failed to setup new email domain. Status:', domainResponse.status);
+                        console.warn('[Community Update] Error response:', errorText);
+                    }
+                } catch (domainError) {
+                    console.error('[Community Update] Error setting up new email domain:', domainError);
+                }
+            } else {
+                console.log('[Community Update] Handle unchanged, skipping email subdomain update');
+            }
+
             toast({ title: 'Success', description: 'Community updated successfully.' });
             onOpenChange(false);
             onCommunityUpdated?.(); // Callback to refresh community data
         } catch (error) {
-            console.error('Error updating community:', error);
+            console.error('[Community Update] Error updating community:', error);
             toast({ title: 'Error', description: 'Failed to update community.', variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
