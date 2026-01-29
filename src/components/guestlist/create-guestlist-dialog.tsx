@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Users, Loader2, Calendar, MapPin, Clock } from 'lucide-react';
+import React, { useState, useCallback, useRef } from 'react';
+import { Users, Loader2, Calendar, MapPin, Clock, Image as ImageIcon, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -56,7 +56,75 @@ export function CreateGuestlistDialog({
   const [eventTime, setEventTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [description, setDescription] = useState('');
+  const [eventImage, setEventImage] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Please select an image under 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      setEventImage(data.url);
+      
+      toast({
+        title: 'Image Uploaded',
+        description: 'Event image uploaded successfully.',
+      });
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload image. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setEventImage('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleCreateGuestlist = async () => {
     if (!guestlistName.trim()) {
@@ -86,6 +154,7 @@ export function CreateGuestlistDialog({
         eventDate: eventDate || null,
         eventTime: eventTime || null,
         eventLocation: eventLocation.trim() || null,
+        eventImage: eventImage || null,
         description: description.trim() || null,
         communityId,
         members: selectedMembers.map(m => ({
@@ -121,6 +190,7 @@ export function CreateGuestlistDialog({
       setEventDate('');
       setEventTime('');
       setEventLocation('');
+      setEventImage('');
       setDescription('');
       setSelectedMembers([]);
       
@@ -147,6 +217,7 @@ export function CreateGuestlistDialog({
     setEventDate('');
     setEventTime('');
     setEventLocation('');
+    setEventImage('');
     setDescription('');
     setSelectedMembers([]);
     onClose();
@@ -240,6 +311,52 @@ export function CreateGuestlistDialog({
                     onChange={(e) => setEventLocation(e.target.value)}
                     style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
                   />
+                </div>
+
+                {/* Event Image */}
+                <div>
+                  <Label className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
+                    <ImageIcon className="h-3 w-3" /> Event Image
+                  </Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  {eventImage ? (
+                    <div className="relative mt-2">
+                      <div 
+                        className="h-32 rounded-lg bg-cover bg-center"
+                        style={{ backgroundImage: `url(${eventImage})` }}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                      >
+                        <X className="h-4 w-4 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                      className="mt-2 w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-white/50 transition-colors"
+                      style={{ borderColor: '#E8DFD1', color: '#8B7355' }}
+                    >
+                      {isUploadingImage ? (
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6" />
+                          <span className="text-sm">Click to upload image</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 
