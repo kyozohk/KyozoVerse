@@ -5,15 +5,17 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Globe, Lock, Calendar, PlusCircle } from 'lucide-react';
+import { Globe, Lock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function SchedulePage() {
   const params = useParams();
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'Month' | 'Week' | 'Day' | 'Agenda'>('Month');
 
   useEffect(() => {
     const fetchCommunity = async () => {
@@ -35,6 +37,65 @@ export default function SchedulePage() {
 
     fetchCommunity();
   }, [handle]);
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    
+    const days: (number | null)[] = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDay; i++) {
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      days.push(prevMonthLastDay - startingDay + i + 1);
+    }
+    
+    // Add days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    
+    // Add days from next month to complete the grid
+    const remainingDays = 42 - days.length;
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push(i);
+    }
+    
+    return { days, startingDay, daysInMonth };
+  };
+
+  const { days, startingDay, daysInMonth } = getDaysInMonth(currentDate);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const goToPrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const isToday = (day: number, index: number) => {
+    const today = new Date();
+    const isCurrentMonth = index >= startingDay && index < startingDay + daysInMonth;
+    return isCurrentMonth && 
+           day === today.getDate() && 
+           currentDate.getMonth() === today.getMonth() && 
+           currentDate.getFullYear() === today.getFullYear();
+  };
+
+  const isCurrentMonth = (index: number) => {
+    return index >= startingDay && index < startingDay + daysInMonth;
+  };
 
   if (!community && !loading) {
     return (
@@ -73,22 +134,89 @@ export default function SchedulePage() {
             />
           )}
           <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold" style={{ color: '#5B4A3A' }}>Schedule</h2>
-                <p className="text-sm" style={{ color: '#8B7355' }}>Manage your community events and calendar</p>
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#5B4A3A' }}>COMMUNITY CALENDAR</h2>
+              <p className="text-sm" style={{ color: '#8B7355' }}>Schedule and manage your creative community events</p>
+            </div>
+            
+            {/* Calendar Controls */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
+                <Button variant="outline" size="sm" onClick={goToPrevMonth}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToNextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <h3 className="text-lg font-medium" style={{ color: '#5B4A3A' }}>
+                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              </h3>
+              <div className="flex items-center gap-1">
+                {(['Month', 'Week', 'Day', 'Agenda'] as const).map((mode) => (
+                  <Button
+                    key={mode}
+                    variant={viewMode === mode ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode(mode)}
+                    style={viewMode === mode ? { backgroundColor: '#5B4A3A' } : {}}
+                  >
+                    {mode}
+                  </Button>
+                ))}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              <Card className="flex items-center justify-center border-dashed border-2 h-48 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-                <div className="text-center" style={{ color: '#8B7355' }}>
-                  <PlusCircle className="mx-auto h-10 w-10 mb-2" />
-                  <span className="font-medium">Add Event</span>
-                </div>
-              </Card>
+            
+            {/* Calendar Grid */}
+            <div className="border rounded-lg overflow-hidden" style={{ borderColor: '#E8DFD1' }}>
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 border-b" style={{ borderColor: '#E8DFD1' }}>
+                {dayNames.map((day) => (
+                  <div 
+                    key={day} 
+                    className="p-3 text-center text-sm font-medium"
+                    style={{ backgroundColor: '#F5F0EB', color: '#5B4A3A' }}
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7">
+                {days.map((day, index) => (
+                  <div
+                    key={index}
+                    className={`min-h-[80px] p-2 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors ${
+                      isToday(day as number, index) ? 'bg-blue-50' : ''
+                    }`}
+                    style={{ 
+                      borderColor: '#E8DFD1',
+                      backgroundColor: !isCurrentMonth(index) ? '#F9F7F5' : undefined
+                    }}
+                  >
+                    <span 
+                      className={`text-sm ${
+                        isCurrentMonth(index) ? 'text-[#5B4A3A]' : 'text-[#C4B5A5]'
+                      }`}
+                    >
+                      {day}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+        
+        {/* Floating Action Button */}
+        <button
+          className="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: '#E07B39' }}
+        >
+          <Plus className="h-6 w-6 text-white" />
+        </button>
       </div>
     </div>
   );

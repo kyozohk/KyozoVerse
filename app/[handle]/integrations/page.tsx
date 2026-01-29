@@ -5,9 +5,20 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Globe, Lock, Plug, PlusCircle } from 'lucide-react';
+import { Globe, Lock, ExternalLink, Calendar, Music, Instagram, Mail, UtensilsCrossed } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+interface Integration {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+}
 
 export default function IntegrationsPage() {
   const params = useParams();
@@ -35,6 +46,54 @@ export default function IntegrationsPage() {
 
     fetchCommunity();
   }, [handle]);
+
+  const integrations: Integration[] = [
+    {
+      id: 'eventbrite',
+      name: 'Eventbrite',
+      category: 'Events & Ticketing',
+      description: 'Import event attendees and ticket sales data from your Eventbrite events.',
+      icon: <Calendar className="h-6 w-6" />,
+      iconBg: '#FFF3E8',
+      iconColor: '#E07B39',
+    },
+    {
+      id: 'resident-advisor',
+      name: 'Resident Advisor',
+      category: 'Events & Ticketing',
+      description: 'Sync your RA events and connect with attendees from the electronic music community.',
+      icon: <Music className="h-6 w-6" />,
+      iconBg: '#EEF4FF',
+      iconColor: '#4B7BF5',
+    },
+    {
+      id: 'instagram',
+      name: 'Instagram',
+      category: 'Social Media',
+      description: 'Connect your Instagram account to import followers and engage with your community.',
+      icon: <Instagram className="h-6 w-6" />,
+      iconBg: '#FEF2F2',
+      iconColor: '#E1306C',
+    },
+    {
+      id: 'gmail',
+      name: 'Gmail',
+      category: 'Communication',
+      description: 'Sync contacts from Gmail and send emails directly from your Kyozo community.',
+      icon: <Mail className="h-6 w-6" />,
+      iconBg: '#FEF2F2',
+      iconColor: '#C5221F',
+    },
+    {
+      id: 'sevenrooms',
+      name: 'SevenRooms',
+      category: 'Hospitality',
+      description: 'Import reservations and guest data from your SevenRooms hospitality platform.',
+      icon: <UtensilsCrossed className="h-6 w-6" />,
+      iconBg: '#F5F3FF',
+      iconColor: '#7C3AED',
+    },
+  ];
 
   if (!community && !loading) {
     return (
@@ -73,19 +132,43 @@ export default function IntegrationsPage() {
             />
           )}
           <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold" style={{ color: '#5B4A3A' }}>Integrations</h2>
-                <p className="text-sm" style={{ color: '#8B7355' }}>Connect with other services and platforms</p>
-              </div>
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold mb-1" style={{ color: '#5B4A3A' }}>Integrations</h2>
+              <p className="text-sm" style={{ color: '#8B7355' }}>Connect your favorite platforms to grow and manage your community.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              <Card className="flex items-center justify-center border-dashed border-2 h-48 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-                <div className="text-center" style={{ color: '#8B7355' }}>
-                  <PlusCircle className="mx-auto h-10 w-10 mb-2" />
-                  <span className="font-medium">Add Integration</span>
-                </div>
-              </Card>
+            
+            <h3 className="text-lg font-medium mb-4" style={{ color: '#5B4A3A' }}>All Integrations</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {integrations.map((integration) => (
+                <Card key={integration.id} className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div 
+                      className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: integration.iconBg, color: integration.iconColor }}
+                    >
+                      {integration.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg" style={{ color: '#5B4A3A' }}>{integration.name}</h4>
+                      <span 
+                        className="inline-block text-xs px-2 py-0.5 rounded-full mb-2"
+                        style={{ backgroundColor: '#F5F0EB', color: '#8B7355' }}
+                      >
+                        {integration.category}
+                      </span>
+                      <p className="text-sm mb-4" style={{ color: '#8B7355' }}>{integration.description}</p>
+                      <Button 
+                        size="sm" 
+                        className="gap-1"
+                        style={{ backgroundColor: '#E07B39', color: 'white' }}
+                      >
+                        Connect <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
