@@ -159,7 +159,7 @@ function CommunitiesContent() {
       />
       <CreateCommunityDialog 
         isOpen={isCreateDialogOpen} 
-        setIsOpen={setIsCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
         onCommunityUpdated={() => {
           // Refresh communities list after creating a new one
           if (user) {

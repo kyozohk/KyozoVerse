@@ -239,7 +239,7 @@ export default function CommunitySidebar() {
         </div>
       )}
 
-      <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
+      <CreateCommunityDialog isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
     </div>
   );
 }

@@ -91,7 +91,7 @@ export default function CommunitiesDashboardClient() {
         )}
       </Suspense>
       
-      <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
+      <CreateCommunityDialog isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
     </div>
   );
 }

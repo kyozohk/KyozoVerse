@@ -83,6 +83,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
 
     const [formData, setFormData] = useState({
         name: '',
+        handle: '',
         lore: '',
         mantras: '',
         location: '',
@@ -108,6 +109,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             if (existingCommunity) {
                 setFormData({
                     name: existingCommunity.name || '',
+                    handle: existingCommunity.handle || '',
                     lore: (existingCommunity as any).lore || '',
                     mantras: (existingCommunity as any).mantras || '',
                     location: (existingCommunity as any).location || '',
@@ -119,7 +121,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
             } else {
                 // Reset form when creating a new community
-                setFormData({ name: '', lore: '', mantras: '', location: '', communityPrivacy: 'public', leaderName: '' });
+                setFormData({ name: '', handle: '', lore: '', mantras: '', location: '', communityPrivacy: 'public', leaderName: '' });
                 setFormErrors({});
                 setTags([]);
                 setProfileImageFile(null);
@@ -208,7 +210,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             await updateDoc(communityRef, {
                 ...formData,
                 tags,
-                handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
+                handle: formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-'),
                 communityProfileImage: updatedProfileImageUrl,
                 communityBackgroundImage: updatedBackgroundImageUrl,
                 updatedAt: serverTimestamp(),
@@ -240,7 +242,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
         const communityData: any = {
             ...formData,
             tags,
-            handle: formData.name.toLowerCase().replace(/\s+/g, '-'),
+            handle: formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-'),
             ownerId: user.uid,
             createdAt: serverTimestamp(),
         };
@@ -288,7 +290,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             });
 
             // Setup community email subdomain (GoDaddy + Resend)
-            const handle = formData.name.toLowerCase().replace(/\s+/g, '-');
+            const handle = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-');
             try {
                 const domainResponse = await fetch('/api/setup-community-domain', {
                     method: 'POST',
@@ -366,7 +368,10 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     {currentStep === 0 && (
                         <div className="space-y-4">
                             <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
-                            <Input label="Community Leader Name" value={formData.leaderName} onChange={(e) => handleValueChange('leaderName', e.target.value)} />
+                            <div>
+                                <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} />
+                                <p className="text-xs text-muted-foreground mt-1">This becomes the URL: kyozo.com/{formData.handle || 'your-handle'}</p>
+                            </div>
                             <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
                             <TagInput tags={tags} setTags={setTags} />
@@ -381,6 +386,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     )}
                     {currentStep === 1 && (
                          <div className="space-y-6">
+                            <Input label="Community Leader Name" value={formData.leaderName} onChange={(e) => handleValueChange('leaderName', e.target.value)} placeholder="Name to use in broadcast templates" />
                             <div>
                                 <label className="text-sm text-muted-foreground mb-1 block">Background Image</label>
                                 <Dropzone file={backgroundImageFile} onFileChange={setBackgroundImageFile} fileType="image" existingImageUrl={backgroundImageUrl} className="h-32" />

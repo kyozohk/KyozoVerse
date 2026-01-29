@@ -220,7 +220,7 @@ export default function CommunityPage() {
       </div>
       <CreateCommunityDialog 
         isOpen={isEditDialogOpen} 
-        setIsOpen={setIsEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
         existingCommunity={community}
       />
       

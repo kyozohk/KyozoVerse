@@ -117,7 +117,7 @@ export default function CommunitiesDashboardPage() {
         searchKeys={['name', 'tagline']}
         selectable={false}
       />
-      <CreateCommunityDialog isOpen={isCreateDialogOpen} setIsOpen={setIsCreateDialogOpen} />
+      <CreateCommunityDialog isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
     </div>
   );
 }
