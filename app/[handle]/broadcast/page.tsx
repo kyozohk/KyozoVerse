@@ -149,25 +149,25 @@ function BroadcastContent() {
               height="16rem"
             />
           )}
-        </div>
-        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          <EnhancedListView
-            items={members}
-            renderGridItem={(item, isSelected, onSelect, urlField, selectable) => (
-              <MemberGridItem item={item} isSelected={isSelected} selectable={selectable} />
-            )}
-            renderListItem={(item, isSelected, onSelect, urlField, selectable) => (
-              <MemberListItem item={item} isSelected={isSelected} selectable={selectable} />
-            )}
-            renderCircleItem={(item, isSelected, onSelect, urlField, selectable) => (
-              <MemberCircleItem item={item} isSelected={isSelected} selectable={selectable} />
-            )}
-            searchKeys={['name', 'email', 'tags']}
-            selectable={true}
-            onSelectionChange={onSelectionChange}
-            isLoading={isLoading}
-            loadingComponent={<LoadingSkeleton />}
-          />
+          <div className="p-6">
+            <EnhancedListView
+              items={members}
+              renderGridItem={(item, isSelected, onSelect, urlField, selectable) => (
+                <MemberGridItem item={item} isSelected={isSelected} selectable={selectable} />
+              )}
+              renderListItem={(item, isSelected, onSelect, urlField, selectable) => (
+                <MemberListItem item={item} isSelected={isSelected} selectable={selectable} />
+              )}
+              renderCircleItem={(item, isSelected, onSelect, urlField, selectable) => (
+                <MemberCircleItem item={item} isSelected={isSelected} selectable={selectable} />
+              )}
+              searchKeys={['name', 'email', 'tags']}
+              selectable={true}
+              onSelectionChange={onSelectionChange}
+              isLoading={isLoading}
+              loadingComponent={<LoadingSkeleton />}
+            />
+          </div>
         </div>
       </div>
       {/* Enhanced Broadcast Dialog */}

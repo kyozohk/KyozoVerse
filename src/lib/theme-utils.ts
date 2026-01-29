@@ -11,6 +11,8 @@ import {
     Ticket,
     Plug,
     LayoutDashboard,
+    Plus,
+    Calendar,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { THEME_COLORS, type CategoryKey } from './theme-colors';
@@ -38,13 +40,15 @@ interface CommunityNavItem {
 
 export const communityNavItems: CommunityNavItem[] = [
     { href: (handle) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
-    { href: (handle) => `/${handle}/members`, icon: Users, label: 'Audience', section: 'communities' },
+    { href: (handle) => `/${handle}/audience`, icon: Users, label: 'Audience', section: 'communities' },
     { href: (handle) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
+    { href: (handle) => `/${handle}/guestlist`, icon: Ticket, label: 'RSVP & Guestlist', section: 'communities' },
+    { href: (handle) => `/${handle}/schedule`, icon: Calendar, label: 'Schedule', section: 'communities' },
     { href: (handle) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
-    { href: (handle) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },
-    { href: (handle) => `/${handle}/ticketing`, icon: Ticket, label: 'Subscription', section: 'communities' },
-    { href: (handle) => `/${handle}/integrations`, icon: Plug, label: 'Settings', section: 'communities' },
-    { href: (handle) => `/${handle}/analytics`, icon: BarChart3, label: 'Analytics', section: 'analytics' },
+    { href: (handle) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },    
+    { href: (handle) => `/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'communities' },
+    { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settingss', section: 'communities' },
+    { href: (handle) => `/${handle}/morefeatures`, icon: Plus, label: 'More Features', section: 'morefeatures' },
 ];
 
 export const getThemeForPath = (pathname: string) => {

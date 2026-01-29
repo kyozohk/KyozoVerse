@@ -213,10 +213,10 @@ export default function CommunityPage() {
             height="16rem"
               onDelete={canManage ? () => setIsDeleteDialogOpen(true) : undefined}
           />
+          
+          {/* Overview Screen Component */}
+          <OverviewScreen />
         </div>
-        
-        {/* Overview Screen Component */}
-        <OverviewScreen />
       </div>
       <CreateCommunityDialog 
         isOpen={isEditDialogOpen} 

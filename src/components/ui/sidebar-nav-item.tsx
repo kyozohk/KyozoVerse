@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const sidebarNavItemVariants = cva(
-  'group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+  'group flex items-center gap-3 rounded-md px-3 py-2.5 text-lg font-bold transition-colors',
   {
     variants: {
       state: {
@@ -58,7 +58,7 @@ const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
           {...props}
         >
           {React.cloneElement(icon, {
-              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-5 w-5 font-light')
+              className: cn(iconVariants({ state: isActive ? 'active' : 'default' }), 'h-6 w-6 font-light')
           })}
           {children}
         </Link>

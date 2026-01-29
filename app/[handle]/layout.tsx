@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import CommunitySidebar from '@/components/layout/community-sidebar';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 
 export default function CommunityLayout({
   children,
@@ -13,7 +14,9 @@ export default function CommunityLayout({
       <CommunitySidebar />
       {/* CommunitySidebar is fixed at left-20 (80px) with w-64 (256px), so content needs 256px margin */}
       <main className="min-h-full" style={{ marginLeft: '256px' }}>
-        {children}
+        <Suspense fallback={<PageLoadingSkeleton showMemberList={true} />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );

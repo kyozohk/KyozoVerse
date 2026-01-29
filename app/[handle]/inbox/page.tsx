@@ -185,8 +185,8 @@ function InboxContent() {
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-hidden flex flex-col">
-        {/* Banner */}
-        <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+        {/* Single container with Banner and Inbox Content */}
+        <div className="flex-1 rounded-2xl overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           {community && (
             <Banner
               backgroundImage={community.communityBackgroundImage}
@@ -207,10 +207,8 @@ function InboxContent() {
               height="16rem"
             />
           )}
-        </div>
-
-        {/* Inbox Content */}
-        <div className="flex-1 rounded-2xl overflow-hidden flex" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          {/* Inbox Content */}
+          <div className="flex-1 flex overflow-hidden">
           {/* Left sidebar - Conversations list */}
           <div className="w-80 border-r flex flex-col" style={{ borderColor: '#E8DFD1' }}>
             {/* Filter Toggles */}
@@ -410,6 +408,7 @@ function InboxContent() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>

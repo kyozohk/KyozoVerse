@@ -247,9 +247,8 @@ export default function CommunityFeedPage() {
               height="16rem"
             />
           )}
-        </div>
-        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          <FeedStats posts={posts} />
+          <div className="p-6">
+            <FeedStats posts={posts} />
           
           {loading ? (
             <div className="masonry-feed-columns"><FeedSkeletons /></div>
@@ -290,6 +289,7 @@ export default function CommunityFeedPage() {
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
       <CreatePostDialog 

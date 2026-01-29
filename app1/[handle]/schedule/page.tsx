@@ -6,14 +6,14 @@ import { ListView } from '@/components/ui/list-view';
 import { Card } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 
-export default function CommunityTicketingPage() {
+export default function CommunityIntegrationsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   return (
     <ListView
-      title="Ticketing"
-      subtitle="Manage support tickets."
+      title="Schedule"
+      subtitle="Connect with other services."
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
       viewMode={viewMode}
@@ -24,10 +24,10 @@ export default function CommunityTicketingPage() {
       >
         <div className="text-center text-muted-foreground">
           <PlusCircle className="mx-auto h-10 w-10 mb-2" />
-          <span className="font-medium">New Ticket</span>
+          <span className="font-medium">New Integration</span>
         </div>
       </Card>
-      {/* Tickets will be listed here */}
+      {/* Integrations will be listed here */}
     </ListView>
   );
 }

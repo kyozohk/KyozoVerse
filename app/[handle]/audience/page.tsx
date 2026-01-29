@@ -401,10 +401,8 @@ function MembersContent() {
               height="16rem"
             />
           )}
-        </div>
-        
-        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          <EnhancedListView
+          <div className="p-6">
+            <EnhancedListView
             items={members}
             renderGridItem={(item, isSelected) => (
               <MemberGridItem item={item} isSelected={isSelected} />
@@ -441,6 +439,7 @@ function MembersContent() {
             onLoadMore={loadMoreMembers}
             isLoadingMore={isLoadingMore}
           />
+          </div>
         </div>
       </div>
       
