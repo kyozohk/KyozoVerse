@@ -12,7 +12,7 @@ export function PageLayout({ children }: PageLayoutProps) {
     >
       <div className="p-8">
         <div 
-          className="rounded-2xl overflow-visible" 
+          className="rounded-2xl overflow-hidden" 
           style={{ 
             backgroundColor: 'var(--page-content-bg)', 
             border: '2px solid var(--page-content-border)' 

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
@@ -136,7 +136,43 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     const colors = ['#843484', '#06C4B5', '#E1B327', '#CF7770', '#699FE5'];
     const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
 
-    const handleNext = () => {
+    // Check if a handle/slug already exists in the database
+    const checkHandleExists = async (handle: string, excludeCommunityId?: string): Promise<boolean> => {
+        console.log('[Community Dialog] Checking if handle exists:', handle);
+        console.log('[Community Dialog] Excluding community ID:', excludeCommunityId || 'none');
+        
+        try {
+            const communitiesRef = collection(db, 'communities');
+            const q = query(communitiesRef, where('handle', '==', handle));
+            const querySnapshot = await getDocs(q);
+            
+            console.log('[Community Dialog] Found communities with handle:', querySnapshot.size);
+            
+            if (querySnapshot.empty) {
+                console.log('[Community Dialog] Handle is available');
+                return false;
+            }
+            
+            // If editing, check if the found community is the same one being edited
+            if (excludeCommunityId) {
+                const existingCommunityWithHandle = querySnapshot.docs.find(doc => doc.id !== excludeCommunityId);
+                if (existingCommunityWithHandle) {
+                    console.log('[Community Dialog] Handle already taken by another community:', existingCommunityWithHandle.id);
+                    return true;
+                }
+                console.log('[Community Dialog] Handle belongs to the community being edited, allowing');
+                return false;
+            }
+            
+            console.log('[Community Dialog] Handle already taken');
+            return true;
+        } catch (error) {
+            console.error('[Community Dialog] Error checking handle:', error);
+            return false; // Allow to proceed if check fails
+        }
+    };
+
+    const handleNext = async () => {
         // Validate required fields on step 1
         if (currentStep === 0) {
             if (!formData.name.trim()) {
@@ -148,6 +184,27 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 });
                 return;
             }
+            
+            // Check handle uniqueness
+            const handleToCheck = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            console.log('[Community Dialog] Validating handle before proceeding:', handleToCheck);
+            
+            const handleExists = await checkHandleExists(
+                handleToCheck, 
+                existingCommunity?.communityId
+            );
+            
+            if (handleExists) {
+                setFormErrors({ name: 'This handle/slug is already taken' });
+                toast({
+                    title: "Handle Already Exists",
+                    description: `The handle "${handleToCheck}" is already taken by another community. Please choose a different one.`,
+                    variant: "destructive",
+                });
+                return;
+            }
+            
+            console.log('[Community Dialog] Handle validation passed');
             setFormErrors({});
         }
         
@@ -236,7 +293,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     const domainResponse = await fetch('/api/setup-community-domain', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ handle: newHandle }),
+                        body: JSON.stringify({ handle: newHandle, oldHandle: oldHandle }),
                     });
                     
                     console.log('[Community Update] Domain API response status:', domainResponse.status);

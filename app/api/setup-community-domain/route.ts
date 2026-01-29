@@ -223,10 +223,138 @@ async function addDKIMRecord(handle: string, dkimRecord: { name: string; value: 
   }
 }
 
+// Delete DNS records from GoDaddy for a community subdomain
+async function deleteGoDaddyDNSRecords(handle: string): Promise<{ success: boolean; error?: string; details?: any }> {
+  console.log(`[setup-community-domain] [GoDaddy] Starting DNS record deletion for old handle: ${handle}`);
+  
+  if (!GO_DADDY_API_KEY || !GO_DADDY_API_SECRET) {
+    console.log('[setup-community-domain] [GoDaddy] API credentials not configured');
+    return { success: false, error: 'GoDaddy API credentials not configured' };
+  }
+
+  const recordsToDelete = [
+    { type: 'TXT', name: `send.${handle}` },
+    { type: 'TXT', name: `resend._domainkey.${handle}` },
+    { type: 'MX', name: `send.${handle}` },
+  ];
+
+  const results: any[] = [];
+
+  try {
+    for (const record of recordsToDelete) {
+      const url = `${GODADDY_BASE_URL}/domains/${BASE_DOMAIN}/records/${record.type}/${record.name}`;
+      console.log(`[setup-community-domain] [GoDaddy] Deleting record: ${record.type} ${record.name}`);
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `sso-key ${GO_DADDY_API_KEY}:${GO_DADDY_API_SECRET}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`[setup-community-domain] [GoDaddy] Delete response status: ${response.status}`);
+
+      if (response.status === 204 || response.status === 200) {
+        console.log(`[setup-community-domain] [GoDaddy] ✓ Successfully deleted record: ${record.name}`);
+        results.push({ record: record.name, status: 'deleted' });
+      } else if (response.status === 404) {
+        console.log(`[setup-community-domain] [GoDaddy] Record not found (already deleted?): ${record.name}`);
+        results.push({ record: record.name, status: 'not_found' });
+      } else {
+        const error = await response.text();
+        console.error(`[setup-community-domain] [GoDaddy] ✗ Failed to delete record ${record.name}:`, error);
+        results.push({ record: record.name, status: 'failed', error });
+      }
+    }
+
+    console.log(`[setup-community-domain] [GoDaddy] Old handle deletion complete. Results:`, results);
+    return { success: true, details: results };
+  } catch (error: any) {
+    console.error('[setup-community-domain] [GoDaddy] Error:', error);
+    return { success: false, error: error.message, details: results };
+  }
+}
+
+// Delete domain from Resend
+async function deleteResendDomain(handle: string): Promise<{ success: boolean; error?: string; details?: any }> {
+  console.log(`[setup-community-domain] [Resend] Starting domain deletion for old handle: ${handle}`);
+  
+  if (!RESEND_API_KEY) {
+    console.log('[setup-community-domain] [Resend] API key not configured');
+    return { success: false, error: 'Resend API key not configured' };
+  }
+
+  const domainName = `${handle}.${BASE_DOMAIN}`;
+  console.log(`[setup-community-domain] [Resend] Looking for domain: ${domainName}`);
+
+  try {
+    // First, list all domains to find the domain ID
+    console.log(`[setup-community-domain] [Resend] Fetching all domains from Resend...`);
+    const listResponse = await fetch(`${RESEND_BASE_URL}/domains`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+    });
+
+    console.log(`[setup-community-domain] [Resend] List domains response status: ${listResponse.status}`);
+
+    if (!listResponse.ok) {
+      const error = await listResponse.text();
+      console.error('[setup-community-domain] [Resend] ✗ Failed to list domains:', error);
+      return { success: false, error: 'Failed to list domains', details: error };
+    }
+
+    const domainsData = await listResponse.json();
+    console.log(`[setup-community-domain] [Resend] Found ${domainsData.data?.length || 0} domains in Resend`);
+    
+    const domain = domainsData.data?.find((d: any) => d.name === domainName);
+
+    if (!domain) {
+      console.log(`[setup-community-domain] [Resend] Domain ${domainName} not found in Resend (may not exist or already deleted)`);
+      return { success: true, details: `Domain ${domainName} not found` };
+    }
+
+    console.log(`[setup-community-domain] [Resend] Found domain to delete: ${domain.name} (ID: ${domain.id}, status: ${domain.status})`);
+
+    // Delete the domain
+    const deleteUrl = `${RESEND_BASE_URL}/domains/${domain.id}`;
+    console.log(`[setup-community-domain] [Resend] Sending DELETE request to: ${deleteUrl}`);
+    
+    const deleteResponse = await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+    });
+
+    console.log(`[setup-community-domain] [Resend] Delete response status: ${deleteResponse.status}`);
+
+    if (deleteResponse.ok || deleteResponse.status === 204) {
+      console.log(`[setup-community-domain] [Resend] ✓ Successfully deleted domain: ${domainName}`);
+      return { success: true, details: `Deleted domain ${domainName} (ID: ${domain.id})` };
+    } else {
+      const error = await deleteResponse.text();
+      console.error(`[setup-community-domain] [Resend] ✗ Failed to delete domain:`, error);
+      return { success: false, error: 'Failed to delete domain from Resend', details: error };
+    }
+  } catch (error: any) {
+    console.error('[setup-community-domain] [Resend] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { handle } = body;
+    const { handle, oldHandle } = body;
+
+    console.log('========================================');
+    console.log('[setup-community-domain] API called');
+    console.log(`[setup-community-domain] New handle: ${handle}`);
+    console.log(`[setup-community-domain] Old handle: ${oldHandle || 'none (new community)'}`);
+    console.log('========================================');
 
     if (!handle) {
       return NextResponse.json(
@@ -235,8 +363,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sanitize handle (lowercase, no spaces)
+    // Sanitize handles (lowercase, no spaces)
     const sanitizedHandle = handle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const sanitizedOldHandle = oldHandle ? oldHandle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : null;
+
+    console.log(`[setup-community-domain] Sanitized new handle: ${sanitizedHandle}`);
+    if (sanitizedOldHandle) {
+      console.log(`[setup-community-domain] Sanitized old handle: ${sanitizedOldHandle}`);
+    }
+
+    // If this is an update (oldHandle provided and different from new handle), delete old domain first
+    if (sanitizedOldHandle && sanitizedOldHandle !== sanitizedHandle) {
+      console.log(`[setup-community-domain] Handle changed from "${sanitizedOldHandle}" to "${sanitizedHandle}"`);
+      console.log(`[setup-community-domain] Deleting old domain records first...`);
+      
+      // Delete old GoDaddy DNS records
+      const godaddyDeleteResult = await deleteGoDaddyDNSRecords(sanitizedOldHandle);
+      console.log(`[setup-community-domain] GoDaddy old records deletion result:`, godaddyDeleteResult);
+      
+      // Delete old Resend domain
+      const resendDeleteResult = await deleteResendDomain(sanitizedOldHandle);
+      console.log(`[setup-community-domain] Resend old domain deletion result:`, resendDeleteResult);
+      
+      console.log(`[setup-community-domain] Old domain cleanup complete. Now setting up new domain...`);
+    }
 
     console.log(`[setup-community-domain] Setting up domain for: ${sanitizedHandle}.${BASE_DOMAIN}`);
 

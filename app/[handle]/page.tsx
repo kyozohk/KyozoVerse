@@ -210,7 +210,7 @@ export default function CommunityPage() {
                 onClick: () => setIsEditDialogOpen(true),
               },
             ] : []}
-            height="20rem"
+            height="16rem"
               onDelete={canManage ? () => setIsDeleteDialogOpen(true) : undefined}
           />
         </div>

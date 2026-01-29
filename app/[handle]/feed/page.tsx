@@ -12,7 +12,7 @@ import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-ut
 import { type Post, type User, type Community } from '@/lib/types';
 import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
-import { Pencil, Mic, Video, Image, ChevronDown, ExternalLink } from 'lucide-react';
+import { Pencil, Mic, Video, Image as ImageIcon, ChevronDown, ExternalLink, Globe, Lock } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { ReadCard } from '@/components/content-cards/read-card';
@@ -23,8 +23,7 @@ import { WatchCard } from '@/components/content-cards/watch-card';
 import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 import Link from 'next/link';
 import { FeedStats } from '@/components/community/feed-stats';
-import { CommunityHeader } from '@/components/community/community-header';
-import { CustomButton } from '@/components/ui';
+import { Banner } from '@/components/ui/banner';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -164,7 +163,7 @@ export default function CommunityFeedPage() {
   
   const buttonConfig = [
     { type: 'text' as PostType, icon: Pencil, color: '#926B7F', label: 'Text' },
-    { type: 'image' as PostType, icon: Image, color: '#926B7F', label: 'Image' },
+    { type: 'image' as PostType, icon: ImageIcon, color: '#926B7F', label: 'Image' },
     { type: 'audio' as PostType, icon: Mic, color: '#6E94B1', label: 'Audio' },
     { type: 'video' as PostType, icon: Video, color: '#F0C679', label: 'Video' },
   ];
@@ -213,47 +212,45 @@ export default function CommunityFeedPage() {
   const memberCountExcludingOwner = nonOwnerMembers.length;
 
   return (
-    <div className="space-y-0">
-      {community && (
-        <CommunityHeader 
-          community={community} 
-          userRole={userRole as any} 
-          memberCount={memberCount}
-          customActions={
-            canCreatePost ? (
-              <>
-                {buttonConfig.map((config) => (
-                  <CustomButton
-                    key={config.type}
-                    variant="rounded-rect"
-                    className="text-white/80 hover:text-white hover:bg-white/10"
-                    onClick={() => handleSelectPostType(config.type)}
-                  >
-                    <config.icon className="h-4 w-4 mr-2" />
-                    {config.label}
-                  </CustomButton>
-                ))}
-                <div className="flex-grow"></div>
-                <CustomButton
-                  variant="rounded-rect"
-                  className="text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={() => window.open(`https://www.kyozo.com/${handle}`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Open Public View
-                </CustomButton>
-              </>
-            ) : undefined
-          }
-        />
-      )}
-      {/* style={{ backgroundImage: `url(/bg/public-feed-bg.jpg)` }} */}
-      <div className="min-h-screen bg-no-repeat bg-cover bg-center bg-fixed relative" >
-        {/* 70% gray overlay */}        
-        {/* Content Area */}
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 pt-8 pb-12">
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-8 flex-1 overflow-auto">
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+          {community && (
+            <Banner
+              backgroundImage={community.communityBackgroundImage}
+              iconImage={community.communityProfileImage}
+              title={community.name}
+              location={(community as any).location}
+              locationExtra={
+                <span className="flex items-center gap-1 text-sm text-white/90">
+                  {(community as any).visibility === 'private' ? (
+                    <><Lock className="h-3.5 w-3.5" /> Private</>
+                  ) : (
+                    <><Globe className="h-3.5 w-3.5" /> Public</>
+                  )}
+                </span>
+              }
+              subtitle={community.tagline || (community as any).mantras}
+              tags={(community as any).tags || []}
+              ctas={canCreatePost ? [
+                ...buttonConfig.map((config) => ({
+                  label: config.label,
+                  icon: <config.icon className="h-4 w-4" />,
+                  onClick: () => handleSelectPostType(config.type),
+                })),
+                {
+                  label: 'Public View',
+                  icon: <ExternalLink className="h-4 w-4" />,
+                  onClick: () => window.open(`https://www.kyozo.com/${handle}`, '_blank'),
+                },
+              ] : []}
+              height="16rem"
+            />
+          )}
+        </div>
+        <div className="mt-6 rounded-2xl p-6" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           <FeedStats posts={posts} />
-
+          
           {loading ? (
             <div className="masonry-feed-columns"><FeedSkeletons /></div>
           ) : filteredPosts.length === 0 ? (

@@ -204,7 +204,7 @@ function InboxContent() {
               }
               subtitle={community.tagline || (community as any).mantras}
               tags={(community as any).tags || []}
-              height="12rem"
+              height="16rem"
             />
           )}
         </div>
