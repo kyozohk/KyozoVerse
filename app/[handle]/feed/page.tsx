@@ -24,6 +24,7 @@ import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 import Link from 'next/link';
 import { FeedStats } from '@/components/community/feed-stats';
 import { Banner } from '@/components/ui/banner';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function CommunityFeedPage() {
 
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [communityLoading, setCommunityLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [postType, setPostType] = useState<PostType>('text');
@@ -75,6 +77,8 @@ export default function CommunityFeedPage() {
         }
       } catch (error) {
         console.error('Error fetching community data:', error);
+      } finally {
+        setCommunityLoading(false);
       }
     }
 
@@ -210,6 +214,10 @@ export default function CommunityFeedPage() {
   // Calculate member count excluding owner
   const nonOwnerMembers = members.filter(m => m.role !== 'owner');
   const memberCountExcludingOwner = nonOwnerMembers.length;
+
+  if (communityLoading) {
+    return <PageLoadingSkeleton showFeed={true} />;
+  }
 
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>

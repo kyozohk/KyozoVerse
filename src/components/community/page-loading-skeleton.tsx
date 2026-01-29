@@ -138,6 +138,7 @@ export function BannerSkeleton() {
           <Skeleton className="h-9 w-28 rounded-lg" />
           <Skeleton className="h-9 w-28 rounded-lg" />
         </div>
+        <p>this is banner</p>
       </div>
     </div>
   );

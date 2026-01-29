@@ -8,6 +8,7 @@ import { Community } from '@/lib/types';
 import { Globe, Lock, Settings, Bell, Shield, Palette } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 
 export default function SettingsPage() {
   const params = useParams();
@@ -36,7 +37,11 @@ export default function SettingsPage() {
     fetchCommunity();
   }, [handle]);
 
-  if (!community && !loading) {
+  if (loading) {
+    return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!community) {
     return (
       <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
         <div className="p-8">

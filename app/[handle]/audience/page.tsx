@@ -5,8 +5,9 @@ import { useEffect, useState, Suspense } from 'react';
 import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc, orderBy, limit, startAfter, DocumentSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, UserPlus, Mail, Globe, Lock } from 'lucide-react';
+import { UserPlus, Mail, Globe, Lock } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
@@ -353,7 +354,11 @@ function MembersContent() {
     </div>
   );
 
-  if (!community && !isLoading) {
+  if (isLoading) {
+    return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!community) {
     return (
       <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
         <div className="p-8">
@@ -484,11 +489,7 @@ function MembersContent() {
 
 export default function MembersPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense fallback={<PageLoadingSkeleton showMemberList={true} />}>
       <MembersContent />
     </Suspense>
   );

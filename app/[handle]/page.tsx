@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Edit, UserPlus, Mail, Radio, Globe, Lock } from 'lucide-react';
+import { Edit, UserPlus, Mail, Radio, Globe, Lock } from 'lucide-react';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { Banner } from '@/components/ui/banner';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { MemberDialog } from '@/components/community/member-dialog';
@@ -144,11 +145,7 @@ export default function CommunityPage() {
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageLoadingSkeleton showMemberList={true} />;
   }
 
   if (!community) {

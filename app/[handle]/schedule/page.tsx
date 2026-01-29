@@ -2,23 +2,54 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Globe, Lock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Globe, Lock, ChevronLeft, ChevronRight, PlusCircle, Users, MapPin, Clock } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
+import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
+
+interface MemberData {
+  id: string;
+  userId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  imageUrl: string;
+  role?: string;
+  joinedDate?: any;
+  tags?: string[];
+}
+
+interface Event {
+  id: string;
+  name: string;
+  eventName?: string;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
+  description?: string;
+  memberCount: number;
+  members: any[];
+  createdAt: any;
+}
 
 export default function SchedulePage() {
   const params = useParams();
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
+  const [members, setMembers] = useState<MemberData[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'Month' | 'Week' | 'Day' | 'Agenda'>('Month');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
+  // Fetch community and members
   useEffect(() => {
-    const fetchCommunity = async () => {
+    const fetchCommunityAndMembers = async () => {
       try {
         const communitiesRef = collection(db, 'communities');
         const q = query(communitiesRef, where('handle', '==', handle));
@@ -26,7 +57,32 @@ export default function SchedulePage() {
         
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
-          setCommunity({ communityId: doc.id, ...doc.data() } as Community);
+          const communityData = { communityId: doc.id, ...doc.data() } as Community;
+          setCommunity(communityData);
+
+          // Fetch community members
+          const membersQuery = query(
+            collection(db, 'communityMembers'),
+            where('communityId', '==', communityData.communityId)
+          );
+          const membersSnapshot = await getDocs(membersQuery);
+          
+          const membersData: MemberData[] = membersSnapshot.docs.map(memberDoc => {
+            const data = memberDoc.data();
+            const userDetails = data.userDetails || {};
+            return {
+              id: memberDoc.id,
+              userId: data.userId || memberDoc.id,
+              name: userDetails.displayName || userDetails.name || data.displayName || 'Unknown',
+              email: userDetails.email || data.email,
+              phone: userDetails.phone || userDetails.phoneNumber || data.phone,
+              imageUrl: userDetails.photoURL || userDetails.avatarUrl || data.avatarUrl || '/default-avatar.png',
+              role: data.role,
+              joinedDate: data.joinedAt,
+              tags: data.tags || [],
+            };
+          });
+          setMembers(membersData);
         }
       } catch (error) {
         console.error('Error fetching community:', error);
@@ -35,8 +91,33 @@ export default function SchedulePage() {
       }
     };
 
-    fetchCommunity();
+    fetchCommunityAndMembers();
   }, [handle]);
+
+  // Subscribe to guestlists (events) - only those with eventDate
+  useEffect(() => {
+    if (!community?.communityId) return;
+
+    const eventsQuery = query(
+      collection(db, 'guestlists'),
+      where('communityId', '==', community.communityId),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(eventsQuery, (snapshot) => {
+      const eventsData: Event[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as Event));
+      setEvents(eventsData);
+    });
+
+    return () => unsubscribe();
+  }, [community?.communityId]);
+
+  const handleEventCreated = (event: any) => {
+    console.log('Event created:', event);
+  };
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -97,7 +178,11 @@ export default function SchedulePage() {
     return index >= startingDay && index < startingDay + daysInMonth;
   };
 
-  if (!community && !loading) {
+  if (loading) {
+    return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!community) {
     return (
       <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
         <div className="p-8">
@@ -130,6 +215,11 @@ export default function SchedulePage() {
               }
               subtitle={community.tagline || (community as any).mantras}
               tags={(community as any).tags || []}
+              ctas={[{
+                label: 'Create Event',
+                icon: <PlusCircle className="h-4 w-4" />,
+                onClick: () => setIsCreateDialogOpen(true),
+              }]}
               height="16rem"
             />
           )}
@@ -185,39 +275,71 @@ export default function SchedulePage() {
               
               {/* Calendar Days */}
               <div className="grid grid-cols-7">
-                {days.map((day, index) => (
-                  <div
-                    key={index}
-                    className={`min-h-[80px] p-2 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors ${
-                      isToday(day as number, index) ? 'bg-blue-50' : ''
-                    }`}
-                    style={{ 
-                      borderColor: '#E8DFD1',
-                      backgroundColor: !isCurrentMonth(index) ? '#F9F7F5' : undefined
-                    }}
-                  >
-                    <span 
-                      className={`text-sm ${
-                        isCurrentMonth(index) ? 'text-[#5B4A3A]' : 'text-[#C4B5A5]'
+                {days.map((day, index) => {
+                  // Get events for this day
+                  const dayEvents = isCurrentMonth(index) ? events.filter(event => {
+                    if (!event.eventDate) return false;
+                    const eventDate = new Date(event.eventDate);
+                    return eventDate.getDate() === day && 
+                           eventDate.getMonth() === currentDate.getMonth() &&
+                           eventDate.getFullYear() === currentDate.getFullYear();
+                  }) : [];
+
+                  return (
+                    <div
+                      key={index}
+                      className={`min-h-[100px] p-2 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors ${
+                        isToday(day as number, index) ? 'bg-blue-50' : ''
                       }`}
+                      style={{ 
+                        borderColor: '#E8DFD1',
+                        backgroundColor: !isCurrentMonth(index) ? '#F9F7F5' : undefined
+                      }}
                     >
-                      {day}
-                    </span>
-                  </div>
-                ))}
+                      <span 
+                        className={`text-sm font-medium ${
+                          isCurrentMonth(index) ? 'text-[#5B4A3A]' : 'text-[#C4B5A5]'
+                        }`}
+                      >
+                        {day}
+                      </span>
+                      {/* Events for this day */}
+                      <div className="mt-1 space-y-1">
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <div
+                            key={event.id}
+                            className="text-xs px-1.5 py-0.5 rounded truncate"
+                            style={{ backgroundColor: '#E07B39', color: 'white' }}
+                            title={event.eventName || event.name}
+                          >
+                            {event.eventTime && <span className="mr-1">{event.eventTime}</span>}
+                            {event.eventName || event.name}
+                          </div>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <div className="text-xs px-1.5 py-0.5 text-[#8B7355]">
+                            +{dayEvents.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Floating Action Button */}
-        <button
-          className="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#E07B39' }}
-        >
-          <Plus className="h-6 w-6 text-white" />
-        </button>
       </div>
+
+      {/* Create Event Dialog */}
+      <CreateGuestlistDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        members={members}
+        communityId={community.communityId}
+        communityName={community.name}
+        onGuestlistCreated={handleEventCreated}
+      />
     </div>
   );
 }

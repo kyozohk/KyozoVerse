@@ -5,9 +5,10 @@ import { useParams } from 'next/navigation';
 import { db } from '@/firebase/firestore';
 import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, doc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage, Input } from '@/components/ui';
-import { Search, Mail, MessageSquare, Loader2, Lock, Globe, Inbox } from 'lucide-react';
+import { Search, Mail, MessageSquare, Lock, Globe, Inbox } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { Banner } from '@/components/ui/banner';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { getUserRoleInCommunity } from '@/lib/community-utils';
 
@@ -172,7 +173,11 @@ function InboxContent() {
 
   const selectedConversation = conversations.find((c) => c.recipientId === selectedConversationId);
 
-  if (!community && !loading) {
+  if (loading) {
+    return <PageLoadingSkeleton showInbox={true} />;
+  }
+
+  if (!community) {
     return (
       <div className="p-8">
         <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
@@ -258,12 +263,7 @@ function InboxContent() {
 
             {/* Conversations List */}
             <div className="flex-1 overflow-y-auto">
-              {loading ? (
-                <div className="p-4 text-center text-[#8B7355]">
-                  <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                  Loading conversations...
-                </div>
-              ) : filteredConversations.length === 0 ? (
+              {filteredConversations.length === 0 ? (
                 <div className="p-4 text-center text-[#8B7355]">
                   <Inbox className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   No conversations yet
@@ -418,13 +418,7 @@ function InboxContent() {
 
 export default function InboxPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen items-center justify-center" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#5B4A3A' }} />
-        </div>
-      }
-    >
+    <Suspense fallback={<PageLoadingSkeleton showInbox={true} />}>
       <InboxContent />
     </Suspense>
   );

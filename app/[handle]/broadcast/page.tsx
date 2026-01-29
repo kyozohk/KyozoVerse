@@ -5,8 +5,9 @@ import { useEffect, useState, Suspense, useCallback } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Mail, Lock, Globe } from 'lucide-react';
+import { Mail, Lock, Globe } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { EnhancedBroadcastDialog } from '@/components/broadcast/enhanced-broadcast-dialog';
@@ -114,7 +115,11 @@ function BroadcastContent() {
     </div>
   );
 
-  if (!community && !isLoading) {
+  if (isLoading) {
+    return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!community) {
     return (
       <div className="p-8">Community not found</div>
     );
@@ -187,11 +192,7 @@ function BroadcastContent() {
 
 export default function BroadcastPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense fallback={<PageLoadingSkeleton showMemberList={true} />}>
       <BroadcastContent />
     </Suspense>
   );

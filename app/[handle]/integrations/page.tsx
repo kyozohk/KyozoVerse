@@ -9,6 +9,7 @@ import { Globe, Lock, ExternalLink, Calendar, Music, Instagram, Mail, UtensilsCr
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 
 interface Integration {
   id: string;
@@ -95,7 +96,11 @@ export default function IntegrationsPage() {
     },
   ];
 
-  if (!community && !loading) {
+  if (loading) {
+    return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!community) {
     return (
       <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
         <div className="p-8">

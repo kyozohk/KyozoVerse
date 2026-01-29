@@ -2,6 +2,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "guestlists",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "communityId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "whatsapp_messages",
       "queryScope": "COLLECTION",
       "fields": [
