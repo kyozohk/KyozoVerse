@@ -4,17 +4,21 @@ import {
     BarChart3,
     CreditCard,
     Settings,
-    Users,
-    Bell,
-    Inbox,
-    Rss,
-    Ticket,
-    Plug,
-    LayoutDashboard,
     Plus,
-    Calendar,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import {
+    OverviewIcon,
+    AudienceIcon,
+    BroadcastIcon,
+    GuestlistIcon,
+    ScheduleIcon,
+    InboxIcon,
+    FeedIcon,
+    IntegrationsIcon,
+} from '@/components/icons/kyozo-icons';
+
+type IconComponent = LucideIcon | React.ComponentType<{ className?: string }>;
 import { THEME_COLORS, type CategoryKey } from './theme-colors';
 
 
@@ -34,20 +38,20 @@ export const mainNavItems: NavItem[] = [
 interface CommunityNavItem {
   href: (handle: string) => string;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   section: string;
 }
 
 export const communityNavItems: CommunityNavItem[] = [
-    { href: (handle) => `/${handle}`, icon: LayoutDashboard, label: 'Overview', section: 'communities' },
-    { href: (handle) => `/${handle}/audience`, icon: Users, label: 'Audience', section: 'communities' },
-    { href: (handle) => `/${handle}/broadcast`, icon: Bell, label: 'Broadcast', section: 'communities' },
-    { href: (handle) => `/${handle}/guestlist`, icon: Ticket, label: 'RSVP & Guestlist', section: 'communities' },
-    { href: (handle) => `/${handle}/schedule`, icon: Calendar, label: 'Schedule', section: 'communities' },
-    { href: (handle) => `/${handle}/inbox`, icon: Inbox, label: 'Inbox', section: 'communities' },
-    { href: (handle) => `/${handle}/feed`, icon: Rss, label: 'Feed', section: 'communities' },    
-    { href: (handle) => `/${handle}/integrations`, icon: Plug, label: 'Integrations', section: 'communities' },
-    { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settingss', section: 'communities' },
+    { href: (handle) => `/${handle}`, icon: OverviewIcon, label: 'Overview', section: 'communities' },
+    { href: (handle) => `/${handle}/audience`, icon: AudienceIcon, label: 'Audience', section: 'communities' },
+    { href: (handle) => `/${handle}/broadcast`, icon: BroadcastIcon, label: 'Broadcast', section: 'communities' },
+    { href: (handle) => `/${handle}/guestlist`, icon: GuestlistIcon, label: 'RSVP & Guestlist', section: 'communities' },
+    { href: (handle) => `/${handle}/schedule`, icon: ScheduleIcon, label: 'Schedule', section: 'communities' },
+    { href: (handle) => `/${handle}/inbox`, icon: InboxIcon, label: 'Inbox', section: 'communities' },
+    { href: (handle) => `/${handle}/feed`, icon: FeedIcon, label: 'Feed', section: 'communities' },    
+    { href: (handle) => `/${handle}/integrations`, icon: IntegrationsIcon, label: 'Integrations', section: 'communities' },
+    { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settings', section: 'communities' },
     { href: (handle) => `/${handle}/morefeatures`, icon: Plus, label: 'More Features', section: 'morefeatures' },
 ];
 

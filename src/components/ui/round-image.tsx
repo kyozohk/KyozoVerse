@@ -36,7 +36,7 @@ export function RoundImage({
   };
 
   // Check if image is a placeholder or missing
-  const isPlaceholder = !src || src.includes('placeholder-avatar') || src.includes('placeholder-community');
+  const isPlaceholder = !src || src.includes('placeholder') || src.includes('default-avatar') || src === '/default-avatar.png';
   const iconSize = Math.floor(size * 0.5); // Icon is 50% of container size
 
   return (

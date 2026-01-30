@@ -25,6 +25,7 @@ interface EventCalendarViewProps {
   events: CalendarEvent[];
   isLoading?: boolean;
   onEventClick?: (event: CalendarEvent) => void;
+  onDayClick?: (date: Date, events: CalendarEvent[]) => void;
 }
 
 type ViewMode = 'calendar' | 'cards' | 'list';
@@ -33,6 +34,7 @@ export function EventCalendarView({
   events,
   isLoading = false,
   onEventClick,
+  onDayClick,
 }: EventCalendarViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -130,6 +132,75 @@ export function EventCalendarView({
     });
   };
 
+  const getDateForDay = (day: number, index: number): Date | null => {
+    if (!isCurrentMonth(index)) return null;
+    return new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+  };
+
+  const handleDayClick = (day: number, index: number, dayEvents: CalendarEvent[]) => {
+    if (!isCurrentMonth(index)) return;
+    const clickedDate = getDateForDay(day, index);
+    if (clickedDate) {
+      onDayClick?.(clickedDate, dayEvents);
+    }
+  };
+
+  // Render events in a grid layout based on count
+  const renderEventGrid = (dayEvents: CalendarEvent[]) => {
+    if (dayEvents.length === 0) return null;
+
+    if (dayEvents.length === 1) {
+      const event = dayEvents[0];
+      return (
+        <div
+          className="text-xs px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 h-full flex items-center"
+          style={{ backgroundColor: '#E07B39', color: 'white' }}
+          title={event.eventName || event.name}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEventClick?.(event);
+          }}
+        >
+          <span className="truncate">{event.eventName || event.name}</span>
+        </div>
+      );
+    }
+
+    // For 2+ events, use a grid layout
+    const gridClass = dayEvents.length === 2 
+      ? 'grid-cols-2' 
+      : dayEvents.length === 3 
+        ? 'grid-cols-2' 
+        : 'grid-cols-2';
+
+    return (
+      <div className={`grid ${gridClass} gap-0.5 h-full`}>
+        {dayEvents.slice(0, 4).map((event, idx) => (
+          <div
+            key={event.id}
+            className={cn(
+              "text-[10px] px-1 py-0.5 rounded cursor-pointer hover:opacity-80 flex items-center justify-center overflow-hidden",
+              dayEvents.length === 3 && idx === 2 && "col-span-2"
+            )}
+            style={{ backgroundColor: '#E07B39', color: 'white' }}
+            title={event.eventName || event.name}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEventClick?.(event);
+            }}
+          >
+            <span className="truncate text-center">{event.eventTime || (event.eventName || event.name).substring(0, 6)}</span>
+          </div>
+        ))}
+        {dayEvents.length > 4 && (
+          <div className="col-span-2 text-[10px] text-center text-[#8B7355]">
+            +{dayEvents.length - 4} more
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const formatEventDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -161,44 +232,26 @@ export function EventCalendarView({
             <div
               key={index}
               className={cn(
-                "min-h-[100px] p-2 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors",
+                "min-h-[100px] p-2 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors flex flex-col",
                 isToday(day, index) && "bg-blue-50"
               )}
               style={{ 
                 borderColor: '#E8DFD1',
                 backgroundColor: !isCurrentMonth(index) ? '#F9F7F5' : undefined
               }}
+              onClick={() => handleDayClick(day, index, dayEvents)}
             >
               <span 
                 className={cn(
-                  "text-sm font-medium",
+                  "text-sm font-medium mb-1",
                   isCurrentMonth(index) ? 'text-[#5B4A3A]' : 'text-[#C4B5A5]'
                 )}
               >
                 {day}
               </span>
               {/* Events for this day */}
-              <div className="mt-1 space-y-1">
-                {dayEvents.slice(0, 2).map((event) => (
-                  <div
-                    key={event.id}
-                    className="text-xs px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
-                    style={{ backgroundColor: '#E07B39', color: 'white' }}
-                    title={event.eventName || event.name}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEventClick?.(event);
-                    }}
-                  >
-                    {event.eventTime && <span className="mr-1">{event.eventTime}</span>}
-                    {event.eventName || event.name}
-                  </div>
-                ))}
-                {dayEvents.length > 2 && (
-                  <div className="text-xs px-1.5 py-0.5 text-[#8B7355]">
-                    +{dayEvents.length - 2} more
-                  </div>
-                )}
+              <div className="flex-1 min-h-0">
+                {renderEventGrid(dayEvents)}
               </div>
             </div>
           );

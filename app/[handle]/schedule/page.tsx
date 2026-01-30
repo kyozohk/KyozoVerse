@@ -8,7 +8,7 @@ import { Community } from '@/lib/types';
 import { Globe, Lock, PlusCircle } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
-import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
+import { CreateEventDialog } from '@/components/schedule/create-event-dialog';
 import { EventCalendarView, CalendarEvent } from '@/components/schedule/event-calendar-view';
 
 interface MemberData {
@@ -31,6 +31,8 @@ export default function SchedulePage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   // Fetch community and members
   useEffect(() => {
@@ -106,7 +108,26 @@ export default function SchedulePage() {
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event);
+    setSelectedEvent(event);
     // TODO: Open event details dialog
+  };
+
+  const handleDayClick = (date: Date, dayEvents: CalendarEvent[]) => {
+    // Format date as YYYY-MM-DD for the input
+    const formattedDate = date.toISOString().split('T')[0];
+    
+    if (dayEvents.length === 0) {
+      // No events on this day - open create dialog with this date
+      setSelectedDate(formattedDate);
+      setIsCreateDialogOpen(true);
+    } else if (dayEvents.length === 1) {
+      // Single event - open that event
+      handleEventClick(dayEvents[0]);
+    } else {
+      // Multiple events - for now, open create dialog (could show a picker later)
+      setSelectedDate(formattedDate);
+      setIsCreateDialogOpen(true);
+    }
   };
 
   if (loading) {
@@ -154,27 +175,27 @@ export default function SchedulePage() {
               height="16rem"
             />
           )}
-          <div className="mb-4 px-6 pt-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#5B4A3A' }}>COMMUNITY CALENDAR</h2>
-            <p className="text-sm" style={{ color: '#8B7355' }}>Schedule and manage your creative community events</p>
-          </div>
-          
           <EventCalendarView
             events={events}
             isLoading={loading}
             onEventClick={handleEventClick}
+            onDayClick={handleDayClick}
           />
         </div>
       </div>
 
       {/* Create Event Dialog */}
-      <CreateGuestlistDialog
+      <CreateEventDialog
         isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
+        onClose={() => {
+          setIsCreateDialogOpen(false);
+          setSelectedDate('');
+        }}
         members={members}
         communityId={community.communityId}
         communityName={community.name}
-        onGuestlistCreated={handleEventCreated}
+        onEventCreated={handleEventCreated}
+        initialDate={selectedDate}
       />
     </div>
   );
