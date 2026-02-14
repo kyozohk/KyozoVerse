@@ -104,7 +104,7 @@ export async function POST(request: Request) {
           to: email,
           subject: '🎉 Welcome to KyozoVerse - Complete Your Registration',
           html: userEmailHtml,
-          from: 'noreply@kyozo.com',
+          from: 'Kyozo <dev@kyozo.com>',
           replyTo: adminEmail,
         }),
       });

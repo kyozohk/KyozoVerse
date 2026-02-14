@@ -105,7 +105,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           to: recipients,
           subject: `New Post in ${post.communityHandle}: ${post.title}`,
           html: postHtml,
-          from: 'Kyozo <dev@contact.kyozo.com>', // Verified Resend domain
+          from: 'Kyozo <dev@kyozo.com>', // Verified Resend domain
         }),
       });
 

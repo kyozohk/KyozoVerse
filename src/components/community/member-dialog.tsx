@@ -391,14 +391,15 @@ export function MemberDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={submitting}
                 className="w-full"
+                style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
                 >
                 Cancel
                 </CustomButton>
                 <CustomButton
-                variant="outline"
                 onClick={handleSubmit}
                 className="w-full"
                 disabled={submitting}
+                style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
                 >
                 {submitting ? (mode === "add" ? "Adding..." : "Saving...") : "Save changes"}
                 </CustomButton>

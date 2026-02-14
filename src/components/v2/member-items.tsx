@@ -66,7 +66,9 @@ const getRoleBadgeColor = (role?: string) => {
 const isValidImageUrl = (url: string) => {
   if (!url) return false;
   if (url === '/placeholder-avatar.png') return false;
+  if (url === '/default-avatar.png') return false;
   if (url.includes('placeholder')) return false;
+  if (url.includes('default-avatar')) return false;
   return true;
 };
 

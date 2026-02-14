@@ -532,21 +532,21 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     )}
                 </div>
 
-                 <div className="mt-8 grid grid-cols-2 gap-4 flex-shrink-0">
+                 <div className="mt-8 grid grid-cols-2 gap-4 flex-shrink-0 pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
                     {currentStep > 0 ? (
-                        <CustomButton variant="filled" onClick={handlePrev} className="w-full py-3 text-base font-medium">
+                        <CustomButton variant="outline" onClick={handlePrev} className="w-full py-3 text-base font-medium" style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Previous
                         </CustomButton>
                     ) : (
-                        <CustomButton variant="filled" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium">Cancel</CustomButton>
+                        <CustomButton variant="outline" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium" style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>Cancel</CustomButton>
                     )}
                     
                     {currentStep < STEPS.length - 1 ? (
                         <CustomButton 
                             onClick={handleNext} 
                             className="w-full py-3 text-base font-medium"
-                            variant="filled"
+                            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
                         >
                             Next
                             <ArrowRight className="h-4 w-4 ml-2" />
@@ -556,7 +556,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                             onClick={handleFormSubmit} 
                             disabled={isSubmitting} 
                             className="w-full py-3 text-base font-medium"
-                            variant="filled"
+                            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
                         >
                             {isSubmitting ? 'Saving...' : 'Finish'}
                         </CustomButton>

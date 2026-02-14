@@ -291,11 +291,6 @@ export default function GuestlistPage() {
               height="16rem"
             />
           )}
-          <div className="mb-4 px-6 pt-6">
-            <h2 className="text-xl font-semibold" style={{ color: '#5B4A3A' }}>RSVP & Guestlist</h2>
-            <p className="text-sm" style={{ color: '#8B7355' }}>Manage event RSVPs and guest lists</p>
-          </div>
-          
           <EnhancedListView
             items={guestlists}
             renderGridItem={renderGuestlistGridItem}

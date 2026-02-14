@@ -608,16 +608,17 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
             onClick={currentStep === BroadcastStep.RECIPIENTS ? () => onOpenChange(false) : goToPreviousStep}
             disabled={sendingBroadcast}
             className="w-full"
+            style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
           >
             {currentStep === BroadcastStep.RECIPIENTS ? "Cancel" : "Back"}
           </CustomButton>
           
           <CustomButton
-            variant="outline"
             onClick={goToNextStep}
             disabled={(currentStep === BroadcastStep.TEMPLATE && !areVariablesFilled()) || sendingBroadcast || selectedMembers.length === 0}
             isLoading={sendingBroadcast}
             className="w-full"
+            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
           >
             {currentStep === BroadcastStep.CONFIRM ? "Send Message" : "Next"}
           </CustomButton>

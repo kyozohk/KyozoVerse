@@ -79,20 +79,21 @@ export function WhatsAppMessageDialog({
           </p>
         </div>
 
-        <div className="mt-auto flex flex-row justify-end gap-3 pt-4">
+        <div className="mt-auto flex flex-row justify-end gap-3 pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
           <CustomButton
             variant="outline"
             onClick={handleClose}
             disabled={sending}
             className="w-full"
+            style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
           >
             Cancel
           </CustomButton>
           <CustomButton
-            variant="outline"
             onClick={handleSend}
             disabled={!message.trim() || sending}
             className="w-full"
+            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
           >
             <Send className="h-4 w-4 mr-2" />
             {sending ? 'Opening...' : 'Send via WhatsApp'}

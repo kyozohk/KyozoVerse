@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Users, Loader2, Calendar, MapPin, Clock } from 'lucide-react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Users, Loader2, Calendar, MapPin, Clock, Image as ImageIcon, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +16,7 @@ import {
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/firebase/firestore';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -38,6 +39,7 @@ interface CreateGuestlistDialogProps {
   communityId: string;
   communityName?: string;
   onGuestlistCreated?: (guestlist: any) => void;
+  initialDate?: string;
 }
 
 export function CreateGuestlistDialog({
@@ -47,16 +49,135 @@ export function CreateGuestlistDialog({
   communityId,
   communityName,
   onGuestlistCreated,
+  initialDate,
 }: CreateGuestlistDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [guestlistName, setGuestlistName] = useState('');
   const [eventName, setEventName] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [eventTime, setEventTime] = useState('');
+  const [startDate, setStartDate] = useState(initialDate || '');
+  const [startTime, setStartTime] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [description, setDescription] = useState('');
+  const [eventImage, setEventImage] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update startDate when initialDate changes
+  useEffect(() => {
+    if (initialDate) {
+      setStartDate(initialDate);
+      setEndDate(initialDate); // Default end date to same day
+    }
+  }, [initialDate]);
+
+  // Auto-fill end date when start date changes
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    // Auto-fill end date to same day if not already set or if it's before start date
+    if (!endDate || endDate < value) {
+      setEndDate(value);
+    }
+  };
+
+  // Auto-fill end time to 3 hours after start time
+  const handleStartTimeChange = (value: string) => {
+    setStartTime(value);
+    // Auto-fill end time to 3 hours later
+    if (value) {
+      const [hours, minutes] = value.split(':').map(Number);
+      let endHours = hours + 3;
+      let newEndDate = endDate || startDate;
+      
+      // Handle overflow past midnight
+      if (endHours >= 24) {
+        endHours = endHours - 24;
+        // Move end date to next day if we have a start date
+        if (startDate) {
+          const nextDay = new Date(startDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          newEndDate = nextDay.toISOString().split('T')[0];
+          setEndDate(newEndDate);
+        }
+      }
+      
+      const endTimeStr = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      setEndTime(endTimeStr);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Please select an image under 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('communityId', communityId);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'x-user-id': user?.uid || '',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      setEventImage(data.url);
+      
+      toast({
+        title: 'Image Uploaded',
+        description: 'Event image uploaded successfully.',
+      });
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload image. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setEventImage('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleCreateGuestlist = async () => {
     if (!guestlistName.trim()) {
@@ -83,9 +204,14 @@ export function CreateGuestlistDialog({
       const guestlistData = {
         name: guestlistName.trim(),
         eventName: eventName.trim() || null,
-        eventDate: eventDate || null,
-        eventTime: eventTime || null,
+        eventDate: startDate || null, // Keep for backward compatibility
+        eventTime: startTime || null, // Keep for backward compatibility
+        startDate: startDate || null,
+        startTime: startTime || null,
+        endDate: endDate || null,
+        endTime: endTime || null,
         eventLocation: eventLocation.trim() || null,
+        eventImage: eventImage || null,
         description: description.trim() || null,
         communityId,
         members: selectedMembers.map(m => ({
@@ -118,9 +244,12 @@ export function CreateGuestlistDialog({
       // Reset form
       setGuestlistName('');
       setEventName('');
-      setEventDate('');
-      setEventTime('');
+      setStartDate('');
+      setStartTime('');
+      setEndDate('');
+      setEndTime('');
       setEventLocation('');
+      setEventImage('');
       setDescription('');
       setSelectedMembers([]);
       
@@ -144,9 +273,12 @@ export function CreateGuestlistDialog({
   const handleClose = () => {
     setGuestlistName('');
     setEventName('');
-    setEventDate('');
-    setEventTime('');
+    setStartDate('');
+    setStartTime('');
+    setEndDate('');
+    setEndTime('');
     setEventLocation('');
+    setEventImage('');
     setDescription('');
     setSelectedMembers([]);
     onClose();
@@ -200,29 +332,58 @@ export function CreateGuestlistDialog({
                   />
                 </div>
 
-                {/* Date and Time */}
+                {/* Start Date and Time */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <Label htmlFor="eventDate" className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
-                      <Calendar className="h-3 w-3" /> Date
+                    <Label htmlFor="startDate" className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
+                      <Calendar className="h-3 w-3" /> Start Date
                     </Label>
                     <Input
-                      id="eventDate"
+                      id="startDate"
                       type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
+                      value={startDate}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
                       style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="eventTime" className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
-                      <Clock className="h-3 w-3" /> Time
+                    <Label htmlFor="startTime" className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
+                      <Clock className="h-3 w-3" /> Start Time
                     </Label>
                     <Input
-                      id="eventTime"
+                      id="startTime"
                       type="time"
-                      value={eventTime}
-                      onChange={(e) => setEventTime(e.target.value)}
+                      value={startTime}
+                      onChange={(e) => handleStartTimeChange(e.target.value)}
+                      style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+                    />
+                  </div>
+                </div>
+
+                {/* End Date and Time */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <Label htmlFor="endDate" className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
+                      <Calendar className="h-3 w-3" /> End Date
+                    </Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate}
+                      style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="endTime" className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
+                      <Clock className="h-3 w-3" /> End Time
+                    </Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
                       style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
                     />
                   </div>
@@ -240,6 +401,52 @@ export function CreateGuestlistDialog({
                     onChange={(e) => setEventLocation(e.target.value)}
                     style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
                   />
+                </div>
+
+                {/* Event Image */}
+                <div>
+                  <Label className="text-sm flex items-center gap-1" style={{ color: '#8B7355' }}>
+                    <ImageIcon className="h-3 w-3" /> Event Image
+                  </Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  {eventImage ? (
+                    <div className="relative mt-2">
+                      <div 
+                        className="h-32 rounded-lg bg-cover bg-center"
+                        style={{ backgroundImage: `url(${eventImage})` }}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                      >
+                        <X className="h-4 w-4 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                      className="mt-2 w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-white/50 transition-colors"
+                      style={{ borderColor: '#E8DFD1', color: '#8B7355' }}
+                    >
+                      {isUploadingImage ? (
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6" />
+                          <span className="text-sm">Click to upload image</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 

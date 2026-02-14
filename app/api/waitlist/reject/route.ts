@@ -105,7 +105,7 @@ export async function POST(request: Request) {
           to: requestData.email,
           subject: 'Update on Your KyozoVerse Access Request',
           html: rejectionEmailHtml,
-          from: 'noreply@kyozo.com',
+          from: 'Kyozo <dev@kyozo.com>',
           replyTo: 'dev@kyozo.com',
         }),
       });

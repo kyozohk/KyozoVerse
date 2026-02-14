@@ -64,7 +64,7 @@ export function EnhancedBroadcastDialog({
   // Use community-specific email domain if handle is provided, otherwise fallback
   const effectiveFromEmail = fromEmail || (communityHandle 
     ? `message@${communityHandle}.kyozo.com` 
-    : 'message@contact.kyozo.com');
+    : 'Kyozo <dev@kyozo.com>');
   const { toast } = useToast();
   const [mode, setMode] = useState<BroadcastMode>('email');
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
