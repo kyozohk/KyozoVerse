@@ -22,11 +22,10 @@ interface TextPostCardProps {
 export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
     const { user } = useAuth();
     const { toast } = useToast();
-    // Show edit/delete options if:
-    // 1. User is logged in AND is the post creator, OR
-    // 2. _canEdit flag is explicitly set (for owners/admins)
-    // Never show in public view (_isPublicView flag)
-    const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
+    
+    // Admin feed - always show delete button (no permission checks)
+    const isPostCreator = true;
+    console.log('🎯 TextPostCard - isPostCreator:', isPostCreator, 'postId:', post.id);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     
@@ -70,17 +69,12 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
                 {/* Background Image */}
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-50 to-pink-50 z-0" />
                 
-                {/* Edit/Delete buttons for post creator */}
-                {isPostCreator && (
-                    <div className="absolute top-2 right-2 flex gap-1 z-20">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => post._onEdit?.()}>
-                            <Edit className="h-4 w-4 text-gray-700" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => setShowDeleteDialog(true)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                    </div>
-                )}
+                {/* Edit/Delete buttons - ALWAYS VISIBLE IN ADMIN FEED */}
+                <div className="absolute top-2 right-2 flex gap-1 z-50">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white hover:bg-gray-100 rounded-full shadow-md" onClick={() => setShowDeleteDialog(true)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                </div>
                 
                 <div className={cn(
                     "relative z-10 flex flex-col",
