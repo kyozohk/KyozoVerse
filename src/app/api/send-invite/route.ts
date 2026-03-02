@@ -144,7 +144,7 @@ export async function POST(request: Request) {
           to: process.env.ADMIN_EMAIL || 'dev@kyozo.com',
           subject: `🎉 New Waitlist Request: ${firstName} ${lastName}`,
           html: adminEmailHtml,
-          from: 'noreply@kyozo.com',
+          from: 'Kyozo <dev@kyozo.com>',
           replyTo: process.env.ADMIN_EMAIL || 'dev@kyozo.com',
         }),
       });

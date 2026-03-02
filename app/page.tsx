@@ -8,6 +8,7 @@ import { CustomButton, CustomFormDialog, Input, PasswordInput, PhoneInput, Check
 import { RequestAccessDialog } from '@/components/auth/request-access-dialog';
 import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
+import { EmailVerificationDialog } from '@/components/auth/email-verification-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { FirebaseError } from 'firebase/app';
 import { Hero } from '@/components/landing/hero';
@@ -40,6 +41,15 @@ export default function Home() {
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpError, setSignUpError] = useState<string | null>(null);
+  const [isVerificationOpen, setIsVerificationOpen] = useState(false);
+  const [pendingSignUpData, setPendingSignUpData] = useState<{
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+  } | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const { user, signIn, signOut, signUp, loading } = useAuth();
 
   useEffect(() => {
@@ -96,27 +106,102 @@ export default function Home() {
   };
 
   const handleSignUp = async () => {
+    console.log('🔐 [SIGNUP] Starting signup process...');
     setSignUpError(null);
     try {
+      console.log('🔐 [SIGNUP] Form data:', { 
+        firstName: signUpFirstName, 
+        lastName: signUpLastName, 
+        email: signUpEmail, 
+        phone: signUpPhone,
+        passwordLength: signUpPassword?.length,
+        agreedToPrivacy 
+      });
+      
       if (!signUpFirstName || !signUpLastName || !signUpPhone || !signUpEmail || !signUpPassword) {
+        console.log('🔐 [SIGNUP] ERROR: Missing required fields');
         setSignUpError("Please fill in all fields.");
         return;
       }
       if (!agreedToPrivacy) {
+        console.log('🔐 [SIGNUP] ERROR: Privacy policy not agreed');
         setSignUpError("Please agree to the Privacy Policy to continue.");
         return;
       }
       if (signUpPassword.length < 6) {
+        console.log('🔐 [SIGNUP] ERROR: Password too short');
         setSignUpError("Password must be at least 6 characters.");
         return;
       }
-      // Clean phone number: remove + and spaces
-      const cleanPhone = signUpPhone.replace(/[\s+]/g, '');
-      const displayName = `${signUpFirstName} ${signUpLastName}`;
       
-      // TODO: Store cleanPhone in user profile
-      await signUp(signUpEmail, signUpPassword, { displayName });
+      setIsSigningUp(true);
+      console.log('🔐 [SIGNUP] Validation passed, sending verification code...');
+      
+      // Send verification code first
+      console.log('🔐 [SIGNUP] Calling /api/send-verification-code with:', { email: signUpEmail, firstName: signUpFirstName });
+      const response = await fetch('/api/send-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: signUpEmail, 
+          firstName: signUpFirstName 
+        }),
+      });
+      
+      console.log('🔐 [SIGNUP] API response status:', response.status);
+      const data = await response.json();
+      console.log('🔐 [SIGNUP] API response data:', data);
+      
+      if (!response.ok) {
+        console.error('🔐 [SIGNUP] ERROR: API returned error:', data);
+        throw new Error(data.error || 'Failed to send verification code');
+      }
+      
+      console.log('🔐 [SIGNUP] SUCCESS: Verification code sent, emailId:', data.emailId);
+      
+      // Store pending signup data
+      setPendingSignUpData({
+        email: signUpEmail,
+        password: signUpPassword,
+        firstName: signUpFirstName,
+        lastName: signUpLastName,
+        phone: signUpPhone,
+      });
+      
+      // Close signup dialog and open verification dialog
       setIsSignUpOpen(false);
+      setIsVerificationOpen(true);
+      
+    } catch (error: any) {
+        let description = "An unexpected error occurred. Please try again.";
+        if (error.message) {
+          description = error.message;
+        }
+        setSignUpError(description);
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+  
+  const handleVerificationComplete = async () => {
+    if (!pendingSignUpData) return;
+    
+    try {
+      const { email, password, firstName, lastName, phone } = pendingSignUpData;
+      const cleanPhone = phone.replace(/[\s+]/g, '');
+      const displayName = `${firstName} ${lastName}`;
+      
+      await signUp(email, password, { displayName });
+      
+      // Send welcome email
+      await fetch('/api/send-welcome-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, firstName, lastName }),
+      });
+      
+      setIsVerificationOpen(false);
+      setPendingSignUpData(null);
       // The auth provider will handle the redirect
     } catch (error: any) {
         let description = "An unexpected error occurred. Please try again.";
@@ -130,7 +215,22 @@ export default function Home() {
             }
         }
         setSignUpError(description);
+        setIsVerificationOpen(false);
+        setIsSignUpOpen(true);
     }
+  };
+  
+  const handleResendVerificationCode = async () => {
+    if (!pendingSignUpData) return;
+    
+    await fetch('/api/send-verification-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: pendingSignUpData.email, 
+        firstName: pendingSignUpData.firstName 
+      }),
+    });
   };
   
     // If the user is logged in, we render null while the useEffect redirects
@@ -374,6 +474,15 @@ export default function Home() {
       <PrivacyPolicyDialog 
         open={showPrivacyDialog} 
         onOpenChange={setShowPrivacyDialog}
+      />
+
+      <EmailVerificationDialog
+        open={isVerificationOpen}
+        onOpenChange={setIsVerificationOpen}
+        email={pendingSignUpData?.email || ''}
+        firstName={pendingSignUpData?.firstName || ''}
+        onVerified={handleVerificationComplete}
+        onResend={handleResendVerificationCode}
       />
     </div>
   );

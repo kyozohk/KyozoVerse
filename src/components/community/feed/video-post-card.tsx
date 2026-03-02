@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlayCircle, PauseCircle, Edit, Trash2, Maximize2, Lock, Play, Pause } from "lucide-react";
-import { useCommunityAuth } from "@/hooks/use-community-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { type Post } from "@/lib/types";
 import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -18,9 +18,11 @@ interface VideoPostCardProps {
 }
 
 export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
-  const { user } = useCommunityAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
+  
+  // Admin feed - always show delete button (no permission checks)
+  const isPostCreator = true;
   const [isPlaying, setIsPlaying] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,21 +34,37 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
     
     setIsDeleting(true);
     try {
-      await deletePost(post.id, post.content.mediaUrls);
+      const response = await fetch('/api/posts/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId: post.id,
+          mediaUrls: post.content.mediaUrls || [],
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete post');
+      }
+
       toast({
         title: "Post deleted",
-        description: "Your video post has been successfully deleted.",
+        description: "The video post has been successfully deleted.",
       });
-    } catch (error) {
+      setShowDeleteDialog(false);
+      window.location.reload();
+    } catch (error: any) {
       console.error("Error deleting post:", error);
       toast({
         title: "Error",
-        description: "Failed to delete video post. Please try again.",
+        description: error.message || "Failed to delete video post. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
-      setShowDeleteDialog(false);
     }
   };
   
@@ -100,22 +118,18 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
   return (
     <>
       <div className="relative overflow-hidden rounded-lg shadow-md transition-all hover:shadow-lg group">
-        {isPostCreator && (
-          <div className="absolute top-2 right-2 flex gap-1 z-30">
-            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full" onClick={() => post._onEdit?.()}>
-              <Edit className="h-4 w-4 text-gray-700" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 bg-white/80 hover:bg-white rounded-full"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </div>
-        )}
+        {/* Delete button - ALWAYS VISIBLE IN ADMIN FEED */}
+        <div className="absolute top-2 right-2 flex gap-1 z-50">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 bg-white hover:bg-gray-100 rounded-full shadow-md"
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
         
         {post.content.mediaUrls && post.content.mediaUrls.length > 0 ? (
           <div className="relative h-64 overflow-hidden">

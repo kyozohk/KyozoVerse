@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use the verified Kyozo domain for sending emails
-    const fromAddress = from || 'Kyozo <message@contact.kyozo.com>';
+    const fromAddress = from || 'Kyozo <dev@kyozo.com>';
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',

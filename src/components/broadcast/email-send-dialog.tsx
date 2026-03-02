@@ -99,7 +99,7 @@ export function EmailSendDialog({
             to: [email],
             subject: personalizedSubject,
             html: htmlMessage,
-            from: 'dev@kyozo.com',
+            from: 'Kyozo <dev@kyozo.com>',
           }),
         });
 

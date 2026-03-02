@@ -180,7 +180,7 @@ function BroadcastContent() {
           },
           body: JSON.stringify({
             to: member.email,
-            from: 'Kyozo <dev@contact.kyozo.com>',
+            from: 'Kyozo <dev@kyozo.com>',
             subject: broadcastSubject,
             html: `
               <!DOCTYPE html>
