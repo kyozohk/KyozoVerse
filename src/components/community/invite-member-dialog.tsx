@@ -130,14 +130,37 @@ Looking forward to seeing you there!`;
     }
 
     try {
-      // Use community handle domain for sending emails
-      // Format: Community Name <messages@handle.kyozo.com>
-      const senderEmail = `${community.name} <messages@${community.handle}.kyozo.com>`;
+      console.log('📧 Sending email to:', email);
+      console.log('🏷️ Community handle:', community.handle);
+      
+      // Use the correct email domain for Willer community
+      // The community URL is /wille but email domain should be willer.kyozo.com
+      const emailHandle = community.handle === 'wille' ? 'willer' : community.handle;
+      const senderEmail = `${community.name} <messages@${emailHandle}.kyozo.com>`;
+      console.log('📤 From address:', senderEmail);
       
       // Get community branding colors (fallback to defaults)
       const primaryColor = (community as any).primaryColor || '#843484';
       const bannerImage = community.communityBackgroundImage;
       const logoImage = community.communityProfileImage;
+      
+      // Simplified HTML content to avoid parsing issues
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1a1a1a; border-radius: 12px; padding: 40px; text-align: center; color: white;">
+          <h1 style="color: #ffffff; margin-bottom: 10px; font-size: 28px;">${community.name}</h1>
+          ${community.tagline ? `<p style="color: #ff6b35; margin-bottom: 30px; font-size: 16px;">${community.tagline}</p>` : ''}
+          <div style="background-color: ${primaryColor}; color: white; padding: 15px 25px; border-radius: 8px; display: inline-block; margin-bottom: 20px;">
+            <strong>You're Invited!</strong>
+          </div>
+          <div style="color: #cccccc; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap;">${inviteMessage}</div>
+          <a href="${inviteUrl}" style="display: inline-block; background-color: ${primaryColor}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Join ${community.name}</a>
+          <div style="border-top: 1px solid #333; padding-top: 20px; margin-top: 30px;">
+            <p style="color: #999; font-size: 12px; margin: 0;">Sent via KyozoVerse</p>
+          </div>
+        </div>
+      `;
+      
+      console.log('📨 Sending email...');
       
       // Send email via Resend API
       const response = await fetch('/api/send-email', {
@@ -149,53 +172,53 @@ Looking forward to seeing you there!`;
           to: email,
           from: senderEmail,
           subject: `Join ${community.name} on KyozoVerse`,
-          html: `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              </head>
-              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f3f4f6;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  ${bannerImage ? `
-                  <div style="width: 100%; height: 180px; background-image: url('${bannerImage}'); background-size: cover; background-position: center; position: relative;">
-                    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));"></div>
-                    ${logoImage ? `
-                    <div style="position: absolute; bottom: -40px; left: 24px;">
-                      <img src="${logoImage}" alt="${community.name}" style="width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; object-fit: cover;" />
-                    </div>
-                    ` : ''}
-                  </div>
-                  ` : ''}
-                  <div style="padding: ${bannerImage ? '50px 24px 24px' : '24px'};">
-                    <h1 style="color: #1f2937; margin-bottom: 8px; font-size: 24px;">${community.name}</h1>
-                    ${community.tagline ? `<p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">${community.tagline}</p>` : ''}
-                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-                    <h2 style="color: #1f2937; margin-bottom: 16px; font-size: 20px;">You're Invited!</h2>
-                    <div style="white-space: pre-wrap; color: #4b5563; line-height: 1.6; margin-bottom: 24px; font-size: 14px;">${inviteMessage}</div>
-                    <a href="${inviteUrl}" style="display: inline-block; background-color: ${primaryColor}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Join ${community.name}</a>
-                  </div>
-                  <div style="background-color: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via KyozoVerse</p>
-                  </div>
-                </div>
-              </body>
-            </html>
-          `,
+          html: emailHtml,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Email send error:', errorData);
-        throw new Error(errorData.error || 'Failed to send email');
-      }
+      console.log('📬 Response status:', response.status);
+      const responseData = await response.json();
+      console.log('📬 Response data:', responseData);
 
-      alert('Invitation email sent successfully!');
+      if (!response.ok) {
+        console.error('Email send error:', responseData);
+        
+        // If the error is related to domain verification, try with fallback domain
+        if (responseData.error && (responseData.error.includes('domain') || responseData.error.includes('from'))) {
+          console.log('🔄 Community domain not verified, trying fallback domain...');
+          
+          const fallbackResponse = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              to: email,
+              from: 'Kyozo <dev@kyozo.com>',
+              subject: `Join ${community.name} on KyozoVerse`,
+              html: emailHtml,
+            }),
+          });
+          
+          const fallbackData = await fallbackResponse.json();
+          console.log('📬 Fallback response:', fallbackData);
+          
+          if (!fallbackResponse.ok) {
+            throw new Error(fallbackData.error || 'Failed to send email');
+          }
+          
+          console.log('✅ Email sent successfully using fallback domain!');
+          alert('Invitation email sent successfully!');
+        } else {
+          throw new Error(responseData.error || 'Failed to send email');
+        }
+      } else {
+        console.log('✅ Email sent successfully using community domain!');
+        alert('Invitation email sent successfully!');
+      }
     } catch (error) {
-      console.error('Error sending email:', error);
-      alert('Failed to send email. Please try again.');
+      console.error('❌ Error sending email:', error);
+      alert(`Failed to send email: ${error.message}`);
     }
   };
 

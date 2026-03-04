@@ -14,6 +14,7 @@ import {
   Crown,
   Megaphone,
   MapPin,
+  Settings,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CustomButton } from '@/components/ui';
@@ -21,8 +22,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RoundImage } from '@/components/ui/round-image';
 import { Community, UserRole } from '@/lib/types';
 import { getThemeForPath } from '@/lib/theme-utils';
+import Link from 'next/link';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/auth';
 
 interface CommunityHeaderProps {
   community: Community;
@@ -40,6 +44,18 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
   const pathname = usePathname();
   const { activeColor } = getThemeForPath(pathname);
   const [ownerInfo, setOwnerInfo] = useState<{ displayName: string; email: string; avatarUrl?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Get current user to check for super admin
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return unsubscribe;
+  }, []);
+
+  const isSuperAdmin = currentUser?.email === 'dev@kyozo.com' || currentUser?.email === 'admin@kyozo.com';
+  const canAccessSettings = userRole === 'owner' || isSuperAdmin;
 
   useEffect(() => {
     const fetchOwnerInfo = async () => {
@@ -176,6 +192,13 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                   {/* Only show edit/delete on overview page */}
                   {pathname.split('/').filter(Boolean).length === 1 && (
                     <div className="flex items-center gap-2 ml-auto">
+                      {canAccessSettings && (
+                        <Link href={`/${community.handle}/settings`}>
+                          <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" title="Community Settings">
+                            <Settings className="h-4 w-4" />
+                          </CustomButton>
+                        </Link>
+                      )}
                       <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
                           <Pencil className="h-4 w-4" />
                       </CustomButton>

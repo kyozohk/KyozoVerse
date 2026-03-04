@@ -183,9 +183,62 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json().catch(() => ({}));
-    const domain = body.domain || 'kyozo.com';
+    const { handle, action, domain } = body;
     
-    console.log('📧 [SETUP] Setting up domain:', domain);
+    // Handle different actions
+    if (action === 'list') {
+      const domains = await listResendDomains();
+      return NextResponse.json({ success: true, domains });
+    }
+    
+    if (action === 'get') {
+      const targetDomain = domain || `${handle}.kyozo.com`;
+      const existingDomains = await listResendDomains();
+      const domainData = existingDomains.find(d => d.name === targetDomain);
+      
+      if (!domainData) {
+        return NextResponse.json({ error: 'Domain not found' }, { status: 404 });
+      }
+      
+      return NextResponse.json({ 
+        success: true, 
+        domain: domainData.name,
+        status: domainData.status,
+        domainId: domainData.id,
+        dnsRecords: domainData.records || []
+      });
+    }
+    
+    if (action === 'verify') {
+      const targetDomain = domain || `${handle}.kyozo.com`;
+      const existingDomains = await listResendDomains();
+      const domainData = existingDomains.find(d => d.name === targetDomain);
+      
+      if (!domainData) {
+        return NextResponse.json({ error: 'Domain not found' }, { status: 404 });
+      }
+      
+      const verifyResult = await verifyResendDomain(domainData.id);
+      const updatedDomain = await getResendDomain(domainData.id);
+      
+      return NextResponse.json({
+        success: true,
+        domain: updatedDomain.name,
+        status: updatedDomain.status,
+        domainId: updatedDomain.id,
+        dnsRecords: updatedDomain.records,
+        verifyResult,
+        message: updatedDomain.status === 'verified' 
+          ? 'Domain is verified and ready to use!' 
+          : 'Domain verification in progress...',
+      });
+    }
+    
+    // Default action: add domain
+    const targetDomain = domain || (handle ? `${handle}.kyozo.com` : 'kyozo.com');
+    
+    console.log('📧 [SETUP] Setting up domain:', targetDomain);
+    console.log('📧 [SETUP] Handle:', handle);
     console.log('📧 [SETUP] RESEND_API_KEY exists:', !!RESEND_API_KEY);
     console.log('📧 [SETUP] GODADDY_API_KEY exists:', !!GODADDY_API_KEY);
     console.log('📧 [SETUP] GODADDY_API_SECRET exists:', !!GODADDY_API_SECRET);
@@ -200,12 +253,12 @@ export async function POST(request: NextRequest) {
     
     // Step 1: Check if domain already exists in Resend
     const existingDomains = await listResendDomains();
-    let domainData = existingDomains.find(d => d.name === domain);
+    let domainData = existingDomains.find(d => d.name === targetDomain);
     
     // Step 2: If not exists, add it
     if (!domainData) {
       console.log('📧 [SETUP] Domain not found in Resend, adding...');
-      domainData = await addResendDomain(domain);
+      domainData = await addResendDomain(targetDomain);
     } else {
       console.log('📧 [SETUP] Domain already exists in Resend:', domainData.id);
       // Get full domain details with DNS records
@@ -219,7 +272,7 @@ export async function POST(request: NextRequest) {
     // Step 4: Add DNS records to GoDaddy
     let godaddyResults: any[] = [];
     if (dnsRecords.length > 0) {
-      godaddyResults = await addGoDaddyDNSRecords(domain, dnsRecords);
+      godaddyResults = await addGoDaddyDNSRecords(targetDomain, dnsRecords);
     }
     
     // Step 5: Wait a moment then verify domain
