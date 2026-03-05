@@ -37,9 +37,9 @@ function isValidFileType(type: string): boolean {
     // Images
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     // Audio
-    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac',
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/mp4',
     // Video
-    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo'
+    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/x-matroska'
   ];
   
   return validTypes.includes(type);
