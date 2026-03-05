@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { deletePost } from '@/lib/post-utils';
@@ -35,6 +36,8 @@ export default function FeedPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post & { id: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [postToEdit, setPostToEdit] = useState<Post & { id: string } | null>(null);
 
   // Fetch community data
   useEffect(() => {
@@ -124,6 +127,11 @@ export default function FeedPage() {
   const handleDeleteClick = (post: Post & { id: string }) => {
     setPostToDelete(post);
     setDeleteDialogOpen(true);
+  };
+
+  const handleEditClick = (post: Post & { id: string }) => {
+    setPostToEdit(post);
+    setShowEditDialog(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -231,26 +239,20 @@ export default function FeedPage() {
           </Card>
         ) : (
           filteredPosts.map((post) => {
-            // Add edit handler for posts that can be edited
+            // Add edit handler for posts
             const postWithEditHandler = {
               ...post,
-              _onEdit: post._canEdit ? () => {
-                // TODO: Implement edit functionality
-                toast({
-                  title: "Edit Post",
-                  description: "Edit functionality coming soon!",
-                });
-              } : undefined,
+              _onEdit: () => handleEditClick(post),
             } as Post & { id: string; _onEdit?: () => void };
             
             switch (post.type) {
               case 'text':
               case 'image':
-                return <TextPostCardSimple key={post.id} post={post} />;
+                return <TextPostCardSimple key={post.id} post={postWithEditHandler} />;
               case 'audio':
-                return <AudioPostCard key={post.id} post={post} />;
+                return <AudioPostCard key={post.id} post={postWithEditHandler} />;
               case 'video':
-                return <VideoPostCard key={post.id} post={post} />;
+                return <VideoPostCard key={post.id} post={postWithEditHandler} />;
               default:
                 return null;
             }
@@ -280,6 +282,18 @@ export default function FeedPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Dialog */}
+      {postToEdit && (
+        <CreatePostDialog
+          isOpen={showEditDialog}
+          setIsOpen={setShowEditDialog}
+          postType={postToEdit.type as 'text' | 'image' | 'audio' | 'video'}
+          communityId={postToEdit.communityId}
+          communityHandle={postToEdit.communityHandle || ''}
+          editPost={postToEdit}
+        />
+      )}
     </div>
   );
 }

@@ -4,11 +4,12 @@ import { useState, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlayCircle, PauseCircle, Edit, Trash2, Maximize2, Lock, Play, Pause } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from '@/hooks/use-auth';
 import { type Post } from "@/lib/types";
 import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CreatePostDialog } from './create-post-dialog';
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { recordInteraction } from '@/lib/interaction-utils';
@@ -28,6 +29,17 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Edit functionality
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  
+  const handleEdit = () => {
+    if (post._onEdit) {
+      post._onEdit();
+    } else {
+      setShowEditDialog(true);
+    }
+  };
   
   const handleDelete = async () => {
     if (!post.id) return;
@@ -120,6 +132,14 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
       <div className="relative overflow-hidden rounded-lg shadow-md transition-all hover:shadow-lg group">
         {/* Delete button - ALWAYS VISIBLE IN ADMIN FEED */}
         <div className="absolute top-2 right-2 flex gap-1 z-50">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 bg-white hover:bg-gray-100 rounded-full shadow-md"
+            onClick={handleEdit}
+          >
+            <Edit className="h-4 w-4 text-blue-500" />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -234,6 +254,16 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Dialog */}
+      <CreatePostDialog
+        isOpen={showEditDialog}
+        setIsOpen={setShowEditDialog}
+        postType="video"
+        communityId={post.communityId}
+        communityHandle={post.communityHandle || ''}
+        editPost={post}
+      />
     </>
   );
 };

@@ -1,19 +1,23 @@
 'use client';
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type Post } from "@/lib/types";
 import Image from "next/image";
+import { CreatePostDialog } from './create-post-dialog';
 
 interface TextPostCardProps {
-  post: Post & { id: string };
+  post: Post & { id: string; _onEdit?: () => void };
 }
 
 export const TextPostCardSimple: React.FC<TextPostCardProps> = ({ post }) => {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  
+  console.log('TextPostCardSimple rendering with _onEdit:', !!post._onEdit);
   
   const handleDelete = async () => {
     if (!post.id) return;
@@ -62,15 +66,26 @@ export const TextPostCardSimple: React.FC<TextPostCardProps> = ({ post }) => {
   
   return (
     <>
-      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl bg-gradient-to-br from-purple-50 to-pink-50">
-        {/* DELETE BUTTON - ALWAYS VISIBLE */}
-        <button
-          onClick={() => setShowDeleteDialog(true)}
-          className="absolute top-4 right-4 z-50 h-10 w-10 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
-          title="Delete post"
-        >
-          <Trash2 className="h-5 w-5 text-white" />
-        </button>
+      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all hover:shadow-xl bg-gradient-to-br from-purple-50 to-pink-50" style={{ position: 'relative' }}>
+        {/* EDIT AND DELETE BUTTONS - ALWAYS VISIBLE */}
+        <div className="absolute top-4 right-4 flex gap-2" style={{ zIndex: 100, position: 'absolute' }}>
+          <button
+            onClick={post._onEdit || (() => setShowEditDialog(true))}
+            className="h-10 w-10 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+            title="Edit post"
+            style={{ zIndex: 100 }}
+          >
+            <Edit className="h-5 w-5 text-white" />
+          </button>
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="h-10 w-10 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+            title="Delete post"
+            style={{ zIndex: 100 }}
+          >
+            <Trash2 className="h-5 w-5 text-white" />
+          </button>
+        </div>
         
         <div className="p-6">
           {/* Badges */}
@@ -86,7 +101,7 @@ export const TextPostCardSimple: React.FC<TextPostCardProps> = ({ post }) => {
           
           {/* Image */}
           {hasImage && (
-            <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
+            <div className="relative aspect-video rounded-lg overflow-hidden mb-4 z-0">
               <Image 
                 src={post.content.mediaUrls![0]} 
                 alt={post.title || "Post image"} 
@@ -133,6 +148,16 @@ export const TextPostCardSimple: React.FC<TextPostCardProps> = ({ post }) => {
           </div>
         </div>
       )}
+      
+      {/* Edit Dialog */}
+      <CreatePostDialog
+        isOpen={showEditDialog}
+        setIsOpen={setShowEditDialog}
+        postType="text"
+        communityId={post.communityId}
+        communityHandle={post.communityHandle || ''}
+        editPost={post}
+      />
     </>
   );
 };

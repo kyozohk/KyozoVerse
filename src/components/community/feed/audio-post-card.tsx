@@ -9,6 +9,7 @@ import { type Post } from "@/lib/types";
 import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CreatePostDialog } from './create-post-dialog';
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { recordInteraction } from '@/lib/interaction-utils';
@@ -28,7 +29,17 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  
+  // Edit functionality
+  const handleEdit = () => {
+    if (post._onEdit) {
+      post._onEdit();
+    } else {
+      setShowEditDialog(true);
+    }
+  };
   
   const handleDelete = async () => {
     if (!post.id) return;
@@ -133,6 +144,14 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
       <div className="relative overflow-hidden rounded-lg shadow-md transition-all hover:shadow-lg bg-white border border-gray-200">
         {/* Delete button - ALWAYS VISIBLE IN ADMIN FEED */}
         <div className="absolute top-2 right-2 flex gap-1 z-50">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 bg-white hover:bg-gray-100 rounded-full shadow-md"
+            onClick={handleEdit}
+          >
+            <Edit className="h-4 w-4 text-blue-500" />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -245,6 +264,16 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Dialog */}
+      <CreatePostDialog
+        isOpen={showEditDialog}
+        setIsOpen={setShowEditDialog}
+        postType="audio"
+        communityId={post.communityId}
+        communityHandle={post.communityHandle || ''}
+        editPost={post}
+      />
     </>
   );
 };

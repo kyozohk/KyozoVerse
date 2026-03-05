@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { CustomFormDialog, Input, Textarea, Button, Dropzone, Checkbox } from '@/components/ui';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -39,6 +39,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
   // File states
   const [file, setFile] = useState<File | null>(null);
@@ -48,7 +49,89 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Extract thumbnail from video
+  const extractVideoThumbnail = async (videoFile: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        resolve(null);
+        return;
+      }
+
+      video.preload = 'metadata';
+      video.src = URL.createObjectURL(videoFile);
+
+      video.onloadedmetadata = () => {
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Seek to 1 second (or 10% of video duration)
+        const seekTime = Math.min(1, video.duration * 0.1);
+        video.currentTime = seekTime;
+      };
+
+      video.onseeked = () => {
+        // Draw the video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert canvas to blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const thumbnailUrl = URL.createObjectURL(blob);
+            resolve(thumbnailUrl);
+          } else {
+            resolve(null);
+          }
+          URL.revokeObjectURL(video.src);
+        }, 'image/jpeg', 0.8);
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(null);
+      };
+    });
+  };
+
+  // Auto-generate thumbnail for video files
+  const handleVideoFileChange = async (file: File | null) => {
+    if (!file) {
+      setFile(null);
+      return;
+    }
+    
+    setFile(file);
+    
+    if (file && postType === 'video') {
+      setIsGeneratingThumbnail(true);
+      try {
+        const generatedThumbnailUrl = await extractVideoThumbnail(file);
+        if (generatedThumbnailUrl && !thumbnailFile && !thumbnailUrl) {
+          // Convert blob URL to file
+          const response = await fetch(generatedThumbnailUrl);
+          const blob = await response.blob();
+          const thumbnailFile = new File([blob], `thumbnail-${file.name}.jpg`, {
+            type: 'image/jpeg'
+          });
+          setThumbnailFile(thumbnailFile);
+          URL.revokeObjectURL(generatedThumbnailUrl);
+        }
+      } catch (error) {
+        console.error('Failed to generate thumbnail:', error);
+      } finally {
+        setIsGeneratingThumbnail(false);
+      }
+    }
+  };
 
   // Populate form when editing
   useEffect(() => {
@@ -115,28 +198,24 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   };
 
-  const handleFileUpload = async (fileToUpload: File, type: 'media' | 'thumbnail') => {
+  const handleFileUpload = async (fileToUpload: File, type: 'media' | 'thumbnail'): Promise<string> => {
     console.log(`📤 Uploading ${type} file:`, {
       fileName: fileToUpload.name,
       fileSize: fileToUpload.size,
       fileType: fileToUpload.type,
-      communityId
     });
+
+    const timestamp = Date.now();
+    const fileName = `${type}-${timestamp}-${fileToUpload.name}`;
+    const filePath = `communities/${communityHandle}/${type}/${fileName}`;
+
     try {
-        const result = await uploadFile(fileToUpload, communityId);
-        const url = typeof result === 'string' ? result : result.url;
-        console.log(`✅ ${type} file uploaded successfully:`, url);
-        return url;
-    } catch (error: any) {
-        console.error(`❌ Error uploading ${type} file:`, {
-          error,
-          errorMessage: error?.message,
-          errorCode: error?.code,
-          errorStack: error?.stack,
-          fileName: fileToUpload.name,
-          communityId
-        });
-        throw new Error(`Failed to upload ${type} file: ${error?.message || 'Unknown error'}`);
+      const url = await uploadFile(fileToUpload, filePath);
+      console.log(`✅ ${type} uploaded successfully:`, url);
+      return typeof url === 'string' ? url : url.url;
+    } catch (error) {
+      console.error(`❌ Failed to upload ${type}:`, error);
+      throw new Error(`Failed to upload ${type} file: ${(error as Error)?.message || 'Unknown error'}`);
     }
   };
 
@@ -265,10 +344,10 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     switch (postType) {
         case 'text':
         case 'image': 
-            return { 'image/*': [] };
-        case 'audio': return { 'audio/*': [] };
-        case 'video': return { 'video/*': [] };
-        default: return undefined;
+            return { 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] };
+        case 'audio': return { 'audio/*': ['.mp3', '.wav', '.ogg', '.m4a'] };
+        case 'video': return { 'video/*': ['.mp4', '.mov', '.avi', '.webm'] };
+        default: return { '*/*': [] };
     }
   }
 
@@ -422,7 +501,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
               />
               {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
                 <Dropzone
-                  onFileChange={setFile}
+                  onFileChange={postType === 'video' ? handleVideoFileChange : setFile}
                   onRemoveExisting={() => setMediaUrl(null)}
                   file={file}
                   accept={getFileInputAccept()}
@@ -431,15 +510,23 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 />
               )}
               {postType === 'video' && (
-                <Dropzone
-                  label="Custom Thumbnail (Optional)"
-                  onFileChange={setThumbnailFile}
-                  onRemoveExisting={() => setThumbnailUrl(null)}
-                  file={thumbnailFile}
-                  accept={{ 'image/*': [] }}
-                  fileType="image"
-                  existingImageUrl={thumbnailUrl}
-                />
+                <div className="space-y-2">
+                  {isGeneratingThumbnail && (
+                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      <span className="text-sm text-blue-700">Generating thumbnail from video...</span>
+                    </div>
+                  )}
+                  <Dropzone
+                    label="Custom Thumbnail (Optional)"
+                    onFileChange={setThumbnailFile}
+                    onRemoveExisting={() => setThumbnailUrl(null)}
+                    file={thumbnailFile}
+                    accept={{ 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }}
+                    fileType="image"
+                    existingImageUrl={thumbnailUrl}
+                  />
+                </div>
               )}
               <div className="mt-4">
                 <Checkbox
