@@ -7,8 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, MessageSquare, Share2, ArrowRight, Edit, Trash2, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
+import { CreatePostDialog } from './create-post-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { type Post } from "@/lib/types";
 import Image from "next/image";
@@ -23,29 +23,33 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
     const { user } = useAuth();
     const { toast } = useToast();
     
-    // Admin feed - always show delete button (no permission checks)
-    const isPostCreator = true;
-    console.log('🎯 TextPostCard - isPostCreator:', isPostCreator, 'postId:', post.id);
+    const isPostCreator = !post._isPublicView && (post._canEdit || (user && post.authorId === user.uid));
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
     
+    const handleEdit = () => {
+        if (post._onEdit) {
+            post._onEdit();
+        } else {
+            setShowEditDialog(true);
+        }
+    };
+
     const handleDelete = async () => {
         if (!post.id) return;
-        
         setIsDeleting(true);
         try {
-            await deletePost(post.id, post.content.mediaUrls);
-            toast({
-                title: "Post deleted",
-                description: "Your post has been successfully deleted.",
+            const response = await fetch('/api/posts/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }),
             });
+            if (!response.ok) throw new Error('Failed to delete');
+            toast({ title: "Post deleted", description: "Your post has been successfully deleted." });
         } catch (error) {
             console.error("Error deleting post:", error);
-            toast({
-                title: "Error",
-                description: "Failed to delete post. Please try again.",
-                variant: "destructive",
-            });
+            toast({ title: "Error", description: "Failed to delete post. Please try again.", variant: "destructive" });
         } finally {
             setIsDeleting(false);
             setShowDeleteDialog(false);
@@ -69,12 +73,16 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
                 {/* Background Image */}
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-50 to-pink-50 z-0" />
                 
-                {/* Edit/Delete buttons - ALWAYS VISIBLE IN ADMIN FEED */}
+                {isPostCreator && (
                 <div className="absolute top-2 right-2 flex gap-1 z-50">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white hover:bg-gray-100 rounded-full shadow-md" onClick={() => setShowDeleteDialog(true)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
+                        <Edit className="h-4 w-4 text-blue-500" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/80 hover:bg-white rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                 </div>
+                )}
                 
                 <div className={cn(
                     "relative z-10 flex flex-col",
@@ -107,7 +115,7 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
                         <div className="flex flex-wrap items-center gap-2 mb-4">
                             <span className="bg-[#C170CF] text-white px-4 py-1 rounded-full text-sm font-medium">Read</span>
                             <span className="bg-transparent border border-[#C170CF] text-[#C170CF] px-4 py-1 rounded-full text-sm">
-                                {post.content.text?.length > 1000 ? 'Long form article' : 'Short form'}
+                                {(post.content.text?.length ?? 0) > 1000 ? 'Long form article' : 'Short form'}
                             </span>
                             {post.visibility === 'private' && (
                                 <span className="text-xs font-semibold rounded-full px-3 py-1 bg-gray-200 text-gray-700 inline-flex items-center gap-1">
@@ -144,10 +152,10 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete this post?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your post
-                            and remove the data from our servers.
+                            <span className="text-red-600 font-medium">This action cannot be undone.</span> This will permanently delete
+                            <span className="font-semibold"> "{post.title}"</span> and all its content.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -157,11 +165,21 @@ export const TextPostCard: React.FC<TextPostCardProps> = ({ post }) => {
                             disabled={isDeleting}
                             className="bg-red-500 hover:bg-red-600"
                         >
-                            {isDeleting ? "Deleting..." : "Delete"}
+                            {isDeleting ? "Deleting..." : "Delete Forever"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            {showEditDialog && (
+                <CreatePostDialog
+                    isOpen={showEditDialog}
+                    setIsOpen={setShowEditDialog}
+                    postType={post.type as 'text' | 'image' | 'audio' | 'video'}
+                    communityId={post.communityId || ''}
+                    communityHandle={post.communityHandle || ''}
+                    editPost={post}
+                />
+            )}
         </>
     );
 };

@@ -125,7 +125,7 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
         <div
           {...getRootProps()}
           className={cn(
-              "relative flex justify-center items-center w-full h-64 rounded-lg border border-dotted cursor-pointer transition-colors",
+              "relative flex justify-center items-center w-full h-36 rounded-lg border border-dotted cursor-pointer transition-colors",
               previewUrl ? 'p-0' : 'p-4',
               isDragActive ? 'bg-accent' : 'bg-muted/10',
               className

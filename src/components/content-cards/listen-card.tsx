@@ -3,11 +3,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Lock, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
-import { useCommunityAuth } from '@/hooks/use-community-auth';
-import { recordInteraction } from '@/lib/interaction-utils';
+import { useAuth } from '@/hooks/use-auth';
+import { toggleLike, recordInteraction } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { deletePost } from '@/lib/post-utils';
 import { Waveform } from './waveform';
 import { cardTitleStyle, cardBodyStyle, CARD_TITLE_COLOR, CARD_BODY_COLOR } from './card-styles';
 
@@ -22,7 +21,7 @@ interface ListenCardProps {
 }
 
 export function ListenCard({ category, episode, duration: initialDuration, title, summary, isPrivate, post }: ListenCardProps) {
-  const { user } = useCommunityAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(post?.likes ?? 0);
@@ -31,7 +30,7 @@ export function ListenCard({ category, episode, duration: initialDuration, title
   const [currentTime, setCurrentTime] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
+  const isPostCreator = post._canEdit || (user && !post._isPublicView && post.authorId === user.uid);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const formatTime = (time: number) => {
@@ -69,7 +68,8 @@ export function ListenCard({ category, episode, duration: initialDuration, title
     
     setIsDeleting(true);
     try {
-      await deletePost(post.id, post.content.mediaUrls);
+      const res = await fetch('/api/posts/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }) });
+      if (!res.ok) throw new Error('Failed to delete');
       toast({
         title: "Post deleted",
         description: "Your audio post has been successfully deleted.",

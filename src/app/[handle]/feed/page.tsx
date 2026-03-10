@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
-import { Filter, Edit, Trash2 } from 'lucide-react';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
 import { getCommunityByHandle, getUserRoleInCommunity } from '@/lib/community-utils';
 import { type Post, type User } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TextPostCardSimple } from '@/components/community/feed/text-post-card-simple';
-import { AudioPostCard } from '@/components/community/feed/audio-post-card';
-import { VideoPostCard } from '@/components/community/feed/video-post-card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +15,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
 import Image from 'next/image';
 import Link from 'next/link';
-import { deletePost } from '@/lib/post-utils';
+import { ReadCard } from '@/components/content-cards/read-card';
+import { ListenCard } from '@/components/content-cards/listen-card';
+import { WatchCard } from '@/components/content-cards/watch-card';
+import { ImageCard } from '@/components/content-cards/image-card';
+import { PostDetailDialog } from '@/components/community/feed/post-detail-dialog';
 
 export default function FeedPage() {
   const params = useParams();
@@ -38,6 +37,8 @@ export default function FeedPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [postToEdit, setPostToEdit] = useState<Post & { id: string } | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [postToView, setPostToView] = useState<Post & { id: string } | null>(null);
 
   // Fetch community data
   useEffect(() => {
@@ -134,25 +135,45 @@ export default function FeedPage() {
     setShowEditDialog(true);
   };
 
+  const handlePostClick = (post: Post & { id: string }) => {
+    console.log('🔍 FEED PAGE: handlePostClick called', { postId: post.id, postType: post.type });
+    setPostToView(post);
+    setShowDetailDialog(true);
+    console.log('🔍 FEED PAGE: setShowDetailDialog(true) called');
+  };
+
+  const handleDetailEdit = () => {
+    if (postToView) {
+      setShowDetailDialog(false);
+      setPostToEdit(postToView);
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleDetailDelete = () => {
+    if (postToView) {
+      setShowDetailDialog(false);
+      setPostToDelete(postToView);
+      setDeleteDialogOpen(true);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (!postToDelete?.id) return;
-    
     setIsDeleting(true);
     try {
-      await deletePost(postToDelete.id, postToDelete.content.mediaUrls);
-      toast({
-        title: "Post deleted",
-        description: "The post has been successfully deleted.",
+      const response = await fetch('/api/posts/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: postToDelete.id, mediaUrls: postToDelete.content.mediaUrls }),
       });
+      if (!response.ok) throw new Error('Failed to delete');
+      toast({ title: "Post deleted", description: "The post has been successfully deleted." });
       setDeleteDialogOpen(false);
       setPostToDelete(null);
     } catch (error) {
       console.error("Error deleting post:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete post. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to delete post. Please try again.", variant: "destructive" });
     } finally {
       setIsDeleting(false);
     }
@@ -239,20 +260,108 @@ export default function FeedPage() {
           </Card>
         ) : (
           filteredPosts.map((post) => {
-            // Add edit handler for posts
-            const postWithEditHandler = {
+            const enrichedPost = {
               ...post,
+              _canEdit: true,
+              _isPublicView: false,
               _onEdit: () => handleEditClick(post),
-            } as Post & { id: string; _onEdit?: () => void };
-            
+            } as Post & { id: string; _canEdit: boolean; _isPublicView: boolean; _onEdit: () => void };
+            const date = post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '';
+            const readTime = `${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min`;
+
             switch (post.type) {
               case 'text':
+                return (
+                  <div 
+                    key={post.id} 
+                    onClick={(e) => {
+                      console.log('🔍 FEED PAGE: Text card clicked', { postId: post.id, postType: post.type });
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePostClick(post);
+                    }} 
+                    className="cursor-pointer"
+                  >
+                    <ReadCard
+                      post={enrichedPost}
+                      category="Read"
+                      readTime={readTime}
+                      date={date}
+                      title={post.title || ''}
+                      summary={post.content.text}
+                      isPrivate={post.visibility === 'private'}
+                    />
+                  </div>
+                );
               case 'image':
-                return <TextPostCardSimple key={post.id} post={postWithEditHandler} />;
+                return (
+                  <div 
+                    key={post.id} 
+                    onClick={(e) => {
+                      console.log('🔍 FEED PAGE: Image card clicked', { postId: post.id, postType: post.type });
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePostClick(post);
+                    }} 
+                    className="cursor-pointer"
+                  >
+                    <ImageCard
+                      post={enrichedPost}
+                      category="View"
+                      readTime={readTime}
+                      date={date}
+                      title={post.title || ''}
+                      summary={post.content.text}
+                      imageUrl={post.content.mediaUrls?.[0] || ''}
+                      isPrivate={post.visibility === 'private'}
+                    />
+                  </div>
+                );
               case 'audio':
-                return <AudioPostCard key={post.id} post={postWithEditHandler} />;
+                return (
+                  <div 
+                    key={post.id} 
+                    onClick={(e) => {
+                      console.log('🔍 FEED PAGE: Audio card clicked', { postId: post.id, postType: post.type });
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePostClick(post);
+                    }} 
+                    className="cursor-pointer"
+                  >
+                    <ListenCard
+                      post={enrichedPost}
+                      category="Listen"
+                      episode=""
+                      duration="0:00"
+                      title={post.title || ''}
+                      summary={post.content.text}
+                      isPrivate={post.visibility === 'private'}
+                    />
+                  </div>
+                );
               case 'video':
-                return <VideoPostCard key={post.id} post={postWithEditHandler} />;
+                return (
+                  <div 
+                    key={post.id} 
+                    onClick={(e) => {
+                      console.log('🔍 FEED PAGE: Video card clicked', { postId: post.id, postType: post.type });
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePostClick(post);
+                    }} 
+                    className="cursor-pointer"
+                  >
+                    <WatchCard
+                      post={enrichedPost}
+                      category="Watch"
+                      title={post.title || ''}
+                      imageUrl={post.content.thumbnailUrl || post.content.mediaUrls?.[0] || '/bg/video_bg.png'}
+                      imageHint={post.content.text || ''}
+                      isPrivate={post.visibility === 'private'}
+                    />
+                  </div>
+                );
               default:
                 return null;
             }
@@ -289,11 +398,20 @@ export default function FeedPage() {
           isOpen={showEditDialog}
           setIsOpen={setShowEditDialog}
           postType={postToEdit.type as 'text' | 'image' | 'audio' | 'video'}
-          communityId={postToEdit.communityId}
+          communityId={postToEdit.communityId || ''}
           communityHandle={postToEdit.communityHandle || ''}
           editPost={postToEdit}
         />
       )}
+
+      {/* Post Detail Dialog */}
+      <PostDetailDialog
+        post={postToView ? { ...postToView, _canEdit: false } : null}
+        isOpen={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        onEdit={handleDetailEdit}
+        onDelete={handleDetailDelete}
+      />
     </div>
   );
 }

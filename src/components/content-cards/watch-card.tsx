@@ -5,11 +5,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Play, Lock, ThumbsUp, MessageSquare, Share2, Pause, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
-import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { toggleLike, recordInteraction } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { deletePost } from '@/lib/post-utils';
 import { cardTitleStyle } from './card-styles';
 
 interface WatchCardProps {
@@ -22,7 +21,7 @@ interface WatchCardProps {
 }
 
 export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, post }: WatchCardProps) {
-  const { user } = useCommunityAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(post?.likes ?? 0);
@@ -33,7 +32,7 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [thumbnail, setThumbnail] = useState<string>(imageUrl);
-  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
+  const isPostCreator = post._canEdit || (user && !post._isPublicView && post.authorId === user.uid);
   const videoRef = useRef<HTMLVideoElement>(null);
   const thumbnailVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -96,7 +95,8 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
     if (!post.id) return;
     setIsDeleting(true);
     try {
-      await deletePost(post.id, post.content.mediaUrls);
+      const res = await fetch('/api/posts/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }) });
+      if (!res.ok) throw new Error('Failed to delete');
       toast({
         title: "Post deleted",
         description: "Your video post has been successfully deleted.",

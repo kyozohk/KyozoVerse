@@ -4,7 +4,7 @@ import { Play, Pause, Lock, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
 import { useCommunityAuth } from '@/hooks/use-community-auth';
-import { recordInteraction } from '@/lib/interaction-utils';
+import { toggleLike, recordInteraction } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deletePost } from '@/lib/post-utils';
@@ -32,7 +32,7 @@ export function ListenCardHorizontal({ category, episode, duration: initialDurat
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
+  const isPostCreator = post._canEdit || (user && !post._isPublicView && post.authorId === user.uid);
 
   useEffect(() => {
     if (audioRef.current) {

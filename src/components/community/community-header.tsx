@@ -189,7 +189,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                     </CustomButton>
                   </div>
                   
-                  {/* Only show edit/delete on overview page */}
+                  {/* Only show edit/settings on overview page */}
                   {pathname.split('/').filter(Boolean).length === 1 && (
                     <div className="flex items-center gap-2 ml-auto">
                       {canAccessSettings && (
@@ -202,17 +202,6 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                       <CustomButton variant="rounded-rect" size="small" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onEdit}>
                           <Pencil className="h-4 w-4" />
                       </CustomButton>
-                      {onDelete && (
-                        <CustomButton 
-                          variant="rounded-rect" 
-                          size="small" 
-                          className="text-white/80 hover:text-red-400 hover:bg-white/10"
-                          onClick={onDelete}
-                          title="Delete community"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </CustomButton>
-                      )}
                     </div>
                   )}
                 </>

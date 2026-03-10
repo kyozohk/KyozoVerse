@@ -5,11 +5,10 @@ import React, { useState } from 'react';
 import { Lock, ThumbsUp, MessageSquare, Share2, ArrowRight, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
-import { useCommunityAuth } from '@/hooks/use-community-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { toggleLike } from '@/lib/interaction-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { deletePost } from '@/lib/post-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -26,33 +25,31 @@ interface ReadCardProps {
 }
 
 export function ReadCard({ post, category, readTime, date, title, summary, isPrivate }: ReadCardProps) {
-  const { user } = useCommunityAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes || 0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const isPostCreator = user && !post._isPublicView && (post.authorId === user.uid || post._canEdit);
+  const isPostCreator = post._canEdit || (user && !post._isPublicView && post.authorId === user.uid);
   
   const handleDelete = async () => {
     if (!post.id) return;
     setIsDeleting(true);
     try {
-        await deletePost(post.id, post.content.mediaUrls);
-        toast({
-            title: "Post deleted",
-            description: "Your post has been successfully deleted.",
-        });
+      const response = await fetch('/api/posts/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }),
+      });
+      if (!response.ok) throw new Error('Failed to delete');
+      toast({ title: "Post deleted", description: "Your post has been successfully deleted." });
     } catch (error) {
-        console.error("Error deleting post:", error);
-        toast({
-            title: "Error",
-            description: "Failed to delete post. Please try again.",
-            variant: "destructive",
-        });
+      console.error("Error deleting post:", error);
+      toast({ title: "Error", description: "Failed to delete post. Please try again.", variant: "destructive" });
     } finally {
-        setIsDeleting(false);
-        setShowDeleteDialog(false);
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
   

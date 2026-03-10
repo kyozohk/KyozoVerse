@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, PauseCircle, Edit, Trash2, Maximize2, Lock, Play, Pause } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';
 import { type Post } from "@/lib/types";
-import { deletePost } from "@/lib/post-utils";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CreatePostDialog } from './create-post-dialog';
@@ -157,7 +156,7 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
               ref={videoRef}
               src={post.content.mediaUrls[0]} 
               className="w-full h-full object-cover"
-              poster="/bg/video_thumbnail.png"
+              poster="/bg/video_bg.png"
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={handleVideoEnded}

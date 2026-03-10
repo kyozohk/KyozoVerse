@@ -49,6 +49,15 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
+  // Recording states (audio + video)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [recordingMode, setRecordingMode] = useState<'audio' | 'video' | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const liveVideoRef = useRef<HTMLVideoElement>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -133,6 +142,63 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   };
 
+  // Recording functions
+  const startRecording = async (mode: 'audio' | 'video') => {
+    try {
+      const constraints = mode === 'video'
+        ? { audio: true, video: { facingMode: 'user' } }
+        : { audio: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaRecorderRef.current = null;
+      chunksRef.current = [];
+
+      if (mode === 'video') {
+        setCameraStream(stream);
+        setTimeout(() => {
+          if (liveVideoRef.current) {
+            liveVideoRef.current.srcObject = stream;
+            liveVideoRef.current.play();
+          }
+        }, 50);
+      }
+
+      const mimeType = mode === 'video' ? 'video/webm' : 'audio/webm';
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        setRecordedBlob(blob);
+        const recorded = new File([blob], `recording-${Date.now()}.webm`, { type: mimeType });
+        if (mode === 'video') {
+          handleVideoFileChange(recorded);
+        } else {
+          setFile(recorded);
+        }
+        stream.getTracks().forEach(t => t.stop());
+        setCameraStream(null);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingMode(mode);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      alert('Failed to access camera/microphone. Please check permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   // Populate form when editing
   useEffect(() => {
     if (isOpen && editPost) {
@@ -155,6 +221,16 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setThumbnailUrl(null);
     setIsPublic(true);
     setIsSubmitting(false);
+    setIsRecording(false);
+    setRecordedBlob(null);
+    setRecordingMode(null);
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      setCameraStream(null);
+    }
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current = null;
+    }
   }
 
   const handleClose = () => {
@@ -205,12 +281,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       fileType: fileToUpload.type,
     });
 
-    const timestamp = Date.now();
-    const fileName = `${type}-${timestamp}-${fileToUpload.name}`;
-    const filePath = `communities/${communityHandle}/${type}/${fileName}`;
-
     try {
-      const url = await uploadFile(fileToUpload, filePath);
+      const url = await uploadFile(fileToUpload, communityId);
       console.log(`✅ ${type} uploaded successfully:`, url);
       return typeof url === 'string' ? url : url.url;
     } catch (error) {
@@ -301,11 +373,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 createdAt: serverTimestamp(),
                 likes: 0,
                 comments: 0,
-                visibility: isPublic ? 'public' : 'private'
+                visibility: (isPublic ? 'public' : 'private') as 'public' | 'private'
             };
             const docRef = await addDoc(collection(db, 'blogs'), newPostData);
             if (isPublic) {
-              sendNewPostEmails({ ...newPostData, id: docRef.id, author: { userId: user.uid, displayName: user.displayName || '' } });
+              sendNewPostEmails({ ...newPostData, id: docRef.id, postId: docRef.id, author: { userId: user.uid, displayName: user.displayName || '' } });
             }
         }
         
@@ -340,7 +412,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       }
   }
 
-  const getFileInputAccept = () => {
+  const getFileInputAccept = (): Record<string, string[]> => {
     switch (postType) {
         case 'text':
         case 'image': 
@@ -471,93 +543,180 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     }
   };
 
+  const dialogFooter = (
+    <div className="flex justify-end gap-3">
+      <Button
+        variant="outline"
+        onClick={handleClose}
+        className="px-6 py-2"
+      >
+        Cancel
+      </Button>
+      <Button
+        onClick={handleSubmit}
+        disabled={isSubmitting || !title.trim()}
+        className="px-6 py-2 text-white disabled:opacity-40"
+        style={{ backgroundColor: '#6B5D52' }}
+      >
+        {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
+      </Button>
+    </div>
+  );
+
   return (
     <CustomFormDialog
       open={isOpen}
-      onClose={handleClose}
+      onOpenChange={(open) => { if (!open) handleClose(); }}
       title={getDialogTitle()}
       description={getDialogDescription()}
+      size="xl"
       rightComponent={renderPreview()}
+      footer={dialogFooter}
     >
         {isSubmitting ? (
-          <div className="flex-grow flex items-center justify-center">
+          <div className="flex items-center justify-center py-16">
             <CreatePostDialogSkeleton />
           </div>
         ) : (
-          <div className="flex flex-col h-full">
-            <div className="flex-grow space-y-4 overflow-y-auto pr-2 pb-4">
-              <Input 
-                label="Title"
-                placeholder="Title" 
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
-              />
-              <Textarea 
-                label="Description"
-                placeholder="Description" 
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)} 
-                rows={6}
-              />
-              {(postType === 'text' || postType === 'image' || postType === 'audio' || postType === 'video') && (
+          <div className="space-y-4">
+            <Input 
+              label="Title"
+              placeholder="Title" 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)} 
+            />
+            <Textarea 
+              label="Description"
+              placeholder="Description" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              rows={6}
+            />
+            {postType === 'audio' && (
+              <div className="space-y-3">
+                <div className="flex gap-2 flex-wrap">
+                  {!isRecording ? (
+                    <Button type="button" variant="default" onClick={() => startRecording('audio')} className="flex-1">
+                      🎤 Record Audio
+                    </Button>
+                  ) : recordingMode === 'audio' ? (
+                    <Button type="button" variant="destructive" onClick={stopRecording} className="flex-1">
+                      ⏹ Stop Recording
+                    </Button>
+                  ) : null}
+                  {(recordedBlob || file) && (
+                    <Button type="button" variant="outline" onClick={() => { setRecordedBlob(null); setFile(null); setMediaUrl(null); }}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                {isRecording && recordingMode === 'audio' && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                    <div className="animate-pulse h-3 w-3 rounded-full bg-red-500"></div>
+                    <span className="text-sm text-red-700">Recording...</span>
+                  </div>
+                )}
+                {(recordedBlob || file || mediaUrl) && !isRecording && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <audio controls className="w-full">
+                      <source src={recordedBlob ? URL.createObjectURL(recordedBlob) : file ? URL.createObjectURL(file) : mediaUrl || ''} />
+                    </audio>
+                  </div>
+                )}
+                <div className="text-center text-sm text-gray-400">— or upload a file —</div>
                 <Dropzone
-                  onFileChange={postType === 'video' ? handleVideoFileChange : setFile}
+                  onFileChange={setFile}
                   onRemoveExisting={() => setMediaUrl(null)}
                   file={file}
                   accept={getFileInputAccept()}
-                  fileType={postType === 'text' ? 'image' : postType || 'image'}
+                  fileType="audio"
                   existingImageUrl={mediaUrl}
                 />
-              )}
-              {postType === 'video' && (
-                <div className="space-y-2">
-                  {isGeneratingThumbnail && (
-                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                      <span className="text-sm text-blue-700">Generating thumbnail from video...</span>
-                    </div>
-                  )}
-                  <Dropzone
-                    label="Custom Thumbnail (Optional)"
-                    onFileChange={setThumbnailFile}
-                    onRemoveExisting={() => setThumbnailUrl(null)}
-                    file={thumbnailFile}
-                    accept={{ 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }}
-                    fileType="image"
-                    existingImageUrl={thumbnailUrl}
-                  />
-                </div>
-              )}
-              <div className="mt-4">
-                <Checkbox
-                  label="Make this post public"
-                  checked={isPublic}
-                  onCheckedChange={setIsPublic}
-                />
-                <p className="text-xs text-muted-foreground mt-1 ml-6">
-                  {isPublic ? 
-                    'Public posts are visible to everyone in the community' : 
-                    'Private posts are only visible to you and community admins'}
-                </p>
               </div>
+            )}
+            {postType === 'video' && (
+              <div className="space-y-3">
+                <div className="flex gap-2 flex-wrap">
+                  {!isRecording ? (
+                    <Button type="button" variant="default" onClick={() => startRecording('video')} className="flex-1">
+                      📹 Record Video
+                    </Button>
+                  ) : recordingMode === 'video' ? (
+                    <Button type="button" variant="destructive" onClick={stopRecording} className="flex-1">
+                      ⏹ Stop Recording
+                    </Button>
+                  ) : null}
+                  {(recordedBlob || file) && (
+                    <Button type="button" variant="outline" onClick={() => { setRecordedBlob(null); setFile(null); setMediaUrl(null); }}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                {isRecording && recordingMode === 'video' && (
+                  <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+                    <video ref={liveVideoRef} muted playsInline className="w-full h-full object-cover" />
+                    <div className="absolute top-2 left-2 flex items-center gap-2 bg-black/60 rounded px-2 py-1">
+                      <div className="animate-pulse h-2 w-2 rounded-full bg-red-500"></div>
+                      <span className="text-xs text-white">Recording</span>
+                    </div>
+                  </div>
+                )}
+                {(recordedBlob || file || mediaUrl) && !isRecording && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <video controls className="w-full rounded">
+                      <source src={recordedBlob ? URL.createObjectURL(recordedBlob) : file ? URL.createObjectURL(file) : mediaUrl || ''} />
+                    </video>
+                  </div>
+                )}
+                <div className="text-center text-sm text-gray-400">— or upload a file —</div>
+                <Dropzone
+                  onFileChange={handleVideoFileChange}
+                  onRemoveExisting={() => setMediaUrl(null)}
+                  file={file}
+                  accept={getFileInputAccept()}
+                  fileType="video"
+                  existingImageUrl={mediaUrl}
+                />
+                {isGeneratingThumbnail && (
+                  <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    <span className="text-sm text-blue-700">Generating thumbnail...</span>
+                  </div>
+                )}
+                <Dropzone
+                  label="Custom Thumbnail (Optional)"
+                  onFileChange={setThumbnailFile}
+                  onRemoveExisting={() => setThumbnailUrl(null)}
+                  file={thumbnailFile}
+                  accept={{ 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }}
+                  fileType="image"
+                  existingImageUrl={thumbnailUrl}
+                />
+              </div>
+            )}
+            {(postType === 'text' || postType === 'image') && (
+              <Dropzone
+                onFileChange={setFile}
+                onRemoveExisting={() => setMediaUrl(null)}
+                file={file}
+                accept={getFileInputAccept()}
+                fileType={postType === 'text' ? 'image' : 'image'}
+                existingImageUrl={mediaUrl}
+              />
+            )}
+            <div>
+              <Checkbox
+                label="Make this post public"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+              />
+              <p className="text-xs text-muted-foreground mt-1 ml-6">
+                {isPublic ? 
+                  'Public posts are visible to everyone in the community' : 
+                  'Private posts are only visible to you and community admins'}
+              </p>
             </div>
-            
-            <div className="sticky bottom-0 flex flex-shrink-0 justify-end gap-4 pt-4 pb-2" >
-              <Button 
-                variant="outline" 
-                onClick={handleClose}
-                className="py-3 text-base font-medium"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting}
-                className="py-3 text-base font-medium bg-primary text-white hover:bg-primary/90"
-              >
-                {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
-              </Button>
-            </div>
+
           </div>
         )}
     </CustomFormDialog>

@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 import { defaultTemplates } from '@/lib/email-templates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const fromEmail = 'Kyozo <dev@kyozo.com>';
+const fromEmail = 'Kyozo <will@contact.kyozo.com>';
 
 async function getAppUrl(): Promise<string> {
   // Try to get URL from Next.js headers (works at runtime)

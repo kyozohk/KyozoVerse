@@ -13,6 +13,7 @@ interface PostDetailPanelProps {
 }
 
 export function PostDetailPanel({ post, isOpen, onClose }: PostDetailPanelProps) {
+  console.log('🔍 POST DETAIL PANEL: rendered', { isOpen, postId: post?.id, postType: post?.type });
   if (!post) return null;
 
   return (

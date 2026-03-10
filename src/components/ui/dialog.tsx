@@ -114,6 +114,8 @@ interface CustomFormDialogProps {
   description?: string;
   children: React.ReactNode;
   size?: 'default' | 'large' | 'xl';
+  rightComponent?: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 export function CustomFormDialog({
@@ -123,10 +125,12 @@ export function CustomFormDialog({
   description,
   children,
   size = 'default',
+  rightComponent,
+  footer,
 }: CustomFormDialogProps) {
 
   const sizeClasses = size === 'xl'
-      ? "w-full max-w-3xl max-h-[90vh]"
+      ? "w-full max-w-6xl max-h-[90vh]"
       : size === 'large' 
       ? "w-full max-w-2xl max-h-[90vh]"
       : "w-full max-w-md max-h-[85vh]";
@@ -168,9 +172,21 @@ export function CustomFormDialog({
               )}
             </DialogHeader>
             
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              {children}
+            <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+              <div className={cn("flex-1 min-h-0 overflow-y-auto pr-1", rightComponent && "w-1/2")}>
+                {children}
+              </div>
+              {rightComponent && (
+                <div className="w-1/2 min-h-0 overflow-y-auto border-l pl-6" style={{ borderColor: 'var(--page-content-border)' }}>
+                  {rightComponent}
+                </div>
+              )}
             </div>
+            {footer && (
+              <div className="flex-shrink-0 pt-4 mt-2 border-t" style={{ borderColor: 'var(--page-content-border)' }}>
+                {footer}
+              </div>
+            )}
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

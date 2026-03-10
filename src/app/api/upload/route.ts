@@ -37,9 +37,9 @@ function isValidFileType(type: string): boolean {
     // Images
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     // Audio
-    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac',
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac', 'audio/webm', 'audio/x-m4a',
     // Video
-    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo'
+    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'
   ];
   
   return validTypes.includes(type);
@@ -117,7 +117,10 @@ export async function POST(request: NextRequest) {
       const storage = getStorage();
       console.log('Storage instance obtained');
       
-      const bucket = storage.bucket();
+      const bucketName = process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_PROJECT_ID}.appspot.com`;
+      console.log('Using bucket:', bucketName);
+      
+      const bucket = storage.bucket(bucketName);
       console.log('Bucket reference obtained');
       
       const fileRef = bucket.file(filename);
