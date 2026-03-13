@@ -5,6 +5,7 @@ import {
     CreditCard,
     Settings,
     Plus,
+    Code2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -33,6 +34,7 @@ export const mainNavItems: NavItem[] = [
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/subscription', label: 'Subscription', icon: CreditCard },
     { href: '/account', label: 'Settings', icon: Settings },
+    { href: '/developer', label: 'Developer API', icon: Code2 },
 ];
 
 interface CommunityNavItem {

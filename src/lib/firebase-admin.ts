@@ -8,6 +8,7 @@ if (!admin.apps.length) {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       });
       console.log('✅ Firebase Admin initialized with service account');
     } 
@@ -15,6 +16,7 @@ if (!admin.apps.length) {
     else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       });
       console.log('✅ Firebase Admin initialized with application default credentials');
     }
@@ -31,4 +33,5 @@ if (!admin.apps.length) {
 
 export const adminAuth = admin.auth();
 export const adminDb = admin.firestore();
+export const adminStorage = admin.storage();
 export default admin;

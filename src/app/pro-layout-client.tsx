@@ -31,6 +31,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   const pathname = usePathname();
   
   const isCommunityPage = useMemo(() => {
+    if (pathname.startsWith('/developer')) return false;
     const segments = pathname.split('/').filter(Boolean);
     return segments.length >= 1 && !mainNavItems.some(item => item.href === `/${segments[0]}`);
   }, [pathname]);
@@ -38,7 +39,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
   useEffect(() => {
-    if (!loading && !user && pathname !== '/') {
+    if (!loading && !user && pathname !== '/' && !pathname.startsWith('/developer')) {
       router.replace('/');
     }
   }, [user, loading, router, pathname]);
@@ -61,7 +62,7 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
 
-  if (pathname === '/') {
+  if (pathname === '/' || pathname.startsWith('/developer')) {
     return <>{children}</>;
   }
 
