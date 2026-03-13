@@ -93,11 +93,37 @@ export async function POST(request: NextRequest) {
     
     if (file.size > maxSizeInBytes) {
       const maxSizeMB = maxSizeInBytes / (1024 * 1024);
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       console.error(`File too large: ${file.size} bytes (max: ${maxSizeInBytes} bytes)`);
-      return NextResponse.json({ 
+      
+      const errorResponse: any = { 
         error: 'File too large', 
-        message: `Maximum file size for ${file.type.split('/')[0]} files is ${maxSizeMB}MB` 
-      }, { status: 400, headers });
+        message: `File size (${fileSizeMB}MB) exceeds maximum (${maxSizeMB}MB)`,
+        currentSize: file.size,
+        maxSize: maxSizeInBytes,
+        fileType: file.type
+      };
+
+      // For images, suggest using the resize endpoint
+      if (file.type.startsWith('image/')) {
+        errorResponse.resizeEndpoint = '/api/resize';
+        errorResponse.suggestion = 'You can use the /api/resize endpoint to automatically compress this image before uploading.';
+      } else if (file.type.startsWith('video/')) {
+        errorResponse.suggestions = [
+          'Use a video compression tool like HandBrake',
+          'Reduce video resolution (e.g., 1080p → 720p)',
+          'Lower the bitrate',
+          'Trim unnecessary parts'
+        ];
+      } else if (file.type.startsWith('audio/')) {
+        errorResponse.suggestions = [
+          'Convert to MP3 with lower bitrate (128kbps or 192kbps)',
+          'Use audio compression tools',
+          'Trim silence or unnecessary parts'
+        ];
+      }
+      
+      return NextResponse.json(errorResponse, { status: 413, headers });
     }
 
     // Convert file to buffer

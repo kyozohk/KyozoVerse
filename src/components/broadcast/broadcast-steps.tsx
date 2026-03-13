@@ -154,7 +154,7 @@ export const TemplateStep = ({
             <div className="whitespace-pre-wrap">
               {templateContent ? (
                 templateContent
-              ) : 'No content available'}                              
+              ) : ''}                              
             </div>
           );
         })()}
@@ -270,7 +270,7 @@ export const PreviewStep = ({
                     <strong>Template:</strong> {template.name} {template.language ? `(${typeof template.language === 'string' ? template.language : template.language.code})` : ''}
                   </div>
                   <div className="p-3 bg-background border rounded-md whitespace-pre-wrap">
-                    {displayText || 'No content available'}
+                    {displayText || ''}
                   </div>
                 </div>
               );

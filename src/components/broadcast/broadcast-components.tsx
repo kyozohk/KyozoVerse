@@ -156,7 +156,7 @@ export const TemplateStep = ({
                 placeholder=''
                 label="Template Preview"
                 readOnly
-                value={templateContent || 'No content available'}
+                value={templateContent || ''}
                 rows={4}
                 className="resize-none bg-muted/20"
               />
@@ -263,7 +263,7 @@ export const PreviewStep = ({
           <Textarea
             label="Message Preview"
             readOnly
-            value={displayText || 'No content available'}
+            value={displayText || ''}
             rows={12}
             className="resize-none bg-muted/20"
           />

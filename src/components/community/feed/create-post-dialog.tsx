@@ -62,6 +62,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadingFile, setUploadingFile] = useState<'media' | 'thumbnail' | null>(null);
 
   // Extract thumbnail from video
   const extractVideoThumbnail = async (videoFile: File): Promise<string | null> => {
@@ -282,10 +284,21 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     });
 
     try {
-      const url = await uploadFile(fileToUpload, communityId);
+      setUploadingFile(type);
+      setUploadProgress(0);
+      
+      const url = await uploadFile(fileToUpload, communityId, (progress) => {
+        setUploadProgress(progress);
+      });
+      
+      setUploadingFile(null);
+      setUploadProgress(0);
+      
       console.log(`✅ ${type} uploaded successfully:`, url);
       return typeof url === 'string' ? url : url.url;
     } catch (error) {
+      setUploadingFile(null);
+      setUploadProgress(0);
       console.error(`❌ Failed to upload ${type}:`, error);
       throw new Error(`Failed to upload ${type} file: ${(error as Error)?.message || 'Unknown error'}`);
     }
@@ -573,6 +586,25 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       rightComponent={renderPreview()}
       footer={dialogFooter}
     >
+        {uploadingFile && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm font-medium text-blue-900">
+                  Uploading {uploadingFile === 'media' ? 'file' : 'thumbnail'}...
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-blue-700">{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
         {isSubmitting ? (
           <div className="flex items-center justify-center py-16">
             <CreatePostDialogSkeleton />

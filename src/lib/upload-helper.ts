@@ -12,9 +12,18 @@ interface UploadResponse {
 }
 
 /**
+ * Upload progress callback type
+ */
+export type UploadProgressCallback = (progress: number) => void;
+
+/**
  * Upload a file using the server-side API
  */
-export async function uploadFile(file: File, communityId: string): Promise<string | UploadResponse> {
+export async function uploadFile(
+  file: File, 
+  communityId: string, 
+  onProgress?: UploadProgressCallback
+): Promise<string | UploadResponse> {
   try {
     console.log('Starting server-side upload for file:', file.name, 'Type:', file.type, 'Size:', file.size);
     
@@ -52,6 +61,9 @@ export async function uploadFile(file: File, communityId: string): Promise<strin
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100);
           console.log(`Upload progress: ${progress}%`);
+          if (onProgress) {
+            onProgress(progress);
+          }
         }
       };
       
