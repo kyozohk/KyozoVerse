@@ -421,11 +421,17 @@ function MembersContent() {
             searchKeys={['name', 'email']}
             selectable={canManage}
             onSelectionChange={(ids, items) => setSelectedMembers(items)}
-            selectionActions={
+            permanentActions={
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsTaggingOpen(true)}
+                onClick={() => {
+                  if (selectedMembers.length === 0) {
+                    alert('Please select one or more members to apply tags.');
+                    return;
+                  }
+                  setIsTaggingOpen(true);
+                }}
                 className="gap-2"
                 style={{ 
                   borderColor: '#E8DFD1',
@@ -434,7 +440,7 @@ function MembersContent() {
                 }}
               >
                 <Tag className="h-4 w-4" />
-                Add Tags ({selectedMembers.length})
+                Add Tags{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
               </Button>
             }
             isLoading={isLoading}

@@ -37,11 +37,16 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
+  // Early return for public routes BEFORE auth checks
+  if (pathname === '/' || pathname.startsWith('/sa')) {
+    return <>{children}</>;
+  }
+
   useEffect(() => {
-    if (!loading && !user && pathname !== '/') {
+    if (!loading && !user) {
       router.replace('/');
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router]);
 
   const handleLogout = async () => {
     await signOut();
@@ -60,10 +65,6 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   useEffect(() => {
     setSidebarOpen(!isCommunityPage);
   }, [isCommunityPage]);
-
-  if (pathname === '/') {
-    return <>{children}</>;
-  }
 
   if (loading) {
     return (

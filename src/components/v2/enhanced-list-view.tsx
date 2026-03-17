@@ -19,6 +19,7 @@ interface EnhancedListViewProps<T> {
   initialSelection?: Set<string>;
   onSelectionChange?: (ids: Set<string>, items: T[]) => void;
   selectionActions?: React.ReactNode;
+  permanentActions?: React.ReactNode;
   pageSize?: number;
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
@@ -40,6 +41,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   initialSelection,
   onSelectionChange,
   selectionActions,
+  permanentActions,
   pageSize = 20,
   hasMore = false,
   onLoadMore,
@@ -327,6 +329,11 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                   </>
                 )}
               </Button>
+            )}
+            {selectable && !isLoading && permanentActions && (
+              <div className="flex items-center gap-2">
+                {permanentActions}
+              </div>
             )}
             <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
               <Button

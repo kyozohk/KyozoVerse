@@ -4,8 +4,9 @@ import * as admin from 'firebase-admin';
 if (!admin.apps.length) {
   try {
     // Try to initialize with service account from environment variable
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    const saRaw = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (saRaw) {
+      const serviceAccount = JSON.parse(saRaw);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });

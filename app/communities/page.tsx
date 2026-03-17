@@ -8,7 +8,7 @@ import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { CommunityGridItem, CommunityListItem, CommunityCircleItem } from '@/components/v2/community-items';
 import { Button } from '@/components/ui/button';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Community } from '@/lib/types';
@@ -80,7 +80,30 @@ function CommunitiesContent() {
         new Map(allCommunities.map(item => [item.communityId, item])).values()
       );
       
-      setCommunities(uniqueCommunities);
+      // Fetch real-time member counts for each community
+      const communitiesWithCounts = await Promise.all(
+        uniqueCommunities.map(async (community) => {
+          try {
+            const memberCountQuery = query(
+              collection(db, 'communityMembers'),
+              where('communityId', '==', community.communityId)
+            );
+            const countSnapshot = await getCountFromServer(memberCountQuery);
+            return {
+              ...community,
+              memberCount: countSnapshot.data().count,
+            };
+          } catch (error) {
+            console.error(`Error fetching member count for ${community.communityId}:`, error);
+            return {
+              ...community,
+              memberCount: community.memberCount || 0,
+            };
+          }
+        })
+      );
+      
+      setCommunities(communitiesWithCounts);
     } catch (error) {
       console.error("Error fetching communities:", error);
     } finally {
