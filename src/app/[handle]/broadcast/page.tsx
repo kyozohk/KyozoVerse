@@ -180,8 +180,12 @@ function BroadcastContent() {
           },
           body: JSON.stringify({
             to: member.email,
-            from: 'Kyozo <dev@kyozo.com>',
+            from: `${community.name} <dev@kyozo.com>`,
             subject: broadcastSubject,
+            communityHandle: community.handle,
+            communityId: community.communityId,
+            recipientName: member.name || member.email,
+            recipientEmail: member.email,
             html: `
               <!DOCTYPE html>
               <html>

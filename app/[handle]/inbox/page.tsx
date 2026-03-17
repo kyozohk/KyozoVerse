@@ -3,9 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/firebase/firestore';
-import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage, Input } from '@/components/ui';
-import { Search, Mail, MessageSquare, Lock, Globe, Inbox } from 'lucide-react';
+import { Search, Mail, MessageSquare, Lock, Globe, Inbox, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
@@ -57,6 +57,7 @@ function InboxContent() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [messageSearchTerm, setMessageSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [communityMembers, setCommunityMembers] = useState<any[]>([]);
@@ -124,39 +125,95 @@ function InboxContent() {
     loadMembers();
   }, [community?.communityId]);
 
-  // Load conversations from broadcast emails and WhatsApp messages
+  // Load conversations from inbox messages
   useEffect(() => {
-    if (!community?.communityId) {
+    if (!handle) {
       setLoading(false);
       return;
     }
 
-    const conversationMap = new Map<string, Conversation>();
+    // Query all messages for this community by handle (both outgoing and incoming)
+    const messagesQuery = query(
+      collection(db, 'inboxMessages'),
+      where('communityHandle', '==', handle),
+      orderBy('timestamp', 'desc')
+    );
 
-    // Create conversations from community members
-    communityMembers.forEach((member) => {
-      const oduserId = member.oduserId || member.oduserId;
-      conversationMap.set(oduserId, {
-        oduserId,
-        recipientId: oduserId,
-        recipientName: member.displayName || member.userDetails?.displayName || 'Unknown',
-        recipientEmail: member.email || member.userDetails?.email,
-        recipientPhone: member.phone || member.phoneNumber || member.userDetails?.phone,
-        recipientAvatar: member.avatarUrl || member.userDetails?.avatarUrl,
-        lastMessage: 'No messages yet',
-        lastMessageTime: null,
-        unreadCount: 0,
-        messageTypes: new Set(),
-      });
-    });
+    const unsubscribe = onSnapshot(
+      messagesQuery,
+      (snapshot) => {
+        const conversationMap = new Map<string, Conversation>();
 
-    setConversations(Array.from(conversationMap.values()));
-    setLoading(false);
+        snapshot.docs.forEach((docSnap) => {
+          const msg = { id: docSnap.id, ...docSnap.data() } as Message;
 
-    // TODO: Subscribe to actual message collections when implemented
-    // For now, we show member list as potential conversations
+          // For outgoing: group by recipient; for incoming: group by sender
+          const memberEmail = msg.direction === 'outgoing'
+            ? (msg.recipientEmail || '')
+            : (msg.senderEmail || '');
+          const memberName = msg.direction === 'outgoing'
+            ? (msg.recipientName || msg.recipientEmail || 'Unknown')
+            : (msg.senderName || msg.senderEmail || 'Unknown');
+          const conversationKey = memberEmail || docSnap.id;
 
-  }, [community?.communityId, communityMembers]);
+          if (!conversationMap.has(conversationKey)) {
+            conversationMap.set(conversationKey, {
+              oduserId: msg.userId || '',
+              recipientId: conversationKey,
+              recipientName: memberName,
+              recipientEmail: memberEmail || undefined,
+              recipientPhone: msg.senderPhone,
+              recipientAvatar: undefined,
+              lastMessage: msg.messageText?.substring(0, 100) || '',
+              lastMessageTime: msg.timestamp,
+              unreadCount: (!msg.read && msg.direction === 'incoming') ? 1 : 0,
+              messageTypes: new Set([msg.type]),
+            });
+          } else {
+            const conv = conversationMap.get(conversationKey)!;
+            if (!msg.read && msg.direction === 'incoming') conv.unreadCount++;
+            conv.messageTypes.add(msg.type);
+            if (!conv.lastMessageTime || (msg.timestamp && msg.timestamp.seconds > conv.lastMessageTime?.seconds)) {
+              conv.lastMessage = msg.messageText?.substring(0, 100) || '';
+              conv.lastMessageTime = msg.timestamp;
+            }
+          }
+        });
+
+        // Merge with community members who haven't messaged yet
+        communityMembers.forEach((member) => {
+          const memberEmail = member.email || member.userDetails?.email || '';
+          if (memberEmail && !conversationMap.has(memberEmail)) {
+            conversationMap.set(memberEmail, {
+              oduserId: member.oduserId || member.userId || '',
+              recipientId: memberEmail,
+              recipientName: member.displayName || member.userDetails?.displayName || 'Unknown',
+              recipientEmail: memberEmail,
+              recipientPhone: member.phone || member.phoneNumber || member.userDetails?.phone,
+              recipientAvatar: member.avatarUrl || member.userDetails?.avatarUrl,
+              lastMessage: 'No messages yet',
+              lastMessageTime: null,
+              unreadCount: 0,
+              messageTypes: new Set(),
+            });
+          }
+        });
+
+        setConversations(Array.from(conversationMap.values()).sort((a, b) => {
+          if (!a.lastMessageTime) return 1;
+          if (!b.lastMessageTime) return -1;
+          return b.lastMessageTime.seconds - a.lastMessageTime.seconds;
+        }));
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error in inbox snapshot listener:', error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [handle, communityMembers]);
 
   // Filter conversations based on search and filter type
   const filteredConversations = conversations.filter((conv) => {
@@ -171,7 +228,57 @@ function InboxContent() {
     return matchesSearch;
   });
 
+  // Load messages for selected conversation
+  useEffect(() => {
+    if (!selectedConversationId || !handle) {
+      setMessages([]);
+      return;
+    }
+
+    const messagesQuery = query(
+      collection(db, 'inboxMessages'),
+      where('communityHandle', '==', handle),
+      orderBy('timestamp', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+      const conversationMessages = snapshot.docs
+        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message))
+        .filter(msg => {
+          const memberEmail = msg.direction === 'outgoing' ? msg.recipientEmail : msg.senderEmail;
+          return memberEmail === selectedConversationId;
+        });
+
+      setMessages(conversationMessages);
+
+      // Mark incoming messages as read
+      conversationMessages.forEach(async (msg) => {
+        if (!msg.read && msg.direction === 'incoming') {
+          try {
+            await updateDoc(doc(db, 'inboxMessages', msg.id), { read: true });
+          } catch (error) {
+            console.error('Error marking message as read:', error);
+          }
+        }
+      });
+    });
+
+    return () => unsubscribe();
+  }, [selectedConversationId, handle]);
+
   const selectedConversation = conversations.find((c) => c.recipientId === selectedConversationId);
+
+  // Filter messages by search term
+  const filteredMessages = messages.filter(msg => {
+    if (!messageSearchTerm) return true;
+    const searchLower = messageSearchTerm.toLowerCase();
+    return (
+      msg.messageText.toLowerCase().includes(searchLower) ||
+      msg.subject?.toLowerCase().includes(searchLower) ||
+      msg.senderName?.toLowerCase().includes(searchLower) ||
+      msg.senderEmail?.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return <PageLoadingSkeleton showInbox={true} />;
@@ -321,14 +428,14 @@ function InboxContent() {
               <>
                 {/* Chat header */}
                 <div className="p-4 border-b bg-white" style={{ borderColor: '#E8DFD1' }}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 mb-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={selectedConversation.recipientAvatar || undefined} />
                       <AvatarFallback style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
                         {selectedConversation.recipientName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-[#5B4A3A]">{selectedConversation.recipientName}</p>
                       <div className="flex items-center gap-3 text-sm text-[#8B7355]">
                         {selectedConversation.recipientEmail && (
@@ -346,20 +453,31 @@ function InboxContent() {
                       </div>
                     </div>
                   </div>
+                  {/* Search messages */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B7355]" />
+                    <Input
+                      placeholder="Search messages..."
+                      value={messageSearchTerm}
+                      onChange={(e) => setMessageSearchTerm(e.target.value)}
+                      className="pl-9"
+                      style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+                    />
+                  </div>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.length === 0 ? (
+                  {filteredMessages.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center h-full">
                       <div className="text-center text-[#8B7355]">
                         <Inbox className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                        <p className="text-lg mb-1">No messages yet</p>
-                        <p className="text-sm">Send a broadcast to start the conversation</p>
+                        <p className="text-lg mb-1">{messageSearchTerm ? 'No matching messages' : 'No messages yet'}</p>
+                        <p className="text-sm">{messageSearchTerm ? 'Try a different search term' : 'Send a broadcast to start the conversation'}</p>
                       </div>
                     </div>
                   ) : (
-                    messages.map((msg) => (
+                    filteredMessages.map((msg) => (
                       <div
                         key={msg.id}
                         className={`flex ${msg.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}

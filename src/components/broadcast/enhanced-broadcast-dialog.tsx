@@ -278,6 +278,9 @@ export function EnhancedBroadcastDialog({
           to: member.email,
           from: `${communityName || 'Kyozo'} <${effectiveFromEmail}>`,
           subject: personalizedSubject,
+          communityHandle: communityHandle || undefined,
+          recipientName: member.name || member.email,
+          recipientEmail: member.email,
           html: `
             <!DOCTYPE html>
             <html>

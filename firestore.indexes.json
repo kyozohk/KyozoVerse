@@ -2,6 +2,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "communityMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "communityId", "order": "ASCENDING" },
+        { "fieldPath": "joinedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "guestlists",
       "queryScope": "COLLECTION",
       "fields": [
@@ -40,6 +48,22 @@
       "fields": [
         { "fieldPath": "communityHandle", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inboxMessages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "communityHandle", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inboxMessages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "communityHandle", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
       ]
     }
   ],

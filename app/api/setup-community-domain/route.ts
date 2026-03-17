@@ -22,57 +22,70 @@ interface DomainSetupResult {
   error?: string;
 }
 
-// Add DNS records to GoDaddy for Resend email sending
+// Add a single batch of DNS records to GoDaddy
+async function patchGoDaddyRecords(records: any[]): Promise<{ success: boolean; error?: string; status?: number }> {
+  const response = await fetch(`${GODADDY_BASE_URL}/domains/${BASE_DOMAIN}/records`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `sso-key ${GO_DADDY_API_KEY}:${GO_DADDY_API_SECRET}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(records),
+  });
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('[setup-community-domain] GoDaddy PATCH error:', response.status, error);
+    return { success: false, error, status: response.status };
+  }
+  return { success: true, status: response.status };
+}
+
+// Add DNS records to GoDaddy for Resend email sending + inbound
 async function addGoDaddyDNSRecords(handle: string, region: string = 'us-east-1'): Promise<{ success: boolean; error?: string; details?: any }> {
   if (!GO_DADDY_API_KEY || !GO_DADDY_API_SECRET) {
     return { success: false, error: 'GoDaddy API credentials not configured' };
   }
 
-  // Determine the correct SES endpoint based on region
   const sesEndpoint = `feedback-smtp.${region}.amazonses.com`;
 
-  const records = [
-    // SPF TXT record for the subdomain
-    {
-      type: 'TXT',
-      name: `send.${handle}`,
-      data: 'v=spf1 include:amazonses.com ~all',
-      ttl: 600,
-    },
-    // MX record for the subdomain (required by Resend)
-    {
-      type: 'MX',
-      name: `send.${handle}`,
-      data: sesEndpoint,
-      priority: 10,
-      ttl: 600,
-    },
+  // Outbound records: SPF TXT + SES MX on send.{handle} subdomain
+  const outboundRecords = [
+    { type: 'TXT', name: `send.${handle}`, data: 'v=spf1 include:amazonses.com ~all', ttl: 600 },
+    { type: 'MX', name: `send.${handle}`, data: sesEndpoint, priority: 10, ttl: 600 },
   ];
 
-  const results: any[] = [];
+  // Inbound record: MX on {handle} subdomain → Resend inbound server
+  const inboundRecords = [
+    { type: 'MX', name: handle, data: 'inbound-smtp.us-east-1.resend.com', priority: 10, ttl: 600 },
+  ];
 
   try {
-    console.log(`[setup-community-domain] Adding ${records.length} DNS records to GoDaddy for ${handle}.${BASE_DOMAIN}`);
-    
-    const response = await fetch(`${GODADDY_BASE_URL}/domains/${BASE_DOMAIN}/records`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `sso-key ${GO_DADDY_API_KEY}:${GO_DADDY_API_SECRET}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(records),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('[setup-community-domain] GoDaddy error:', error);
-      return { success: false, error: `GoDaddy API error: ${response.status}`, details: error };
+    // Call 1: Outbound records
+    console.log(`[setup-community-domain] Adding outbound DNS records for send.${handle}.${BASE_DOMAIN}`);
+    const outboundResult = await patchGoDaddyRecords(outboundRecords);
+    if (!outboundResult.success) {
+      console.warn(`[setup-community-domain] Outbound records warning (${outboundResult.status}): ${outboundResult.error}`);
+    } else {
+      console.log(`[setup-community-domain] ✓ Outbound records added: send.${handle}`);
     }
 
-    console.log(`[setup-community-domain] ✓ Added SPF TXT record: send.${handle}`);
-    console.log(`[setup-community-domain] ✓ Added MX record: send.${handle} -> ${sesEndpoint}`);
-    
-    return { success: true, details: { spfAdded: true, mxAdded: true } };
+    // Call 2: Inbound MX record (separate call to avoid conflicts)
+    console.log(`[setup-community-domain] Adding inbound MX record for ${handle}.${BASE_DOMAIN}`);
+    const inboundResult = await patchGoDaddyRecords(inboundRecords);
+    if (!inboundResult.success) {
+      console.warn(`[setup-community-domain] Inbound MX warning (${inboundResult.status}): ${inboundResult.error}`);
+    } else {
+      console.log(`[setup-community-domain] ✓ Inbound MX added: ${handle} → inbound-smtp.us-east-1.resend.com`);
+    }
+
+    return {
+      success: true,
+      details: {
+        spfAdded: outboundResult.success,
+        mxAdded: outboundResult.success,
+        inboundMxAdded: inboundResult.success,
+      },
+    };
   } catch (error: any) {
     console.error('[setup-community-domain] GoDaddy error:', error);
     return { success: false, error: error.message };
@@ -103,13 +116,14 @@ async function registerResendDomain(handle: string): Promise<{ success: boolean;
     const data = await response.json();
 
     if (!response.ok) {
-      // Domain might already exist
-      if (data.message?.includes('already exists')) {
-        console.log(`[setup-community-domain] Domain ${domainName} already exists in Resend`);
+      // Domain might already exist (Resend returns various messages)
+      const msg = data.message || data.error || '';
+      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exist')) {
+        console.log(`[setup-community-domain] Domain ${domainName} already registered in Resend`);
         return { success: true, status: 'already_exists' };
       }
       console.error('[setup-community-domain] Resend error:', data);
-      return { success: false, error: data.message || 'Resend API error' };
+      return { success: false, error: msg || 'Resend API error' };
     }
 
     console.log(`[setup-community-domain] Registered ${domainName} with Resend, ID: ${data.id}`);
@@ -392,13 +406,10 @@ export async function POST(request: NextRequest) {
 
     const result: DomainSetupResult = { success: false };
 
-    // Step 1: Register domain with Resend
+    // Step 1: Register domain with Resend (ok if already exists)
     const resendResult = await registerResendDomain(sanitizedHandle);
     if (!resendResult.success) {
-      return NextResponse.json(
-        { error: resendResult.error, step: 'resend_registration' },
-        { status: 500 }
-      );
+      console.warn(`[setup-community-domain] Resend registration issue: ${resendResult.error} — continuing with DNS setup`);
     }
     result.resend = {
       domainId: resendResult.domainId || '',

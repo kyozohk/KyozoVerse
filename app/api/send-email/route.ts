@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { to, from, subject, html } = body;
+    const { to, from, subject, html, replyTo, communityId, communityHandle, recipientName, recipientEmail } = body;
 
     if (!to || !subject || !html) {
       return NextResponse.json(
@@ -36,6 +38,7 @@ export async function POST(request: NextRequest) {
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
+        reply_to: replyTo || (communityHandle ? `reply@${communityHandle}.kyozo.com` : 'reply@kyozo.com'),
       }),
     });
 
@@ -47,6 +50,35 @@ export async function POST(request: NextRequest) {
         { error: data.message || 'Failed to send email' },
         { status: response.status }
       );
+    }
+
+    // Store outgoing message in Firestore if communityHandle provided
+    if (communityHandle || communityId) {
+      try {
+        const recipients = Array.isArray(to) ? to : [to];
+        for (const recipientAddr of recipients) {
+          await adminDb.collection('inboxMessages').add({
+            senderEmail: fromAddress,
+            senderName: communityHandle || 'Community',
+            recipientEmail: typeof recipientAddr === 'string' ? recipientAddr : recipientEmail || null,
+            recipientName: recipientName || null,
+            communityId: communityId || null,
+            communityHandle: communityHandle || null,
+            subject: subject || '',
+            messageText: html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 500),
+            htmlContent: html,
+            direction: 'outgoing',
+            type: 'email',
+            read: true,
+            broadcastId: data.id || null,
+            timestamp: FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
+            metadata: { resendId: data.id || null },
+          });
+        }
+      } catch (err) {
+        console.error('Error storing outgoing message:', err);
+      }
     }
 
     return NextResponse.json({ success: true, id: data.id });
