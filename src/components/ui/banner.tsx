@@ -134,7 +134,7 @@ export function Banner({
           </button>
         </div>
       ) : tags.length > 0 ? (
-        <div className="absolute bottom-8 left-8 flex flex-wrap gap-2 max-w-md">
+        <div className="absolute bottom-8 left-8 flex flex-wrap gap-2" style={{ maxWidth: ctas.length > 0 ? 'calc(100% - 500px)' : '28rem' }}>
           {tags.map((tag) => (
             <span 
               key={tag} 

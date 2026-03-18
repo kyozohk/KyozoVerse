@@ -113,8 +113,8 @@ export default function SchedulePage() {
   };
 
   const handleDayClick = (date: Date, dayEvents: CalendarEvent[]) => {
-    // Format date as YYYY-MM-DD for the input
-    const formattedDate = date.toISOString().split('T')[0];
+    // Format date as YYYY-MM-DD using local timezone (not UTC) to avoid off-by-one errors
+    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     
     if (dayEvents.length === 0) {
       // No events on this day - open create dialog with this date
@@ -170,7 +170,13 @@ export default function SchedulePage() {
               ctas={[{
                 label: 'Create Event',
                 icon: <PlusCircle className="h-4 w-4" />,
-                onClick: () => setIsCreateDialogOpen(true),
+                onClick: () => {
+                  // Set today's date as default when opening via header button
+                  const today = new Date();
+                  const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                  setSelectedDate(todayFormatted);
+                  setIsCreateDialogOpen(true);
+                },
               }]}
               height="16rem"
             />

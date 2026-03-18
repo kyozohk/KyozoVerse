@@ -21,7 +21,7 @@ export function CommunityCompactItem({ community }: { community: Community }) {
             <p className="font-semibold text-md">{community.name}</p>
             <div className="flex items-center text-sm text-muted-foreground">
               <Users className="h-4 w-4 mr-1" />
-              <span>{community.memberCount || 0} members</span>
+              <span>{community.memberCount || 0} {(community.memberCount || 0) === 1 ? 'member' : 'members'}</span>
             </div>
           </div>
         </CardContent>

@@ -74,7 +74,7 @@ export default function SettingsPage() {
               </div>
               
               <div className="flex justify-end">
-                <CustomButton variant="semi-rounded">
+                <CustomButton variant="default">
                   Save Changes
                 </CustomButton>
               </div>

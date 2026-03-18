@@ -401,7 +401,7 @@ export function MemberDialog({
                 disabled={submitting}
                 style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
                 >
-                {submitting ? (mode === "add" ? "Adding..." : "Saving...") : "Save changes"}
+                {submitting ? (mode === "add" ? "Adding..." : "Saving...") : (mode === "add" ? "Add Member" : "Save Changes")}
                 </CustomButton>
             </div>
           </div>

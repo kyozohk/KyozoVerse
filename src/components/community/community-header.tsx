@@ -133,7 +133,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
                         </Badge>
                         <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
                           <Users className="h-3 w-3 mr-1.5" />
-                          {memberCount !== undefined ? memberCount : community.memberCount || 0} members
+                          {memberCount !== undefined ? memberCount : community.memberCount || 0} {(memberCount !== undefined ? memberCount : community.memberCount || 0) === 1 ? 'member' : 'members'}
                         </Badge>
                         {(community as any).location && (
                           <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">

@@ -14,12 +14,19 @@ export function ResetPasswordDialog({ open, onOpenChange, onGoBack }: { open: bo
 
   const handleSubmit = async () => {
     setError(null);
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
     try {
       await resetPassword(email);
-      setIsSubmitted(true);
-    } catch (error: any) {
-      setError(error.message);
+    } catch {
+      // Silently catch errors to prevent email enumeration attacks.
+      // We show the same "check your inbox" message regardless of whether
+      // the email exists in our system or not.
     }
+    // Always show submitted state to prevent email enumeration
+    setIsSubmitted(true);
   };
 
   const handleResend = async () => {
@@ -42,7 +49,7 @@ export function ResetPasswordDialog({ open, onOpenChange, onGoBack }: { open: bo
       open={open}
       onOpenChange={onOpenChange}
       title={isSubmitted ? "Check your inbox" : "Reset your password"}
-      description={isSubmitted ? `We've sent a password reset link to ${email}.` : "Enter the email address associated with your account and we'll send you a link to reset your password."}
+      description={isSubmitted ? `If an account exists for ${email}, we've sent a password reset link. Please check your inbox and spam folder.` : "Enter the email address associated with your account and we'll send you a link to reset your password."}
     >
       <div className="flex flex-col h-full">
         {!isSubmitted ? (

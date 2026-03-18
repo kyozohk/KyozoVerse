@@ -20,7 +20,7 @@ export function CommunityGridItem({ community }: { community: Community }) {
           <p className="font-semibold text-lg">{community.name}</p>
           <div className="flex items-center text-sm text-muted-foreground mt-1">
             <Users className="h-4 w-4 mr-1" />
-            <span>{community.memberCount || 0} members</span>
+            <span>{community.memberCount || 0} {(community.memberCount || 0) === 1 ? 'member' : 'members'}</span>
           </div>
           {displayTags.length > 0 && (
             <div className="flex items-center justify-center gap-2 mt-2">

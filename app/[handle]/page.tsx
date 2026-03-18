@@ -212,7 +212,7 @@ export default function CommunityPage() {
           />
           
           {/* Overview Screen Component */}
-          <OverviewScreen />
+          <OverviewScreen communityHandle={handle} communityId={community.communityId} />
         </div>
       </div>
       <CreateCommunityDialog 

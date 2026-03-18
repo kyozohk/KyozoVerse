@@ -30,7 +30,7 @@ export function CommunityCard({ community }: { community: Community }) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{community.memberCount || 0} members</span>
+            <span>{community.memberCount || 0} {(community.memberCount || 0) === 1 ? 'member' : 'members'}</span>
           </div>
           <div className="flex items-center gap-1">
             <MessageSquare className="h-4 w-4" />

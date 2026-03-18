@@ -35,7 +35,7 @@ export function CommunityListItem({ community }: { community: Community }) {
                     {/* Member Count (2 columns) */}
                     <div className="col-span-6 md:col-span-2 flex items-center text-sm text-muted-foreground">
                         <Users className="h-4 w-4 mr-2" />
-                        <span>{community.memberCount || 0} members</span>
+                        <span>{community.memberCount || 0} {(community.memberCount || 0) === 1 ? 'member' : 'members'}</span>
                     </div>
 
                     {/* Tags (3 columns) */}

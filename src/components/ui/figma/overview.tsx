@@ -113,9 +113,11 @@ const mockFeedPosts: FeedPost[] = [
 interface OverviewScreenProps {
   initialDisplaySettingsOpen?: boolean;
   initialInviteCustomizerOpen?: boolean;
+  communityHandle?: string;
+  communityId?: string;
 }
 
-export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInviteCustomizerOpen = false }: OverviewScreenProps = {}) {
+export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInviteCustomizerOpen = false, communityHandle, communityId }: OverviewScreenProps = {}) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
   const [tagModalOpen, setTagModalOpen] = useState(false);

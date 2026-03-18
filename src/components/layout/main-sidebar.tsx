@@ -47,10 +47,10 @@ export default function MainSidebar({ expanded = false }: MainSidebarProps) {
         >
             <div className="flex h-full flex-col p-2">
                 <div className="flex h-[76px] items-center justify-center">
-                    <div className={`flex items-center ${expanded ? 'gap-3' : 'justify-center'}`}>
+                    <a href="/communities" className={`flex items-center cursor-pointer ${expanded ? 'gap-3' : 'justify-center'}`}>
                         <Image src="/favicon.svg" alt="Kyozo" width={50} height={50} />
                         {expanded && <span className="text-xl font-bold" style={{ color: '#5B4A3A' }}>Kyozo</span>}
-                    </div>
+                    </a>
                 </div>
                 
                 <nav className={`flex flex-1 flex-col gap-y-2 py-5 ${expanded ? 'items-stretch' : 'items-center'}`}>
@@ -67,13 +67,6 @@ export default function MainSidebar({ expanded = false }: MainSidebarProps) {
                 </nav>
 
                 <div className={`flex flex-col gap-y-2 mt-auto pb-2 ${expanded ? 'items-stretch' : 'items-center'}`}>
-                    <SidebarNavItem 
-                        href="/account" 
-                        icon={<User />}
-                        className={expanded ? 'w-full justify-start px-4' : 'w-full justify-center'}
-                    >
-                        {expanded ? <span className="ml-3">Account</span> : <span className="sr-only">Account</span>}
-                    </SidebarNavItem>
                     <button
                         onClick={handleLogout}
                         className={`flex items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${expanded ? 'h-12 w-full justify-start px-4 gap-3' : 'h-12 w-12 justify-center'}`}

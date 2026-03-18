@@ -473,10 +473,13 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     
                     {currentStep === 0 && (
                         <div className="space-y-4">
-                            <Input label="Community Name *" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
+                            <div>
+                                <Input label="Community Name *" value={formData.name} onChange={(e) => { handleValueChange('name', e.target.value); setFormErrors({}); }} />
+                                {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
+                            </div>
                             <div>
                                 <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} />
-                                <p className="text-xs text-muted-foreground mt-1">This becomes the URL: kyozo.com/{formData.handle || 'your-handle'}</p>
+                                <p className="text-xs text-muted-foreground mt-1">This becomes the URL: pro.kyozo.com/{formData.handle || 'your-handle'}</p>
                             </div>
                             <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
                             <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
