@@ -16,11 +16,12 @@ import { InviteMemberDialog } from '@/components/community/invite-member-dialog'
 import { TagMembersDialog } from '@/components/community/tag-members-dialog';
 import { addTagsToCommunity } from '@/lib/community-tags';
 import { useAuth } from '@/hooks/use-auth';
-import { Tag } from 'lucide-react';
+import { Tag, Zap, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserRoleInCommunity } from '@/lib/community-utils';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
+import { ImportMembersDialog } from '@/components/community/import-members-dialog';
 
 interface MemberData {
   id: string;
@@ -48,23 +49,33 @@ function MembersContent() {
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Pagination state
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Helper to generate placeholder avatar from name
+  const getAvatarUrl = (name: string, email: string, existingUrl?: string | null): string => {
+    if (existingUrl) return existingUrl;
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128&bold=true`;
+  };
+
   // Helper function to transform member docs to MemberData
   const transformMemberDoc = (memberDoc: any): MemberData => {
     const memberData = memberDoc.data();
     const userDetails = memberData.userDetails || {};
+    const name = userDetails.displayName || userDetails.email || 'Unknown User';
     
     return {
       id: memberDoc.id,
       userId: memberData.userId,
-      name: userDetails.displayName || userDetails.email || 'Unknown User',
+      name,
       email: userDetails.email || '',
-      imageUrl: userDetails.avatarUrl || userDetails.photoURL || '/placeholder-avatar.png',
+      imageUrl: getAvatarUrl(name, userDetails.email || '', userDetails.avatarUrl || userDetails.photoURL),
       role: memberData.role || 'member',
       joinedDate: memberData.joinedAt,
       tags: memberData.tags || [],
@@ -104,8 +115,10 @@ function MembersContent() {
         );
         const membersSnapshot = await getDocs(membersQuery);
 
-        // Transform member docs - use userDetails embedded in the member document
-        const membersData = membersSnapshot.docs.map(transformMemberDoc);
+        // Transform member docs and filter out owner/admin (only show actual members)
+        const membersData = membersSnapshot.docs
+          .map(transformMemberDoc)
+          .filter(m => m.role !== 'owner' && m.role !== 'admin');
         
         setMembers(membersData);
         setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1] || null);
@@ -124,7 +137,7 @@ function MembersContent() {
     };
 
     fetchCommunityAndMembers();
-  }, [handle, user]);
+  }, [handle, user, refreshKey]);
 
   // Load more members (infinite scroll)
   const loadMoreMembers = async () => {
@@ -140,12 +153,18 @@ function MembersContent() {
         limit(PAGE_SIZE)
       );
       const membersSnapshot = await getDocs(membersQuery);
+
+      // Filter out owner/admin from the list (only show actual members)
+      const memberDocs = membersSnapshot.docs
+        .map(transformMemberDoc)
+        .filter(m => m.role !== 'owner' && m.role !== 'admin');
+      setMembers(prev => [...prev, ...memberDocs]);
       
-      const newMembers = membersSnapshot.docs.map(transformMemberDoc);
-      
-      setMembers(prev => [...prev, ...newMembers]);
-      setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1] || null);
-      setHasMore(membersSnapshot.docs.length === PAGE_SIZE);
+      if (membersSnapshot.docs.length < PAGE_SIZE) {
+        setHasMore(false);
+      } else {
+        setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1]);
+      }
     } catch (error) {
       console.error('Error loading more members:', error);
     } finally {
@@ -393,6 +412,11 @@ function MembersContent() {
               tags={(community as any).tags || []}
               ctas={canManage ? [
                 {
+                  label: 'Import Members',
+                  icon: <Upload className="h-4 w-4" />,
+                  onClick: () => setIsImportOpen(true),
+                },
+                {
                   label: 'Invite Member',
                   icon: <Mail className="h-4 w-4" />,
                   onClick: () => setIsInviteDialogOpen(true),
@@ -407,6 +431,22 @@ function MembersContent() {
             />
           )}
           <div className="p-6">
+            {/* Automatically Integrate banner — shown when no members yet */}
+            {!isLoading && members.length === 0 && canManage && (
+              <button
+                onClick={() => setIsImportOpen(true)}
+                className="w-full mb-5 flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all hover:opacity-90 hover:shadow-md"
+                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}
+              >
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-white text-sm">Automatically integrate</p>
+                  <p className="text-white/80 text-xs mt-0.5">Consolidate contacts from CSV, Google Sheets, and platforms like Eventbrite</p>
+                </div>
+              </button>
+            )}
             <EnhancedListView
             items={members}
             renderGridItem={(item, isSelected) => (
@@ -474,6 +514,22 @@ function MembersContent() {
         />
       )}
       
+      {/* Import Members Dialog */}
+      {community && (
+        <ImportMembersDialog
+          isOpen={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          community={community}
+          onSuccess={() => {
+            setIsLoading(true);
+            setMembers([]);
+            setLastDoc(null);
+            setHasMore(true);
+            setRefreshKey(k => k + 1);
+          }}
+        />
+      )}
+
       {/* Tag Members Dialog */}
       {community && (
         <TagMembersDialog

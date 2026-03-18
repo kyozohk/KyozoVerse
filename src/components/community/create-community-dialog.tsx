@@ -425,6 +425,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             });
             onOpenChange(false);
             setCurrentStep(0);
+            onCommunityUpdated?.(); // Refresh communities list
         } catch (error) {
             console.error("Error creating community: ", error);
             errorEmitter.emit('permission-error', new FirestorePermissionError({
