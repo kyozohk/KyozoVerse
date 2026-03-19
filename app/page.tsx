@@ -170,13 +170,13 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center justify-center text-center">
         <div className="py-24 px-4 md:py-32 w-full">
-          <Hero
+          {/* <Hero
             text={["Discover your", "creative universe"]}
             gradientStart="#A07FBD"
             gradientEnd="#23AF98"
-          />
+          /> */}
           
-          <section className="mt-24 space-y-12 mx-40">
+          {/* <section className="mt-24 space-y-12 mx-40">
             <FeatureCard
               title="No Likes No Followers Just Humans"
               description="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
@@ -186,9 +186,9 @@ export default function Home() {
               RightComponent={<IphoneMockup src="/Mobile-white.png" />}
               
             />
-          </section>
-          <Hero text={["Where creative", "minds converge"]} />                  
-          <section className="mt-24 space-y-12 mx-40">            
+          </section> */}
+          {/* <Hero text={["Where creative", "minds converge"]} />                   */}
+          {/* <section className="mt-24 space-y-12 mx-40">            
             <FeatureCard
               title="Exclusive access and insights"
               description="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
@@ -205,7 +205,7 @@ export default function Home() {
               color={THEME_COLORS.overview.primary}
               RightComponent={<ParallaxGrid />}
             />            
-          </section>
+          </section> */}
         </div>
         <Hero text={["We are", "a human network"]} />    
         {/* Edge-to-edge marquee */}
