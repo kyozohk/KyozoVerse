@@ -10,6 +10,7 @@ import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 interface PricingFeature {
   id: string;
@@ -27,6 +28,7 @@ export default function MoreFeaturesPage() {
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCommunity = async () => {
@@ -212,6 +214,8 @@ export default function MoreFeaturesPage() {
         <button
           className="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
           style={{ backgroundColor: '#E07B39' }}
+          onClick={() => toast({ title: 'Request Feature', description: 'Custom feature requests coming soon! Contact sales for enterprise add-ons.' })}
+          title="Request a feature"
         >
           <Plus className="h-6 w-6 text-white" />
         </button>

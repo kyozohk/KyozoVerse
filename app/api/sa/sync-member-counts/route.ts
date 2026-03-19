@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { verifyAuth } from '@/lib/api-auth';
 
 const SA_PASSWORD = 'kyozo123';
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   const pwd = request.headers.get('x-sa-password');
   if (pwd !== SA_PASSWORD) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initAdmin } from '@/firebase/admin';
 import { storage } from '@/firebase/storage';
 import { ref, deleteObject } from 'firebase/storage';
+import { verifyAuth } from '@/lib/api-auth';
 
 function extractStoragePath(url: string): string | null {
   try {
@@ -35,6 +36,9 @@ function extractStoragePath(url: string): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     console.log('📥 Delete API route called');
     

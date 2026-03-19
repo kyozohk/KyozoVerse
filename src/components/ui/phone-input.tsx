@@ -65,15 +65,20 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isInternalUpdate = useRef(false);
 
+  // Sync FROM parent value → internal state (only when parent changes externally)
   useEffect(() => {
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false;
+      return;
+    }
     if (value) {
-      // Find matching country by checking if value starts with the dial code (without +)
-      const matchingCountry = COUNTRIES.sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => {
+      const matchingCountry = [...COUNTRIES].sort((a, b) => b.dialCode.length - a.dialCode.length).find(c => {
         const dialCodeWithoutPlus = c.dialCode.replace('+', '');
         return value.startsWith(dialCodeWithoutPlus);
       });
-      
+
       if (matchingCountry) {
         setSelectedCountry(matchingCountry);
         const dialCodeWithoutPlus = matchingCountry.dialCode.replace('+', '');
@@ -86,12 +91,14 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     }
   }, [value]);
 
+  // Sync TO parent value → when internal state changes (user typing/selecting)
   useEffect(() => {
     const fullNumber = phoneNumber ? `${selectedCountry.dialCode.replace('+', '')}${phoneNumber.replace(/\D/g, '')}` : '';
     if (onChange && fullNumber !== value) {
+      isInternalUpdate.current = true;
       onChange(fullNumber);
     }
-  }, [selectedCountry, phoneNumber, onChange, value]);
+  }, [selectedCountry, phoneNumber]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/lib/api-auth';
 
 // API Key validation - in production, store this in environment variables
 const validateApiKey = (apiKey: string | null): boolean => {
@@ -11,15 +12,10 @@ const validateApiKey = (apiKey: string | null): boolean => {
 };
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
-    // Validate API key from header
-    const apiKey = request.headers.get('x-api-key');
-    if (!validateApiKey(apiKey)) {
-      return NextResponse.json(
-        { error: 'Invalid or missing API key', code: 'UNAUTHORIZED' },
-        { status: 401 }
-      );
-    }
 
     const body = await request.json();
     const { to, from, subject, html, text, replyTo, communityName } = body;
@@ -120,7 +116,10 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint for API documentation
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   return NextResponse.json({
     name: 'Kyozo Email API',
     version: '1.0',

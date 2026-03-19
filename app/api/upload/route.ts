@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
+import { verifyAuth } from '@/lib/api-auth';
 
 // Initialize Firebase Admin if it hasn't been initialized
 let app: App;
@@ -50,6 +51,9 @@ function isValidFileType(type: string): boolean {
  * This is the secure way to allow clients to upload files directly to GCS.
  */
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     // Set CORS headers
     const headers = {
@@ -58,57 +62,52 @@ export async function POST(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
-    // Check if user is authenticated
-    const userId = request.headers.get('x-user-id');
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
-    }
-
     // Get the form data with the file
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const communityId = formData.get('communityId') as string;
-    
+    const userId = request.headers.get('x-user-id');
+
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400, headers });
     }
 
     console.log('File received:', file.name, 'Size:', file.size, 'Type:', file.type);
-    
+
     // Validate file type
     if (!isValidFileType(file.type)) {
       console.error('Invalid file type:', file.type);
-      return NextResponse.json({ 
-        error: 'Invalid file type', 
-        message: `File type ${file.type} is not supported` 
+      return NextResponse.json({
+        error: 'Invalid file type',
+        message: `File type ${file.type} is not supported`
       }, { status: 400, headers });
     }
-    
+
     // Validate file size based on type
-    const maxSizeInBytes = file.type.startsWith('video/') 
+    const maxSizeInBytes = file.type.startsWith('video/')
       ? 100 * 1024 * 1024  // 100MB for videos
-      : file.type.startsWith('audio/') 
+      : file.type.startsWith('audio/')
         ? 20 * 1024 * 1024  // 20MB for audio
         : 10 * 1024 * 1024; // 10MB for images
-    
+
     if (file.size > maxSizeInBytes) {
       const maxSizeMB = maxSizeInBytes / (1024 * 1024);
       console.error(`File too large: ${file.size} bytes (max: ${maxSizeInBytes} bytes)`);
-      return NextResponse.json({ 
-        error: 'File too large', 
-        message: `Maximum file size for ${file.type.split('/')[0]} files is ${maxSizeMB}MB` 
+      return NextResponse.json({
+        error: 'File too large',
+        message: `Maximum file size for ${file.type.split('/')[0]} files is ${maxSizeMB}MB`
       }, { status: 400, headers });
     }
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
     console.log('File converted to buffer, size:', buffer.length);
-    
+
     // Generate a unique filename with proper folder structure based on file type
     let fileCategory = 'images';
     if (file.type.startsWith('audio/')) fileCategory = 'audio';
     if (file.type.startsWith('video/')) fileCategory = 'videos';
-    
+
     const filename = `community-media/${communityId}/${fileCategory}/${Date.now()}-${file.name}`;
     console.log('Target filename:', filename);
     

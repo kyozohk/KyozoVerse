@@ -357,26 +357,28 @@ export default function MemberProfilePage() {
               </div>
             )}
 
-            {/* Member ID */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--page-bg-color)', border: '1px solid var(--page-content-border)' }}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#8B7355' }}>Identifiers</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-mono">
-                <div className="flex items-center gap-2">
-                  <span style={{ color: '#8B7355' }}>User ID:</span>
-                  <span className="truncate" style={{ color: '#5B4A3A' }}>{member.userId}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span style={{ color: '#8B7355' }}>Member Doc:</span>
-                  <span className="truncate" style={{ color: '#5B4A3A' }}>{member.id}</span>
-                </div>
-                {member.wa_id && (
+            {/* Member ID - Hidden in production, visible only in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--page-bg-color)', border: '1px solid var(--page-content-border)' }}>
+                <h3 className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#8B7355' }}>Identifiers (Dev Only)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-mono">
                   <div className="flex items-center gap-2">
-                    <span style={{ color: '#8B7355' }}>WhatsApp ID:</span>
-                    <span className="truncate" style={{ color: '#5B4A3A' }}>{member.wa_id}</span>
+                    <span style={{ color: '#8B7355' }}>User ID:</span>
+                    <span className="truncate" style={{ color: '#5B4A3A' }}>{member.userId}</span>
                   </div>
-                )}
+                  <div className="flex items-center gap-2">
+                    <span style={{ color: '#8B7355' }}>Member Doc:</span>
+                    <span className="truncate" style={{ color: '#5B4A3A' }}>{member.id}</span>
+                  </div>
+                  {member.wa_id && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: '#8B7355' }}>WhatsApp ID:</span>
+                      <span className="truncate" style={{ color: '#5B4A3A' }}>{member.wa_id}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -180,7 +180,12 @@ async function addGoDaddyDNSRecords(domain: string, records: ResendDNSRecord[]):
 
 export async function POST(request: NextRequest) {
   console.log('📧 [SETUP] Starting email domain setup...');
-  
+
+  // SECURITY: Require authentication for domain management
+  const { verifyAuth } = await import('@/lib/api-auth');
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const body = await request.json().catch(() => ({}));
     const { handle, action, domain } = body;
@@ -309,7 +314,12 @@ export async function POST(request: NextRequest) {
 // GET endpoint to check domain status
 export async function GET(request: NextRequest) {
   console.log('📧 [STATUS] Checking domain status...');
-  
+
+  // SECURITY: Require authentication for domain status checks
+  const { verifyAuth } = await import('@/lib/api-auth');
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const domain = searchParams.get('domain') || 'kyozo.com';

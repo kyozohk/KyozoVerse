@@ -81,7 +81,7 @@ export default function SubscriptionPage() {
             </li>
           </ul>
           
-          <CustomButton variant="semi-rounded" className="w-full">Upgrade</CustomButton>
+          <CustomButton variant="waitlist" className="w-full" style={{ backgroundColor: '#D4A574' }}>Upgrade</CustomButton>
         </div>
         
         <div className="bg-card p-6 rounded-lg border shadow-sm">

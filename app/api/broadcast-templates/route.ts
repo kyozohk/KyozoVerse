@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { verifyAuth } from '@/lib/api-auth';
 
 // Initialize Firebase Admin at module load time (same pattern as upload route)
 let app: App;
@@ -33,7 +34,10 @@ function getDb() {
 }
 
 // GET - Fetch all broadcast templates
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     console.log('[broadcast-templates] GET request received');
     const db = getDb();
@@ -63,6 +67,9 @@ export async function GET() {
 
 // POST - Create a new broadcast template
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const db = getDb();
     const body = await request.json();

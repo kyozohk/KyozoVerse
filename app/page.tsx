@@ -99,7 +99,13 @@ export default function Home() {
     setSignUpError(null);
     try {
       if (!signUpFirstName || !signUpLastName || !signUpPhone || !signUpEmail || !signUpPassword) {
-        setSignUpError("Please fill in all fields.");
+        const missing: string[] = [];
+        if (!signUpFirstName) missing.push('First Name');
+        if (!signUpLastName) missing.push('Last Name');
+        if (!signUpPhone) missing.push('Phone Number');
+        if (!signUpEmail) missing.push('Email');
+        if (!signUpPassword) missing.push('Password');
+        setSignUpError(`Please fill in: ${missing.join(', ')}.`);
         return;
       }
       if (!agreedToPrivacy) {
@@ -156,7 +162,7 @@ export default function Home() {
       </header>
 
       {/* Floating Join Waitlist Button */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
         <CustomButton onClick={openWaitlist}>
           Join the waitlist
         </CustomButton>
@@ -201,7 +207,7 @@ export default function Home() {
             />            
           </section>
         </div>
-        <Hero text={["We are", "human network"]} />    
+        <Hero text={["We are", "a human network"]} />    
         {/* Edge-to-edge marquee */}
         <BubbleMarquee
           categories={[
@@ -227,8 +233,19 @@ export default function Home() {
             }
           ]}
         />
-        <Hero text={["Join the Kyozo", "creative universe"]} />    
+        <Hero text={["Join the Kyozo", "creative universe"]} />
       </main>
+
+      {/* Footer */}
+      <footer className="w-full py-12 px-8 text-center" style={{ backgroundColor: 'var(--page-bg-color, #FFF8F5)' }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground mb-6">
+            <button type="button" onClick={() => setShowPrivacyDialog(true)} className="hover:underline">Privacy Policy</button>
+            <a href="mailto:hello@kyozo.com" className="hover:underline">Contact</a>
+          </div>
+          <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Kyozo. All rights reserved.</p>
+        </div>
+      </footer>
 
       <RequestAccessDialog
         open={isWaitlistOpen}
@@ -257,14 +274,15 @@ export default function Home() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 {error && (
-                  <p className="text-red-500 text-sm mt-2">
-                    {error} <button type="button" className="text-primary hover:underline" onClick={openResetPassword}>Forgot password?</button>
-                  </p>
+                  <p className="text-red-500 text-sm mt-2">{error}</p>
                 )}
+                <div className="text-right mt-2">
+                  <button type="button" className="text-sm text-primary hover:underline" onClick={openResetPassword}>Forgot password?</button>
+                </div>
               </div>
             </div>
           </div>
-          
+
           <div className="mt-6 flex-shrink-0">
             <div className="mb-4">
               <CustomButton onClick={handleSignIn} className="w-full">Sign In</CustomButton>
@@ -316,12 +334,23 @@ export default function Home() {
               onChange={(e) => setSignUpEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
             />
-            <PasswordInput
-              label="Password"
-              value={signUpPassword}
-              onChange={(e) => setSignUpPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-            />
+            <div>
+              <PasswordInput
+                label="Password"
+                value={signUpPassword}
+                onChange={(e) => setSignUpPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+              />
+              {signUpPassword && signUpPassword.length < 6 && (
+                <p className="text-xs text-amber-600 mt-1">Password must be at least 6 characters</p>
+              )}
+              {signUpPassword && signUpPassword.length >= 6 && signUpPassword.length < 10 && (
+                <p className="text-xs text-amber-600 mt-1">Tip: Use 10+ characters with numbers and symbols for a stronger password</p>
+              )}
+              {signUpPassword && signUpPassword.length >= 10 && (
+                <p className="text-xs text-green-600 mt-1">Strong password</p>
+              )}
+            </div>
             <div className="mt-3">
               <Checkbox
                 checked={agreedToPrivacy}

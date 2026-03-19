@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWelcomeEmail } from '@/lib/email-templates';
+import { verifyAuth } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   console.log('🎉 [WELCOME] Starting send-welcome-email request');
-  
+
+  // Require authentication
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const body = await request.json();
     const { email, firstName, lastName } = body;

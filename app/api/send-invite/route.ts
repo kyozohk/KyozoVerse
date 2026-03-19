@@ -1,8 +1,13 @@
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/lib/api-auth';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Require authentication
+    const authResult = await verifyAuth(request);
+    if (authResult.error) return authResult.error;
+
     // Parse the request body with error handling
     let body;
     try {

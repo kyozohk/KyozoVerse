@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVerificationEmail } from '@/lib/email-templates';
 import { db as adminDb } from '@/firebase/admin';
+import { checkRateLimit } from '@/lib/api-auth';
 
 // Generate a random 4-digit code
 function generateVerificationCode(): string {
@@ -9,6 +10,10 @@ function generateVerificationCode(): string {
 
 export async function POST(request: NextRequest) {
   console.log('📧 [VERIFICATION] Starting send-verification-code request');
+
+  // Rate limit: max 5 verification requests per minute per IP
+  const rateLimitResponse = checkRateLimit(request, 5, 60000);
+  if (rateLimitResponse) return rateLimitResponse;
   
   try {
     const body = await request.json();

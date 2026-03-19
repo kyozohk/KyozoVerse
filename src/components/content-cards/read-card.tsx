@@ -114,9 +114,48 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
               </h2>
               {summary && <p className="text-sm md:text-base line-clamp-3" style={{ ...cardBodyStyle, color: CARD_BODY_COLOR }}>{summary}</p>}
             </div>
+            {/* Engagement buttons */}
+            <div className="flex items-center gap-4 pt-3 border-t border-neutral-200 mt-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (user) {
+                    toggleLike(post.id, user.uid, 'blogs').then(({ liked }) => {
+                      setIsLiked(liked);
+                      setLikes(prev => liked ? prev + 1 : prev - 1);
+                    });
+                  }
+                }}
+                className={cn("flex items-center gap-1.5 text-sm transition-colors", isLiked ? "text-red-500" : "text-neutral-500 hover:text-red-500")}
+              >
+                <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                <span>{likes}</span>
+              </button>
+              <button type="button" className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-blue-500 transition-colors" onClick={(e) => { e.stopPropagation(); toast({ title: 'Comments', description: 'Comment section coming soon!' }); }}>
+                <MessageSquare className="h-4 w-4" />
+                <span>{post.comments || 0}</span>
+              </button>
+              <button type="button" className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-green-500 transition-colors" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(window.location.href); toast({ title: 'Link copied!', description: 'Post link copied to clipboard.' }); }}>
+                <Share2 className="h-4 w-4" />
+              </button>
+            </div>
+
             <div className="pt-4 md:pt-5 lg:pt-7 flex-shrink-0">
               <div className="flex items-center justify-end">
-                <span className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm">Read Full Article →</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Open post in expanded view or scroll to top with full content
+                    const el = e.currentTarget.closest('[data-post-id]');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    toast({ title: title, description: summary?.substring(0, 100) || 'Full article view coming soon.' });
+                  }}
+                  className="text-[#504c4c] hover:text-neutral-700 transition-colors uppercase tracking-[0.35px] text-xs md:text-sm cursor-pointer hover:underline"
+                >
+                  Read Full Article →
+                </button>
               </div>
             </div>
           </div>

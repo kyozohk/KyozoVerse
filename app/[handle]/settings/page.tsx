@@ -8,13 +8,16 @@ import { Community } from '@/lib/types';
 import { Globe, Lock, Settings, Bell, Shield, Palette } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const params = useParams();
   const handle = params.handle as string;
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCommunity = async () => {
@@ -93,7 +96,12 @@ export default function SettingsPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {settingsSections.map((section, index) => (
-                <Card key={index} className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-primary/5 transition-colors">
+                <Card
+                  key={index}
+                  className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-primary/5 transition-colors relative"
+                  onClick={() => toast({ title: section.title, description: `${section.title} settings coming soon!` })}
+                >
+                  <Badge variant="outline" className="absolute top-3 right-3 text-[10px]" style={{ color: '#8B7355', borderColor: '#D8CFC0' }}>Coming Soon</Badge>
                   <div className="text-center" style={{ color: '#8B7355' }}>
                     <section.icon className="mx-auto h-10 w-10 mb-2" />
                     <span className="font-medium block">{section.title}</span>

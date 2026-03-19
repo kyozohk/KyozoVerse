@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/lib/api-auth';
 
 const GO_DADDY_API_KEY = process.env.GO_DADDY_API_KEY;
 const GO_DADDY_API_SECRET = process.env.GO_DADDY_API_SECRET;
@@ -136,7 +137,10 @@ export async function POST(request: NextRequest) {
   console.log('========================================');
   console.log('[DELETE-COMMUNITY-DOMAIN] API called');
   console.log('========================================');
-  
+
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const body = await request.json();
     const { handle } = body;

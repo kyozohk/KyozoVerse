@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/lib/api-auth';
 
 const GO_DADDY_API_KEY = process.env.GO_DADDY_API_KEY;
 const GO_DADDY_API_SECRET = process.env.GO_DADDY_API_SECRET;
@@ -360,6 +361,9 @@ async function deleteResendDomain(handle: string): Promise<{ success: boolean; e
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const body = await request.json();
     const { handle, oldHandle } = body;
@@ -478,6 +482,9 @@ export async function POST(request: NextRequest) {
 
 // GET - Check domain status
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   const { searchParams } = new URL(request.url);
   const handle = searchParams.get('handle');
 

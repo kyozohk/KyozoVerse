@@ -495,7 +495,10 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     )}
                     {currentStep === 1 && (
                          <div className="space-y-6">
-                            <Input label="Community Leader Name" value={formData.leaderName} onChange={(e) => handleValueChange('leaderName', e.target.value)} placeholder="Name to use in broadcast templates" />
+                            <div>
+                                <Input label="Community Leader Name" value={formData.leaderName} onChange={(e) => handleValueChange('leaderName', e.target.value)} />
+                                <p className="text-xs text-muted-foreground mt-1">Name shown in broadcast templates and community emails</p>
+                            </div>
                             <div>
                                 <label className="text-sm text-muted-foreground mb-1 block">Background Image</label>
                                 <Dropzone file={backgroundImageFile} onFileChange={setBackgroundImageFile} fileType="image" existingImageUrl={backgroundImageUrl} className="h-32" />

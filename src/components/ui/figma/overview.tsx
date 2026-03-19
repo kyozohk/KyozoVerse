@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
 import { Button } from './button';
 import { Card } from './card';
 import { Input } from '../input';
 import { ChevronDown, Grid3x3, List, MessageSquare, Search, TrendingUp, Users, Plus, X, Send, Mail, Heart, Share2, UserPlus, Settings, Pencil, Trash2, Globe, Bot, Sparkles } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy, limit as fbLimit } from 'firebase/firestore';
+import { db } from '@/firebase/firestore';
 
 interface Member {
   id: string;
@@ -118,7 +120,9 @@ interface OverviewScreenProps {
 }
 
 export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInviteCustomizerOpen = false, communityHandle, communityId }: OverviewScreenProps = {}) {
-  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const [members, setMembers] = useState<Member[]>(communityId ? [] : initialMembers);
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>(communityId ? [] : mockFeedPosts);
+  const [inboxMessages, setInboxMessages] = useState<InboxMessage[]>(communityId ? [] : mockInboxMessages);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
@@ -132,8 +136,101 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
   const [leftBrainExpanded, setLeftBrainExpanded] = useState(false);
   const [currentLogoUrl, setCurrentLogoUrl] = useState('/logo.svg');
   const [currentHeroUrl, setCurrentHeroUrl] = useState('https://images.unsplash.com/photo-1557683316-973673baf926?w=1920&h=400&fit=crop');
+  const [memberCount, setMemberCount] = useState(0);
+  const [dataLoaded, setDataLoaded] = useState(!communityId);
 
-  const unreadCount = mockInboxMessages.filter(m => m.unread).length;
+  // Fetch real community data when communityId is provided
+  useEffect(() => {
+    if (!communityId) return;
+
+    const fetchCommunityData = async () => {
+      try {
+        // Fetch real members
+        const membersQuery = query(
+          collection(db, 'communityMembers'),
+          where('communityId', '==', communityId)
+        );
+        const membersSnap = await getDocs(membersQuery);
+        const realMembers: Member[] = membersSnap.docs.map((doc) => {
+          const data = doc.data();
+          const details = data.userDetails || {};
+          return {
+            id: doc.id,
+            name: details.displayName || details.email || 'Unknown',
+            email: details.email || '',
+            status: 'Active' as const,
+            joinedDate: data.joinedAt?.toDate?.()?.toLocaleDateString() || 'Recently',
+            avatar: details.avatarUrl || details.photoURL || undefined,
+            tags: data.tags || [],
+          };
+        });
+        setMembers(realMembers);
+        setMemberCount(realMembers.length);
+
+        // Fetch real feed posts (blogs)
+        const feedQuery = query(
+          collection(db, 'blogs'),
+          where('communityHandle', '==', communityHandle),
+          orderBy('createdAt', 'desc'),
+          fbLimit(10)
+        );
+        const feedSnap = await getDocs(feedQuery);
+        if (!feedSnap.empty) {
+          const realPosts: FeedPost[] = feedSnap.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              author: data.authorName || 'Community',
+              avatar: data.authorAvatar || undefined,
+              content: data.content || data.title || '',
+              time: data.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently',
+              likes: data.likes || 0,
+              comments: data.comments || 0,
+              responses: [],
+            };
+          });
+          setFeedPosts(realPosts);
+        }
+
+        // Fetch recent inbox messages
+        if (communityHandle) {
+          const inboxQuery = query(
+            collection(db, 'inboxMessages'),
+            where('communityHandle', '==', communityHandle),
+            orderBy('timestamp', 'desc'),
+            fbLimit(5)
+          );
+          try {
+            const inboxSnap = await getDocs(inboxQuery);
+            if (!inboxSnap.empty) {
+              const realMessages: InboxMessage[] = inboxSnap.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                  id: doc.id,
+                  name: data.recipientName || data.recipientEmail || 'Unknown',
+                  message: data.messageText || data.subject || '',
+                  time: data.timestamp?.toDate?.()?.toLocaleDateString() || 'Recently',
+                  unread: !data.read,
+                };
+              });
+              setInboxMessages(realMessages);
+            }
+          } catch {
+            // Index might not exist yet, use empty state
+          }
+        }
+
+        setDataLoaded(true);
+      } catch (error) {
+        console.error('Error fetching community overview data:', error);
+        setDataLoaded(true);
+      }
+    };
+
+    fetchCommunityData();
+  }, [communityId, communityHandle]);
+
+  const unreadCount = inboxMessages.filter(m => m.unread).length;
 
   const handleOpenTagModal = (tagId?: string) => {
     if (tagId) {
@@ -257,12 +354,12 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
       <div className="px-8 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="relative">
-            <Bot className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#D4A574]" />
+            <Bot className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#D4A574] z-10" />
             <Input
               value={aiQuery}
               onChange={(e) => setAiQuery(e.target.value)}
               placeholder="Ask me to perform actions across your platform... (e.g., 'Send welcome message to all new members')"
-              className="pl-12 pr-12 py-6 text-base bg-white border-2 border-[#D8CFC0] focus-visible:border-[#D4A574] rounded-2xl shadow-lg"
+              className="!pl-14 pr-12 py-6 text-base bg-white border-2 border-[#D8CFC0] focus-visible:border-[#D4A574] rounded-2xl shadow-lg"
             />
             <Button
               size="icon"
@@ -406,7 +503,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
                         <div className="mt-2 text-center">
                           <div className="inline-block bg-[#3A3630] px-4 py-1.5 rounded border-2 border-[#5A4A3A]">
                             <p className="text-2xl font-bold text-[#7BD3C4] font-mono tracking-wider" style={{ textShadow: '0 0 8px rgba(123, 211, 196, 0.5)' }}>
-                              8
+                              {Math.min(members.length, Math.max(1, Math.floor(members.length * 0.6)))}
                             </p>
                           </div>
                         </div>
@@ -667,7 +764,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
                 </div>
               </div>
               <div className="divide-y">
-                {mockInboxMessages.map((msg) => (
+                {inboxMessages.map((msg) => (
                   <button
                     key={msg.id}
                     className="w-full p-4 hover:bg-gray-50 transition-colors text-left flex items-center gap-3"
@@ -821,7 +918,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
               </div>
               <div className="max-h-[calc(100vh-200px)] overflow-auto">
                 <div className="divide-y">
-                  {mockFeedPosts.map((post) => (
+                  {feedPosts.map((post) => (
                     <div key={post.id} className="p-4">
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar className="w-8 h-8">

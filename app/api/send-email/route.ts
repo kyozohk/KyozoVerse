@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { verifyAuth } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication
+    const authResult = await verifyAuth(request);
+    if (authResult.error) return authResult.error;
+
     const body = await request.json();
     const { to, from, subject, html, replyTo, communityId, communityHandle, recipientName, recipientEmail } = body;
 
