@@ -182,7 +182,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
               id: doc.id,
               author: data.authorName || 'Community',
               avatar: data.authorAvatar || undefined,
-              content: data.content || data.title || '',
+              content: (typeof data.content === 'string' ? data.content : data.content?.text || data.title || ''),
               time: data.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently',
               likes: data.likes || 0,
               comments: data.comments || 0,

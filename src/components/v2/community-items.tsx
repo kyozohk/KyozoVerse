@@ -45,7 +45,7 @@ export const CommunityGridItem = ({ item, isSelected, urlField = 'id' }: Communi
     <div className="p-6 pt-0 flex-grow">
       <div className="flex items-center text-sm text-muted-foreground">
         <Users className="mr-2 h-4 w-4" />
-        <span>{item.memberCount.toLocaleString()} members</span>
+        <span>{item.memberCount.toLocaleString()} {item.memberCount === 1 ? 'member' : 'members'}</span>
       </div>
     </div>
     {item.tags && item.tags.length > 0 && (
@@ -87,7 +87,7 @@ export const CommunityListItem = ({ item, isSelected, urlField = 'id' }: Communi
       <h3 className="text-lg font-semibold">{item.name}</h3>
       <div className="flex items-center text-sm text-muted-foreground">
         <Users className="mr-2 h-4 w-4" />
-        <span>{item.memberCount.toLocaleString()} members</span>
+        <span>{item.memberCount.toLocaleString()} {item.memberCount === 1 ? 'member' : 'members'}</span>
       </div>
         {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-2">
@@ -131,7 +131,7 @@ export const CommunityCircleItem = ({ item, isSelected, urlField = 'id' }: Commu
       <h3 className="text-xl font-bold">{item.name}</h3>
       <div className="mt-2 flex items-center justify-center text-sm text-muted-foreground">
         <Users className="mr-2 h-4 w-4" />
-        <span>{item.memberCount.toLocaleString()} members</span>
+        <span>{item.memberCount.toLocaleString()} {item.memberCount === 1 ? 'member' : 'members'}</span>
       </div>
     </div>
     {item.tags && item.tags.length > 0 && (
