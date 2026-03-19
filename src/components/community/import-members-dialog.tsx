@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, VisuallyHidden } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
   Calendar, Upload, Plus, X, ChevronLeft, Check,
@@ -189,6 +189,9 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({ isOpen
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl w-full p-0 gap-0 overflow-hidden [&>button:last-of-type]:hidden" style={{ maxHeight: '90vh' }}>
+        <VisuallyHidden>
+          <DialogTitle>Import Members</DialogTitle>
+        </VisuallyHidden>
 
         {/* Gradient header */}
         <div className="px-6 py-5 flex items-center justify-between flex-shrink-0"

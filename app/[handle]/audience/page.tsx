@@ -57,13 +57,6 @@ function MembersContent() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Helper to generate placeholder avatar from name
-  const getAvatarUrl = (name: string, email: string, existingUrl?: string | null): string => {
-    if (existingUrl) return existingUrl;
-    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128&bold=true`;
-  };
-
   // Helper function to transform member docs to MemberData
   const transformMemberDoc = (memberDoc: any): MemberData => {
     const memberData = memberDoc.data();
@@ -75,7 +68,7 @@ function MembersContent() {
       userId: memberData.userId,
       name,
       email: userDetails.email || '',
-      imageUrl: getAvatarUrl(name, userDetails.email || '', userDetails.avatarUrl || userDetails.photoURL),
+      imageUrl: userDetails.avatarUrl || userDetails.photoURL || '',
       role: memberData.role || 'member',
       joinedDate: memberData.joinedAt,
       tags: memberData.tags || [],
