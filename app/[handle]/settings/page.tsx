@@ -32,13 +32,20 @@ export default function SettingsPage() {
         }
       } catch (error) {
         console.error('Error fetching community:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load community data.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCommunity();
-  }, [handle]);
+    if (handle) {
+      fetchCommunity();
+    }
+  }, [handle, toast]);
 
   if (loading) {
     return <PageLoadingSkeleton showMemberList={true} />;
@@ -46,11 +53,23 @@ export default function SettingsPage() {
 
   if (!community) {
     return (
-      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-        <div className="p-8">
-          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-            <p>Community not found</p>
-          </div>
+      <div 
+        className="h-screen flex flex-col items-center justify-center p-8" 
+        style={{ backgroundColor: 'var(--page-bg-color)' }}
+      >
+        <div 
+          className="rounded-2xl p-8 text-center max-w-md" 
+          style={{ 
+            backgroundColor: 'var(--page-content-bg)', 
+            border: '2px solid var(--page-content-border)' 
+          }}
+        >
+          <h2 className="text-xl font-semibold mb-2" style={{ color: '#5B4A3A' }}>
+            Community not found
+          </h2>
+          <p className="text-sm" style={{ color: '#8B7355' }}>
+            The community you're looking for doesn't exist or you don't have access.
+          </p>
         </div>
       </div>
     );
@@ -64,48 +83,89 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-      <div className="p-8 flex-1 overflow-auto">
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+    <div 
+      className="min-h-screen flex flex-col" 
+      style={{ backgroundColor: 'var(--page-bg-color)' }}
+    >
+      <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-auto">
+        <div 
+          className="rounded-2xl overflow-hidden mx-auto max-w-7xl" 
+          style={{ 
+            backgroundColor: 'var(--page-content-bg)', 
+            border: '2px solid var(--page-content-border)' 
+          }}
+        >
           {community && (
             <Banner
               backgroundImage={community.communityBackgroundImage}
               iconImage={community.communityProfileImage}
               title={community.name}
-              location={(community as any).location}
+              location={community.location ?? ''}
               locationExtra={
                 <span className="flex items-center gap-1 text-sm text-white/90">
-                  {(community as any).visibility === 'private' ? (
-                    <><Lock className="h-3.5 w-3.5" /> Private</>
+                  {community.visibility === 'private' ? (
+                    <>
+                      <Lock className="h-3.5 w-3.5" /> Private
+                    </>
                   ) : (
-                    <><Globe className="h-3.5 w-3.5" /> Public</>
+                    <>
+                      <Globe className="h-3.5 w-3.5" /> Public
+                    </>
                   )}
                 </span>
               }
-              subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
+              subtitle={community.tagline || community.mantras || ''}
+              tags={community.tags || []}
               height="16rem"
             />
           )}
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
+          
+          <div className="p-6 lg:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
               <div>
-                <h2 className="text-xl font-semibold" style={{ color: '#5B4A3A' }}>Settings</h2>
-                <p className="text-sm" style={{ color: '#8B7355' }}>Manage your community settings</p>
+                <h2 className="text-2xl lg:text-3xl font-bold mb-2" style={{ color: '#5B4A3A' }}>
+                  Settings
+                </h2>
+                <p className="text-lg" style={{ color: '#8B7355' }}>
+                  Manage your community settings
+                </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
               {settingsSections.map((section, index) => (
                 <Card
                   key={index}
-                  className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-primary/5 transition-colors relative"
-                  onClick={() => toast({ title: section.title, description: `${section.title} settings coming soon!` })}
+                  className="group flex flex-col p-6 h-48 lg:h-52 cursor-pointer hover:bg-accent/50 transition-all duration-200 shadow-lg hover:shadow-xl border hover:border-primary/30"
+                  style={{
+                    backgroundColor: 'var(--card)',
+                    borderColor: 'var(--card-border)'
+                  }}
+                  onClick={() =>
+                    toast({
+                      title: `${section.title} Settings`,
+                      description: `${section.title} settings coming soon!`,
+                      duration: 3000
+                    })
+                  }
                 >
-                  <Badge variant="outline" className="absolute top-3 right-3 text-[10px]" style={{ color: '#8B7355', borderColor: '#D8CFC0' }}>Coming Soon</Badge>
-                  <div className="text-center" style={{ color: '#8B7355' }}>
-                    <section.icon className="mx-auto h-10 w-10 mb-2" />
-                    <span className="font-medium block">{section.title}</span>
-                    <span className="text-xs">{section.description}</span>
+                  <div className="text-center flex-1 flex flex-col items-center justify-center" style={{ color: '#8B7355' }}>
+                    <section.icon className="mx-auto h-12 w-12 lg:h-14 lg:w-14 mb-3 group-hover:scale-110 transition-transform duration-200" />
+                    <h3 className="font-semibold text-base lg:text-lg mb-1">{section.title}</h3>
+                    <p className="text-xs lg:text-sm opacity-80">{section.description}</p>
+                  </div>
+
+                  <div className="flex justify-center pt-2">
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={{
+                        color: '#8B7355',
+                        borderColor: '#D8CFC0'
+                      }}
+                    >
+                      Coming Soon
+                    </Badge>
                   </div>
                 </Card>
               ))}

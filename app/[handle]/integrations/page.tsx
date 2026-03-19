@@ -289,16 +289,17 @@ export default function IntegrationsPage() {
           />
 
           <div className="p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold" style={{ color: '#5B4A3A' }}>Import Members</h2>
-              <p className="text-sm mt-1" style={{ color: '#8B7355' }}>Import contacts from Eventbrite, CSV, Excel, or add them manually.</p>
-            </div>
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold" style={{ color: '#5B4A3A' }}>Import Members</h2>
+                <p className="text-sm mt-1" style={{ color: '#8B7355' }}>Import contacts from Eventbrite, CSV, Excel, or add them manually.</p>
+              </div>
 
-            <StepIndicator current={step} />
+              <StepIndicator current={step} />
 
-            {/* ── Step 1: Source ── */}
-            {step === 'source' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl">
+              {/* ── Step 1: Source ── */}
+              {step === 'source' && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mx-auto" style={{ maxWidth: '800px' }}>
                 {([
                   { id: 'eventbrite', label: 'Eventbrite', icon: <Calendar className="h-7 w-7" />, color: '#E07B39', bg: '#FFF3E8', desc: 'Import event attendees' },
                   { id: 'csv', label: 'CSV File', icon: <FileText className="h-7 w-7" />, color: '#059669', bg: '#ECFDF5', desc: 'Upload a .csv file' },
@@ -498,6 +499,7 @@ export default function IntegrationsPage() {
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

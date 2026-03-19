@@ -460,6 +460,7 @@ function MembersContent() {
             )}
             searchKeys={['name', 'email']}
             selectable={canManage}
+            defaultViewMode="list"
             onSelectionChange={(ids, items) => setSelectedMembers(items)}
             permanentActions={
               <Button

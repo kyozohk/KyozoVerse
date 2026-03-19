@@ -168,6 +168,7 @@ function BroadcastContent() {
               )}
               searchKeys={['name', 'email', 'tags']}
               selectable={true}
+              defaultViewMode="list"
               onSelectionChange={onSelectionChange}
               isLoading={isLoading}
               loadingComponent={<LoadingSkeleton />}
