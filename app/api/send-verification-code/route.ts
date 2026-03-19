@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare email payload
     const emailPayload = {
-      from: 'Kyozo <dev@kyozo.com>',
+      from: 'Kyozo <noreply@contact.kyozo.com>',
       to: [email],
       subject: `${code} is your Kyozo verification code`,
       html,

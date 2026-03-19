@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Use the provided 'from' address or default to verified Kyozo domain
     // Format: "Name <email@domain.com>" or just "email@domain.com"
-    const fromAddress = from || `${communityName || 'Kyozo'} <dev@kyozo.com>`;
+    const fromAddress = from || `${communityName || 'Kyozo'} <noreply@contact.kyozo.com>`;
 
     // Prepare recipients - can be string or array
     const recipients = Array.isArray(to) ? to : [to];

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare payload
     const emailPayload = {
-      from: 'Kyozo <dev@kyozo.com>',
+      from: 'Kyozo <noreply@contact.kyozo.com>',
       to: [email],
       subject: `Welcome to Kyozo, ${ownerName}! 🎉`,
       html,
