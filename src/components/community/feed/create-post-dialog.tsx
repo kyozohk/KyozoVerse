@@ -39,6 +39,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
+  const [fillRow, setFillRow] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
   // File states
@@ -207,6 +208,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       setTitle(editPost.title || '');
       setDescription(editPost.content.text || '');
       setIsPublic(editPost.visibility === 'public');
+      setFillRow(editPost.fillRow || false);
       setMediaUrl(editPost.content.mediaUrls?.[0] || null);
       setThumbnailUrl(editPost.content.thumbnailUrl || null);
     } else {
@@ -222,6 +224,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setMediaUrl(null);
     setThumbnailUrl(null);
     setIsPublic(true);
+    setFillRow(false);
     setIsSubmitting(false);
     setIsRecording(false);
     setRecordedBlob(null);
@@ -282,6 +285,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       fileSize: fileToUpload.size,
       fileType: fileToUpload.type,
     });
+
+    // Check if user is authenticated
+    if (!user) {
+      throw new Error('User must be authenticated to upload files');
+    }
 
     try {
       setUploadingFile(type);
@@ -366,13 +374,19 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         // Only add thumbnailUrl for video posts
         if (postType === 'video' && finalThumbnailUrl) {
           contentPayload.thumbnailUrl = finalThumbnailUrl;
+          console.log('✅ Adding thumbnail to content payload:', finalThumbnailUrl);
+        } else if (postType === 'video') {
+          console.log('⚠️ No thumbnail URL available for video post');
         }
+
+        console.log('📦 Final content payload:', contentPayload);
 
         if (editPost) {
             await updateDoc(doc(db, 'blogs', editPost.id), {
                 title,
                 content: contentPayload,
                 visibility: isPublic ? 'public' : 'private',
+                fillRow: fillRow,
                 updatedAt: serverTimestamp()
             });
         } else {
@@ -386,7 +400,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 createdAt: serverTimestamp(),
                 likes: 0,
                 comments: 0,
-                visibility: (isPublic ? 'public' : 'private') as 'public' | 'private'
+                visibility: (isPublic ? 'public' : 'private') as 'public' | 'private',
+                fillRow: fillRow
             };
             const docRef = await addDoc(collection(db, 'blogs'), newPostData);
             if (isPublic) {
@@ -557,22 +572,36 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   };
 
   const dialogFooter = (
-    <div className="flex justify-end gap-3">
-      <Button
-        variant="outline"
-        onClick={handleClose}
-        className="px-6 py-2"
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={handleSubmit}
-        disabled={isSubmitting || !title.trim()}
-        className="px-6 py-2 text-white disabled:opacity-40"
-        style={{ backgroundColor: '#6B5D52' }}
-      >
-        {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
-      </Button>
+    <div className="flex justify-between items-center gap-4">
+      <div className="flex items-center gap-6">
+        <Checkbox
+          label="Make this post public"
+          checked={isPublic}
+          onCheckedChange={setIsPublic}
+        />
+        <Checkbox
+          label="Fill the row"
+          checked={fillRow}
+          onCheckedChange={setFillRow}
+        />
+      </div>
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={handleClose}
+          className="px-6 py-2"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting || !title.trim()}
+          className="px-6 py-2 text-white disabled:opacity-40"
+          style={{ backgroundColor: '#6B5D52' }}
+        >
+          {isSubmitting ? (editPost ? 'Saving...' : 'Posting...') : (editPost ? 'Save Changes' : 'Post')}
+        </Button>
+      </div>
     </div>
   );
 
@@ -736,18 +765,6 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 existingImageUrl={mediaUrl}
               />
             )}
-            <div>
-              <Checkbox
-                label="Make this post public"
-                checked={isPublic}
-                onCheckedChange={setIsPublic}
-              />
-              <p className="text-xs text-muted-foreground mt-1 ml-6">
-                {isPublic ? 
-                  'Public posts are visible to everyone in the community' : 
-                  'Private posts are only visible to you and community admins'}
-              </p>
-            </div>
 
           </div>
         )}

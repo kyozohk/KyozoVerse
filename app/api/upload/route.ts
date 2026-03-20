@@ -116,7 +116,10 @@ export async function POST(request: NextRequest) {
       const storage = getStorage();
       console.log('Storage instance obtained');
       
-      const bucket = storage.bucket();
+      const bucketName = process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_PROJECT_ID}.appspot.com`;
+      console.log('Using bucket:', bucketName);
+      
+      const bucket = storage.bucket(bucketName);
       console.log('Bucket reference obtained');
       
       const fileRef = bucket.file(filename);

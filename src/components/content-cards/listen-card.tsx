@@ -64,11 +64,23 @@ export function ListenCard({ category, episode, duration: initialDuration, title
   };
 
   const handleDelete = async () => {
-    if (!post.id) return;
+    if (!post.id || !user) return;
     
     setIsDeleting(true);
     try {
-      const res = await fetch('/api/posts/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }) });
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/posts/delete', { 
+        method: 'POST', 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        }, 
+        body: JSON.stringify({ 
+          postId: post.id, 
+          mediaUrls: post.content.mediaUrls,
+          thumbnailUrl: post.content.thumbnailUrl
+        }) 
+      });
       if (!res.ok) throw new Error('Failed to delete');
       toast({
         title: "Post deleted",

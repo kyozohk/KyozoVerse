@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Lock, ThumbsUp, MessageSquare, Share2, ArrowRight, Edit, Trash2 } from 'lucide-react';
+import { Lock, ThumbsUp, MessageSquare, Share2, ArrowRight, Edit, Trash2, Heart } from 'lucide-react';
 import { Button } from '../ui';
 import { Post } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
@@ -34,19 +34,38 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
   const isPostCreator = post._canEdit || (user && !post._isPublicView && post.authorId === user.uid);
   
   const handleDelete = async () => {
-    if (!post.id) return;
+    if (!post.id || !user) return;
     setIsDeleting(true);
     try {
+      const idToken = await user.getIdToken();
       const response = await fetch('/api/posts/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ 
+          postId: post.id, 
+          mediaUrls: post.content.mediaUrls,
+          thumbnailUrl: post.content.thumbnailUrl
+        }),
       });
-      if (!response.ok) throw new Error('Failed to delete');
-      toast({ title: "Post deleted", description: "Your post has been successfully deleted." });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete post');
+      }
+      
+      toast({
+        title: "Post deleted",
+        description: "Your post has been successfully deleted.",
+      });
     } catch (error) {
       console.error("Error deleting post:", error);
-      toast({ title: "Error", description: "Failed to delete post. Please try again.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -121,9 +140,9 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
                 onClick={(e) => {
                   e.stopPropagation();
                   if (user) {
-                    toggleLike(post.id, user.uid, 'blogs').then(({ liked }) => {
+                    toggleLike(post.id, user.uid).then(({ liked, likesCount }) => {
                       setIsLiked(liked);
-                      setLikes(prev => liked ? prev + 1 : prev - 1);
+                      setLikes(likesCount);
                     });
                   }
                 }}

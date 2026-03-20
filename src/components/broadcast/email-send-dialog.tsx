@@ -10,6 +10,7 @@ import { CommunityMember } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface EmailSendDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function EmailSendDialog({
   const [sending, setSending] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<CommunityMember[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Initialize selected members when dialog opens or members change
   useEffect(() => {
@@ -92,9 +94,18 @@ export function EmailSendDialog({
         console.log(`📧 Sending personalized email to: ${email}`);
         console.log(`📧 Subject: ${personalizedSubject}`);
 
+        if (!user) {
+          throw new Error('User must be authenticated to send emails');
+        }
+
+        const idToken = await user.getIdToken();
+
         const response = await fetch('/api/send-email', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({
             to: [email],
             subject: personalizedSubject,

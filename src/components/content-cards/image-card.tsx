@@ -57,13 +57,26 @@ export function ImageCard({ category, readTime, date, title, summary, imageUrl, 
   };
 
   const handleDelete = async () => {
+    if (!user) return;
     try {
-      const res = await fetch('/api/posts/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: post.id, mediaUrls: post.content.mediaUrls }) });
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/posts/delete', { 
+        method: 'POST', 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        }, 
+        body: JSON.stringify({ 
+          postId: post.id, 
+          mediaUrls: post.content.mediaUrls,
+          thumbnailUrl: post.content.thumbnailUrl
+        }) 
+      });
       if (!res.ok) throw new Error('Failed to delete');
       toast({ title: "Post deleted successfully" });
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error("Error deleting post:", error);
       toast({ title: "Failed to delete post", variant: "destructive" });
     }
   };

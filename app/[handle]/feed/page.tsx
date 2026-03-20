@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
@@ -189,7 +189,18 @@ export default function CommunityFeedPage() {
         {post.type === 'audio' ? (
           <ListenCard {...postProps} category="Audio" episode="Listen" duration="0:00" title={post.title || 'Untitled Audio'} summary={post.content.text} isPrivate={post.visibility === 'private'} />
         ) : post.type === 'video' ? (
-          <WatchCard {...postProps} category="Video" title={post.title || 'Untitled Video'} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600'} imageHint="video content" isPrivate={post.visibility === 'private'} />
+          (() => {
+            const thumbnailUrl = post.content.thumbnailUrl || post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/video-placeholder/800/600';
+            console.log('🎥 Video post rendering:', {
+              postId: post.id,
+              title: post.title,
+              thumbnailUrl: post.content.thumbnailUrl,
+              videoUrl: post.content.mediaUrls?.[0],
+              usingThumbnail: !!post.content.thumbnailUrl,
+              finalImageUrl: thumbnailUrl
+            });
+            return <WatchCard {...postProps} category="Video" title={post.title || 'Untitled Video'} imageUrl={thumbnailUrl} imageHint="video content" isPrivate={post.visibility === 'private'} />;
+          })()
         ) : post.type === 'image' ? (
           <ImageCard {...postProps} category="Image" readTime={`${Math.max(1, Math.ceil((post.content.text?.length || 0) / 1000))} min read`} date={post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Dec 2024'} title={post.title || 'Untitled'} summary={post.content.text} imageUrl={post.content.mediaUrls?.[0] || 'https://picsum.photos/seed/image-placeholder/800/600'} isPrivate={post.visibility === 'private'} />
         ) : (
@@ -291,9 +302,56 @@ export default function CommunityFeedPage() {
                 </div>
               )}
               
-              {/* All other posts - masonry grid */}
-              <div className="masonry-feed-columns">
-                {feedPosts.map(renderPost)}
+              {/* All other posts - grid with fillRow support */}
+              <div className="space-y-6">
+                {(() => {
+                  const rows: JSX.Element[] = [];
+                  let currentRow: (Post & { id: string })[] = [];
+                  
+                  feedPosts.forEach((post, index) => {
+                    if (post.fillRow) {
+                      // If there's a pending row, render it first
+                      if (currentRow.length > 0) {
+                        rows.push(
+                          <div key={`row-${rows.length}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {currentRow.map(p => renderPost(p))}
+                          </div>
+                        );
+                        currentRow = [];
+                      }
+                      // Render full-width post
+                      rows.push(
+                        <div key={post.id} className="w-full">
+                          {renderPost(post)}
+                        </div>
+                      );
+                    } else {
+                      // Add to current row
+                      currentRow.push(post);
+                      
+                      // If row is full (2 items), render it
+                      if (currentRow.length === 2) {
+                        rows.push(
+                          <div key={`row-${rows.length}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {currentRow.map(p => renderPost(p))}
+                          </div>
+                        );
+                        currentRow = [];
+                      }
+                    }
+                  });
+                  
+                  // Render any remaining posts in the current row
+                  if (currentRow.length > 0) {
+                    rows.push(
+                      <div key={`row-${rows.length}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {currentRow.map(p => renderPost(p))}
+                      </div>
+                    );
+                  }
+                  
+                  return rows;
+                })()}
               </div>
             </>
           )}

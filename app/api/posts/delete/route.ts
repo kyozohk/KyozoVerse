@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('📦 Request body:', body);
     
-    const { postId, mediaUrls } = body;
+    const { postId, mediaUrls, thumbnailUrl } = body;
 
     if (!postId) {
       console.error('❌ No postId provided');
@@ -83,9 +83,18 @@ export async function POST(request: NextRequest) {
       throw new Error(`Firestore error: ${firestoreError.message}`);
     }
 
+    // Collect all URLs to delete (mediaUrls + thumbnailUrl)
+    const urlsToDelete: string[] = [];
+    if (mediaUrls && Array.isArray(mediaUrls)) {
+      urlsToDelete.push(...mediaUrls);
+    }
+    if (thumbnailUrl) {
+      urlsToDelete.push(thumbnailUrl);
+    }
+
     // Delete associated media files from Storage
-    if (mediaUrls && Array.isArray(mediaUrls) && mediaUrls.length > 0) {
-      for (const url of mediaUrls) {
+    if (urlsToDelete.length > 0) {
+      for (const url of urlsToDelete) {
         try {
           const path = extractStoragePath(url);
           if (path) {

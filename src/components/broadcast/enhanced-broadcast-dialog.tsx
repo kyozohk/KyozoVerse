@@ -16,6 +16,7 @@ import {
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -66,6 +67,7 @@ export function EnhancedBroadcastDialog({
     ? `message@${communityHandle}.kyozo.com` 
     : 'Kyozo <dev@kyozo.com>');
   const { toast } = useToast();
+  const { user } = useAuth();
   const [mode, setMode] = useState<BroadcastMode>('email');
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [subject, setSubject] = useState('');
@@ -259,6 +261,12 @@ export function EnhancedBroadcastDialog({
     // Get community branding - fetch from the broadcast page props or use defaults
     const primaryColor = '#5B4A3A';
 
+    if (!user) {
+      throw new Error('User must be authenticated to send emails');
+    }
+
+    const idToken = await user.getIdToken();
+
     for (const member of membersWithEmail) {
       // Replace variables in subject and message for each member
       const personalizedSubject = replaceVariables(subject, member);
@@ -273,7 +281,10 @@ export function EnhancedBroadcastDialog({
       
       const response = await fetch('/api/send-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           to: member.email,
           from: `${communityName || 'Kyozo'} <${effectiveFromEmail}>`,
