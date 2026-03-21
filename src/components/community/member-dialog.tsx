@@ -349,12 +349,13 @@ export function MemberDialog({
                           ? 'border-primary ring-2 ring-primary/20'
                           : 'border-muted hover:border-primary/50'
                       }`}
+                      style={{ backgroundColor: '#f0f0f0' }}
                     >
                       <Image
                         src={banner.url}
                         alt={banner.label}
                         fill
-                        className="object-cover"
+                        className="object-cover object-left"
                       />
                       {coverUrl === banner.url && !coverFile && (
                         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">

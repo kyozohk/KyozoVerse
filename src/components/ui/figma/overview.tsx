@@ -131,6 +131,8 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
   const [filterByTag, setFilterByTag] = useState<string | null>(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [aiQuery, setAiQuery] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const [displaySettingsOpen, setDisplaySettingsOpen] = useState(initialDisplaySettingsOpen);
   const [rightBrainExpanded, setRightBrainExpanded] = useState(false);
   const [leftBrainExpanded, setLeftBrainExpanded] = useState(false);
@@ -231,6 +233,34 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
   }, [communityId, communityHandle]);
 
   const unreadCount = inboxMessages.filter(m => m.unread).length;
+
+  const handleAiSubmit = async () => {
+    if (!aiQuery.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiResponse('');
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `You are a community management AI assistant for Kyozo. The user is managing a community${communityHandle ? ` called "${communityHandle}"` : ''}. They asked: "${aiQuery}". Provide a helpful, concise response about how to accomplish this in their community platform. If it involves sending messages, managing members, creating events, or other platform actions, explain the steps. Keep it brief (2-3 sentences).`,
+          type: 'long',
+        }),
+      });
+      const data = await res.json();
+      if (data.content) {
+        setAiResponse(data.content);
+      } else if (data.error) {
+        setAiResponse(`Sorry, I couldn't process that: ${data.error}`);
+      } else {
+        setAiResponse('I received your request. This feature is being enhanced — try navigating to the relevant section from the sidebar to take action.');
+      }
+    } catch {
+      setAiResponse('AI assistant is currently unavailable. Please use the sidebar navigation to manage your community.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleOpenTagModal = (tagId?: string) => {
     if (tagId) {
@@ -360,17 +390,31 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
               onChange={(e) => setAiQuery(e.target.value)}
               placeholder="Ask me to perform actions across your platform... (e.g., 'Send welcome message to all new members')"
               className="!pl-14 pr-12 py-6 text-base bg-white border-2 border-[#D8CFC0] focus-visible:border-[#D4A574] rounded-2xl shadow-lg"
+              onKeyDown={(e) => e.key === 'Enter' && handleAiSubmit()}
             />
             <Button
               size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-[#E87461] hover:bg-[#D76451]"
+              onClick={handleAiSubmit}
+              disabled={aiLoading || !aiQuery.trim()}
             >
-              <Send className="w-4 h-4" />
+              {aiLoading ? <Sparkles className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>
           </div>
-          <p className="text-xs text-[#000000] mt-3 text-center">
-            AI-powered assistance to help you manage your community
-          </p>
+          {aiResponse && (
+            <div className="mt-3 p-4 bg-white/80 border-2 border-[#D8CFC0] rounded-xl text-sm text-[#3A3630]">
+              <div className="flex items-start gap-2">
+                <Bot className="w-4 h-4 text-[#D4A574] mt-0.5 flex-shrink-0" />
+                <p>{aiResponse}</p>
+              </div>
+              <button onClick={() => setAiResponse('')} className="text-xs text-[#8B7355] hover:underline mt-2">Dismiss</button>
+            </div>
+          )}
+          {!aiResponse && (
+            <p className="text-xs text-[#000000] mt-3 text-center">
+              AI-powered assistance to help you manage your community
+            </p>
+          )}
         </div>
       </div>
 
