@@ -182,9 +182,18 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
     try {
       // Delete community subdomain from GoDaddy and Resend
       try {
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        const idToken = await user.getIdToken();
+
         const domainResponse = await fetch('/api/delete-community-domain', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({ handle: community.handle }),
         });
         const domainResult = await domainResponse.json();

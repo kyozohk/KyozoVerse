@@ -1,36 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
+import admin from '@/lib/firebase-admin';
 import { verifyAuth } from '@/lib/api-auth';
 
-// Initialize Firebase Admin if it hasn't been initialized
-let app: App;
-
-try {
-  if (!getApps().length) {
-    // Log environment variables for debugging (without exposing the full private key)
-    console.log('Firebase Admin SDK initialization:');
-    console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
-    console.log('Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
-    console.log('Private Key exists:', !!process.env.FIREBASE_PRIVATE_KEY);
-    
-    // Initialize with the correct bucket name
-    app = initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY,
-      }),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-    });
-    
-    console.log('Firebase Admin SDK initialized successfully');
-  } else {
-    console.log('Firebase Admin SDK already initialized');
-  }
-} catch (error) {
-  console.error('Error initializing Firebase Admin SDK:', error);
-}
+// Get storage bucket name from environment
+const STORAGE_BUCKET = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
 // Helper function to validate file types
 function isValidFileType(type: string): boolean {
@@ -113,11 +86,15 @@ export async function POST(request: NextRequest) {
     
     try {
       // Get a reference to the storage bucket
-      const storage = getStorage();
+      if (!STORAGE_BUCKET) {
+        throw new Error('Storage bucket not configured. Please set FIREBASE_STORAGE_BUCKET environment variable.');
+      }
+
+      const storage = admin.storage();
       console.log('Storage instance obtained');
       
-      const bucket = storage.bucket();
-      console.log('Bucket reference obtained');
+      const bucket = storage.bucket(STORAGE_BUCKET);
+      console.log('Bucket reference obtained:', STORAGE_BUCKET);
       
       const fileRef = bucket.file(filename);
       console.log('File reference created');
