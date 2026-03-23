@@ -175,9 +175,15 @@ export function CreateEventDialog({
       formData.append('file', file);
       formData.append('communityId', communityId);
 
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'x-user-id': user?.uid || '' },
+        headers: { 'Authorization': `Bearer ${idToken}` },
         body: formData,
       });
 

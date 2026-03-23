@@ -257,10 +257,17 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
       const postHtml = renderPostToHtml(post, communityHandle);
 
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+
       await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           to: recipients,

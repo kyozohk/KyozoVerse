@@ -45,6 +45,9 @@ export async function uploadFile(
       throw new Error('User not authenticated');
     }
     
+    // Get the Firebase ID token
+    const idToken = await user.getIdToken();
+    
     // Create form data
     const formData = new FormData();
     formData.append('file', file);
@@ -121,7 +124,7 @@ export async function uploadFile(
       
       // Open and send the request
       xhr.open('POST', '/api/upload');
-      xhr.setRequestHeader('x-user-id', user.uid);
+      xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
       xhr.send(formData);
     });
   } catch (error) {

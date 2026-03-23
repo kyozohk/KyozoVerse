@@ -290,9 +290,13 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 console.log('[Community Update] Calling /api/setup-community-domain with handle:', newHandle);
                 
                 try {
+                    const idToken = await user.getIdToken();
                     const domainResponse = await fetch('/api/setup-community-domain', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
                         body: JSON.stringify({ handle: newHandle, oldHandle: oldHandle }),
                     });
                     
@@ -349,7 +353,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 const ownedSnap = await getDocs(ownedQuery);
                 const communityCount = ownedSnap.size;
                 // Basic/Free plan limit: 1 community (can be adjusted per plan)
-                const PLAN_LIMIT = 3; // TODO: Fetch from user's subscription plan
+                const PLAN_LIMIT = 5; // TODO: Fetch from user's subscription plan
                 if (communityCount >= PLAN_LIMIT) {
                     toast({
                         title: "Plan Limit Reached",
@@ -418,9 +422,13 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             // Setup community email subdomain (GoDaddy + Resend)
             const handle = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-');
             try {
+                const idToken = await user.getIdToken();
                 const domainResponse = await fetch('/api/setup-community-domain', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
                     body: JSON.stringify({ handle }),
                 });
                 
