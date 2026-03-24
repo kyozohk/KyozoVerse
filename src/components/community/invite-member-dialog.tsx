@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { CustomFormDialog, Input, CustomButton, Textarea } from '@/components/ui';
 import { Mail, MessageCircle, Copy, Check } from 'lucide-react';
 import { type Community } from '@/lib/types';
+import { useAuth } from '@/hooks/use-auth';
 
 interface InviteMemberDialogProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
   onClose,
   community
 }) => {
+  const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -162,11 +164,18 @@ Looking forward to seeing you there!`;
       
       console.log('📨 Sending email...');
       
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+      
       // Send email via Resend API
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           to: email,
@@ -191,6 +200,7 @@ Looking forward to seeing you there!`;
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`,
             },
             body: JSON.stringify({
               to: email,

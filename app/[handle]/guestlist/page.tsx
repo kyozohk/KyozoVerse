@@ -10,6 +10,7 @@ import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
+import { GuestlistDetailDialog } from '@/components/guestlist/guestlist-detail-dialog';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 
 interface MemberData {
@@ -56,6 +57,9 @@ export default function GuestlistPage() {
   const [guestlists, setGuestlists] = useState<Guestlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedGuestlist, setSelectedGuestlist] = useState<Guestlist | null>(null);
+  const [editingGuestlist, setEditingGuestlist] = useState<Guestlist | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Fetch community and members
   useEffect(() => {
@@ -143,9 +147,22 @@ export default function GuestlistPage() {
     console.log('Guestlist created:', guestlist);
   };
 
+  const handleGuestlistClick = (guestlist: Guestlist) => {
+    setSelectedGuestlist(guestlist);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleEdit = (guestlist: Guestlist) => {
+    setEditingGuestlist(guestlist);
+    setIsCreateDialogOpen(true);
+  };
+
   // Render functions for EnhancedListView
   const renderGuestlistGridItem = (guestlist: Guestlist) => (
-    <Card className="h-48 p-4 cursor-pointer hover:shadow-md transition-shadow">
+    <Card 
+      className="h-48 p-4 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => handleGuestlistClick(guestlist)}
+    >
       <div className="flex flex-col h-full">
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-semibold text-lg truncate" style={{ color: '#5B4A3A' }}>
@@ -188,7 +205,10 @@ export default function GuestlistPage() {
   );
 
   const renderGuestlistListItem = (guestlist: Guestlist) => (
-    <Card className="p-4 cursor-pointer hover:shadow-md transition-shadow">
+    <Card 
+      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => handleGuestlistClick(guestlist)}
+    >
       <div className="flex items-center gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -228,7 +248,10 @@ export default function GuestlistPage() {
   );
 
   const renderGuestlistCircleItem = (guestlist: Guestlist) => (
-    <div className="flex flex-col items-center gap-2 p-4 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors">
+    <div 
+      className="flex flex-col items-center gap-2 p-4 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+      onClick={() => handleGuestlistClick(guestlist)}
+    >
       <div 
         className="w-16 h-16 rounded-full flex items-center justify-center"
         style={{ backgroundColor: '#E07B39' }}
@@ -306,12 +329,29 @@ export default function GuestlistPage() {
 
       {/* Create Guestlist Dialog */}
       <CreateGuestlistDialog
+        key={editingGuestlist?.id || 'new'}
         isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
+        onClose={() => {
+          setIsCreateDialogOpen(false);
+          setEditingGuestlist(null);
+        }}
         members={members}
         communityId={community.communityId}
         communityName={community.name}
         onGuestlistCreated={handleGuestlistCreated}
+        existingGuestlist={editingGuestlist}
+      />
+
+      {/* Guestlist Detail Dialog */}
+      <GuestlistDetailDialog
+        isOpen={isDetailDialogOpen}
+        onClose={() => {
+          setIsDetailDialogOpen(false);
+          setSelectedGuestlist(null);
+        }}
+        guestlist={selectedGuestlist}
+        onEdit={handleEdit}
+        onDelete={() => setSelectedGuestlist(null)}
       />
     </div>
   );

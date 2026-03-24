@@ -70,7 +70,7 @@ function BroadcastContent() {
             userId: memberData.userId,
             name: userDetails.displayName || userDetails.email || 'Unknown User',
             email: userDetails.email || '',
-            imageUrl: userDetails.avatarUrl || userDetails.photoURL || '/placeholder-avatar.png',
+            imageUrl: userDetails.avatarUrl || userDetails.photoURL || '',
             role: memberData.role || 'member',
             joinedDate: memberData.joinedAt,
             tags: memberData.tags || [],

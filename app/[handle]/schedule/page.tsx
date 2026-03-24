@@ -9,6 +9,7 @@ import { Globe, Lock, PlusCircle } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { CreateEventDialog } from '@/components/schedule/create-event-dialog';
+import { EventDetailDialog } from '@/components/schedule/event-detail-dialog';
 import { EventCalendarView, CalendarEvent } from '@/components/schedule/event-calendar-view';
 
 interface MemberData {
@@ -31,8 +32,10 @@ export default function SchedulePage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   // Fetch community and members
   useEffect(() => {
@@ -109,7 +112,12 @@ export default function SchedulePage() {
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event);
     setSelectedEvent(event);
-    // TODO: Open event details dialog
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleEdit = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    setIsCreateDialogOpen(true);
   };
 
   const handleDayClick = (date: Date, dayEvents: CalendarEvent[]) => {
@@ -192,16 +200,31 @@ export default function SchedulePage() {
 
       {/* Create Event Dialog */}
       <CreateEventDialog
+        key={editingEvent?.id || 'new'}
         isOpen={isCreateDialogOpen}
         onClose={() => {
           setIsCreateDialogOpen(false);
           setSelectedDate('');
+          setEditingEvent(null);
         }}
         members={members}
         communityId={community.communityId}
         communityName={community.name}
         onEventCreated={handleEventCreated}
         initialDate={selectedDate}
+        existingEvent={editingEvent}
+      />
+
+      {/* Event Detail Dialog */}
+      <EventDetailDialog
+        isOpen={isDetailDialogOpen}
+        onClose={() => {
+          setIsDetailDialogOpen(false);
+          setSelectedEvent(null);
+        }}
+        event={selectedEvent}
+        onEdit={handleEdit}
+        onDelete={() => setSelectedEvent(null)}
       />
     </div>
   );

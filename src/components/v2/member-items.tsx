@@ -7,6 +7,7 @@ import { Mail, Calendar, Shield, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RoundImage } from '@/components/ui/round-image';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface Member {
   id: string;
@@ -62,20 +63,9 @@ const getRoleBadgeColor = (role?: string) => {
   }
 };
 
-// Check if image URL is valid (not a placeholder)
-const isValidImageUrl = (url: string) => {
-  if (!url) return false;
-  if (url === '/placeholder-avatar.png') return false;
-  if (url === '/default-avatar.png') return false;
-  if (url.includes('placeholder')) return false;
-  if (url.includes('default-avatar')) return false;
-  return true;
-};
-
 export const MemberGridItem = ({ item, isSelected, selectable }: MemberItemProps) => {
   const params = useParams();
   const handle = params?.handle as string;
-  const hasValidImage = isValidImageUrl(item.imageUrl);
   
   const content = (
       <Card 
@@ -86,21 +76,9 @@ export const MemberGridItem = ({ item, isSelected, selectable }: MemberItemProps
         style={{ borderColor: 'var(--page-content-border)' }}
       >
         <div className="relative" style={{ paddingTop: '60%', backgroundColor: '#E2D9C9' }}>
-          {hasValidImage ? (
-            <Image
-              src={item.imageUrl}
-              alt={item.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-white/50 flex items-center justify-center border-2 border-white/80">
-                <User className="h-10 w-10 text-[#8A7A6A]" />
-              </div>
-            </div>
-          )}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <UserAvatar name={item.name} imageUrl={item.imageUrl} size={80} />
+          </div>
         </div>
         <div className="p-4 flex-1 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-2">
@@ -164,12 +142,7 @@ export const MemberListItem = ({ item, isSelected, selectable }: MemberItemProps
         )}
         style={{ borderColor: 'var(--page-content-border)' }}
       >
-        <RoundImage 
-          src={item.imageUrl} 
-          alt={item.name} 
-          size={56}
-          border={true}
-        />
+        <UserAvatar name={item.name} imageUrl={item.imageUrl} size={56} />
         <div className="flex-1 min-w-0 ml-4">
           <div className="flex items-center gap-2 mb-0.5">
             <h3 className="text-base font-semibold truncate">{item.name}</h3>
@@ -235,12 +208,7 @@ export const MemberCircleItem = ({ item, isSelected, selectable }: MemberItemPro
         style={{ borderColor: 'var(--page-content-border)' }}
       >
         <div className="p-6 pt-6">
-          <RoundImage 
-            src={item.imageUrl} 
-            alt={item.name} 
-            size={96}
-            border={true}
-          />
+          <UserAvatar name={item.name} imageUrl={item.imageUrl} size={96} />
         </div>
         <div className="px-4 pb-4 flex-1 flex flex-col justify-between w-full">
           <div>

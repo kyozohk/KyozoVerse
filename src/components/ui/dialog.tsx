@@ -6,6 +6,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 
 const Dialog = DialogPrimitive.Root
 
@@ -30,6 +31,19 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+/**
+ * DialogContent component
+ * 
+ * IMPORTANT: For accessibility, DialogContent requires a DialogTitle.
+ * If you want to hide the title visually, wrap it with VisuallyHidden:
+ * 
+ * <DialogContent>
+ *   <VisuallyHidden>
+ *     <DialogTitle>Your Title</DialogTitle>
+ *   </VisuallyHidden>
+ *   ...rest of content
+ * </DialogContent>
+ */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -205,4 +219,5 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  VisuallyHidden,
 }

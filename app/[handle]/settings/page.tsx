@@ -1,25 +1,35 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Globe, Lock, Settings, Bell, Shield, Palette } from 'lucide-react';
+import { Globe, Lock, Settings, Bell, Shield, Palette, Trash2, AlertTriangle } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { DeleteCommunityDialog } from '@/components/community/delete-community-dialog';
+import { CustomButton } from '@/components/ui/CustomButton';
+import { useAuth } from '@/hooks/use-auth';
+import { getUserRoleInCommunity } from '@/lib/community-utils';
 
 export default function SettingsPage() {
   const params = useParams();
+  const router = useRouter();
   const handle = params.handle as string;
+  const { user, loading: authLoading } = useAuth();
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'guest'>('guest');
   const { toast } = useToast();
 
   useEffect(() => {
+    if (authLoading) return;
+
     const fetchCommunity = async () => {
       try {
         const communitiesRef = collection(db, 'communities');
@@ -28,7 +38,14 @@ export default function SettingsPage() {
         
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
-          setCommunity({ communityId: doc.id, ...doc.data() } as Community);
+          const communityData = { communityId: doc.id, ...doc.data() } as Community;
+          setCommunity(communityData);
+
+          // Get user role if user is logged in
+          if (user) {
+            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
+            setUserRole(role);
+          }
         }
       } catch (error) {
         console.error('Error fetching community:', error);
@@ -45,9 +62,17 @@ export default function SettingsPage() {
     if (handle) {
       fetchCommunity();
     }
-  }, [handle, toast]);
+  }, [handle, user, authLoading, toast]);
 
-  if (loading) {
+  const handleDeleteSuccess = () => {
+    toast({
+      title: "Community Deleted",
+      description: "The community has been permanently deleted.",
+    });
+    router.push('/');
+  };
+
+  if (loading || authLoading) {
     return <PageLoadingSkeleton showMemberList={true} />;
   }
 
@@ -170,9 +195,57 @@ export default function SettingsPage() {
                 </Card>
               ))}
             </div>
+
+            {/* Danger Zone - Only show for owners */}
+            {userRole === 'owner' && (
+              <div className="mt-8">
+                <Card className="border-red-200 bg-red-50">
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <AlertTriangle className="h-5 w-5 text-red-900" />
+                      <h3 className="text-lg font-semibold text-red-900">Danger Zone</h3>
+                    </div>
+                    <div className="p-4 bg-white rounded-lg border border-red-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-red-900 mb-1">Delete Community</h4>
+                          <p className="text-sm text-red-700 mb-2">
+                            Permanently delete "{community?.name}" and all its data. This action cannot be undone.
+                          </p>
+                          <ul className="text-xs text-red-600 space-y-1">
+                            <li>• All community posts and content</li>
+                            <li>• All member associations</li>
+                            <li>• Email domain ({community?.handle}.kyozo.com)</li>
+                            <li>• All community settings and data</li>
+                          </ul>
+                        </div>
+                        <CustomButton
+                          variant="outline"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          className="ml-4 border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400"
+                          style={{ borderColor: '#FCA5A5', color: '#DC2626' }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Community
+                        </CustomButton>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {community && (
+        <DeleteCommunityDialog
+          community={community}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 }

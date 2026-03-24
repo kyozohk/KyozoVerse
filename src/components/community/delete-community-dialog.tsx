@@ -10,6 +10,7 @@ import { db } from '@/firebase/firestore';
 import { type Community, type User } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/use-auth';
 
 interface MemberWithCommunities extends User {
   communities: string[];
@@ -29,6 +30,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   onClose,
   onSuccess
 }) => {
+  const { user } = useAuth();
   const [membersWithCommunities, setMembersWithCommunities] = useState<MemberWithCommunities[]>([]);
   const [postsCount, setPostsCount] = useState(0);
   const [confirmText, setConfirmText] = useState('');
@@ -118,9 +120,18 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
       setSentCode(code);
       
       // Send email with verification code
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+
       const response = await fetch('/api/send-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           to: ownerEmail,
           subject: `🔐 Verify Community Deletion - ${community.name}`,
@@ -171,9 +182,18 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
     try {
       // Delete community subdomain from GoDaddy and Resend
       try {
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        const idToken = await user.getIdToken();
+
         const domainResponse = await fetch('/api/delete-community-domain', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({ handle: community.handle }),
         });
         const domainResult = await domainResponse.json();

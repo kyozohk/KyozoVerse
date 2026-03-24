@@ -103,7 +103,17 @@ export function EnhancedBroadcastDialog({
   const fetchTemplates = useCallback(async () => {
     setIsLoadingTemplates(true);
     try {
-      const response = await fetch('/api/broadcast-templates');
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+
+      const response = await fetch('/api/broadcast-templates', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
       }
@@ -114,7 +124,7 @@ export function EnhancedBroadcastDialog({
     } finally {
       setIsLoadingTemplates(false);
     }
-  }, []);
+  }, [user]);
 
   // Initialize when dialog opens
   useEffect(() => {
@@ -148,9 +158,18 @@ export function EnhancedBroadcastDialog({
     }
 
     try {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+
       const response = await fetch('/api/broadcast-templates', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           name: newTemplateName,
           subject: subject,
@@ -252,25 +271,40 @@ export function EnhancedBroadcastDialog({
   };
 
   const sendEmailBroadcast = async () => {
+    console.log('📧 Starting email broadcast...');
+    console.log('📧 Selected members:', selectedMembers.length);
+    
     const membersWithEmail = selectedMembers.filter(m => m.email && m.email.trim());
+    console.log('📧 Members with email:', membersWithEmail.length);
+    console.log('📧 Email addresses:', membersWithEmail.map(m => m.email));
     
     if (membersWithEmail.length === 0) {
       throw new Error('No selected members have email addresses');
     }
 
-    // Get community branding - fetch from the broadcast page props or use defaults
-    const primaryColor = '#5B4A3A';
-
     if (!user) {
+      console.error('❌ User not authenticated');
       throw new Error('User must be authenticated to send emails');
     }
 
+    console.log('🔑 Getting Firebase ID token...');
     const idToken = await user.getIdToken();
+    console.log('✅ ID token obtained:', idToken.substring(0, 20) + '...');
+
+    // Get community branding - fetch from the broadcast page props or use defaults
+    const primaryColor = '#5B4A3A';
+
+    console.log('📬 Sending to', membersWithEmail.length, 'members...');
 
     for (const member of membersWithEmail) {
+      console.log(`\n📨 Sending to: ${member.email}`);
+      
       // Replace variables in subject and message for each member
       const personalizedSubject = replaceVariables(subject, member);
       const personalizedMessage = replaceVariables(message, member);
+      
+      console.log('📝 Subject:', personalizedSubject);
+      console.log('📝 Message preview:', personalizedMessage.substring(0, 100) + '...');
       
       // Convert plain text message to HTML with proper formatting
       // Split by double newlines for paragraphs, single newlines for line breaks
@@ -279,20 +313,14 @@ export function EnhancedBroadcastDialog({
         .map(paragraph => `<p style="margin: 0 0 16px 0; color: #374151; font-size: 16px; line-height: 1.7;">${paragraph.replace(/\n/g, '<br>')}</p>`)
         .join('');
       
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          to: member.email,
-          from: `${communityName || 'Kyozo'} <${effectiveFromEmail}>`,
-          subject: personalizedSubject,
-          communityHandle: communityHandle || undefined,
-          recipientName: member.name || member.email,
-          recipientEmail: member.email,
-          html: `
+      const emailPayload = {
+        to: member.email,
+        from: `${communityName || 'Kyozo'} <${effectiveFromEmail}>`,
+        subject: personalizedSubject,
+        communityHandle: communityHandle || undefined,
+        recipientName: member.name || member.email,
+        recipientEmail: member.email,
+        html: `
             <!DOCTYPE html>
             <html>
               <head>
@@ -320,13 +348,45 @@ export function EnhancedBroadcastDialog({
               </body>
             </html>
           `,
-        }),
+      };
+      
+      console.log('📤 Email payload:', JSON.stringify({
+        ...emailPayload,
+        html: emailPayload.html.substring(0, 100) + '...'
+      }, null, 2));
+      
+      console.log('🌐 Sending POST request to /api/send-email...');
+      
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify(emailPayload),
       });
 
+      console.log('📥 Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`Failed to send to ${member.email}`);
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+          console.error('❌ Error details:', errorData);
+        } catch (e) {
+          console.error('❌ Could not parse error response as JSON');
+        }
+        throw new Error(`Failed to send to ${member.email}: ${response.status} ${errorText}`);
       }
+      
+      const responseData = await response.json();
+      console.log('✅ Success response:', responseData);
+      console.log(`✅ Email sent successfully to ${member.email}`);
     }
+    
+    console.log('🎉 All emails sent successfully!');
   };
 
   const sendWhatsAppBroadcast = async () => {

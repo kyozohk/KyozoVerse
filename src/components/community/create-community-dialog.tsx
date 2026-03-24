@@ -290,9 +290,13 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 console.log('[Community Update] Calling /api/setup-community-domain with handle:', newHandle);
                 
                 try {
+                    const idToken = await user.getIdToken();
                     const domainResponse = await fetch('/api/setup-community-domain', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
                         body: JSON.stringify({ handle: newHandle, oldHandle: oldHandle }),
                     });
                     
@@ -342,8 +346,29 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             return;
         }
 
+        // Check plan limits before creating (Basic plan = 1 community)
+        if (!existingCommunity) {
+            try {
+                const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+                const ownedSnap = await getDocs(ownedQuery);
+                const communityCount = ownedSnap.size;
+                // Basic/Free plan limit: 1 community (can be adjusted per plan)
+                const PLAN_LIMIT = 5; // TODO: Fetch from user's subscription plan
+                if (communityCount >= PLAN_LIMIT) {
+                    toast({
+                        title: "Plan Limit Reached",
+                        description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
+                        variant: "destructive",
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.error('Error checking plan limits:', err);
+            }
+        }
+
         setIsSubmitting(true);
-        
+
         const communityData: any = {
             ...formData,
             tags,
@@ -397,9 +422,13 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             // Setup community email subdomain (GoDaddy + Resend)
             const handle = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-');
             try {
+                const idToken = await user.getIdToken();
                 const domainResponse = await fetch('/api/setup-community-domain', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
                     body: JSON.stringify({ handle }),
                 });
                 
@@ -481,8 +510,8 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                                 <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} />
                                 <p className="text-xs text-muted-foreground mt-1">This becomes the URL: pro.kyozo.com/{formData.handle || 'your-handle'}</p>
                             </div>
-                            <Textarea label="Lore" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
-                            <Textarea label="Mantras" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
+                            <Textarea label="Description" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} placeholder="Tell people what your community is about..." />
+                            <Textarea label="Tagline" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} placeholder="A short motto or mission statement" />
                             <TagInput tags={tags} setTags={setTags} />
                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} />
                             <div className="flex items-center space-x-2 pt-2">

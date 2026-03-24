@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the verified Kyozo domain for sending emails
-    const fromAddress = from || 'Kyozo <dev@kyozo.com>';
+    // Use the verified Kyozo domain for sending emails (contact.kyozo.com is verified on Resend)
+    const fromAddress = from || 'Kyozo <noreply@contact.kyozo.com>';
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -51,6 +51,31 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       console.error('Resend API error:', data);
+      
+      // If domain not verified, retry with fallback
+      if (data.message && data.message.includes('not verified')) {
+        console.log('Domain not verified, retrying with fallback domain...');
+        const fallbackResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Kyozo <dev@kyozo.com>',
+            to: Array.isArray(to) ? to : [to],
+            subject,
+            html,
+            reply_to: 'reply@kyozo.com',
+          }),
+        });
+        const fallbackData = await fallbackResponse.json();
+        if (!fallbackResponse.ok) {
+          return NextResponse.json({ error: fallbackData.message }, { status: fallbackResponse.status });
+        }
+        return NextResponse.json({ success: true, id: fallbackData.id });
+      }
+      
       return NextResponse.json(
         { error: data.message || 'Failed to send email' },
         { status: response.status }

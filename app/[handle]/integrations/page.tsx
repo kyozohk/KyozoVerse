@@ -77,19 +77,21 @@ const STEPS: { id: WizardStep; label: string }[] = [
 function StepIndicator({ current }: { current: WizardStep }) {
   const idx = STEPS.findIndex(s => s.id === current);
   return (
-    <div className="flex items-center justify-center gap-0 mb-8">
+    <div className="flex items-center justify-center gap-0 mb-16">
       {STEPS.map((step, i) => (
         <div key={step.id} className="flex items-center">
-          <div className="flex flex-col items-center gap-1">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-              i < idx ? 'text-white' : i === idx ? 'text-white' : 'text-gray-400'
+          <div className="flex flex-col items-center gap-2">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+              i < idx ? 'text-white shadow-md' : i === idx ? 'text-white shadow-lg scale-110' : 'text-gray-400'
             }`} style={{ backgroundColor: i <= idx ? '#5B4A3A' : '#E8DFD1' }}>
-              {i < idx ? <Check className="h-4 w-4" /> : i + 1}
+              {i < idx ? <Check className="h-5 w-5" /> : i + 1}
             </div>
-            <span className="text-xs whitespace-nowrap hidden sm:block" style={{ color: i <= idx ? '#5B4A3A' : '#B0A090' }}>{step.label}</span>
+            <span className={`text-xs whitespace-nowrap hidden sm:block font-medium transition-all ${
+              i === idx ? 'font-semibold' : ''
+            }`} style={{ color: i <= idx ? '#5B4A3A' : '#B0A090' }}>{step.label}</span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className="w-16 h-0.5 mb-5 mx-1" style={{ backgroundColor: i < idx ? '#5B4A3A' : '#E8DFD1' }} />
+            <div className="w-20 h-1 mb-6 mx-2 rounded-full transition-all duration-300" style={{ backgroundColor: i < idx ? '#5B4A3A' : '#E8DFD1' }} />
           )}
         </div>
       ))}
@@ -288,34 +290,34 @@ export default function IntegrationsPage() {
             height="16rem"
           />
 
-          <div className="p-6">
+          <div className="p-8">
             <div className="max-w-5xl mx-auto">
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold" style={{ color: '#5B4A3A' }}>Import Members</h2>
-                <p className="text-sm mt-1" style={{ color: '#8B7355' }}>Import contacts from Eventbrite, CSV, Excel, or add them manually.</p>
+              <div className="mb-8 text-center">
+                <h2 className="text-3xl font-bold mb-2" style={{ color: '#5B4A3A' }}>Import Members</h2>
+                <p className="text-base" style={{ color: '#8B7355' }}>Import contacts from Eventbrite, CSV, Excel, or add them manually.</p>
               </div>
 
               <StepIndicator current={step} />
 
               {/* ── Step 1: Source ── */}
               {step === 'source' && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mx-auto" style={{ maxWidth: '800px' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mx-auto" style={{ maxWidth: '950px' }}>
                 {([
-                  { id: 'eventbrite', label: 'Eventbrite', icon: <Calendar className="h-7 w-7" />, color: '#E07B39', bg: '#FFF3E8', desc: 'Import event attendees' },
-                  { id: 'csv', label: 'CSV File', icon: <FileText className="h-7 w-7" />, color: '#059669', bg: '#ECFDF5', desc: 'Upload a .csv file' },
-                  { id: 'xlsx', label: 'Excel / XLS', icon: <FileSpreadsheet className="h-7 w-7" />, color: '#1D6F42', bg: '#F0FDF4', desc: 'Upload .xlsx or .xls' },
-                  { id: 'manual', label: 'Manual Entry', icon: <Plus className="h-7 w-7" />, color: '#7C3AED', bg: '#F5F3FF', desc: 'Add one by one' },
+                  { id: 'eventbrite', label: 'Eventbrite', icon: <Calendar className="h-8 w-8" />, color: '#E07B39', bg: '#FFF3E8', desc: 'Import event attendees' },
+                  { id: 'csv', label: 'CSV File', icon: <FileText className="h-8 w-8" />, color: '#059669', bg: '#ECFDF5', desc: 'Upload a .csv file' },
+                  { id: 'xlsx', label: 'Excel / XLS', icon: <FileSpreadsheet className="h-8 w-8" />, color: '#1D6F42', bg: '#F0FDF4', desc: 'Upload .xlsx or .xls' },
+                  { id: 'manual', label: 'Manual Entry', icon: <Plus className="h-8 w-8" />, color: '#7C3AED', bg: '#F5F3FF', desc: 'Add one by one' },
                 ] as const).map(s => (
                   <button
                     key={s.id}
                     onClick={() => { setSource(s.id as ImportSource); setStep('configure'); }}
-                    className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 text-center transition-all hover:shadow-md hover:-translate-y-0.5"
+                    className="group flex flex-col items-center gap-4 p-8 rounded-2xl border-2 text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-opacity-60"
                     style={{ borderColor: '#E8DFD1', backgroundColor: 'white' }}
                   >
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ backgroundColor: s.bg, color: s.color }}>{s.icon}</div>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{ backgroundColor: s.bg, color: s.color }}>{s.icon}</div>
                     <div>
-                      <p className="font-semibold text-sm" style={{ color: '#3D2E1E' }}>{s.label}</p>
-                      <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{s.desc}</p>
+                      <p className="font-bold text-base mb-1" style={{ color: '#3D2E1E' }}>{s.label}</p>
+                      <p className="text-xs" style={{ color: '#8B7355' }}>{s.desc}</p>
                     </div>
                   </button>
                 ))}
@@ -324,147 +326,160 @@ export default function IntegrationsPage() {
 
             {/* ── Step 2: Configure ── */}
             {step === 'configure' && source === 'eventbrite' && (
-              <div className="max-w-md space-y-4">
-                <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>Connect Eventbrite</h3>
-                <div>
-                  <label className="text-xs font-medium block mb-1" style={{ color: '#8B7355' }}>API Token</label>
-                  <input value={ebToken} onChange={e => setEbToken(e.target.value)} placeholder="Paste your Eventbrite private token..." className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none" style={{ borderColor: '#E8DFD1' }} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1" style={{ color: '#8B7355' }}>Event ID</label>
-                  <input value={ebEventId} onChange={e => setEbEventId(e.target.value)} placeholder="e.g. 123456789" className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none" style={{ borderColor: '#E8DFD1' }} />
-                </div>
-                {ebError && <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" />{ebError}</p>}
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => setStep('source')}>Back</Button>
-                  <Button size="sm" onClick={fetchEventbrite} disabled={ebLoading || !ebToken || !ebEventId} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    {ebLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Fetching...</> : 'Fetch Attendees'}
-                  </Button>
+              <div className="max-w-lg mx-auto">
+                <div className="bg-white rounded-2xl border-2 p-8 shadow-sm" style={{ borderColor: '#E8DFD1' }}>
+                  <h3 className="text-xl font-bold mb-6" style={{ color: '#3D2E1E' }}>Connect Eventbrite</h3>
+                  <div className="space-y-5">
+                    <div>
+                      <label className="text-sm font-semibold block mb-2" style={{ color: '#5B4A3A' }}>API Token</label>
+                      <input value={ebToken} onChange={e => setEbToken(e.target.value)} placeholder="Paste your Eventbrite private token..." className="w-full px-4 py-3 rounded-xl border-2 text-sm focus:outline-none focus:border-opacity-60 transition-colors" style={{ borderColor: '#E8DFD1' }} />
+                      <p className="text-xs mt-2" style={{ color: '#B0A090' }}>Find this in Eventbrite → Account Settings → API Keys</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold block mb-2" style={{ color: '#5B4A3A' }}>Event ID</label>
+                      <input value={ebEventId} onChange={e => setEbEventId(e.target.value)} placeholder="e.g. 123456789" className="w-full px-4 py-3 rounded-xl border-2 text-sm focus:outline-none focus:border-opacity-60 transition-colors" style={{ borderColor: '#E8DFD1' }} />
+                    </div>
+                    {ebError && <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3"><p className="text-sm text-red-600 flex items-center gap-2"><AlertCircle className="h-4 w-4" />{ebError}</p></div>}
+                  </div>
+                  <div className="flex gap-3 mt-8">
+                    <Button variant="outline" size="default" onClick={() => setStep('source')} className="flex-1">Back</Button>
+                    <Button size="default" onClick={fetchEventbrite} disabled={ebLoading || !ebToken || !ebEventId} className="flex-1" style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
+                      {ebLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Fetching...</> : 'Fetch Attendees'}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
 
             {step === 'configure' && (source === 'csv' || source === 'xlsx') && (
-              <div className="max-w-md space-y-4">
-                <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>Upload {source === 'csv' ? 'CSV' : 'Excel'} File</h3>
-                <p className="text-sm" style={{ color: '#8B7355' }}>File should have columns: Name, Email, Phone, Tags (optional)</p>
-                <div
-                  className="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors hover:bg-gray-50"
-                  style={{ borderColor: '#E8DFD1' }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-8 w-8 mx-auto mb-2" style={{ color: '#B0A090' }} />
-                  <p className="text-sm font-medium" style={{ color: '#5B4A3A' }}>Click to browse or drag & drop</p>
-                  <p className="text-xs mt-1" style={{ color: '#8B7355' }}>{source === 'csv' ? '.csv, .tsv' : '.xlsx, .xls'} files accepted</p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept={source === 'csv' ? '.csv,.tsv' : '.xlsx,.xls'}
-                    className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }}
-                  />
+              <div className="max-w-xl mx-auto">
+                <div className="bg-white rounded-2xl border-2 p-8 shadow-sm" style={{ borderColor: '#E8DFD1' }}>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: '#3D2E1E' }}>Upload {source === 'csv' ? 'CSV' : 'Excel'} File</h3>
+                  <p className="text-sm mb-6" style={{ color: '#8B7355' }}>File should have columns: <span className="font-semibold">Name, Email, Phone, Tags</span> (optional)</p>
+                  <div
+                    className="border-3 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 hover:bg-gray-50 hover:border-opacity-60 hover:shadow-inner"
+                    style={{ borderColor: '#E8DFD1', borderWidth: '3px' }}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F5F0EB' }}>
+                      <Upload className="h-8 w-8" style={{ color: '#8B7355' }} />
+                    </div>
+                    <p className="text-base font-semibold mb-1" style={{ color: '#5B4A3A' }}>Click to browse or drag & drop</p>
+                    <p className="text-sm" style={{ color: '#8B7355' }}>{source === 'csv' ? '.csv, .tsv' : '.xlsx, .xls'} files accepted</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={source === 'csv' ? '.csv,.tsv' : '.xlsx,.xls'}
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }}
+                    />
+                  </div>
+                  <div className="mt-6">
+                    <Button variant="outline" size="default" onClick={() => setStep('source')} className="w-full">Back</Button>
+                  </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setStep('source')}>Back</Button>
               </div>
             )}
 
             {step === 'configure' && source === 'manual' && (
-              <div className="max-w-2xl space-y-4">
-                <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>Add Members Manually</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {(['name', 'email', 'phone', 'tags'] as const).map(field => (
-                    <div key={field}>
-                      <label className="text-xs font-medium block mb-1 capitalize" style={{ color: '#8B7355' }}>{field}</label>
-                      <input
-                        value={manualForm[field]}
-                        onChange={e => setManualForm(p => ({ ...p, [field]: e.target.value }))}
-                        placeholder={field === 'tags' ? 'tag1, tag2' : field}
-                        className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none"
-                        style={{ borderColor: '#E8DFD1' }}
-                        onKeyDown={e => { if (e.key === 'Enter') addManualMember(); }}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <Button size="sm" onClick={addManualMember} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                  <Plus className="h-4 w-4 mr-1" />Add Member
-                </Button>
-
-                {members.length > 0 && (
-                  <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-                    {members.map(m => (
-                      <div key={m._id} className="flex items-center gap-3 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--page-bg-color)', border: '1px solid #E8DFD1' }}>
-                        <span className="flex-1 font-medium" style={{ color: '#3D2E1E' }}>{m.name || '—'}</span>
-                        <span style={{ color: '#8B7355' }}>{m.email}</span>
-                        <span style={{ color: '#8B7355' }}>{m.phone}</span>
-                        <button onClick={() => deleteMember(m._id)}><X className="h-4 w-4 text-red-400 hover:text-red-600" /></button>
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-white rounded-2xl border-2 p-8 shadow-sm" style={{ borderColor: '#E8DFD1' }}>
+                  <h3 className="text-xl font-bold mb-6" style={{ color: '#3D2E1E' }}>Add Members Manually</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+                    {(['name', 'email', 'phone', 'tags'] as const).map(field => (
+                      <div key={field}>
+                        <label className="text-sm font-semibold block mb-2 capitalize" style={{ color: '#5B4A3A' }}>{field}</label>
+                        <input
+                          value={manualForm[field]}
+                          onChange={e => setManualForm(p => ({ ...p, [field]: e.target.value }))}
+                          placeholder={field === 'tags' ? 'tag1, tag2' : field}
+                          className="w-full px-4 py-3 rounded-xl border-2 text-sm focus:outline-none focus:border-opacity-60 transition-colors"
+                          style={{ borderColor: '#E8DFD1' }}
+                          onKeyDown={e => { if (e.key === 'Enter') addManualMember(); }}
+                        />
                       </div>
                     ))}
                   </div>
-                )}
-
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => setStep('source')}>Back</Button>
-                  <Button size="sm" disabled={members.length === 0} onClick={() => setStep('preview')} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    Preview {members.length > 0 ? `(${members.length})` : ''} <ChevronRight className="h-4 w-4 ml-1" />
+                  <Button size="default" onClick={addManualMember} className="w-full sm:w-auto" style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
+                    <Plus className="h-4 w-4 mr-2" />Add Member
                   </Button>
+
+                  {members.length > 0 && (
+                    <div className="mt-6 space-y-2 max-h-60 overflow-y-auto p-4 bg-gray-50 rounded-xl">
+                      {members.map(m => (
+                        <div key={m._id} className="flex items-center gap-3 p-3 rounded-lg text-sm bg-white shadow-sm" style={{ border: '1px solid #E8DFD1' }}>
+                          <span className="flex-1 font-medium" style={{ color: '#3D2E1E' }}>{m.name || '—'}</span>
+                          <span className="hidden sm:inline" style={{ color: '#8B7355' }}>{m.email}</span>
+                          <span className="hidden md:inline" style={{ color: '#8B7355' }}>{m.phone}</span>
+                          <button onClick={() => deleteMember(m._id)} className="p-1 hover:bg-red-50 rounded transition-colors"><X className="h-4 w-4 text-red-400 hover:text-red-600" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-8">
+                    <Button variant="outline" size="default" onClick={() => setStep('source')} className="flex-1">Back</Button>
+                    <Button size="default" disabled={members.length === 0} onClick={() => setStep('preview')} className="flex-1" style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
+                      Preview {members.length > 0 ? `(${members.length})` : ''} <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* ── Step 3: Preview & Edit ── */}
             {step === 'preview' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-2xl border-2 p-6 shadow-sm" style={{ borderColor: '#E8DFD1' }}>
                   <div>
-                    <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>Preview Import</h3>
+                    <h3 className="text-xl font-bold mb-1" style={{ color: '#3D2E1E' }}>Preview Import</h3>
                     <p className="text-sm" style={{ color: '#8B7355' }}>{members.length} members ready — click any cell to edit before importing.</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setStep('configure')}><ChevronLeft className="h-4 w-4 mr-1" />Back</Button>
-                    <Button size="sm" onClick={runImport} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                      <Download className="h-4 w-4 mr-1" />Import {members.length} Members
+                  <div className="flex gap-3">
+                    <Button variant="outline" size="default" onClick={() => setStep('configure')}><ChevronLeft className="h-4 w-4 mr-2" />Back</Button>
+                    <Button size="default" onClick={runImport} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
+                      <Download className="h-4 w-4 mr-2" />Import {members.length}
                     </Button>
                   </div>
                 </div>
 
                 {/* Editable grid */}
-                <div className="overflow-auto rounded-xl border" style={{ borderColor: '#E8DFD1', maxHeight: '60vh' }}>
+                <div className="overflow-auto rounded-2xl border-2 shadow-sm" style={{ borderColor: '#E8DFD1', maxHeight: '60vh' }}>
                   <table className="w-full text-sm">
-                    <thead>
+                    <thead className="sticky top-0">
                       <tr style={{ backgroundColor: '#F5F0EB' }}>
-                        <th className="text-left px-4 py-2.5 font-semibold text-xs uppercase tracking-wide" style={{ color: '#8B7355', width: 36 }}>#</th>
+                        <th className="text-left px-4 py-3 font-bold text-xs uppercase tracking-wide sticky left-0" style={{ color: '#5B4A3A', width: 50, backgroundColor: '#F5F0EB' }}>#</th>
                         {['name', 'email', 'phone', 'tags', 'notes'].map(col => (
-                          <th key={col} className="text-left px-4 py-2.5 font-semibold text-xs uppercase tracking-wide" style={{ color: '#8B7355' }}>{col}</th>
+                          <th key={col} className="text-left px-4 py-3 font-bold text-xs uppercase tracking-wide" style={{ color: '#5B4A3A' }}>{col}</th>
                         ))}
-                        <th className="px-4 py-2.5 w-10" />
+                        <th className="px-4 py-3 w-20 text-center font-bold text-xs uppercase tracking-wide" style={{ color: '#5B4A3A' }}>Actions</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="bg-white">
                       {members.map((m, i) => (
-                        <tr key={m._id} className="border-t hover:bg-amber-50/30" style={{ borderColor: '#F0EBE3' }}>
-                          <td className="px-4 py-2 text-xs" style={{ color: '#B0A090' }}>{i + 1}</td>
+                        <tr key={m._id} className="border-t transition-colors hover:bg-amber-50/50" style={{ borderColor: '#F0EBE3' }}>
+                          <td className="px-4 py-3 text-xs font-medium sticky left-0 bg-white" style={{ color: '#B0A090' }}>{i + 1}</td>
                           {['name', 'email', 'phone', 'tags', 'notes'].map(col => (
-                            <td key={col} className="px-2 py-1.5">
+                            <td key={col} className="px-4 py-3">
                               {editingId === m._id ? (
                                 <input
                                   value={m[col]}
                                   onChange={e => updateMember(m._id, col, e.target.value)}
-                                  className="w-full px-2 py-1 rounded border text-sm focus:outline-none"
+                                  className="w-full px-3 py-2 rounded-lg border-2 text-sm focus:outline-none focus:border-opacity-60 transition-colors"
                                   style={{ borderColor: '#E8DFD1' }}
                                   placeholder={col === 'tags' ? 'tag1, tag2' : col}
                                 />
                               ) : (
-                                <span className="px-2" style={{ color: m[col] ? '#3D2E1E' : '#C0B0A0' }}>{m[col] || <span className="italic text-xs" style={{ color: '#C0B0A0' }}>empty</span>}</span>
+                                <span className="px-2 py-1" style={{ color: m[col] ? '#3D2E1E' : '#C0B0A0' }}>{m[col] || <span className="italic text-xs" style={{ color: '#C0B0A0' }}>empty</span>}</span>
                               )}
                             </td>
                           ))}
-                          <td className="px-2 py-1.5">
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => setEditingId(editingId === m._id ? null : m._id)}>
-                                {editingId === m._id ? <Save className="h-3.5 w-3.5 text-green-600" /> : <Edit2 className="h-3.5 w-3.5" style={{ color: '#B0A090' }} />}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-2">
+                              <button onClick={() => setEditingId(editingId === m._id ? null : m._id)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                {editingId === m._id ? <Save className="h-4 w-4 text-green-600" /> : <Edit2 className="h-4 w-4" style={{ color: '#8B7355' }} />}
                               </button>
-                              <button onClick={() => deleteMember(m._id)}><Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" /></button>
+                              <button onClick={() => deleteMember(m._id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 className="h-4 w-4 text-red-400 hover:text-red-600" /></button>
                             </div>
                           </td>
                         </tr>
@@ -477,25 +492,30 @@ export default function IntegrationsPage() {
 
             {/* ── Step 4: Done ── */}
             {step === 'done' && (
-              <div className="max-w-md text-center py-10 mx-auto">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#ECFDF5' }}>
-                  <Check className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#3D2E1E' }}>Import Complete!</h3>
-                <p className="text-sm" style={{ color: '#8B7355' }}>
-                  {members.length - importErrors.length} of {members.length} members imported successfully.
-                </p>
-                {importErrors.length > 0 && (
-                  <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-left">
-                    <p className="text-xs font-semibold text-red-700 mb-1">{importErrors.length} errors:</p>
-                    {importErrors.slice(0, 5).map((e, i) => <p key={i} className="text-xs text-red-600">{e}</p>)}
+              <div className="max-w-xl mx-auto">
+                <div className="bg-white rounded-2xl border-2 p-10 shadow-sm text-center" style={{ borderColor: '#E8DFD1' }}>
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg" style={{ backgroundColor: '#ECFDF5' }}>
+                    <Check className="h-10 w-10 text-green-600" />
                   </div>
-                )}
-                <div className="flex gap-3 justify-center mt-6">
-                  <Button variant="outline" size="sm" onClick={() => { setStep('source'); setSource(null); setMembers([]); setImportDone(false); }}>Import More</Button>
-                  <Button size="sm" onClick={() => window.location.href = `/${handle}/audience`} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    <Users className="h-4 w-4 mr-1" />View Audience
-                  </Button>
+                  <h3 className="text-2xl font-bold mb-3" style={{ color: '#3D2E1E' }}>Import Complete!</h3>
+                  <p className="text-base mb-6" style={{ color: '#8B7355' }}>
+                    <span className="font-bold text-lg" style={{ color: '#5B4A3A' }}>{members.length - importErrors.length}</span> of {members.length} members imported successfully.
+                  </p>
+                  {importErrors.length > 0 && (
+                    <div className="mt-6 p-4 rounded-xl bg-red-50 border-2 border-red-200 text-left">
+                      <p className="text-sm font-bold text-red-700 mb-2">{importErrors.length} errors occurred:</p>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {importErrors.slice(0, 5).map((e, i) => <p key={i} className="text-xs text-red-600">{e}</p>)}
+                        {importErrors.length > 5 && <p className="text-xs text-red-500 italic mt-2">...and {importErrors.length - 5} more</p>}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+                    <Button variant="outline" size="default" onClick={() => { setStep('source'); setSource(null); setMembers([]); setImportDone(false); }} className="flex-1">Import More</Button>
+                    <Button size="default" onClick={() => window.location.href = `/${handle}/audience`} className="flex-1" style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
+                      <Users className="h-4 w-4 mr-2" />View Audience
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

@@ -85,27 +85,107 @@ export default function SettingsPage() {
         <TabsContent value="notifications" className="space-y-6">
           <div className="bg-card p-6 rounded-lg border shadow-sm">
             <h3 className="text-lg font-medium mb-4">Notification Preferences</h3>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Notification settings coming soon</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-3 border-b">
+                <div>
+                  <p className="font-medium text-sm">Email Notifications</p>
+                  <p className="text-xs text-muted-foreground">Receive email updates about your communities</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4A574]" />
+                </label>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b">
+                <div>
+                  <p className="font-medium text-sm">New Member Alerts</p>
+                  <p className="text-xs text-muted-foreground">Get notified when someone joins your community</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4A574]" />
+                </label>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b">
+                <div>
+                  <p className="font-medium text-sm">Feed Activity</p>
+                  <p className="text-xs text-muted-foreground">Notifications for likes, comments, and shares</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4A574]" />
+                </label>
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-medium text-sm">Marketing & Updates</p>
+                  <p className="text-xs text-muted-foreground">Product updates and feature announcements</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4A574]" />
+                </label>
+              </div>
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="security" className="space-y-6">
           <div className="bg-card p-6 rounded-lg border shadow-sm">
-            <h3 className="text-lg font-medium mb-4">Security Settings</h3>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Security settings coming soon</p>
+            <h3 className="text-lg font-medium mb-4">Change Password</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              To change your password, we'll send a password reset link to your email address.
+            </p>
+            <CustomButton
+              variant="default"
+              onClick={() => {
+                if (user?.email) {
+                  import('@/firebase/auth').then(({ resetPassword }) => {
+                    resetPassword(user.email!).then(() => {
+                      alert('Password reset email sent! Check your inbox.');
+                    }).catch(() => {
+                      alert('Failed to send reset email. Please try again.');
+                    });
+                  });
+                }
+              }}
+            >
+              Send Password Reset Email
+            </CustomButton>
+          </div>
+          <div className="bg-card p-6 rounded-lg border shadow-sm">
+            <h3 className="text-lg font-medium mb-4">Account Security</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm">Two-Factor Authentication</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm">Login History</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
+              </div>
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="appearance" className="space-y-6">
           <div className="bg-card p-6 rounded-lg border shadow-sm">
-            <h3 className="text-lg font-medium mb-4">Appearance Settings</h3>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Appearance settings coming soon</p>
+            <h3 className="text-lg font-medium mb-4">Theme</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <button className="p-4 rounded-lg border-2 border-primary bg-white text-center">
+                <div className="w-full h-8 bg-white border rounded mb-2" />
+                <span className="text-sm font-medium">Light</span>
+              </button>
+              <button className="p-4 rounded-lg border-2 border-muted bg-gray-900 text-center text-white">
+                <div className="w-full h-8 bg-gray-800 rounded mb-2" />
+                <span className="text-sm font-medium">Dark</span>
+              </button>
+              <button className="p-4 rounded-lg border-2 border-muted bg-gradient-to-b from-white to-gray-900 text-center">
+                <div className="w-full h-8 bg-gradient-to-r from-white to-gray-800 rounded mb-2" />
+                <span className="text-sm font-medium">System</span>
+              </button>
             </div>
+            <p className="text-xs text-muted-foreground mt-3">Theme switching will be available in a future update. Currently using Light mode.</p>
           </div>
         </TabsContent>
       </Tabs>
