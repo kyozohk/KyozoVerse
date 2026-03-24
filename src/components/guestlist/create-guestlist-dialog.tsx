@@ -32,6 +32,28 @@ interface MemberData {
   tags?: string[];
 }
 
+interface GuestlistMember {
+  id: string;
+  userId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  imageUrl?: string;
+  tags?: string[];
+}
+
+interface ExistingGuestlist {
+  id: string;
+  name: string;
+  eventName?: string;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
+  description?: string;
+  members: GuestlistMember[];
+  eventImage?: string;
+}
+
 interface CreateGuestlistDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,6 +62,7 @@ interface CreateGuestlistDialogProps {
   communityName?: string;
   onGuestlistCreated?: (guestlist: any) => void;
   initialDate?: string;
+  existingGuestlist?: ExistingGuestlist | null;
 }
 
 export function CreateGuestlistDialog({
@@ -50,30 +73,31 @@ export function CreateGuestlistDialog({
   communityName,
   onGuestlistCreated,
   initialDate,
+  existingGuestlist,
 }: CreateGuestlistDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
-  const [guestlistName, setGuestlistName] = useState('');
-  const [eventName, setEventName] = useState('');
-  const [startDate, setStartDate] = useState(initialDate || '');
-  const [startTime, setStartTime] = useState('');
-  const [endDate, setEndDate] = useState('');
+
+  // Initialize state directly from existingGuestlist or defaults
+  const getInitialMembers = () => {
+    if (!existingGuestlist?.members?.length) return [];
+    const existingIds = new Set(existingGuestlist.members.map(m => m.userId));
+    return members.filter(m => existingIds.has(m.userId));
+  };
+
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>(getInitialMembers);
+  const [guestlistName, setGuestlistName] = useState(existingGuestlist?.name || '');
+  const [eventName, setEventName] = useState(existingGuestlist?.eventName || '');
+  const [startDate, setStartDate] = useState(existingGuestlist?.eventDate || initialDate || '');
+  const [startTime, setStartTime] = useState(existingGuestlist?.eventTime || '');
+  const [endDate, setEndDate] = useState(existingGuestlist?.eventDate || initialDate || '');
   const [endTime, setEndTime] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
-  const [description, setDescription] = useState('');
-  const [eventImage, setEventImage] = useState<string>('');
+  const [eventLocation, setEventLocation] = useState(existingGuestlist?.eventLocation || '');
+  const [description, setDescription] = useState(existingGuestlist?.description || '');
+  const [eventImage, setEventImage] = useState<string>(existingGuestlist?.eventImage || '');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Update startDate when initialDate changes
-  useEffect(() => {
-    if (initialDate) {
-      setStartDate(initialDate);
-      setEndDate(initialDate); // Default end date to same day
-    }
-  }, [initialDate]);
 
   // Auto-fill end date when start date changes
   const handleStartDateChange = (value: string) => {
@@ -232,19 +256,38 @@ export function CreateGuestlistDialog({
           addedAt: new Date().toISOString(),
         })),
         memberCount: selectedMembers.length,
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, 'guestlists'), guestlistData);
-      
-      toast({
-        title: 'Guestlist Created',
-        description: `"${guestlistName}" created with ${selectedMembers.length} guest${selectedMembers.length === 1 ? '' : 's'}.`,
-      });
-      
-      if (onGuestlistCreated) {
-        onGuestlistCreated({ id: docRef.id, ...guestlistData });
+      if (existingGuestlist) {
+        // Update existing guestlist via API (bypasses Firestore security rules)
+        const idToken = await user?.getIdToken();
+        const res = await fetch('/api/guestlists/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+          body: JSON.stringify({ guestlistId: existingGuestlist.id, data: guestlistData }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        
+        toast({
+          title: 'Guestlist Updated',
+          description: `"${guestlistName}" updated with ${selectedMembers.length} guest${selectedMembers.length === 1 ? '' : 's'}.`,
+        });
+      } else {
+        // Create new guestlist
+        const docRef = await addDoc(collection(db, 'guestlists'), {
+          ...guestlistData,
+          createdAt: serverTimestamp(),
+        });
+        
+        toast({
+          title: 'Guestlist Created',
+          description: `"${guestlistName}" created with ${selectedMembers.length} guest${selectedMembers.length === 1 ? '' : 's'}.`,
+        });
+        
+        if (onGuestlistCreated) {
+          onGuestlistCreated({ id: docRef.id, ...guestlistData });
+        }
       }
       
       // Reset form
@@ -261,10 +304,10 @@ export function CreateGuestlistDialog({
       
       onClose();
     } catch (error) {
-      console.error('Failed to create guestlist:', error);
+      console.error('Failed to save guestlist:', error);
       toast({
-        title: 'Failed to Create',
-        description: 'Failed to create guestlist. Please try again.',
+        title: existingGuestlist ? 'Failed to Update' : 'Failed to Create',
+        description: `Failed to ${existingGuestlist ? 'update' : 'create'} guestlist. Please try again.`,
         variant: 'destructive',
       });
     } finally {
@@ -297,9 +340,9 @@ export function CreateGuestlistDialog({
           {/* Left Panel - Guestlist Details */}
           <div className="flex-1 flex flex-col border-r" style={{ borderColor: '#E8DFD1' }}>
             <DialogHeader className="p-6 pb-4">
-              <DialogTitle style={{ color: '#5B4A3A' }}>Create Guestlist</DialogTitle>
+              <DialogTitle style={{ color: '#5B4A3A' }}>{existingGuestlist ? 'Edit Guestlist' : 'Create Guestlist'}</DialogTitle>
               <DialogDescription>
-                Create a new guestlist and add members to it
+                {existingGuestlist ? 'Update the guestlist details and members' : 'Create a new guestlist and add members to it'}
               </DialogDescription>
             </DialogHeader>
 
@@ -516,9 +559,9 @@ export function CreateGuestlistDialog({
                 style={{ backgroundColor: '#E07B39', color: 'white' }}
               >
                 {isSaving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {existingGuestlist ? 'Saving...' : 'Creating...'}</>
                 ) : (
-                  <><Users className="mr-2 h-4 w-4" /> Create Guestlist</>
+                  <><Users className="mr-2 h-4 w-4" /> {existingGuestlist ? 'Save Changes' : 'Create Guestlist'}</>
                 )}
               </Button>
             </div>
@@ -547,6 +590,7 @@ export function CreateGuestlistDialog({
                 searchKeys={['name', 'email', 'tags']}
                 selectable={true}
                 onSelectionChange={onSelectionChange}
+                selection={new Set(selectedMembers.map(m => m.id))}
                 defaultViewMode="list"
               />
             </div>

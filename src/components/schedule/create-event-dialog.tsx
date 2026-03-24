@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Users, Loader2, Calendar, MapPin, Clock, Image as ImageIcon, X, Upload, ChevronDown, Plus } from 'lucide-react';
+import { Users, Loader2, Calendar, MapPin, Image as ImageIcon, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +40,18 @@ interface Guestlist {
   members: any[];
 }
 
+interface ExistingEvent {
+  id: string;
+  name: string;
+  eventName?: string;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
+  description?: string;
+  members: any[];
+  eventImage?: string;
+}
+
 interface CreateEventDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,6 +60,7 @@ interface CreateEventDialogProps {
   communityName?: string;
   onEventCreated?: (event: any) => void;
   initialDate?: string;
+  existingEvent?: ExistingEvent | null;
 }
 
 export function CreateEventDialog({
@@ -58,31 +71,33 @@ export function CreateEventDialog({
   communityName,
   onEventCreated,
   initialDate,
+  existingEvent,
 }: CreateEventDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Mode: 'select' for selecting existing guestlist, 'create' for creating new
-  const [mode, setMode] = useState<'select' | 'create'>('select');
-  
-  // Existing guestlists
+  // Existing guestlists for selection
   const [guestlists, setGuestlists] = useState<Guestlist[]>([]);
   const [loadingGuestlists, setLoadingGuestlists] = useState(true);
   const [selectedGuestlistId, setSelectedGuestlistId] = useState<string>('');
-  
-  // New guestlist creation
-  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
-  const [newGuestlistName, setNewGuestlistName] = useState('');
+
+  // Members for edit mode
+  const getInitialMembers = () => {
+    if (!existingEvent?.members?.length) return [];
+    const existingIds = new Set(existingEvent.members.map((m: any) => m.userId));
+    return members.filter(m => existingIds.has(m.userId));
+  };
+  const [selectedMembers, setSelectedMembers] = useState<MemberData[]>(getInitialMembers);
   
   // Event details
-  const [eventName, setEventName] = useState('');
-  const [startDate, setStartDate] = useState(initialDate || '');
-  const [startTime, setStartTime] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [eventName, setEventName] = useState(existingEvent?.eventName || existingEvent?.name || '');
+  const [startDate, setStartDate] = useState(existingEvent?.eventDate || initialDate || '');
+  const [startTime, setStartTime] = useState(existingEvent?.eventTime || '');
+  const [endDate, setEndDate] = useState(existingEvent?.eventDate || initialDate || '');
   const [endTime, setEndTime] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
-  const [description, setDescription] = useState('');
-  const [eventImage, setEventImage] = useState<string>('');
+  const [eventLocation, setEventLocation] = useState(existingEvent?.eventLocation || '');
+  const [description, setDescription] = useState(existingEvent?.description || '');
+  const [eventImage, setEventImage] = useState<string>(existingEvent?.eventImage || '');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -116,13 +131,13 @@ export function CreateEventDialog({
     fetchGuestlists();
   }, [isOpen, communityId]);
 
-  // Update dates when initialDate changes
+  // Update dates when initialDate changes (only for new events - no existingEvent)
   useEffect(() => {
-    if (initialDate) {
+    if (initialDate && !existingEvent) {
       setStartDate(initialDate);
       setEndDate(initialDate);
     }
-  }, [initialDate]);
+  }, [initialDate, existingEvent]);
 
   // Auto-fill end date when start date changes
   const handleStartDateChange = (value: string) => {
@@ -212,26 +227,52 @@ export function CreateEventDialog({
       return;
     }
 
-    if (mode === 'select' && !selectedGuestlistId) {
-      toast({ title: 'No Guestlist Selected', description: 'Please select a guestlist or create a new one.', variant: 'destructive' });
-      return;
-    }
-
-    if (mode === 'create' && selectedMembers.length === 0) {
-      toast({ title: 'No Members Selected', description: 'Please select at least one member for the guestlist.', variant: 'destructive' });
-      return;
-    }
-
-    if (mode === 'create' && !newGuestlistName.trim()) {
-      toast({ title: 'Missing Guestlist Name', description: 'Please enter a name for the new guestlist.', variant: 'destructive' });
+    if (!existingEvent && !selectedGuestlistId) {
+      toast({ title: 'No Guestlist Selected', description: 'Please select a guestlist to link to this event.', variant: 'destructive' });
       return;
     }
 
     setIsSaving(true);
     
     try {
-      if (mode === 'select') {
-        // Create new event linked to existing guestlist
+      if (existingEvent) {
+        // Update existing event via API (bypasses Firestore security rules)
+        const eventData = {
+          name: existingEvent.name || eventName.trim(),
+          eventName: eventName.trim(),
+          eventDate: startDate || null,
+          eventTime: startTime || null,
+          startDate: startDate || null,
+          startTime: startTime || null,
+          endDate: endDate || null,
+          endTime: endTime || null,
+          eventLocation: eventLocation.trim() || null,
+          eventImage: eventImage || null,
+          description: description.trim() || null,
+          members: selectedMembers.map(m => ({
+            id: m.id,
+            userId: m.userId,
+            name: m.name,
+            email: m.email || null,
+            phone: m.phone || null,
+            imageUrl: m.imageUrl,
+            tags: m.tags || [],
+            status: 'invited',
+            addedAt: new Date().toISOString(),
+          })),
+          memberCount: selectedMembers.length,
+        };
+        const idToken = await user?.getIdToken();
+        const res = await fetch('/api/guestlists/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+          body: JSON.stringify({ guestlistId: existingEvent.id, data: eventData }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        toast({ title: 'Event Updated', description: `Event "${eventName}" has been updated.` });
+      } else {
+        // Create new event linked to selected guestlist
+        const selectedGuestlist = guestlists.find(g => g.id === selectedGuestlistId);
         const eventData = {
           name: selectedGuestlist?.name || eventName.trim(),
           eventName: eventName.trim(),
@@ -251,50 +292,15 @@ export function CreateEventDialog({
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         };
-        
         const docRef = await addDoc(collection(db, 'guestlists'), eventData);
         toast({ title: 'Event Created', description: `Event "${eventName}" has been scheduled.` });
         onEventCreated?.({ id: docRef.id, ...eventData });
-      } else {
-        // Create new guestlist with event details
-        const guestlistData = {
-          name: newGuestlistName.trim(),
-          eventName: eventName.trim(),
-          eventDate: startDate || null,
-          eventTime: startTime || null,
-          startDate: startDate || null,
-          startTime: startTime || null,
-          endDate: endDate || null,
-          endTime: endTime || null,
-          eventLocation: eventLocation.trim() || null,
-          eventImage: eventImage || null,
-          description: description.trim() || null,
-          communityId,
-          members: selectedMembers.map(m => ({
-            id: m.id,
-            userId: m.userId,
-            name: m.name,
-            email: m.email || null,
-            phone: m.phone || null,
-            imageUrl: m.imageUrl,
-            tags: m.tags || [],
-            status: 'invited',
-            addedAt: new Date().toISOString(),
-          })),
-          memberCount: selectedMembers.length,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        };
-
-        const docRef = await addDoc(collection(db, 'guestlists'), guestlistData);
-        toast({ title: 'Event Created', description: `Event "${eventName}" created with ${selectedMembers.length} guests.` });
-        onEventCreated?.({ id: docRef.id, ...guestlistData });
       }
       
       handleClose();
     } catch (error) {
-      console.error('Failed to create event:', error);
-      toast({ title: 'Failed to Create', description: 'Failed to create event. Please try again.', variant: 'destructive' });
+      console.error('Failed to save event:', error);
+      toast({ title: existingEvent ? 'Failed to Update' : 'Failed to Create', description: `Failed to ${existingEvent ? 'update' : 'create'} event. Please try again.`, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -307,10 +313,8 @@ export function CreateEventDialog({
   }, [members]);
 
   const handleClose = () => {
-    setMode('select');
     setSelectedGuestlistId('');
     setSelectedMembers([]);
-    setNewGuestlistName('');
     setEventName('');
     setStartDate('');
     setStartTime('');
@@ -322,18 +326,16 @@ export function CreateEventDialog({
     onClose();
   };
 
-  const selectedGuestlist = guestlists.find(g => g.id === selectedGuestlistId);
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[850px] max-h-[90vh] p-0 overflow-hidden" style={{ backgroundColor: '#F5F0E8' }}>
+      <DialogContent className={`${existingEvent ? 'sm:max-w-[850px]' : 'sm:max-w-[520px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8' }}>
         <div className="flex h-[70vh]">
           {/* Left Panel - Event Details */}
           <div className="flex-1 flex flex-col border-r" style={{ borderColor: '#E8DFD1' }}>
             <DialogHeader className="p-6 pb-4">
-              <DialogTitle style={{ color: '#5B4A3A' }}>Create Event</DialogTitle>
+              <DialogTitle style={{ color: '#5B4A3A' }}>{existingEvent ? 'Edit Event' : 'Create Event'}</DialogTitle>
               <DialogDescription>
-                Schedule an event and assign a guestlist
+                {existingEvent ? 'Update the event details and attendees' : 'Schedule an event and assign a guestlist'}
               </DialogDescription>
             </DialogHeader>
 
@@ -352,50 +354,36 @@ export function CreateEventDialog({
                 />
               </div>
 
-              {/* Guestlist Selection */}
-              <div className="mb-4">
-                <Label className="text-sm font-medium mb-2 block" style={{ color: '#5B4A3A' }}>
-                  Guestlist <span className="text-red-500">*</span>
-                </Label>
-                
-                {loadingGuestlists ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#8B7355' }} />
-                  </div>
-                ) : (
-                  <>
-                    {/* Horizontal scrolling guestlist cards */}
+              {/* Guestlist Selection - only in create mode */}
+              {!existingEvent && (
+                <div className="mb-4">
+                  <Label className="text-sm font-medium mb-2 block" style={{ color: '#5B4A3A' }}>
+                    Guestlist <span className="text-red-500">*</span>
+                  </Label>
+                  {loadingGuestlists ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#8B7355' }} />
+                    </div>
+                  ) : guestlists.length === 0 ? (
+                    <p className="text-sm py-2" style={{ color: '#8B7355' }}>No guestlists yet. Create a guestlist first.</p>
+                  ) : (
                     <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
                       {guestlists.map((gl) => (
                         <button
                           key={gl.id}
                           type="button"
-                          onClick={() => {
-                            setMode('select');
-                            setSelectedGuestlistId(gl.id);
-                          }}
+                          onClick={() => setSelectedGuestlistId(gl.id)}
                           className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
-                            mode === 'select' && selectedGuestlistId === gl.id
-                              ? 'border-2 shadow-sm'
-                              : 'hover:border-2 hover:shadow-sm'
+                            selectedGuestlistId === gl.id ? 'border-2 shadow-sm' : 'hover:border-2 hover:shadow-sm'
                           }`}
                           style={{
-                            backgroundColor: mode === 'select' && selectedGuestlistId === gl.id ? '#E8DFD1' : 'white',
-                            borderColor: mode === 'select' && selectedGuestlistId === gl.id ? '#5B4A3A' : '#E8DFD1',
+                            backgroundColor: selectedGuestlistId === gl.id ? '#E8DFD1' : 'white',
+                            borderColor: selectedGuestlistId === gl.id ? '#5B4A3A' : '#E8DFD1',
                           }}
                         >
-                          {/* Member avatars - show first 3 */}
                           <div className="flex -space-x-2">
                             {gl.members.slice(0, 3).map((member: any, idx: number) => (
-                              <RoundImage
-                                key={member.id || idx}
-                                src={member.imageUrl || ''}
-                                alt={member.name || 'Guest'}
-                                size={24}
-                                border={true}
-                                borderColor="white"
-                                borderWidth={1}
-                              />
+                              <RoundImage key={member.id || idx} src={member.imageUrl || ''} alt={member.name || 'Guest'} size={24} border={true} borderColor="white" borderWidth={1} />
                             ))}
                             {gl.members.length === 0 && (
                               <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
@@ -409,44 +397,10 @@ export function CreateEventDialog({
                           </div>
                         </button>
                       ))}
-                      
-                      {/* Create New button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode('create');
-                          setSelectedGuestlistId('');
-                        }}
-                        className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
-                          mode === 'create'
-                            ? 'border-2 shadow-sm bg-white'
-                            : 'border-dashed hover:border-solid hover:shadow-sm'
-                        }`}
-                        style={{ borderColor: mode === 'create' ? '#5B4A3A' : '#E8DFD1' }}
-                      >
-                        <Plus className="h-4 w-4" style={{ color: '#8B7355' }} />
-                        <span className="text-xs" style={{ color: '#8B7355' }}>Create New</span>
-                      </button>
                     </div>
-
-                    {/* New guestlist name input */}
-                    {mode === 'create' && (
-                      <div className="mt-3">
-                        <Label className="text-sm" style={{ color: '#8B7355' }}>New Guestlist Name</Label>
-                        <Input
-                          placeholder="e.g., VIP Launch Party..."
-                          value={newGuestlistName}
-                          onChange={(e) => setNewGuestlistName(e.target.value)}
-                          style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                        />
-                        <p className="text-xs mt-1" style={{ color: '#8B7355' }}>
-                          Select members from the right panel →
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Date/Time Section - Compact Layout */}
               <div className="mb-4 grid grid-cols-2 gap-4">
@@ -585,20 +539,20 @@ export function CreateEventDialog({
               </Button>
               <Button
                 onClick={handleCreateEvent}
-                disabled={isSaving || !eventName.trim() || (mode === 'select' && !selectedGuestlistId) || (mode === 'create' && (selectedMembers.length === 0 || !newGuestlistName.trim()))}
+                disabled={isSaving || !eventName.trim() || (!existingEvent && !selectedGuestlistId)}
                 style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
               >
                 {isSaving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {existingEvent ? 'Saving...' : 'Creating...'}</>
                 ) : (
-                  <><Calendar className="mr-2 h-4 w-4" /> Create Event</>
+                  <><Calendar className="mr-2 h-4 w-4" /> {existingEvent ? 'Save Changes' : 'Create Event'}</>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* Right Panel - Member Selection (only when creating new guestlist) */}
-          {mode === 'create' && (
+          {/* Right Panel - Member Selection (edit mode only) */}
+          {existingEvent && (
             <div className="w-[600px] flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
               <div className="p-4 border-b" style={{ borderColor: '#E8DFD1' }}>
                 <h3 className="font-medium" style={{ color: '#5B4A3A' }}>Add Guests</h3>
@@ -612,6 +566,7 @@ export function CreateEventDialog({
                   searchKeys={['name', 'email'] as (keyof MemberData)[]}
                   selectable={true}
                   onSelectionChange={onSelectionChange}
+                  selection={new Set(selectedMembers.map(m => m.id))}
                   renderGridItem={(item, isSelected, onSelect, urlField, selectable) => (
                     <div onClick={onSelect}>
                       <MemberGridItem item={item} isSelected={isSelected} selectable={selectable} />
