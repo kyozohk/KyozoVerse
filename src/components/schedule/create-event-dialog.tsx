@@ -328,10 +328,10 @@ export function CreateEventDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className={`${existingEvent ? 'sm:max-w-[850px]' : 'sm:max-w-[520px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8' }}>
+      <DialogContent className={`${existingEvent ? 'sm:max-w-[1200px]' : 'sm:max-w-[520px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8' }}>
         <div className="flex h-[70vh]">
-          {/* Left Panel - Event Details */}
-          <div className="flex-1 flex flex-col border-r" style={{ borderColor: '#E8DFD1' }}>
+          {/* Left Panel - Event Details (70% width in edit mode) */}
+          <div className={`${existingEvent ? 'w-[70%]' : 'flex-1'} flex flex-col border-r`} style={{ borderColor: '#E8DFD1' }}>
             <DialogHeader className="p-6 pb-4">
               <DialogTitle style={{ color: '#5B4A3A' }}>{existingEvent ? 'Edit Event' : 'Create Event'}</DialogTitle>
               <DialogDescription>
@@ -551,9 +551,9 @@ export function CreateEventDialog({
             </div>
           </div>
 
-          {/* Right Panel - Member Selection (edit mode only) */}
+          {/* Right Panel - Member Selection (edit mode only, 30% width) */}
           {existingEvent && (
-            <div className="w-[600px] flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
+            <div className="w-[30%] flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
               <div className="p-4 border-b" style={{ borderColor: '#E8DFD1' }}>
                 <h3 className="font-medium" style={{ color: '#5B4A3A' }}>Add Guests</h3>
                 <p className="text-sm text-muted-foreground">
