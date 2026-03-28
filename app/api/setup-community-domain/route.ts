@@ -238,6 +238,65 @@ async function addDKIMRecord(handle: string, dkimRecord: { name: string; value: 
   }
 }
 
+// Remove GoDaddy parking page A records from apex domain
+async function removeGoDaddyParkingRecords(): Promise<{ success: boolean; error?: string }> {
+  console.log(`[setup-community-domain] Checking for GoDaddy parking records on apex domain...`);
+  
+  if (!GO_DADDY_API_KEY || !GO_DADDY_API_SECRET) {
+    return { success: false, error: 'GoDaddy API credentials not configured' };
+  }
+
+  try {
+    // Get current A records for apex domain
+    const getResponse = await fetch(`${GODADDY_BASE_URL}/domains/${BASE_DOMAIN}/records/A/@`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `sso-key ${GO_DADDY_API_KEY}:${GO_DADDY_API_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!getResponse.ok) {
+      console.error(`[setup-community-domain] Failed to fetch A records: ${getResponse.status}`);
+      return { success: false, error: 'Failed to fetch A records' };
+    }
+
+    const records = await getResponse.json();
+    const parkingRecords = records.filter((r: any) => r.data === 'Parked');
+    
+    if (parkingRecords.length === 0) {
+      console.log(`[setup-community-domain] No parking records found. DNS is clean.`);
+      return { success: true };
+    }
+
+    console.log(`[setup-community-domain] Found ${parkingRecords.length} parking record(s). Removing...`);
+    
+    // Keep only valid A records (not "Parked")
+    const validRecords = records.filter((r: any) => r.data !== 'Parked');
+    
+    const putResponse = await fetch(`${GODADDY_BASE_URL}/domains/${BASE_DOMAIN}/records/A/@`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `sso-key ${GO_DADDY_API_KEY}:${GO_DADDY_API_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(validRecords),
+    });
+
+    if (!putResponse.ok) {
+      const error = await putResponse.text();
+      console.error(`[setup-community-domain] Failed to remove parking records: ${error}`);
+      return { success: false, error };
+    }
+
+    console.log(`[setup-community-domain] ✓ Parking records removed successfully`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('[setup-community-domain] Error removing parking records:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // Delete DNS records from GoDaddy for a community subdomain
 async function deleteGoDaddyDNSRecords(handle: string): Promise<{ success: boolean; error?: string; details?: any }> {
   console.log(`[setup-community-domain] [GoDaddy] Starting DNS record deletion for old handle: ${handle}`);
@@ -461,6 +520,15 @@ export async function POST(request: NextRequest) {
       } else {
         console.warn(`[setup-community-domain] Verification trigger failed: ${verifyResult.error}`);
       }
+    }
+
+    // Step 5: Remove any GoDaddy parking records from apex domain
+    console.log(`[setup-community-domain] Cleaning up GoDaddy parking records...`);
+    const parkingCleanup = await removeGoDaddyParkingRecords();
+    if (parkingCleanup.success) {
+      console.log(`[setup-community-domain] ✓ Apex domain parking cleanup complete`);
+    } else {
+      console.warn(`[setup-community-domain] Parking cleanup warning: ${parkingCleanup.error}`);
     }
 
     result.success = true;

@@ -102,6 +102,12 @@ export function ReadCard({ post, category, readTime, date, title, summary, isPri
               <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#926B7F] text-white rounded-full font-medium">
                 {category}
               </span>
+              {post.isPoetry && (
+                <span className="px-3 py-1 text-xs uppercase tracking-wide bg-[#D4870E] text-white rounded-full font-medium flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                  Poetry
+                </span>
+              )}
               <p className="text-neutral-500 uppercase tracking-wide text-xs">
                 {readTime} {date && `• ${date}`}
               </p>

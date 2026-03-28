@@ -20,7 +20,6 @@ import { ImageCard } from '@/components/content-cards/image-card';
 import { ListenCard } from '@/components/content-cards/listen-card';
 import { ListenCardHorizontal } from '@/components/content-cards/listen-card-horizontal';
 import { WatchCard } from '@/components/content-cards/watch-card';
-import { PostDetailPanel } from '@/components/community/feed/post-detail-panel';
 import Link from 'next/link';
 import { FeedStats } from '@/components/community/feed-stats';
 import { Banner } from '@/components/ui/banner';
@@ -40,7 +39,6 @@ export default function CommunityFeedPage() {
   const [editingPost, setEditingPost] = useState<(Post & { id: string }) | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [community, setCommunity] = useState<Community | null>(null);
-  const [selectedPost, setSelectedPost] = useState<(Post & { id: string}) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -178,7 +176,7 @@ export default function CommunityFeedPage() {
     const postProps = {
       post: {
         ...post,
-        _canEdit: canEditThisPost,
+        _canEdit: canEditThisPost ? true : undefined,
         _onEdit: () => handleEditPost(post),
         _isPublicView: false,
       }
@@ -210,7 +208,7 @@ export default function CommunityFeedPage() {
     );
 
     return (
-      <div key={post.id} onClick={() => setSelectedPost(post)} className="break-inside-avoid mb-6 cursor-pointer">
+      <div key={post.id} className="break-inside-avoid mb-6">
         {postContent}
       </div>
     );
@@ -283,11 +281,11 @@ export default function CommunityFeedPage() {
               {/* First audio post - full width at top */}
               {firstAudioPost && (
                 <div className="mb-8">
-                  <div onClick={() => setSelectedPost(firstAudioPost)} className="cursor-pointer">
-                    <ListenCardHorizontal
+                  <div>
+                  <ListenCardHorizontal
                       post={{
                         ...firstAudioPost,
-                        _canEdit: canManageContent || (user && firstAudioPost.authorId === user.uid),
+                        _canEdit: (canManageContent || (user && firstAudioPost.authorId === user.uid)) ? true : undefined,
                         _onEdit: () => handleEditPost(firstAudioPost),
                         _isPublicView: false,
                       }}
@@ -366,11 +364,6 @@ export default function CommunityFeedPage() {
         communityHandle={handle}
         editPost={editingPost} />
       
-      <PostDetailPanel
-        post={selectedPost}
-        isOpen={!!selectedPost}
-        onClose={() => setSelectedPost(null)}
-      />
     </div>
   );
 }

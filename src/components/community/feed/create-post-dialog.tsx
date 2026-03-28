@@ -40,6 +40,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [fillRow, setFillRow] = useState(false);
+  const [isPoetry, setIsPoetry] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
   // File states
@@ -209,6 +210,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       setDescription(editPost.content.text || '');
       setIsPublic(editPost.visibility === 'public');
       setFillRow(editPost.fillRow || false);
+      setIsPoetry(editPost.isPoetry || false);
       setMediaUrl(editPost.content.mediaUrls?.[0] || null);
       setThumbnailUrl(editPost.content.thumbnailUrl || null);
     } else {
@@ -225,6 +227,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setThumbnailUrl(null);
     setIsPublic(true);
     setFillRow(false);
+    setIsPoetry(false);
     setIsSubmitting(false);
     setIsRecording(false);
     setRecordedBlob(null);
@@ -394,6 +397,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 content: contentPayload,
                 visibility: isPublic ? 'public' : 'private',
                 fillRow: fillRow,
+                isPoetry: postType === 'text' ? isPoetry : false,
                 updatedAt: serverTimestamp()
             });
         } else {
@@ -408,7 +412,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 likes: 0,
                 comments: 0,
                 visibility: (isPublic ? 'public' : 'private') as 'public' | 'private',
-                fillRow: fillRow
+                fillRow: fillRow,
+                isPoetry: postType === 'text' ? isPoetry : false
             };
             const docRef = await addDoc(collection(db, 'blogs'), newPostData);
             if (isPublic) {
@@ -481,10 +486,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       likes: 0,
       comments: 0,
       visibility: isPublic ? 'public' : 'private' as const,
+      isPoetry: postType === 'text' ? isPoetry : false,
       _isPublicView: true,
     };
     return basePost;
-  }, [title, description, mediaUrl, file, thumbnailUrl, thumbnailFile, postType, user, communityId, communityHandle, isPublic]);
+  }, [title, description, mediaUrl, file, thumbnailUrl, thumbnailFile, postType, user, communityId, communityHandle, isPublic, isPoetry]);
 
   // Render preview based on post type
   const renderPreview = () => {
@@ -653,12 +659,37 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
             />
+            {postType === 'text' && (
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium" style={{ color: '#5B4A3A' }}>Content</label>
+                <button
+                  type="button"
+                  onClick={() => setIsPoetry(!isPoetry)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    isPoetry
+                      ? 'bg-[#D4870E] text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                  Poetry Mode
+                </button>
+              </div>
+            )}
+            {isPoetry && postType === 'text' && (
+              <div className="p-3 rounded-lg border border-[#D4870E]/30 bg-[#D4870E]/5">
+                <p className="text-xs" style={{ color: '#D4870E' }}>
+                  <strong>Poetry Mode:</strong> Each paragraph becomes one page. Use a double line break (press Enter twice) to start a new page. Single line breaks within a paragraph are preserved.
+                </p>
+              </div>
+            )}
             <Textarea 
-              label="Description"
-              placeholder="Description" 
+              label={postType === 'text' && !isPoetry ? 'Description' : undefined}
+              placeholder={isPoetry ? 'Paste or type your poem here...\n\nLine breaks and spacing\nwill be preserved exactly\nas you enter them.' : 'Description'} 
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
-              rows={6}
+              rows={isPoetry ? 10 : 6}
+              className={isPoetry ? 'font-mono' : ''}
             />
             {postType === 'audio' && (
               <div className="space-y-3">
