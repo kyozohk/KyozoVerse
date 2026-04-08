@@ -22,6 +22,8 @@ import { getUserRoleInCommunity } from '@/lib/community-utils';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 import { ImportMembersDialog } from '@/components/community/import-members-dialog';
+import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
+import { Edit } from 'lucide-react';
 
 interface MemberData {
   id: string;
@@ -50,6 +52,7 @@ function MembersContent() {
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isEditCommunityOpen, setIsEditCommunityOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Pagination state
@@ -402,8 +405,12 @@ function MembersContent() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={canManage ? [
+                {
+                  label: 'Edit Community',
+                  icon: <Edit className="h-4 w-4" />,
+                  onClick: () => setIsEditCommunityOpen(true),
+                },
                 {
                   label: 'Import Members',
                   icon: <Upload className="h-4 w-4" />,
@@ -428,7 +435,7 @@ function MembersContent() {
             {!isLoading && members.length === 0 && canManage && (
               <button
                 onClick={() => setIsImportOpen(true)}
-                className="w-full mb-5 flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all hover:opacity-90 hover:shadow-md"
+                className="w-full mb-5 flex items-center gap-4 pl-6 pr-5 py-4 rounded-xl text-left transition-all hover:opacity-90 hover:shadow-md"
                 style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}
               >
                 <div className="w-9 h-9 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center">
@@ -467,11 +474,6 @@ function MembersContent() {
                   setIsTaggingOpen(true);
                 }}
                 className="gap-2"
-                style={{ 
-                  borderColor: '#E8DFD1',
-                  backgroundColor: '#E8DFD1',
-                  color: '#5B4A3A'
-                }}
               >
                 <Tag className="h-4 w-4" />
                 Add Tags{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
@@ -536,6 +538,31 @@ function MembersContent() {
           initialSelectedMembers={selectedMembersForDialog as any}
           communityId={community.communityId}
           onApplyTags={handleApplyTags}
+        />
+      )}
+
+      {/* Edit Community Dialog */}
+      {community && (
+        <CreateCommunityDialog
+          isOpen={isEditCommunityOpen}
+          onOpenChange={setIsEditCommunityOpen}
+          existingCommunity={community}
+          onCommunityUpdated={async () => {
+            // Re-fetch community data after update
+            try {
+              const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
+              const communitySnapshot = await getDocs(communityQuery);
+              if (!communitySnapshot.empty) {
+                const communityData = {
+                  communityId: communitySnapshot.docs[0].id,
+                  ...communitySnapshot.docs[0].data()
+                } as Community;
+                setCommunity(communityData);
+              }
+            } catch (error) {
+              console.error('Error re-fetching community:', error);
+            }
+          }}
         />
       )}
       

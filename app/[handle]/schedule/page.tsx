@@ -174,7 +174,6 @@ export default function SchedulePage() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={[{
                 label: 'Create Event',
                 icon: <PlusCircle className="h-4 w-4" />,

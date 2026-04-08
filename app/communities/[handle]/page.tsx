@@ -93,10 +93,24 @@ export default function CommunityPage() {
             </div>
           </div>
         </div>
-        <CreateCommunityDialog 
-          isOpen={isEditDialogOpen} 
-          setIsOpen={setIsEditDialogOpen}
+        <CreateCommunityDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
           existingCommunity={community}
+          onCommunityUpdated={() => {
+            // Re-fetch community data after update
+            const fetchUpdatedCommunity = async () => {
+              try {
+                const communityDoc = await getDoc(doc(db, 'communities', handle));
+                if (communityDoc.exists()) {
+                  setCommunity({ communityId: communityDoc.id, ...communityDoc.data() } as Community);
+                }
+              } catch (error) {
+                console.error('Error re-fetching community:', error);
+              }
+            };
+            fetchUpdatedCommunity();
+          }}
         />
       </div>
     </div>

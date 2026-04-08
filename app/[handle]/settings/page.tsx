@@ -140,7 +140,6 @@ export default function SettingsPage() {
                 </span>
               }
               subtitle={community.tagline || community.mantras || ''}
-              tags={community.tags || []}
               height="16rem"
             />
           )}

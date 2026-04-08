@@ -226,7 +226,6 @@ export default function MemberProfilePage() {
               </span>
             }
             subtitle={community.tagline || (community as any).mantras}
-            tags={(community as any).tags || []}
             leftCta={{
               label: 'Back to Audience',
               icon: <ArrowLeft className="h-4 w-4" />,

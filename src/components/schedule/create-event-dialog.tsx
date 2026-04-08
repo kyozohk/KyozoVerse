@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Users, Loader2, Calendar, MapPin, Image as ImageIcon, X, Upload } from 'lucide-react';
+import { Users, Loader2, Calendar, MapPin, Image as ImageIcon, X, Upload, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/firebase/firestore';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { RoundImage } from '@/components/ui/round-image';
+import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
 
 interface MemberData {
   id: string;
@@ -101,6 +102,8 @@ export function CreateEventDialog({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCreateGuestlistDialog, setShowCreateGuestlistDialog] = useState(false);
+  const [isSuspendedForGuestlist, setIsSuspendedForGuestlist] = useState(false);
 
   // Fetch existing guestlists
   useEffect(() => {
@@ -326,8 +329,27 @@ export function CreateEventDialog({
     onClose();
   };
 
+  const handleCreateNewGuestlist = () => {
+    setIsSuspendedForGuestlist(true);
+    setShowCreateGuestlistDialog(true);
+  };
+
+  const handleGuestlistCreated = (guestlist: any) => {
+    // Add the new guestlist to the list and auto-select it
+    setGuestlists(prev => [{ id: guestlist.id, name: guestlist.name, memberCount: guestlist.memberCount || 0, members: guestlist.members || [] }, ...prev]);
+    setSelectedGuestlistId(guestlist.id);
+    setShowCreateGuestlistDialog(false);
+    setIsSuspendedForGuestlist(false);
+  };
+
+  const handleGuestlistDialogClose = () => {
+    setShowCreateGuestlistDialog(false);
+    setIsSuspendedForGuestlist(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <>
+    <Dialog open={isOpen && !isSuspendedForGuestlist} onOpenChange={handleClose}>
       <DialogContent className={`${existingEvent ? 'sm:max-w-[1200px]' : 'sm:max-w-[520px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8' }}>
         <div className="flex h-[70vh]">
           {/* Left Panel - Event Details (70% width in edit mode) */}
@@ -365,7 +387,19 @@ export function CreateEventDialog({
                       <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#8B7355' }} />
                     </div>
                   ) : guestlists.length === 0 ? (
-                    <p className="text-sm py-2" style={{ color: '#8B7355' }}>No guestlists yet. Create a guestlist first.</p>
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <p className="text-sm" style={{ color: '#8B7355' }}>No guestlists yet.</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCreateNewGuestlist}
+                        style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
+                      >
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Create New Guestlist
+                      </Button>
+                    </div>
                   ) : (
                     <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
                       {guestlists.map((gl) => (
@@ -397,6 +431,16 @@ export function CreateEventDialog({
                           </div>
                         </button>
                       ))}
+                      {/* Create New Guestlist button inline with guestlist chips */}
+                      <button
+                        type="button"
+                        onClick={handleCreateNewGuestlist}
+                        className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed transition-all hover:shadow-sm"
+                        style={{ borderColor: '#E8DFD1', color: '#8B7355' }}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        <span className="text-xs font-medium">New Guestlist</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -600,5 +644,16 @@ export function CreateEventDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Nested Create Guestlist Dialog */}
+      <CreateGuestlistDialog
+        isOpen={showCreateGuestlistDialog}
+        onClose={handleGuestlistDialogClose}
+        members={members}
+        communityId={communityId}
+        communityName={communityName}
+        onGuestlistCreated={handleGuestlistCreated}
+      />
+    </>
   );
 }

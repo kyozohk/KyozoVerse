@@ -353,15 +353,15 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 const ownedSnap = await getDocs(ownedQuery);
                 const communityCount = ownedSnap.size;
                 // Basic/Free plan limit: 1 community (can be adjusted per plan)
-                const PLAN_LIMIT = 5; // TODO: Fetch from user's subscription plan
-                if (communityCount >= PLAN_LIMIT) {
-                    toast({
-                        title: "Plan Limit Reached",
-                        description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
-                        variant: "destructive",
-                    });
-                    return;
-                }
+                const PLAN_LIMIT = 10; // TODO: Fetch from user's subscription plan
+                // if (communityCount >= PLAN_LIMIT) {
+                //     toast({
+                //         title: "Plan Limit Reached",
+                //         description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
+                //         variant: "destructive",
+                //     });
+                //     return;
+                // }
             } catch (err) {
                 console.error('Error checking plan limits:', err);
             }
@@ -510,8 +510,8 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                                 <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} />
                                 <p className="text-xs text-muted-foreground mt-1">This becomes the URL: pro.kyozo.com/{formData.handle || 'your-handle'}</p>
                             </div>
-                            <Textarea label="Description" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} placeholder="Tell people what your community is about..." />
-                            <Textarea label="Tagline" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} placeholder="A short motto or mission statement" />
+                            <Textarea label="Description" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} />
+                            <Textarea label="Tagline" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} />
                             <TagInput tags={tags} setTags={setTags} />
                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} />
                             <div className="flex items-center space-x-2 pt-2">

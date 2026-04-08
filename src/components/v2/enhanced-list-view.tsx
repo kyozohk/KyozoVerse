@@ -222,7 +222,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
               onClick={selectable ? () => toggleSelection(item.id) : undefined}
             >
               {selectable && (
-                <div className="absolute top-2 left-2 z-10">
+                <div className={cn(
+                  "absolute z-10",
+                  viewMode === 'list' ? "top-4 left-4" : "top-2 left-2"
+                )}>
                   <div 
                     className={cn(
                       "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",

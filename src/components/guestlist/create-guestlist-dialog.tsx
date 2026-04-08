@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Users, Loader2, Calendar, MapPin, Clock, Image as ImageIcon, X, Upload } from 'lucide-react';
+import { Users, Loader2, Calendar, MapPin, Clock, Image as ImageIcon, X, Upload, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/firebase/firestore';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { CreateEventDialog } from '@/components/schedule/create-event-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface MemberData {
   id: string;
@@ -98,6 +100,9 @@ export function CreateGuestlistDialog({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isRsvp, setIsRsvp] = useState(false);
+  const [showCreateEventDialog, setShowCreateEventDialog] = useState(false);
+  const [isSuspendedForEvent, setIsSuspendedForEvent] = useState(false);
 
   // Auto-fill end date when start date changes
   const handleStartDateChange = (value: string) => {
@@ -279,17 +284,52 @@ export function CreateGuestlistDialog({
           ...guestlistData,
           createdAt: serverTimestamp(),
         });
-        
+
         toast({
           title: 'Guestlist Created',
           description: `"${guestlistName}" created with ${selectedMembers.length} guest${selectedMembers.length === 1 ? '' : 's'}.`,
         });
-        
+
         if (onGuestlistCreated) {
           onGuestlistCreated({ id: docRef.id, ...guestlistData });
         }
+
+        // Send RSVP emails if checkbox is checked
+        if (isRsvp) {
+          const membersWithEmail = selectedMembers.filter(m => m.email);
+          if (membersWithEmail.length > 0) {
+            try {
+              const idToken = await user?.getIdToken();
+              await fetch('/api/rsvp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                body: JSON.stringify({
+                  guestlistId: docRef.id,
+                  guestlistName: guestlistName.trim(),
+                  eventName: eventName.trim() || guestlistName.trim(),
+                  eventDate: startDate || null,
+                  eventTime: startTime || null,
+                  eventLocation: eventLocation.trim() || null,
+                  communityId,
+                  communityName,
+                }),
+              });
+              toast({
+                title: 'RSVP Invites Sent',
+                description: `RSVP emails sent to ${membersWithEmail.length} guest${membersWithEmail.length === 1 ? '' : 's'}.`,
+              });
+            } catch (rsvpError) {
+              console.error('Failed to send RSVP emails:', rsvpError);
+              toast({
+                title: 'RSVP Send Failed',
+                description: 'Guestlist was created but RSVP emails could not be sent.',
+                variant: 'destructive',
+              });
+            }
+          }
+        }
       }
-      
+
       // Reset form
       setGuestlistName('');
       setEventName('');
@@ -301,6 +341,7 @@ export function CreateGuestlistDialog({
       setEventImage('');
       setDescription('');
       setSelectedMembers([]);
+      setIsRsvp(false);
       
       onClose();
     } catch (error) {
@@ -319,6 +360,30 @@ export function CreateGuestlistDialog({
     setSelectedMembers(items);
   }, []);
 
+  const handleCreateNewEvent = () => {
+    setIsSuspendedForEvent(true);
+    setShowCreateEventDialog(true);
+  };
+
+  const handleEventCreated = (event: any) => {
+    // Auto-fill event details from the created event
+    if (event.eventName) setEventName(event.eventName);
+    if (event.startDate) setStartDate(event.startDate);
+    if (event.startTime) setStartTime(event.startTime);
+    if (event.endDate) setEndDate(event.endDate);
+    if (event.endTime) setEndTime(event.endTime);
+    if (event.eventLocation) setEventLocation(event.eventLocation);
+    if (event.eventImage) setEventImage(event.eventImage);
+    if (event.description) setDescription(event.description);
+    setShowCreateEventDialog(false);
+    setIsSuspendedForEvent(false);
+  };
+
+  const handleEventDialogClose = () => {
+    setShowCreateEventDialog(false);
+    setIsSuspendedForEvent(false);
+  };
+
   const handleClose = () => {
     setGuestlistName('');
     setEventName('');
@@ -330,11 +395,13 @@ export function CreateGuestlistDialog({
     setEventImage('');
     setDescription('');
     setSelectedMembers([]);
+    setIsRsvp(false);
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <>
+    <Dialog open={isOpen && !isSuspendedForEvent} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[1200px] max-h-[90vh] p-0 overflow-hidden" style={{ backgroundColor: '#F5F0E8' }}>
         <div className="flex h-[80vh]">
           {/* Left Panel - Guestlist Details */}
@@ -363,9 +430,22 @@ export function CreateGuestlistDialog({
 
               {/* Event Details Section */}
               <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8DFD1' }}>
-                <h4 className="text-sm font-medium mb-3" style={{ color: '#5B4A3A' }}>
-                  Event Details (Optional)
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium" style={{ color: '#5B4A3A' }}>
+                    Event Details (Optional)
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCreateNewEvent}
+                    className="text-xs h-7 px-2"
+                    style={{ color: '#E07B39' }}
+                  >
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Create New Event
+                  </Button>
+                </div>
                 
                 {/* Event Name */}
                 <div className="mb-3">
@@ -553,6 +633,18 @@ export function CreateGuestlistDialog({
               >
                 Cancel
               </Button>
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={isRsvp}
+                  onCheckedChange={setIsRsvp}
+                  label={
+                    <span className="flex items-center gap-1 text-sm" style={{ color: '#5B4A3A' }}>
+                      <Mail className="h-3.5 w-3.5" style={{ color: '#E07B39' }} />
+                      Send RSVP
+                    </span>
+                  }
+                />
+              </div>
               <Button
                 onClick={handleCreateGuestlist}
                 disabled={isSaving || selectedMembers.length === 0 || !guestlistName.trim()}
@@ -598,5 +690,16 @@ export function CreateGuestlistDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Nested Create Event Dialog */}
+      <CreateEventDialog
+        isOpen={showCreateEventDialog}
+        onClose={handleEventDialogClose}
+        members={members}
+        communityId={communityId}
+        communityName={communityName}
+        onEventCreated={handleEventCreated}
+      />
+    </>
   );
 }

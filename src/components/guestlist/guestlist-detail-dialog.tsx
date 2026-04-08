@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { CustomFormDialog } from '@/components/ui/dialog';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { Calendar, MapPin, Users, Edit, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Edit, Trash2, Mail, Bell, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,10 @@ interface GuestlistMember {
   phone?: string;
   imageUrl?: string;
   tags?: string[];
+  rsvpStatus?: 'pending' | 'accepted';
+  rsvpSentAt?: string;
+  rsvpAcceptedAt?: string;
+  status?: string;
 }
 
 interface Guestlist {
@@ -40,6 +45,7 @@ interface Guestlist {
   members: GuestlistMember[];
   createdAt: any;
   tags?: string[];
+  isRsvp?: boolean;
 }
 
 interface GuestlistDetailDialogProps {
@@ -61,6 +67,37 @@ export function GuestlistDetailDialog({
   const { user } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
+
+  // RSVP stats
+  const rsvpMembers = guestlist?.members?.filter((m: any) => m.rsvpStatus) || [];
+  const acceptedCount = rsvpMembers.filter((m: any) => m.rsvpStatus === 'accepted').length;
+  const pendingCount = rsvpMembers.filter((m: any) => m.rsvpStatus === 'pending').length;
+  const isRsvpGuestlist = guestlist?.isRsvp || rsvpMembers.length > 0;
+
+  const handleSendReminders = async () => {
+    if (!guestlist) return;
+    setIsSendingReminder(true);
+    try {
+      const idToken = await user?.getIdToken();
+      const res = await fetch('/api/rsvp/remind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ guestlistId: guestlist.id }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      toast({
+        title: 'Reminders Sent',
+        description: `Reminder emails sent to ${data.sentCount} guest${data.sentCount === 1 ? '' : 's'}.`
+      });
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      toast({ title: 'Error', description: 'Failed to send reminders.', variant: 'destructive' });
+    } finally {
+      setIsSendingReminder(false);
+    }
+  };
 
   if (!guestlist) return null;
 
@@ -134,6 +171,71 @@ export function GuestlistDetailDialog({
             </div>
           )}
 
+          {/* RSVP Status Summary */}
+          {isRsvpGuestlist && (
+            <div className="p-4 rounded-lg" style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8DFD1' }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" style={{ color: '#E07B39' }} />
+                  <h4 className="font-semibold text-sm" style={{ color: '#5B4A3A' }}>RSVP Status</h4>
+                </div>
+                {pendingCount > 0 && (
+                  <button
+                    onClick={handleSendReminders}
+                    disabled={isSendingReminder}
+                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-colors hover:opacity-80"
+                    style={{ backgroundColor: '#E07B39', color: 'white' }}
+                  >
+                    {isSendingReminder ? (
+                      <><span className="animate-spin">↻</span> Sending...</>
+                    ) : (
+                      <><Bell className="h-3 w-3" /> Remind ({pendingCount})</>
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4CAF50' }} />
+                  <span className="text-sm" style={{ color: '#5B4A3A' }}>
+                    <strong>{acceptedCount}</strong> Accepted
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FF9800' }} />
+                  <span className="text-sm" style={{ color: '#5B4A3A' }}>
+                    <strong>{pendingCount}</strong> Pending
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#9E9E9E' }} />
+                  <span className="text-sm" style={{ color: '#5B4A3A' }}>
+                    <strong>{guestlist.memberCount - rsvpMembers.length}</strong> No RSVP
+                  </span>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-3 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#E8DFD1' }}>
+                <div className="h-full flex">
+                  <div
+                    className="h-full transition-all"
+                    style={{
+                      width: `${guestlist.memberCount > 0 ? (acceptedCount / guestlist.memberCount) * 100 : 0}%`,
+                      backgroundColor: '#4CAF50'
+                    }}
+                  />
+                  <div
+                    className="h-full transition-all"
+                    style={{
+                      width: `${guestlist.memberCount > 0 ? (pendingCount / guestlist.memberCount) * 100 : 0}%`,
+                      backgroundColor: '#FF9800'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Guest List */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -160,6 +262,22 @@ export function GuestlistDetailDialog({
                       </p>
                     )}
                   </div>
+                  {/* RSVP Status Badge */}
+                  {member.rsvpStatus && (
+                    <span
+                      className="flex items-center gap-1 text-xs px-2 py-1 rounded-full flex-shrink-0"
+                      style={{
+                        backgroundColor: member.rsvpStatus === 'accepted' ? '#E8F5E9' : '#FFF3E0',
+                        color: member.rsvpStatus === 'accepted' ? '#2E7D32' : '#E65100',
+                      }}
+                    >
+                      {member.rsvpStatus === 'accepted' ? (
+                        <><CheckCircle className="h-3 w-3" /> Accepted</>
+                      ) : (
+                        <><Clock className="h-3 w-3" /> Pending</>
+                      )}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

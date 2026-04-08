@@ -65,6 +65,7 @@ export default function GuestlistPage() {
   useEffect(() => {
     const fetchCommunityAndMembers = async () => {
       try {
+        console.log('[Guestlist] Fetching community for handle:', handle);
         const communitiesRef = collection(db, 'communities');
         const q = query(communitiesRef, where('handle', '==', handle));
         const querySnapshot = await getDocs(q);
@@ -72,6 +73,7 @@ export default function GuestlistPage() {
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
           const communityData = { communityId: doc.id, ...doc.data() } as Community;
+          console.log('[Guestlist] Community found:', communityData.name);
           setCommunity(communityData);
 
           // Fetch community members
@@ -97,11 +99,15 @@ export default function GuestlistPage() {
             };
           });
           setMembers(membersData);
+          console.log('[Guestlist] Loaded', membersData.length, 'members');
+        } else {
+          console.warn('[Guestlist] No community found for handle:', handle);
         }
       } catch (error) {
-        console.error('Error fetching community:', error);
+        console.error('[Guestlist] Error fetching community:', error);
       } finally {
         setLoading(false);
+        console.log('[Guestlist] Loading complete');
       }
     };
 
@@ -110,16 +116,27 @@ export default function GuestlistPage() {
 
   // Subscribe to guestlists
   useEffect(() => {
-    if (!community?.communityId) return;
+    if (!community?.communityId) {
+      console.log('[Guestlist] Waiting for community...');
+      return;
+    }
+    console.log('[Guestlist] Subscribing to guestlists for community:', community.communityId);
+
+    // Initialize with empty array immediately
+    setGuestlists([]);
 
     const guestlistsQuery = query(
       collection(db, 'guestlists'),
-      where('communityId', '==', community.communityId),
-      orderBy('createdAt', 'desc')
+      where('communityId', '==', community.communityId)
+      // orderBy('createdAt', 'desc') // Commented out - requires Firestore composite index
     );
 
-    const unsubscribe = onSnapshot(guestlistsQuery, (snapshot) => {
-      const guestlistsData: Guestlist[] = snapshot.docs.map(doc => {
+    let unsubscribe: (() => void) | undefined;
+    
+    try {
+      unsubscribe = onSnapshot(guestlistsQuery, (snapshot) => {
+        console.log('[Guestlist] onSnapshot fired! Snapshot size:', snapshot.size, 'empty:', snapshot.empty);
+        const guestlistsData: Guestlist[] = snapshot.docs.map(doc => {
         const data = doc.data();
         // Accumulate tags from all members in the guestlist
         const memberTags = new Set<string>();
@@ -136,10 +153,31 @@ export default function GuestlistPage() {
           tags: Array.from(memberTags),
         } as Guestlist;
       });
+      
+      // Sort by createdAt descending (newest first) on client side
+      guestlistsData.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+      
       setGuestlists(guestlistsData);
+      console.log('[Guestlist] Loaded', guestlistsData.length, 'guestlists');
+    }, (error) => {
+      console.error('[Guestlist] Error in guestlists subscription:', error);
+      // Set empty array on error so page still renders
+      setGuestlists([]);
     });
+    } catch (error) {
+      console.error('[Guestlist] Error setting up subscription:', error);
+      setGuestlists([]);
+    }
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [community?.communityId]);
 
   const handleGuestlistCreated = (guestlist: any) => {
@@ -269,6 +307,8 @@ export default function GuestlistPage() {
     </div>
   );
 
+  console.log('[Guestlist] Render - loading:', loading, 'community:', !!community, 'guestlists:', guestlists.length);
+
   if (loading) {
     return <PageLoadingSkeleton showMemberList={true} />;
   }
@@ -305,7 +345,6 @@ export default function GuestlistPage() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={[{
                 label: 'Create Guestlist',
                 icon: <PlusCircle className="h-4 w-4" />,
@@ -321,7 +360,7 @@ export default function GuestlistPage() {
             renderCircleItem={renderGuestlistCircleItem}
             searchKeys={['name', 'eventName', 'eventLocation', 'description']}
             selectable={false}
-            isLoading={loading}
+            isLoading={false}
             defaultViewMode="grid"
           />
         </div>

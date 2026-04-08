@@ -286,7 +286,6 @@ export default function IntegrationsPage() {
               </span>
             }
             subtitle={community.tagline || (community as any).mantras}
-            tags={(community as any).tags || []}
             height="16rem"
           />
 

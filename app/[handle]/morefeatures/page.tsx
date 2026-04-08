@@ -122,7 +122,6 @@ export default function MoreFeaturesPage() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               height="16rem"
             />
           )}
