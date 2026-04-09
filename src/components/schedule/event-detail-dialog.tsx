@@ -26,8 +26,12 @@ interface CalendarEvent {
   eventTime?: string;
   eventLocation?: string;
   description?: string;
+  eventImage?: string;
   memberCount: number;
   members: any[];
+  createdAt: any;
+  linkedListId?: string;
+  linkedListType?: 'guestlist' | 'rsvp';
 }
 
 interface EventDetailDialogProps {
@@ -72,6 +76,11 @@ export function EventDetailDialog({ isOpen, onClose, event, onEdit, onDelete }: 
     <>
       <CustomFormDialog open={isOpen} onOpenChange={(open) => !open && onClose()} title={event.eventName || event.name} size="xl">
         <div className="space-y-6">
+          {event.eventImage && (
+            <div className="-mx-6 -mt-6 mb-2 overflow-hidden rounded-t-xl" style={{ height: '200px' }}>
+              <img src={event.eventImage} alt={event.eventName || event.name} className="w-full h-full object-cover" />
+            </div>
+          )}
           <div className="space-y-3">
             {event.eventDate && (
               <div className="flex items-center gap-2" style={{ color: '#5B4A3A' }}>

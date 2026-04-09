@@ -13,6 +13,7 @@ import { THEME_COLORS } from "@/lib/theme-colors";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Plus } from "lucide-react";
 import { joinCommunity } from "@/lib/community-utils";
 import { doc, updateDoc, increment, getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
@@ -331,57 +332,92 @@ export function MemberDialog({
               />
               
               {/* Banner Selection */}
-              <div className="my-2">
-                <Label className="text-sm font-medium mb-2 block">Profile Banner</Label>
-                
-                {/* Default Banner Options */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="inputWrapper my-2 relative">
+                <div
+                  className="flex items-center gap-3 p-4 rounded-lg border border-dotted"
+                  style={{ borderWidth: '1px', borderColor: '#E8DFD1' }}
+                >
                   {DEFAULT_BANNERS.map((banner) => (
-                    <button
+                    <div
                       key={banner.id}
-                      type="button"
+                      className="relative w-20 h-12 rounded-lg cursor-pointer transition-all overflow-hidden"
                       onClick={() => {
                         setCoverUrl(banner.url);
                         setCoverFile(null);
                       }}
-                      className={`relative h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                        coverUrl === banner.url && !coverFile
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-muted hover:border-primary/50'
-                      }`}
-                      style={{ backgroundColor: '#f0f0f0' }}
                     >
                       <Image
                         src={banner.url}
                         alt={banner.label}
                         fill
-                        className="object-cover object-left"
+                        className="object-cover"
                       />
                       {coverUrl === banner.url && !coverFile && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="bg-primary rounded-full p-1">
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          </div>
-                        </div>
+                        <div
+                          className="absolute inset-0 rounded-lg border-[3px]"
+                          style={{ borderColor: '#E07B39' }}
+                        />
                       )}
-                    </button>
+                    </div>
                   ))}
+                  
+                  {/* Custom Upload Button */}
+                  <div
+                    className="relative w-20 h-12 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer"
+                    style={{ borderColor: '#E07B39', color: '#E07B39' }}
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e: any) => {
+                        const file = e.target?.files?.[0];
+                        if (file) {
+                          setCoverFile(file);
+                          setCoverUrl(null);
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    {coverFile || (coverUrl && !DEFAULT_BANNERS.some(b => b.url === coverUrl)) ? (
+                      <>
+                        {coverFile && (
+                          <Image
+                            src={URL.createObjectURL(coverFile)}
+                            alt="Custom banner"
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                        )}
+                        {!coverFile && coverUrl && (
+                          <Image
+                            src={coverUrl}
+                            alt="Custom banner"
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                        )}
+                        <div
+                          className="absolute inset-0 rounded-lg border-2"
+                          style={{ borderColor: '#E07B39' }}
+                        />
+                      </>
+                    ) : (
+                      <Plus className="h-6 w-6" />
+                    )}
+                  </div>
                 </div>
-                
-                {/* Custom Upload */}
-                <Dropzone 
-                  label="Or upload custom banner"
-                  file={coverFile} 
-                  onFileChange={(file) => {
-                    setCoverFile(file);
-                    if (file) {
-                      setCoverUrl(null); // Clear preset selection when uploading custom
-                    }
+                <label
+                  className="floatingLabel"
+                  style={{
+                    top: '-0.7rem',
+                    fontSize: '0.75rem',
+                    backgroundColor: '#F5F0E8',
+                    color: '#E07B39',
                   }}
-                  fileType="image"
-                  existingImageUrl={coverFile ? undefined : (coverUrl && !DEFAULT_BANNERS.some(b => b.url === coverUrl) ? coverUrl : undefined)}
-                  className="h-20"
-                />
+                >
+                  Profile Banner
+                </label>
               </div>
               
               {error && <p className="text-sm text-red-500 mt-2">{error}</p>}

@@ -5,13 +5,14 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Globe, Lock, Settings, Bell, Shield, Palette, Trash2, AlertTriangle } from 'lucide-react';
+import { Globe, Lock, Settings, Bell, Shield, Palette, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { DeleteCommunityDialog } from '@/components/community/delete-community-dialog';
+import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { useAuth } from '@/hooks/use-auth';
 import { getUserRoleInCommunity } from '@/lib/community-utils';
@@ -24,6 +25,7 @@ export default function SettingsPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'guest'>('guest');
   const { toast } = useToast();
 
@@ -140,7 +142,11 @@ export default function SettingsPage() {
                 </span>
               }
               subtitle={community.tagline || community.mantras || ''}
-              tags={community.tags || []}
+              ctas={(userRole === 'owner' || userRole === 'admin') ? [{
+                label: 'Edit Community',
+                icon: <Pencil className="h-4 w-4" />,
+                onClick: () => setIsEditDialogOpen(true),
+              }] : []}
               height="16rem"
             />
           )}
@@ -246,6 +252,24 @@ export default function SettingsPage() {
           onSuccess={handleDeleteSuccess}
         />
       )}
+      <CreateCommunityDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        existingCommunity={community}
+        onCommunityUpdated={() => {
+          setIsEditDialogOpen(false);
+          const fetchUpdated = async () => {
+            const commRef = collection(db, 'communities');
+            const q = query(commRef, where('handle', '==', handle));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              const d = snap.docs[0];
+              setCommunity({ communityId: d.id, ...d.data() } as Community);
+            }
+          };
+          fetchUpdated();
+        }}
+      />
     </div>
   );
 }

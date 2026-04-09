@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/api-auth';
+import { validateHandleComplete, sanitizeHandle } from '@/lib/handle-validation';
 
 const GO_DADDY_API_KEY = process.env.GO_DADDY_API_KEY;
 const GO_DADDY_API_SECRET = process.env.GO_DADDY_API_SECRET;
@@ -440,9 +441,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sanitize handles (lowercase, no spaces)
-    const sanitizedHandle = handle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const sanitizedOldHandle = oldHandle ? oldHandle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : null;
+    // Sanitize and validate handles
+    const sanitizedHandle = sanitizeHandle(handle);
+    const sanitizedOldHandle = oldHandle ? sanitizeHandle(oldHandle) : null;
+    
+    // Validate the new handle format
+    const validation = validateHandleComplete(sanitizedHandle);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: `Invalid handle: ${validation.error}` },
+        { status: 400 }
+      );
+    }
 
     console.log(`[setup-community-domain] Sanitized new handle: ${sanitizedHandle}`);
     if (sanitizedOldHandle) {

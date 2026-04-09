@@ -194,11 +194,18 @@ export default function GuestlistPage() {
           )}
         </div>
         
-        <div className="flex items-center gap-1 mt-3 pt-3 border-t" style={{ borderColor: '#E8DFD1' }}>
-          <Users className="h-4 w-4" style={{ color: '#E07B39' }} />
-          <span className="text-sm font-medium" style={{ color: '#5B4A3A' }}>
-            {guestlist.memberCount} Guest{guestlist.memberCount === 1 ? '' : 's'}
-          </span>
+        <div className="mt-3 pt-3 border-t space-y-1" style={{ borderColor: '#E8DFD1' }}>
+          <div className="flex items-center gap-1">
+            <Users className="h-4 w-4" style={{ color: '#E07B39' }} />
+            <span className="text-sm font-medium" style={{ color: '#5B4A3A' }}>
+              {guestlist.memberCount} Guest{guestlist.memberCount === 1 ? '' : 's'}
+            </span>
+          </div>
+          {guestlist.createdAt && (
+            <p className="text-xs" style={{ color: '#B0A090' }}>
+              Created {new Date(guestlist.createdAt.toDate ? guestlist.createdAt.toDate() : guestlist.createdAt).toLocaleDateString()}
+            </p>
+          )}
         </div>
       </div>
     </Card>
@@ -305,7 +312,6 @@ export default function GuestlistPage() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={[{
                 label: 'Create Guestlist',
                 icon: <PlusCircle className="h-4 w-4" />,

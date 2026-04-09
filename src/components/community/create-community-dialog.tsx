@@ -16,6 +16,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import Image from 'next/image';
 import { Community } from '@/lib/types';
 import { uploadFile } from '@/lib/upload-helper';
+import { validateHandleComplete, sanitizeHandle } from '@/lib/handle-validation';
 
 const STEPS = [
     { id: 1, title: 'Basic Info' },
@@ -90,7 +91,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
         communityPrivacy: 'public',
         leaderName: '',
     });
-    const [formErrors, setFormErrors] = useState<{name?: string}>({});
+    const [formErrors, setFormErrors] = useState<{name?: string; handle?: string}>({});
     
     const [tags, setTags] = useState<string[]>([]);
     
@@ -185,17 +186,30 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 return;
             }
             
-            // Check handle uniqueness
-            const handleToCheck = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            // Generate handle if not provided
+            const handleToCheck = formData.handle || sanitizeHandle(formData.name);
             console.log('[Community Dialog] Validating handle before proceeding:', handleToCheck);
             
+            // Validate handle format
+            const validation = validateHandleComplete(handleToCheck);
+            if (!validation.isValid) {
+                setFormErrors({ handle: validation.error });
+                toast({
+                    title: "Invalid Handle",
+                    description: validation.error,
+                    variant: "destructive",
+                });
+                return;
+            }
+            
+            // Check handle uniqueness
             const handleExists = await checkHandleExists(
                 handleToCheck, 
                 existingCommunity?.communityId
             );
             
             if (handleExists) {
-                setFormErrors({ name: 'This handle/slug is already taken' });
+                setFormErrors({ handle: 'This handle is already taken by another community' });
                 toast({
                     title: "Handle Already Exists",
                     description: `The handle "${handleToCheck}" is already taken by another community. Please choose a different one.`,
@@ -220,7 +234,18 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     };
     
     const handleValueChange = (name: keyof typeof formData, value: string | boolean) => {
-        setFormData(prev => ({ ...prev, [name]: value }));
+        // Sanitize handle input in real-time
+        if (name === 'handle' && typeof value === 'string') {
+            const sanitized = sanitizeHandle(value);
+            setFormData(prev => ({ ...prev, [name]: sanitized }));
+            
+            // Clear handle error when user is typing
+            if (formErrors.handle) {
+                setFormErrors(prev => ({ ...prev, handle: undefined }));
+            }
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleFormSubmit = async () => {
@@ -263,9 +288,35 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 updatedBackgroundImageUrl = await handleFileUpload(backgroundImageFile, existingCommunity.communityId, 'background');
             }
 
-            const newHandle = formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-');
+            const newHandle = formData.handle || sanitizeHandle(formData.name);
             const oldHandle = existingCommunity.handle;
             const handleChanged = newHandle !== oldHandle;
+            
+            // Validate handle format
+            const validation = validateHandleComplete(newHandle);
+            if (!validation.isValid) {
+                toast({
+                    title: "Invalid Handle",
+                    description: validation.error,
+                    variant: "destructive",
+                });
+                setIsSubmitting(false);
+                return;
+            }
+            
+            // Check handle uniqueness if changed
+            if (handleChanged) {
+                const handleExists = await checkHandleExists(newHandle, existingCommunity.communityId);
+                if (handleExists) {
+                    toast({
+                        title: "Handle Already Exists",
+                        description: `The handle "${newHandle}" is already taken by another community.`,
+                        variant: "destructive",
+                    });
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
 
             console.log('[Community Update] Starting update for community:', existingCommunity.communityId);
             console.log('[Community Update] Old handle:', oldHandle);
@@ -369,10 +420,36 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
 
         setIsSubmitting(true);
 
+        const finalHandle = formData.handle || sanitizeHandle(formData.name);
+        
+        // Validate handle format
+        const validation = validateHandleComplete(finalHandle);
+        if (!validation.isValid) {
+            toast({
+                title: "Invalid Handle",
+                description: validation.error,
+                variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+        }
+        
+        // Check handle uniqueness
+        const handleExists = await checkHandleExists(finalHandle);
+        if (handleExists) {
+            toast({
+                title: "Handle Already Exists",
+                description: `The handle "${finalHandle}" is already taken by another community.`,
+                variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
         const communityData: any = {
             ...formData,
             tags,
-            handle: formData.handle || formData.name.toLowerCase().replace(/\s+/g, '-'),
+            handle: finalHandle,
             ownerId: user.uid,
             createdAt: serverTimestamp(),
         };
@@ -507,8 +584,9 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                                 {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
                             </div>
                             <div>
-                                <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} />
+                                <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} />
                                 <p className="text-xs text-muted-foreground mt-1">This becomes the URL: pro.kyozo.com/{formData.handle || 'your-handle'}</p>
+                                {formErrors.handle && <p className="text-xs text-red-500 mt-1">{formErrors.handle}</p>}
                             </div>
                             <Textarea label="Description" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} placeholder="Tell people what your community is about..." />
                             <Textarea label="Tagline" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} placeholder="A short motto or mission statement" />

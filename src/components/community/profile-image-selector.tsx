@@ -12,7 +12,8 @@ interface ProfileImageSelectorProps {
 }
 
 const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
-const activeColor = "#843484"; // Default purple color
+const activeColor = "#E07B39"; // Brand orange color
+const borderColor = "#E8DFD1"; // Brand beige border
 
 export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFile }: ProfileImageSelectorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +44,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
     <div className="inputWrapper my-2 relative">
       <div
         className="flex items-center gap-4 p-4 rounded-lg border border-dotted"
-        style={{ borderWidth: '1px', borderColor: 'var(--input-border-color, #C170CF)' }}
+        style={{ borderWidth: '1px', borderColor: borderColor }}
       >
       {profileImageOptions.map((src) => (
         <div
@@ -100,8 +101,8 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
         style={{
           top: '-0.7rem',
           fontSize: '0.75rem',
-          backgroundColor: '#EDEDED',
-          color: 'var(--input-border-color, #C170CF)',
+          backgroundColor: '#F5F0E8',
+          color: '#E07B39',
         }}
       >
         Profile Icon

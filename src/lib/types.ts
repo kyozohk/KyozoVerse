@@ -30,6 +30,11 @@ export type Community = {
   isPrivate?: boolean;
   mantras?: string;
   lore?: string;
+  tags?: string[];
+  location?: string;
+  visibility?: 'public' | 'private';
+  communityPrivacy?: 'public' | 'private';
+  leaderName?: string;
 };
 
 export type CommunityMember = {

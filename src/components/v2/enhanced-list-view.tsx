@@ -225,7 +225,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 <div className="absolute top-2 left-2 z-10">
                   <div 
                     className={cn(
-                      "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
+                      "w-5 h-5 rounded border flex items-center justify-center transition-colors",
                       selectedIds.has(item.id) 
                         ? "bg-accent border-accent-foreground/30" 
                         : "bg-card/50 border-muted-foreground/30"

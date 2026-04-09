@@ -252,7 +252,6 @@ export default function JoinCommunityPage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="John"
                 required
               />
               <Input
@@ -260,7 +259,6 @@ export default function JoinCommunityPage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Doe"
                 required
               />
             </div>
@@ -270,7 +268,6 @@ export default function JoinCommunityPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="john@example.com"
               required
             />
 
@@ -279,7 +276,6 @@ export default function JoinCommunityPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1234567890"
             />
 
             <div className="relative">
@@ -288,7 +284,6 @@ export default function JoinCommunityPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
                 required
               />
               <button
@@ -306,7 +301,6 @@ export default function JoinCommunityPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
                 required
               />
               <button

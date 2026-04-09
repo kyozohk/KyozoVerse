@@ -4,6 +4,7 @@ export {
   AudienceIcon,
   BroadcastIcon,
   GuestlistIcon,
+  RsvpIcon,
   ScheduleIcon,
   InboxIcon,
   FeedIcon,

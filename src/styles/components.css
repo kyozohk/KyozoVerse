@@ -209,7 +209,8 @@ input::placeholder {
   left: 0.75rem;
   font-size: 0.75rem;
   color: #A07856;
-  background-color: hsl(var(--sidebar-background));
+  background-color: var(--page-bg-color, #F5F0E8);
+  padding: 0 0.25rem;
 }
 
 /* Select trigger styled like input, used in FloatingSelect */
@@ -231,7 +232,8 @@ input::placeholder {
   left: 0.75rem;
   font-size: 0.75rem;
   color: #A07856;
-  background-color: hsl(var(--sidebar-background));
+  background-color: var(--page-bg-color, #F5F0E8);
+  padding: 0 0.25rem;
 }
 
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Users, Loader2, Calendar, MapPin, Image as ImageIcon, X, Upload } from 'lucide-react';
+import { Users, Loader2, Calendar, MapPin, Image as ImageIcon, X, Upload, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/firebase/firestore';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
 import { RoundImage } from '@/components/ui/round-image';
 
 interface MemberData {
@@ -33,11 +34,12 @@ interface MemberData {
   tags?: string[];
 }
 
-interface Guestlist {
+interface LinkedList {
   id: string;
   name: string;
   memberCount: number;
   members: any[];
+  type: 'guestlist' | 'rsvp';
 }
 
 interface ExistingEvent {
@@ -50,6 +52,8 @@ interface ExistingEvent {
   description?: string;
   members: any[];
   eventImage?: string;
+  linkedListId?: string;
+  linkedListType?: 'guestlist' | 'rsvp';
 }
 
 interface CreateEventDialogProps {
@@ -61,6 +65,7 @@ interface CreateEventDialogProps {
   onEventCreated?: (event: any) => void;
   initialDate?: string;
   existingEvent?: ExistingEvent | null;
+  defaultListType?: 'guestlist' | 'rsvp';
 }
 
 export function CreateEventDialog({
@@ -72,14 +77,18 @@ export function CreateEventDialog({
   onEventCreated,
   initialDate,
   existingEvent,
+  defaultListType = 'guestlist',
 }: CreateEventDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Existing guestlists for selection
-  const [guestlists, setGuestlists] = useState<Guestlist[]>([]);
-  const [loadingGuestlists, setLoadingGuestlists] = useState(true);
+  // List selection state
+  const [listType, setListType] = useState<'guestlist' | 'rsvp'>(defaultListType);
+  const [guestlists, setGuestlists] = useState<LinkedList[]>([]);
+  const [rsvpLists, setRsvpLists] = useState<LinkedList[]>([]);
+  const [loadingLists, setLoadingLists] = useState(true);
   const [selectedGuestlistId, setSelectedGuestlistId] = useState<string>('');
+  const [showNewListDialog, setShowNewListDialog] = useState(false);
 
   // Members for edit mode
   const getInitialMembers = () => {
@@ -88,6 +97,13 @@ export function CreateEventDialog({
     return members.filter(m => existingIds.has(m.userId));
   };
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>(getInitialMembers);
+  
+  // Initialize selectedGuestlistId from linked list in edit mode
+  useEffect(() => {
+    if (existingEvent?.linkedListId) {
+      setSelectedGuestlistId(existingEvent.linkedListId);
+    }
+  }, [existingEvent?.linkedListId]);
   
   // Event details
   const [eventName, setEventName] = useState(existingEvent?.eventName || existingEvent?.name || '');
@@ -102,33 +118,25 @@ export function CreateEventDialog({
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch existing guestlists
+  // Fetch guestlists + rsvps
   useEffect(() => {
     if (!isOpen || !communityId) return;
-    
-    const fetchGuestlists = async () => {
-      setLoadingGuestlists(true);
+    const fetchLists = async () => {
+      setLoadingLists(true);
       try {
-        const guestlistsQuery = query(
-          collection(db, 'guestlists'),
-          where('communityId', '==', communityId)
-        );
-        const snapshot = await getDocs(guestlistsQuery);
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name,
-          memberCount: doc.data().memberCount || 0,
-          members: doc.data().members || [],
-        }));
-        setGuestlists(data);
+        const [glSnap, rsvpSnap] = await Promise.all([
+          getDocs(query(collection(db, 'guestlists'), where('communityId', '==', communityId))),
+          getDocs(query(collection(db, 'rsvps'), where('communityId', '==', communityId))),
+        ]);
+        setGuestlists(glSnap.docs.map(d => ({ id: d.id, name: d.data().name, memberCount: d.data().memberCount || 0, members: d.data().members || [], type: 'guestlist' as const })));
+        setRsvpLists(rsvpSnap.docs.map(d => ({ id: d.id, name: d.data().name, memberCount: d.data().memberCount || 0, members: d.data().members || [], type: 'rsvp' as const })));
       } catch (error) {
-        console.error('Error fetching guestlists:', error);
+        console.error('Error fetching lists:', error);
       } finally {
-        setLoadingGuestlists(false);
+        setLoadingLists(false);
       }
     };
-    
-    fetchGuestlists();
+    fetchLists();
   }, [isOpen, communityId]);
 
   // Update dates when initialDate changes (only for new events - no existingEvent)
@@ -202,7 +210,11 @@ export function CreateEventDialog({
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload error:', errorText);
+        throw new Error(`Upload failed: ${response.status}`);
+      }
 
       const data = await response.json();
       setEventImage(data.url);
@@ -236,8 +248,13 @@ export function CreateEventDialog({
     
     try {
       if (existingEvent) {
+        // Determine linked list info and members
+        const allLists = [...guestlists, ...rsvpLists];
+        const linkedList = selectedGuestlistId ? allLists.find(l => l.id === selectedGuestlistId) : null;
+        const linkedListType = linkedList?.type || existingEvent.linkedListType;
+        
         // Update existing event via API (bypasses Firestore security rules)
-        const eventData = {
+        const eventData: Record<string, any> = {
           name: existingEvent.name || eventName.trim(),
           eventName: eventName.trim(),
           eventDate: startDate || null,
@@ -249,19 +266,19 @@ export function CreateEventDialog({
           eventLocation: eventLocation.trim() || null,
           eventImage: eventImage || null,
           description: description.trim() || null,
-          members: selectedMembers.map(m => ({
-            id: m.id,
-            userId: m.userId,
-            name: m.name,
-            email: m.email || null,
-            phone: m.phone || null,
-            imageUrl: m.imageUrl,
-            tags: m.tags || [],
-            status: 'invited',
-            addedAt: new Date().toISOString(),
-          })),
-          memberCount: selectedMembers.length,
         };
+        // Update linked list if changed
+        if (selectedGuestlistId && selectedGuestlistId !== existingEvent.linkedListId) {
+          eventData.linkedListId = selectedGuestlistId;
+          eventData.linkedListType = linkedListType;
+          eventData.guestlistId = linkedListType === 'guestlist' ? selectedGuestlistId : null;
+          eventData.rsvpId = linkedListType === 'rsvp' ? selectedGuestlistId : null;
+          // Update members from the newly linked list
+          if (linkedList) {
+            eventData.members = linkedList.members;
+            eventData.memberCount = linkedList.memberCount;
+          }
+        }
         const idToken = await user?.getIdToken();
         const res = await fetch('/api/guestlists/update', {
           method: 'POST',
@@ -271,10 +288,11 @@ export function CreateEventDialog({
         if (!res.ok) throw new Error(await res.text());
         toast({ title: 'Event Updated', description: `Event "${eventName}" has been updated.` });
       } else {
-        // Create new event linked to selected guestlist
-        const selectedGuestlist = guestlists.find(g => g.id === selectedGuestlistId);
+        // Create new event linked to selected list (guestlist or rsvp)
+        const allLists = listType === 'rsvp' ? rsvpLists : guestlists;
+        const selectedList = allLists.find(g => g.id === selectedGuestlistId);
         const eventData = {
-          name: selectedGuestlist?.name || eventName.trim(),
+          name: selectedList?.name || eventName.trim(),
           eventName: eventName.trim(),
           eventDate: startDate || null,
           eventTime: startTime || null,
@@ -286,9 +304,12 @@ export function CreateEventDialog({
           eventImage: eventImage || null,
           description: description.trim() || null,
           communityId,
-          guestlistId: selectedGuestlistId,
-          members: selectedGuestlist?.members || [],
-          memberCount: selectedGuestlist?.memberCount || 0,
+          linkedListId: selectedGuestlistId,
+          linkedListType: listType,
+          guestlistId: listType === 'guestlist' ? selectedGuestlistId : null,
+          rsvpId: listType === 'rsvp' ? selectedGuestlistId : null,
+          members: selectedList?.members || [],
+          memberCount: selectedList?.memberCount || 0,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         };
@@ -323,18 +344,32 @@ export function CreateEventDialog({
     setEventLocation('');
     setEventImage('');
     setDescription('');
+    setListType(defaultListType);
+    setShowNewListDialog(false);
     onClose();
   };
 
+  const handleNewListCreated = (newList: any) => {
+    const item: LinkedList = { id: newList.id, name: newList.name, memberCount: newList.memberCount || 0, members: newList.members || [], type: listType };
+    if (listType === 'rsvp') {
+      setRsvpLists(prev => [item, ...prev]);
+    } else {
+      setGuestlists(prev => [item, ...prev]);
+    }
+    setSelectedGuestlistId(newList.id);
+    setShowNewListDialog(false);
+  };
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className={`${existingEvent ? 'sm:max-w-[1200px]' : 'sm:max-w-[520px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8' }}>
-        <div className="flex h-[70vh]">
+      <DialogContent className={`${existingEvent ? 'sm:max-w-[1200px]' : 'sm:max-w-[700px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8', '--page-bg-color': '#F5F0E8' } as React.CSSProperties}>
+        <div className="flex h-[80vh]">
           {/* Left Panel - Event Details (70% width in edit mode) */}
           <div className={`${existingEvent ? 'w-[70%]' : 'flex-1'} flex flex-col border-r`} style={{ borderColor: '#E8DFD1' }}>
             <DialogHeader className="p-6 pb-4">
-              <DialogTitle style={{ color: '#5B4A3A' }}>{existingEvent ? 'Edit Event' : 'Create Event'}</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-2xl font-bold" style={{ color: '#5B4A3A' }}>{existingEvent ? 'Edit Event' : 'Create Event'}</DialogTitle>
+              <DialogDescription style={{ color: '#8B7355' }}>
                 {existingEvent ? 'Update the event details and attendees' : 'Schedule an event and assign a guestlist'}
               </DialogDescription>
             </DialogHeader>
@@ -342,33 +377,58 @@ export function CreateEventDialog({
             <div className="flex-1 overflow-y-auto px-6">
               {/* Event Name */}
               <div className="mb-4">
-                <Label htmlFor="eventName" style={{ color: '#5B4A3A' }}>
-                  Event Name <span className="text-red-500">*</span>
-                </Label>
                 <Input
-                  id="eventName"
-                  placeholder="e.g., Annual Gala, Product Launch..."
+                  label="Event Name *"
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
-                  style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
                 />
               </div>
 
-              {/* Guestlist Selection - only in create mode */}
+              {/* Description */}
+              <div className="mb-4">
+                <Textarea
+                  label="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              {/* List Selection - only in create mode */}
               {!existingEvent && (
                 <div className="mb-4">
-                  <Label className="text-sm font-medium mb-2 block" style={{ color: '#5B4A3A' }}>
-                    Guestlist <span className="text-red-500">*</span>
-                  </Label>
-                  {loadingGuestlists ? (
+                  {/* Guestlist / RSVP toggle */}
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-medium" style={{ color: '#5B4A3A' }}>
+                      {listType === 'guestlist' ? 'Guestlist' : 'RSVP'} <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: '#E8DFD1' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setListType('guestlist'); setSelectedGuestlistId(''); }}
+                        className="px-3 py-1 text-xs font-medium transition-colors"
+                        style={listType === 'guestlist' ? { backgroundColor: '#5B4A3A', color: 'white' } : { backgroundColor: 'white', color: '#8B7355' }}
+                      >
+                        Guestlist
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setListType('rsvp'); setSelectedGuestlistId(''); }}
+                        className="px-3 py-1 text-xs font-medium transition-colors"
+                        style={listType === 'rsvp' ? { backgroundColor: '#E07B39', color: 'white' } : { backgroundColor: 'white', color: '#8B7355' }}
+                      >
+                        RSVP
+                      </button>
+                    </div>
+                  </div>
+
+                  {loadingLists ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#8B7355' }} />
                     </div>
-                  ) : guestlists.length === 0 ? (
-                    <p className="text-sm py-2" style={{ color: '#8B7355' }}>No guestlists yet. Create a guestlist first.</p>
                   ) : (
                     <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
-                      {guestlists.map((gl) => (
+                      {(listType === 'guestlist' ? guestlists : rsvpLists).map((gl) => (
                         <button
                           key={gl.id}
                           type="button"
@@ -393,87 +453,77 @@ export function CreateEventDialog({
                           </div>
                           <div className="text-left">
                             <p className="text-xs font-medium" style={{ color: '#5B4A3A' }}>{gl.name}</p>
-                            <p className="text-[10px]" style={{ color: '#8B7355' }}>{gl.memberCount} guests</p>
+                            <p className="text-[10px]" style={{ color: '#8B7355' }}>{gl.memberCount} {listType === 'rsvp' ? 'invitees' : 'guests'}</p>
                           </div>
                         </button>
                       ))}
+
+                      {/* Create new button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowNewListDialog(true)}
+                        className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed transition-all hover:shadow-sm"
+                        style={{ borderColor: '#D8CFC0', color: '#8B7355', backgroundColor: 'transparent' }}
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span className="text-xs font-medium">New {listType === 'rsvp' ? 'RSVP' : 'Guestlist'}</span>
+                      </button>
                     </div>
+                  )}
+
+                  {!selectedGuestlistId && !loadingLists && (
+                    <p className="text-xs mt-1" style={{ color: '#8B7355' }}>
+                      Select or create a {listType === 'rsvp' ? 'RSVP list' : 'guestlist'} to link to this event.
+                    </p>
                   )}
                 </div>
               )}
 
-              {/* Date/Time Section - Compact Layout */}
+              {/* Date/Time Section - Improved Layout */}
               <div className="mb-4 grid grid-cols-2 gap-4">
-                {/* Start */}
-                <div className="p-3 rounded-lg" style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8DFD1' }}>
-                  <h4 className="text-xs font-medium mb-2" style={{ color: '#5B4A3A' }}>Start</h4>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => handleStartDateChange(e.target.value)}
-                        className="text-xs h-8"
-                        style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                      />
-                    </div>
-                    <div className="w-24">
-                      <Input
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => handleStartTimeChange(e.target.value)}
-                        className="text-xs h-8"
-                        style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* End */}
-                <div className="p-3 rounded-lg" style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8DFD1' }}>
-                  <h4 className="text-xs font-medium mb-2" style={{ color: '#5B4A3A' }}>End</h4>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        min={startDate}
-                        className="text-xs h-8"
-                        style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                      />
-                    </div>
-                    <div className="w-24">
-                      <Input
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        className="text-xs h-8"
-                        style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <Input
+                  label="Start Date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                />
+                <Input
+                  label="Start Time"
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => handleStartTimeChange(e.target.value)}
+                />
+              </div>
+              <div className="mb-4 grid grid-cols-2 gap-4">
+                <Input
+                  label="End Date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+                <Input
+                  label="End Time"
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
               </div>
 
               {/* Location */}
               <div className="mb-4">
-                <Label className="text-sm flex items-center gap-1" style={{ color: '#5B4A3A' }}>
-                  <MapPin className="h-3 w-3" /> Location
-                </Label>
                 <Input
-                  placeholder="e.g., The Grand Ballroom, 123 Main St..."
+                  label="Location"
+                  icon={<MapPin className="h-4 w-4" style={{ color: '#8B7355' }} />}
                   value={eventLocation}
                   onChange={(e) => setEventLocation(e.target.value)}
-                  style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
                 />
               </div>
 
               {/* Event Image */}
-              <div className="mb-4">
-                <Label className="text-sm flex items-center gap-1" style={{ color: '#5B4A3A' }}>
-                  <ImageIcon className="h-3 w-3" /> Event Image
-                </Label>
+              <div className="mb-2">
+                <p className="text-sm font-medium mb-2" style={{ color: '#5B4A3A' }}>
+                  <ImageIcon className="h-3.5 w-3.5 inline mr-1" /> Event Image
+                </p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -514,18 +564,6 @@ export function CreateEventDialog({
                   </button>
                 )}
               </div>
-
-              {/* Description */}
-              <div className="mb-4">
-                <Label style={{ color: '#5B4A3A' }}>Description</Label>
-                <Textarea
-                  placeholder="Add notes or description for this event..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                />
-              </div>
             </div>
 
             {/* Footer */}
@@ -551,54 +589,122 @@ export function CreateEventDialog({
             </div>
           </div>
 
-          {/* Right Panel - Member Selection (edit mode only, 30% width) */}
+          {/* Right Panel - Linked Guestlist (edit mode only, 30% width) */}
           {existingEvent && (
             <div className="w-[30%] flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
               <div className="p-4 border-b" style={{ borderColor: '#E8DFD1' }}>
-                <h3 className="font-medium" style={{ color: '#5B4A3A' }}>Add Guests</h3>
-                <p className="text-sm text-muted-foreground">
-                  Search by name or tags to add members to this guestlist
-                </p>
+                <h3 className="font-medium" style={{ color: '#5B4A3A' }}>Linked List</h3>
+                <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>Change which guestlist or RSVP is linked to this event. To add/remove members, edit the list directly.</p>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <EnhancedListView
-                  items={members}
-                  searchKeys={['name', 'email'] as (keyof MemberData)[]}
-                  selectable={true}
-                  onSelectionChange={onSelectionChange}
-                  selection={new Set(selectedMembers.map(m => m.id))}
-                  renderGridItem={(item, isSelected, onSelect, urlField, selectable) => (
-                    <div onClick={onSelect}>
-                      <MemberGridItem item={item} isSelected={isSelected} selectable={selectable} />
-                    </div>
-                  )}
-                  renderListItem={(item, isSelected, onSelect, urlField, selectable) => (
-                    <div onClick={onSelect}>
-                      <MemberListItem item={item} isSelected={isSelected} selectable={selectable} />
-                    </div>
-                  )}
-                  renderCircleItem={(item, isSelected, onSelect, urlField, selectable) => (
-                    <div onClick={onSelect}>
-                      <MemberCircleItem item={item} isSelected={isSelected} selectable={selectable} />
-                    </div>
-                  )}
-                  defaultViewMode="list"
-                />
+              <div className="flex-1 overflow-y-auto p-4">
+                {loadingLists ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#8B7355' }} />
+                  </div>
+                ) : (
+                  <>
+                    {/* Guestlists */}
+                    {guestlists.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#B0A090' }}>Guestlists</p>
+                        <div className="space-y-2">
+                          {guestlists.map(gl => (
+                            <button
+                              key={gl.id}
+                              type="button"
+                              onClick={() => setSelectedGuestlistId(gl.id)}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all"
+                              style={{
+                                backgroundColor: selectedGuestlistId === gl.id ? '#E8DFD1' : 'white',
+                                borderColor: selectedGuestlistId === gl.id ? '#5B4A3A' : '#E8DFD1',
+                                borderWidth: selectedGuestlistId === gl.id ? '2px' : '1px',
+                              }}
+                            >
+                              <div className="flex -space-x-2 flex-shrink-0">
+                                {gl.members.slice(0, 3).map((m: any, idx: number) => (
+                                  <RoundImage key={m.id || idx} src={m.imageUrl || ''} alt={m.name || ''} size={24} border borderColor="white" borderWidth={1} />
+                                ))}
+                                {gl.members.length === 0 && (
+                                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <Users className="h-3 w-3" style={{ color: '#8B7355' }} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate" style={{ color: '#5B4A3A' }}>{gl.name}</p>
+                                <p className="text-xs" style={{ color: '#8B7355' }}>{gl.memberCount} guests</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* RSVP Lists */}
+                    {rsvpLists.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#B0A090' }}>RSVP Lists</p>
+                        <div className="space-y-2">
+                          {rsvpLists.map(gl => (
+                            <button
+                              key={gl.id}
+                              type="button"
+                              onClick={() => setSelectedGuestlistId(gl.id)}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all"
+                              style={{
+                                backgroundColor: selectedGuestlistId === gl.id ? '#FEF3EC' : 'white',
+                                borderColor: selectedGuestlistId === gl.id ? '#E07B39' : '#E8DFD1',
+                                borderWidth: selectedGuestlistId === gl.id ? '2px' : '1px',
+                              }}
+                            >
+                              <div className="flex -space-x-2 flex-shrink-0">
+                                {gl.members.slice(0, 3).map((m: any, idx: number) => (
+                                  <RoundImage key={m.id || idx} src={m.imageUrl || ''} alt={m.name || ''} size={24} border borderColor="white" borderWidth={1} />
+                                ))}
+                                {gl.members.length === 0 && (
+                                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <Users className="h-3 w-3" style={{ color: '#8B7355' }} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate" style={{ color: '#5B4A3A' }}>{gl.name}</p>
+                                <p className="text-xs" style={{ color: '#E07B39' }}>{gl.memberCount} invitees</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {guestlists.length === 0 && rsvpLists.length === 0 && (
+                      <p className="text-sm text-center py-8" style={{ color: '#B0A090' }}>No lists found</p>
+                    )}
+                  </>
+                )}
               </div>
-              
-              {/* Selected count */}
-              <div className="p-4 border-t" style={{ borderColor: '#E8DFD1', backgroundColor: '#E8DFD1' }}>
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" style={{ color: '#5B4A3A' }} />
-                  <span className="font-medium" style={{ color: '#5B4A3A' }}>
-                    {selectedMembers.length} Guest{selectedMembers.length === 1 ? '' : 's'} Selected
-                  </span>
+              {selectedGuestlistId && (
+                <div className="p-4 border-t" style={{ borderColor: '#E8DFD1', backgroundColor: '#E8DFD1' }}>
+                  <p className="text-xs font-medium" style={{ color: '#5B4A3A' }}>
+                    Linked: {[...guestlists, ...rsvpLists].find(l => l.id === selectedGuestlistId)?.name || 'Selected'}
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Inline create guestlist/rsvp dialog */}
+    <CreateGuestlistDialog
+      key={`new-${listType}`}
+      isOpen={showNewListDialog}
+      onClose={() => setShowNewListDialog(false)}
+      members={members}
+      communityId={communityId}
+      communityName={communityName}
+      onGuestlistCreated={handleNewListCreated}
+      isRsvp={listType === 'rsvp'}
+    />
+    </>
   );
 }

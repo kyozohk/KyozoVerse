@@ -145,7 +145,6 @@ function BroadcastContent() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={selectedMembers.length >= 1 ? [{
                 label: `Message ${selectedMembers.length} ${selectedMembers.length === 1 ? 'Member' : 'Members'}`,
                 icon: <Mail className="h-4 w-4" />,

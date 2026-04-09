@@ -248,7 +248,6 @@ export default function CommunityFeedPage() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={canCreatePost ? [
                 ...buttonConfig.map((config) => ({
                   label: config.label,

@@ -402,7 +402,6 @@ function MembersContent() {
                 </span>
               }
               subtitle={community.tagline || (community as any).mantras}
-              tags={(community as any).tags || []}
               ctas={canManage ? [
                 {
                   label: 'Import Members',

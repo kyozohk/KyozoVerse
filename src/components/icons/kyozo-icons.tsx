@@ -207,6 +207,28 @@ export function IntegrationsIcon({ size = 24, ...props }: IconProps) {
   );
 }
 
+// RSVP icon - mail with check
+export function RsvpIcon({ size = 24, ...props }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 33 33"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="3" y="7" width="27" height="19" rx="2" />
+      <path d="M3 10L16.5 19L30 10" />
+      <path d="M21 24L24 27L30 21" />
+    </svg>
+  );
+}
+
 // Analytics icon - bar chart
 export function AnalyticsIcon({ size = 24, ...props }: IconProps) {
   return (

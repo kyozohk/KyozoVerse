@@ -19,6 +19,8 @@ export interface CalendarEvent {
   members: any[];
   createdAt: any;
   tags?: string[];
+  linkedListId?: string;
+  linkedListType?: 'guestlist' | 'rsvp';
 }
 
 interface EventCalendarViewProps {

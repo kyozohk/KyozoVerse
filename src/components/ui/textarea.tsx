@@ -5,13 +5,14 @@ import {cn} from '@/lib/utils';
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string; // Make label optional again
+  label?: string;
   error?: string;
+  helpText?: string;
   wrapperClassName?: string;
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({className, label, error, wrapperClassName, ...props}, ref) => {
+  ({className, label, error, helpText, wrapperClassName, placeholder, ...props}, ref) => {
     const id = React.useId();
     return (
       <div className={cn('inputWrapper', wrapperClassName)}>
@@ -19,12 +20,12 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           <textarea
             id={id}
             className={cn(
-              'input !h-auto', // Use !h-auto to override fixed height
+              'input !h-auto',
               error ? 'hasError' : '',
               className
             )}
             ref={ref}
-            placeholder=" " // Use a space for the placeholder to enable :not(:placeholder-shown)
+            placeholder={label ? " " : placeholder}
             {...props}
           />
           {label && (
@@ -33,6 +34,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             </label>
           )}
         </div>
+        {helpText && !error && <div className="text-xs mt-1" style={{ color: '#8B7355' }}>{helpText}</div>}
         {error && <div className="errorMessage">{error}</div>}
       </div>
     );
