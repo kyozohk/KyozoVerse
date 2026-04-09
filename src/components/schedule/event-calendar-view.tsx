@@ -155,15 +155,29 @@ export function EventCalendarView({
       const event = dayEvents[0];
       return (
         <div
-          className="text-xs px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 h-full flex items-center"
-          style={{ backgroundColor: '#E07B39', color: 'white' }}
+          className="text-xs rounded cursor-pointer hover:opacity-80 h-full flex flex-col overflow-hidden"
+          style={{ backgroundColor: event.eventImage ? 'transparent' : '#E07B39' }}
           title={event.eventName || event.name}
           onClick={(e) => {
             e.stopPropagation();
             onEventClick?.(event);
           }}
         >
-          <span className="truncate">{event.eventName || event.name}</span>
+          {event.eventImage ? (
+            <>
+              <div 
+                className="flex-1 bg-cover bg-center min-h-[40px]"
+                style={{ backgroundImage: `url(${event.eventImage})` }}
+              />
+              <div className="px-1.5 py-0.5 text-[10px] truncate" style={{ backgroundColor: '#E07B39', color: 'white' }}>
+                {event.eventName || event.name}
+              </div>
+            </>
+          ) : (
+            <div className="px-1.5 py-1 flex items-center h-full" style={{ color: 'white' }}>
+              <span className="truncate">{event.eventName || event.name}</span>
+            </div>
+          )}
         </div>
       );
     }

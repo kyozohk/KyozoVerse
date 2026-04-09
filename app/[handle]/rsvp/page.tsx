@@ -72,7 +72,7 @@ export default function RsvpPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingRsvp, setEditingRsvp] = useState<RsvpList | null>(null);
   const [expandedRsvp, setExpandedRsvp] = useState<string | null>(null);
-  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null); // tracks 'rsvpId' or 'rsvpId-memberId'
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'guest'>('guest');
   const [deleteTarget, setDeleteTarget] = useState<RsvpList | null>(null);
 
@@ -139,9 +139,9 @@ export default function RsvpPage() {
     await sendConfirmationEmails(rsvp.id, rsvp.members, rsvp.name);
   };
 
-  const sendConfirmationEmails = async (rsvpId: string, memberList: RsvpMember[], rsvpName: string) => {
+  const sendConfirmationEmails = async (rsvpId: string, memberList: RsvpMember[], rsvpName: string, sendingStateKey?: string) => {
     if (!user || !community) return;
-    setSendingEmail(rsvpId);
+    setSendingEmail(sendingStateKey || rsvpId);
     try {
       const idToken = await user.getIdToken();
       const baseUrl = window.location.origin;
@@ -208,6 +208,14 @@ export default function RsvpPage() {
     await sendConfirmationEmails(rsvp.id, pending, rsvp.name);
   };
 
+  const handleSendMemberReminder = async (rsvp: RsvpList, member: RsvpMember) => {
+    if (!member.email) {
+      toast({ title: 'No email', description: 'This member does not have an email address.', variant: 'destructive' });
+      return;
+    }
+    await sendConfirmationEmails(rsvp.id, [member], rsvp.name, `${rsvp.id}-${member.id}`);
+  };
+
   const handleDeleteRsvp = async () => {
     if (!deleteTarget || !user) return;
     try {
@@ -263,136 +271,126 @@ export default function RsvpPage() {
             height="16rem"
           />
 
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold" style={{ color: '#5B4A3A' }}>RSVP Lists</h2>
-              <span className="text-sm" style={{ color: '#8B7355' }}>{rsvpLists.length} list{rsvpLists.length !== 1 ? 's' : ''}</span>
-            </div>
-
-            {rsvpLists.length === 0 ? (
-              <div className="text-center py-16 rounded-xl" style={{ backgroundColor: '#FAF8F5', border: '1px dashed #E8DFD1' }}>
-                <Mail className="h-12 w-12 mx-auto mb-3" style={{ color: '#D8CFC0' }} />
-                <p className="text-base font-medium" style={{ color: '#8B7355' }}>No RSVP lists yet</p>
-                {canManage && <p className="text-sm mt-1" style={{ color: '#B0A090' }}>Create an RSVP list to send confirmation emails to members</p>}
-              </div>
-            ) : (
-              rsvpLists.map(rsvp => {
+          <div className="px-6 pt-6 pb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rsvpLists.length === 0 ? (
+                <div className="col-span-full text-center py-16 rounded-xl" style={{ backgroundColor: '#FAF8F5', border: '1px dashed #E8DFD1' }}>
+                  <Mail className="h-12 w-12 mx-auto mb-3" style={{ color: '#D8CFC0' }} />
+                  <p className="text-base font-medium" style={{ color: '#8B7355' }}>No RSVP lists yet</p>
+                  {canManage && <p className="text-sm mt-1" style={{ color: '#B0A090' }}>Create an RSVP list to send confirmation emails to members</p>}
+                </div>
+              ) : (
+                rsvpLists.map(rsvp => {
                 const accepted = rsvp.members.filter(m => m.rsvpStatus === 'accepted').length;
                 const declined = rsvp.members.filter(m => m.rsvpStatus === 'declined').length;
                 const pending = rsvp.members.filter(m => m.rsvpStatus === 'pending').length;
                 const isExpanded = expandedRsvp === rsvp.id;
-                const isSending = sendingEmail === rsvp.id;
 
                 return (
-                  <div key={rsvp.id} className="rounded-xl overflow-hidden" style={{ border: '1px solid #E8DFD1', backgroundColor: 'white' }}>
-                    {/* Card Header */}
-                    <div className="px-5 pt-5 pb-4">
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Left: Title + meta */}
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FEF3EC' }}>
-                            <Mail className="h-4 w-4" style={{ color: '#E07B39' }} />
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="font-semibold text-base leading-tight" style={{ color: '#3D2E22' }}>{rsvp.name}</h3>
-                            {rsvp.createdAt && (
-                              <p className="text-xs mt-0.5" style={{ color: '#B0A090' }}>
-                                Created {new Date(rsvp.createdAt.toDate ? rsvp.createdAt.toDate() : rsvp.createdAt).toLocaleDateString()}
-                                {rsvp.emailSentAt && ` · Invites sent ${new Date(rsvp.emailSentAt).toLocaleDateString()}`}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {/* Right: Action buttons */}
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {canManage && (
-                            <>
-                              <button
-                                onClick={() => handleSendReminder(rsvp)}
-                                disabled={isSending}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-[#FEF3EC] disabled:opacity-50"
-                                style={{ color: '#E07B39', border: '1px solid #F5DFD0' }}
-                                title="Send reminder to pending members"
-                              >
-                                <Bell className="h-3.5 w-3.5" />
-                                {isSending ? 'Sending...' : 'Remind'}
-                              </button>
-                              <button
-                                onClick={() => { setEditingRsvp(rsvp); setIsCreateDialogOpen(true); }}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F5F0EA] transition-colors"
-                                style={{ color: '#8B7355' }}
-                              >
-                                <Edit2 className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteTarget(rsvp)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
-                                style={{ color: '#DC2626' }}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </>
-                          )}
+                  <Card key={rsvp.id} className="p-3 flex flex-col h-full">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-semibold text-lg truncate flex-1" style={{ color: '#5B4A3A' }}>{rsvp.name}</h3>
+                      {canManage && (
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                           <button
-                            onClick={() => setExpandedRsvp(isExpanded ? null : rsvp.id)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F5F0EA] transition-colors"
+                            onClick={() => { setEditingRsvp(rsvp); setIsCreateDialogOpen(true); }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#F5F0EA] transition-colors"
                             style={{ color: '#8B7355' }}
                           >
-                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(rsvp)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
+                            style={{ color: '#DC2626' }}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Stats Grid - 2x2 */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ backgroundColor: '#F0FDF4' }}>
+                        <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#16a34a' }} />
+                        <span className="text-sm font-medium" style={{ color: '#166534' }}>{accepted}</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ backgroundColor: '#FFFBEB' }}>
+                        <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#d97706' }} />
+                        <span className="text-sm font-medium" style={{ color: '#92400e' }}>{pending}</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ backgroundColor: '#FEF2F2' }}>
+                        <XCircle className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#dc2626' }} />
+                        <span className="text-sm font-medium" style={{ color: '#991b1b' }}>{declined}</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ backgroundColor: '#F5F0EA' }}>
+                        <Users className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#8B7355' }} />
+                        <span className="text-sm font-medium" style={{ color: '#5B4A3A' }}>{rsvp.memberCount}</span>
                       </div>
                     </div>
 
-                    {/* Stats Row */}
-                    <div className="px-5 pb-4 grid grid-cols-4 gap-3">
-                      <div className="flex flex-col items-center py-2.5 rounded-lg" style={{ backgroundColor: '#F0FDF4' }}>
-                        <span className="text-lg font-bold leading-tight" style={{ color: '#166534' }}>{accepted}</span>
-                        <span className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#16a34a' }}>
-                          <CheckCircle className="h-3 w-3" />Accepted
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center py-2.5 rounded-lg" style={{ backgroundColor: '#FFFBEB' }}>
-                        <span className="text-lg font-bold leading-tight" style={{ color: '#92400e' }}>{pending}</span>
-                        <span className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#d97706' }}>
-                          <Clock className="h-3 w-3" />Pending
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center py-2.5 rounded-lg" style={{ backgroundColor: '#FEF2F2' }}>
-                        <span className="text-lg font-bold leading-tight" style={{ color: '#991b1b' }}>{declined}</span>
-                        <span className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#dc2626' }}>
-                          <XCircle className="h-3 w-3" />Declined
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center py-2.5 rounded-lg" style={{ backgroundColor: '#F5F0EA' }}>
-                        <span className="text-lg font-bold leading-tight" style={{ color: '#5B4A3A' }}>{rsvp.memberCount}</span>
-                        <span className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#8B7355' }}>
-                          <Users className="h-3 w-3" />Total
-                        </span>
-                      </div>
+                    {/* Metadata */}
+                    <div className="space-y-0.5 mb-2">
+                      {rsvp.createdAt && (
+                        <p className="text-xs" style={{ color: '#B0A090' }}>
+                          Created {new Date(rsvp.createdAt.toDate ? rsvp.createdAt.toDate() : rsvp.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
+                      {rsvp.emailSentAt && (
+                        <p className="text-xs" style={{ color: '#B0A090' }}>
+                          Invites sent {new Date(rsvp.emailSentAt).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
+
+                    {/* View Members Button */}
+                    <button
+                      onClick={() => setExpandedRsvp(isExpanded ? null : rsvp.id)}
+                      className="w-full mt-auto py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#F5F0EA]"
+                      style={{ color: '#8B7355', border: '1px solid #E8DFD1' }}
+                    >
+                      {isExpanded ? (
+                        <><ChevronUp className="inline h-4 w-4 mr-1" />Hide Members</>
+                      ) : (
+                        <><ChevronDown className="inline h-4 w-4 mr-1" />View Members</>
+                      )}
+                    </button>
 
                     {/* Expanded Members */}
                     {isExpanded && (
-                      <div className="border-t" style={{ borderColor: '#E8DFD1' }}>
-                        <div className="px-5 py-3 space-y-2">
-                          {rsvp.members.map(member => (
-                            <div key={member.id} className="flex items-center gap-3 py-2.5 px-3 rounded-lg" style={{ backgroundColor: '#FAF8F5' }}>
-                              <UserAvatar name={member.name} imageUrl={member.imageUrl && member.imageUrl !== '/default-avatar.png' ? member.imageUrl : null} size={36} />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate" style={{ color: '#3D2E22' }}>{member.name}</p>
-                                {member.email && <p className="text-xs truncate" style={{ color: '#8B7355' }}>{member.email}</p>}
-                              </div>
+                      <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: '#E8DFD1' }}>
+                        {rsvp.members.map(member => (
+                          <div key={member.id} className="flex items-center gap-2 py-2 px-2 rounded-lg" style={{ backgroundColor: '#FAF8F5' }}>
+                            <UserAvatar name={member.name} imageUrl={member.imageUrl && member.imageUrl !== '/default-avatar.png' ? member.imageUrl : null} size={32} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate" style={{ color: '#3D2E22' }}>{member.name}</p>
+                              {member.email && <p className="text-[10px] truncate" style={{ color: '#8B7355' }}>{member.email}</p>}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {canManage && member.rsvpStatus === 'pending' && (
+                                <button
+                                  onClick={() => handleSendMemberReminder(rsvp, member)}
+                                  disabled={sendingEmail === `${rsvp.id}-${member.id}`}
+                                  className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[#FEF3EC] transition-colors"
+                                  style={{ color: '#E07B39' }}
+                                  title="Send reminder"
+                                >
+                                  <Bell className="h-3 w-3" />
+                                </button>
+                              )}
                               {statusBadge(member.rsvpStatus)}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               })
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
