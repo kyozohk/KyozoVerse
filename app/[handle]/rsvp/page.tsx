@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Globe, Lock, Mail, CheckCircle, Clock, XCircle, Users, Bell, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Globe, Lock, Mail, CheckCircle, Clock, XCircle, Users, Bell, Edit2, Trash2, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
@@ -362,18 +362,41 @@ export default function RsvpPage() {
                       )}
                     </div>
 
-                    {/* View Members Button */}
-                    <button
-                      onClick={() => setExpandedRsvp(isExpanded ? null : rsvp.id)}
-                      className="w-full mt-auto py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#F5F0EA]"
-                      style={{ color: '#8B7355', border: '1px solid #E8DFD1' }}
-                    >
-                      {isExpanded ? (
-                        <><ChevronUp className="inline h-4 w-4 mr-1" />Hide Members</>
-                      ) : (
-                        <><ChevronDown className="inline h-4 w-4 mr-1" />View Members</>
+                    {/* Action Buttons */}
+                    <div className="mt-auto space-y-2">
+                      {/* Send Invitations Button (only if not sent yet) */}
+                      {canManage && !rsvp.emailSentAt && rsvp.members.length > 0 && (
+                        <button
+                          onClick={() => sendConfirmationEmails(rsvp.id, rsvp.members, rsvp.name)}
+                          disabled={sendingEmail === rsvp.id}
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors"
+                          style={{ 
+                            backgroundColor: sendingEmail === rsvp.id ? '#F5F0EA' : '#E07B39', 
+                            color: 'white',
+                            opacity: sendingEmail === rsvp.id ? 0.6 : 1
+                          }}
+                        >
+                          {sendingEmail === rsvp.id ? (
+                            <><Loader2 className="inline h-4 w-4 mr-1 animate-spin" />Sending...</>
+                          ) : (
+                            <><Mail className="inline h-4 w-4 mr-1" />Send Invitations</>
+                          )}
+                        </button>
                       )}
-                    </button>
+                      
+                      {/* View Members Button */}
+                      <button
+                        onClick={() => setExpandedRsvp(isExpanded ? null : rsvp.id)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#F5F0EA]"
+                        style={{ color: '#8B7355', border: '1px solid #E8DFD1' }}
+                      >
+                        {isExpanded ? (
+                          <><ChevronUp className="inline h-4 w-4 mr-1" />Hide Members</>
+                        ) : (
+                          <><ChevronDown className="inline h-4 w-4 mr-1" />View Members</>
+                        )}
+                      </button>
+                    </div>
 
                     {/* Expanded Members */}
                     {isExpanded && (

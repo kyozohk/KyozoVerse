@@ -104,6 +104,9 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     const [selectedColor, setSelectedColor] = useState('#843484');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [planLimitReached, setPlanLimitReached] = useState(false);
+    const [communityCount, setCommunityCount] = useState(0);
+    const PLAN_LIMIT = 5; // TODO: Fetch from user's subscription plan
     
     useEffect(() => {
         if (isOpen) {
@@ -120,6 +123,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 setTags(existingCommunity.tags || []);
                 setProfileImageUrl(existingCommunity.communityProfileImage || null);
                 setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
+                setPlanLimitReached(false); // Editing doesn't count against limit
             } else {
                 // Reset form when creating a new community
                 setFormData({ name: '', handle: '', lore: '', mantras: '', location: '', communityPrivacy: 'public', leaderName: '' });
@@ -129,10 +133,36 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 setBackgroundImageFile(null);
                 setProfileImageUrl(null);
                 setBackgroundImageUrl(null);
+                
+                // Check plan limits early for new communities
+                if (user) {
+                    const checkPlanLimit = async () => {
+                        try {
+                            const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+                            const ownedSnap = await getDocs(ownedQuery);
+                            const count = ownedSnap.size;
+                            setCommunityCount(count);
+                            
+                            if (count >= PLAN_LIMIT) {
+                                setPlanLimitReached(true);
+                                toast({
+                                    title: "Plan Limit Reached",
+                                    description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
+                                    variant: "destructive",
+                                });
+                            } else {
+                                setPlanLimitReached(false);
+                            }
+                        } catch (err) {
+                            console.error('Error checking plan limits:', err);
+                        }
+                    };
+                    checkPlanLimit();
+                }
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, existingCommunity?.communityId]);
+    }, [isOpen, existingCommunity?.communityId, user?.uid]);
 
     const colors = ['#843484', '#06C4B5', '#E1B327', '#CF7770', '#699FE5'];
     const profileImageOptions = ['/Parallax1.jpg', '/Parallax2.jpg', '/Parallax3.jpg', '/Parallax4.jpg', '/Parallax5.jpg', '/Parallax6.png'];
@@ -174,6 +204,16 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     };
 
     const handleNext = async () => {
+        // Check plan limit before allowing to proceed (for new communities)
+        if (!existingCommunity && planLimitReached) {
+            toast({
+                title: "Plan Limit Reached",
+                description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
+                variant: "destructive",
+            });
+            return;
+        }
+        
         // Validate required fields on step 1
         if (currentStep === 0) {
             if (!formData.name.trim()) {
@@ -234,8 +274,33 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     };
     
     const handleValueChange = (name: keyof typeof formData, value: string | boolean) => {
+        // Auto-generate handle from name if handle is empty
+        if (name === 'name' && typeof value === 'string') {
+            setFormData(prev => {
+                const newHandle = prev.handle === '' || prev.handle === sanitizeHandle(prev.name) 
+                    ? sanitizeHandle(value) 
+                    : prev.handle;
+                
+                // Show warning if name produces invalid handle
+                if (value.trim() && newHandle.length < 3) {
+                    setFormErrors(prevErrors => ({ 
+                        ...prevErrors, 
+                        name: 'Community name must contain at least 3 letters or numbers for the URL'
+                    }));
+                } else {
+                    // Clear name error when user is typing
+                    setFormErrors(prevErrors => ({ ...prevErrors, name: undefined }));
+                }
+                
+                return {
+                    ...prev,
+                    name: value,
+                    handle: newHandle
+                };
+            });
+        }
         // Sanitize handle input in real-time
-        if (name === 'handle' && typeof value === 'string') {
+        else if (name === 'handle' && typeof value === 'string') {
             const sanitized = sanitizeHandle(value);
             setFormData(prev => ({ ...prev, [name]: sanitized }));
             
@@ -468,6 +533,8 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             let finalBackgroundImageUrl = null;
             if (backgroundImageFile) {
                 finalBackgroundImageUrl = await handleFileUpload(backgroundImageFile, communityId, 'background');
+            } else if (backgroundImageUrl) {
+                finalBackgroundImageUrl = backgroundImageUrl; // Use pre-selected URL
             }
             
             // Update doc with image URLs and communityId
@@ -575,6 +642,21 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             size="xl"
         >
             <div className="flex flex-col h-full">
+                {/* Plan limit indicator for new communities */}
+                {!existingCommunity && (
+                    <div className={`px-4 py-2 rounded-lg mb-4 text-sm ${planLimitReached ? 'bg-red-50 border border-red-200' : 'bg-blue-50 border border-blue-200'}`}>
+                        {planLimitReached ? (
+                            <p className="text-red-700 font-medium">
+                                ⚠️ Plan limit reached: {communityCount}/{PLAN_LIMIT} communities created. Upgrade to create more.
+                            </p>
+                        ) : (
+                            <p className="text-blue-700">
+                                📊 Communities: {communityCount}/{PLAN_LIMIT} used
+                            </p>
+                        )}
+                    </div>
+                )}
+                
                 <div className="flex-grow space-y-4 pt-4 overflow-y-auto">
                     
                     {currentStep === 0 && (

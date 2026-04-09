@@ -78,10 +78,10 @@ export function validateHandle(handle: string): HandleValidationResult {
  * Converts to lowercase, replaces spaces and invalid chars with hyphens
  * 
  * @param input - The input string to sanitize
- * @returns A sanitized handle string
+ * @returns A sanitized handle string (empty if no valid characters found)
  */
 export function sanitizeHandle(input: string): string {
-  return input
+  const sanitized = input
     .toLowerCase()
     .trim()
     // Replace spaces with hyphens
@@ -94,6 +94,10 @@ export function sanitizeHandle(input: string): string {
     .replace(/^-+|-+$/g, '')
     // Limit to 50 characters
     .substring(0, 50);
+  
+  // If sanitization results in empty or too short handle, return empty string
+  // The calling code should handle this case (e.g., show error or generate fallback)
+  return sanitized;
 }
 
 /**

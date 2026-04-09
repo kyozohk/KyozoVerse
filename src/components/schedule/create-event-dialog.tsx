@@ -158,23 +158,30 @@ export function CreateEventDialog({
   // Auto-fill end time to 3 hours after start time
   const handleStartTimeChange = (value: string) => {
     setStartTime(value);
-    if (value) {
-      const [hours, minutes] = value.split(':').map(Number);
-      let endHours = hours + 3;
+    // Only auto-fill end time if we have a complete time (HH:MM format)
+    if (value && value.includes(':')) {
+      const parts = value.split(':');
+      if (parts.length === 2 && parts[0] && parts[1]) {
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          let endHours = hours + 3;
       let newEndDate = endDate || startDate;
       
-      if (endHours >= 24) {
-        endHours = endHours - 24;
-        if (startDate) {
-          const nextDay = new Date(startDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          newEndDate = nextDay.toISOString().split('T')[0];
-          setEndDate(newEndDate);
+          if (endHours >= 24) {
+            endHours = endHours - 24;
+            if (startDate) {
+              const nextDay = new Date(startDate);
+              nextDay.setDate(nextDay.getDate() + 1);
+              newEndDate = nextDay.toISOString().split('T')[0];
+              setEndDate(newEndDate);
+            }
+          }
+          
+          const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+          setEndTime(endTimeStr);
         }
       }
-      
-      const endTimeStr = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      setEndTime(endTimeStr);
     }
   };
 
@@ -575,17 +582,25 @@ export function CreateEventDialog({
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleCreateEvent}
-                disabled={isSaving || !eventName.trim() || (!existingEvent && !selectedGuestlistId)}
-                style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
-              >
-                {isSaving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {existingEvent ? 'Saving...' : 'Creating...'}</>
-                ) : (
-                  <><Calendar className="mr-2 h-4 w-4" /> {existingEvent ? 'Save Changes' : 'Create Event'}</>
+              <div className="flex flex-col items-end gap-1">
+                {!eventName.trim() && (
+                  <p className="text-xs text-red-600">Event name is required</p>
                 )}
-              </Button>
+                {!existingEvent && !selectedGuestlistId && eventName.trim() && (
+                  <p className="text-xs text-red-600">Please select a guestlist or RSVP</p>
+                )}
+                <Button
+                  onClick={handleCreateEvent}
+                  disabled={isSaving || !eventName.trim() || (!existingEvent && !selectedGuestlistId)}
+                  style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
+                >
+                  {isSaving ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {existingEvent ? 'Saving...' : 'Creating...'}</>
+                  ) : (
+                    <><Calendar className="mr-2 h-4 w-4" /> {existingEvent ? 'Save Changes' : 'Create Event'}</>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
 

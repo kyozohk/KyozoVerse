@@ -31,16 +31,48 @@ interface ImportMembersDialogProps {
   onSuccess: () => void;
 }
 
-function parseCSV(text: string): string[][] {
+function parseDelimitedFile(text: string, delimiter: string = ','): string[][] {
   const rows: string[][] = [];
   for (const line of text.split(/\r?\n/).filter(l => l.trim())) {
     const cols: string[] = []; let cur = '', inQ = false;
     for (const ch of line) {
-      if (ch === '"') { inQ = !inQ; } else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; } else { cur += ch; }
+      if (ch === '"') { inQ = !inQ; } 
+      else if (ch === delimiter && !inQ) { cols.push(cur.trim()); cur = ''; } 
+      else { cur += ch; }
     }
     cols.push(cur.trim()); rows.push(cols);
   }
   return rows;
+}
+
+function detectDelimiter(text: string): ',' | '\t' {
+  const firstLine = text.split(/\r?\n/)[0] || '';
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+  return tabCount > commaCount ? '\t' : ',';
+}
+
+function validateHeaders(headers: string[]): { valid: boolean; error?: string; warnings?: string[] } {
+  const normalized = headers.map(h => h.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+  const hasName = normalized.some(h => h.includes('name') || h.includes('first'));
+  const hasEmail = normalized.some(h => h.includes('email'));
+  
+  if (!hasName && !hasEmail) {
+    return { valid: false, error: 'File must contain at least a "name" or "email" column' };
+  }
+  
+  const warnings: string[] = [];
+  const recognizedPatterns = ['name', 'first', 'last', 'email', 'phone', 'mobile', 'tag', 'note', 'comment'];
+  const unrecognized = headers.filter((h, i) => {
+    const norm = normalized[i];
+    return !recognizedPatterns.some(p => norm.includes(p));
+  });
+  
+  if (unrecognized.length > 0) {
+    warnings.push(`Unrecognized columns will be ignored: ${unrecognized.join(', ')}`);
+  }
+  
+  return { valid: true, warnings };
 }
 
 function rowsToMembers(rows: string[][]): ImportMember[] {
@@ -95,7 +127,26 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({ isOpen
   const handleFileUpload = useCallback(async (file: File) => {
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext === 'csv' || ext === 'tsv') {
-      setPendingMembers(rowsToMembers(parseCSV(await file.text())));
+      const text = await file.text();
+      const delimiter = ext === 'tsv' ? '\t' : detectDelimiter(text);
+      const rows = parseDelimitedFile(text, delimiter);
+      
+      if (rows.length < 2) {
+        toast({ title: 'Error', description: 'File must contain headers and at least one data row.', variant: 'destructive' });
+        return;
+      }
+      
+      const validation = validateHeaders(rows[0]);
+      if (!validation.valid) {
+        toast({ title: 'Invalid File', description: validation.error, variant: 'destructive' });
+        return;
+      }
+      
+      if (validation.warnings && validation.warnings.length > 0) {
+        toast({ title: 'Warning', description: validation.warnings.join(' '), variant: 'default' });
+      }
+      
+      setPendingMembers(rowsToMembers(rows));
       setStep('preview');
     } else if (ext === 'xlsx' || ext === 'xls') {
       try {
@@ -136,7 +187,20 @@ export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({ isOpen
   };
 
   const addManualMember = () => {
-    if (!manualForm.name && !manualForm.email) return;
+    if (!manualForm.name && !manualForm.email) {
+      toast({ title: 'Required', description: 'Please enter at least a name or email.', variant: 'destructive' });
+      return;
+    }
+    
+    // Validate email if provided
+    if (manualForm.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(manualForm.email)) {
+        toast({ title: 'Invalid Email', description: 'Please enter a valid email address.', variant: 'destructive' });
+        return;
+      }
+    }
+    
     setPendingMembers(p => [...p, { _id: `m-${Date.now()}`, ...manualForm, notes: '' }]);
     setManualForm({ name: '', email: '', phone: '', tags: '' });
   };
