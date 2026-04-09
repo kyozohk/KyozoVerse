@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarChart, LineChart, PieChart, Download, Calendar, ChevronDown, BarChart2, Users, Eye, ThumbsUp } from "lucide-react";
-import { getUserRoleInCommunity, getCommunityByHandle } from "@/lib/community-utils";
+import { useCommunityAccess } from '@/hooks/use-community-access';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
@@ -48,58 +48,37 @@ const mockEngagementData = [
 ];
 
 export default function CommunityAnalyticsPage() {
-  const { user } = useAuth();
   const params = useParams();
   const handle = params.handle as string;
   
-  const [userRole, setUserRole] = useState<string>("guest");
-  const [communityId, setCommunityId] = useState<string>("");
-  const [communityName, setCommunityName] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  // Access control hook - only owner/admin can access analytics
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin'],
+    redirectOnDenied: true,
+  });
+  
   const [timeRange, setTimeRange] = useState("last-30-days");
   
-  useEffect(() => {
-    async function fetchCommunityAndRole() {
-      if (!handle || !user) {
-        setLoading(false);
-        return;
-      }
-      
-      setLoading(true);
-      try {
-        const communityData = await getCommunityByHandle(handle);
-        
-        if (communityData) {
-          setCommunityId(communityData.communityId);
-          setCommunityName(communityData.name);
-          
-          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-          setUserRole(role);
-        } else {
-          setUserRole('guest'); // No community found, treat as guest
-        }
-      } catch (error) {
-        console.error("Error fetching community data:", error);
-        setUserRole('guest');
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchCommunityAndRole();
-  }, [handle, user]);
-  
-  const canAccessAnalytics = userRole === "owner" || userRole === "admin";
-  
-  if (loading) {
+  if (accessLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (!community) {
+    return null;
+  }
   
-  if (!canAccessAnalytics) {
+  // Access is already controlled by useCommunityAccess hook above
+  if (false) {
     return (
       <div className="container mx-auto max-w-4xl p-4 md:p-8">
         <Card>

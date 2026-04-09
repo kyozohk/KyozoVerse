@@ -10,7 +10,7 @@ import { Community } from '@/lib/types';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { useAuth } from '@/hooks/use-auth';
-import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 
 interface Message {
   id: string;
@@ -51,8 +51,14 @@ function InboxContent() {
   const params = useParams();
   const handle = params?.handle as string;
 
-  const [community, setCommunity] = useState<Community | null>(null);
-  const [userRole, setUserRole] = useState<string>('guest');
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -62,31 +68,9 @@ function InboxContent() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [communityMembers, setCommunityMembers] = useState<any[]>([]);
 
-  // Load community
-  useEffect(() => {
-    async function fetchCommunity() {
-      if (!handle) return;
-      try {
-        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
-        const snapshot = await getDocs(communityQuery);
-        if (!snapshot.empty) {
-          const communityData = { communityId: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Community;
-          setCommunity(communityData);
-          if (user) {
-            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-            setUserRole(role);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching community:', error);
-      }
-    }
-    fetchCommunity();
-  }, [handle, user]);
-
   // Load community members
   useEffect(() => {
-    if (!community?.communityId) return;
+    if (!community?.communityId || accessLoading) return;
 
     const loadMembers = async () => {
       try {
@@ -280,8 +264,16 @@ function InboxContent() {
     );
   });
 
-  if (loading) {
+  if (accessLoading || loading) {
     return <PageLoadingSkeleton showInbox={true} />;
+  }
+
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (!community) {
+    return null;
   }
 
   if (!community) {

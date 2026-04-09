@@ -11,6 +11,7 @@ import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleto
 import { CreateEventDialog } from '@/components/schedule/create-event-dialog';
 import { EventDetailDialog } from '@/components/schedule/event-detail-dialog';
 import { EventCalendarView, CalendarEvent } from '@/components/schedule/event-calendar-view';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 
 interface MemberData {
   id: string;
@@ -27,7 +28,15 @@ interface MemberData {
 export default function SchedulePage() {
   const params = useParams();
   const handle = params.handle as string;
-  const [community, setCommunity] = useState<Community | null>(null);
+  
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+  
   const [members, setMembers] = useState<MemberData[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,52 +46,43 @@ export default function SchedulePage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  // Fetch community and members
+  // Fetch members
   useEffect(() => {
-    const fetchCommunityAndMembers = async () => {
+    const fetchMembers = async () => {
+      if (!community?.communityId || accessLoading) return;
+      
       try {
-        const communitiesRef = collection(db, 'communities');
-        const q = query(communitiesRef, where('handle', '==', handle));
-        const querySnapshot = await getDocs(q);
+        const membersQuery = query(
+          collection(db, 'communityMembers'),
+          where('communityId', '==', community.communityId)
+        );
+        const membersSnapshot = await getDocs(membersQuery);
         
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const communityData = { communityId: doc.id, ...doc.data() } as Community;
-          setCommunity(communityData);
-
-          // Fetch community members
-          const membersQuery = query(
-            collection(db, 'communityMembers'),
-            where('communityId', '==', communityData.communityId)
-          );
-          const membersSnapshot = await getDocs(membersQuery);
-          
-          const membersData: MemberData[] = membersSnapshot.docs.map(memberDoc => {
-            const data = memberDoc.data();
-            const userDetails = data.userDetails || {};
-            return {
-              id: memberDoc.id,
-              userId: data.userId || memberDoc.id,
-              name: userDetails.displayName || userDetails.name || data.displayName || 'Unknown',
-              email: userDetails.email || data.email,
-              phone: userDetails.phone || userDetails.phoneNumber || data.phone,
-              imageUrl: userDetails.photoURL || userDetails.avatarUrl || data.avatarUrl || '/default-avatar.png',
-              role: data.role,
-              joinedDate: data.joinedAt,
-              tags: data.tags || [],
-            };
-          });
-          setMembers(membersData);
-        }
+        const membersData: MemberData[] = membersSnapshot.docs.map(memberDoc => {
+          const data = memberDoc.data();
+          const userDetails = data.userDetails || {};
+          return {
+            id: memberDoc.id,
+            userId: data.userId || memberDoc.id,
+            name: userDetails.displayName || userDetails.name || data.displayName || 'Unknown',
+            email: userDetails.email || data.email,
+            phone: userDetails.phone || userDetails.phoneNumber || data.phone,
+            imageUrl: userDetails.photoURL || userDetails.avatarUrl || data.avatarUrl || '/default-avatar.png',
+            role: data.role,
+            joinedDate: data.joinedAt,
+            tags: data.tags || [],
+          };
+        });
+        setMembers(membersData);
       } catch (error) {
-        console.error('Error fetching community:', error);
+        console.error('Error fetching members:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCommunityAndMembers();
-  }, [handle]);
+    fetchMembers();
+  }, [community?.communityId, accessLoading]);
 
   // Subscribe to guestlists (events) - only those with eventDate
   useEffect(() => {
@@ -138,8 +138,12 @@ export default function SchedulePage() {
     }
   };
 
-  if (loading) {
+  if (accessLoading || loading) {
     return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!hasAccess) {
+    return null;
   }
 
   if (!community) {

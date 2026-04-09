@@ -11,6 +11,7 @@ import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleto
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { EnhancedBroadcastDialog } from '@/components/broadcast/enhanced-broadcast-dialog';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 
 interface MemberData {
   id: string;
@@ -26,7 +27,15 @@ interface MemberData {
 function BroadcastContent() {
   const params = useParams();
   const handle = params.handle as string;
-  const [community, setCommunity] = useState<Community | null>(null);
+  
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+  
   const [members, setMembers] = useState<MemberData[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,29 +43,16 @@ function BroadcastContent() {
   const [selection, setSelection] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const fetchCommunityAndMembers = async () => {
+    const fetchMembers = async () => {
+      if (!community?.communityId || accessLoading) return;
+      
       try {
         setIsLoading(true);
 
-        // Fetch community by handle
-        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
-        const communitySnapshot = await getDocs(communityQuery);
-        
-        if (communitySnapshot.empty) {
-          setIsLoading(false);
-          return;
-        }
-
-        const communityData = {
-          communityId: communitySnapshot.docs[0].id,
-          ...communitySnapshot.docs[0].data()
-        } as Community;
-        setCommunity(communityData);
-
-        // Fetch community members - use userDetails embedded in the member doc (same as members page)
+        // Fetch community members
         const membersQuery = query(
           collection(db, 'communityMembers'),
-          where('communityId', '==', communityData.communityId)
+          where('communityId', '==', community.communityId)
         );
         const membersSnapshot = await getDocs(membersQuery);
 
@@ -79,14 +75,14 @@ function BroadcastContent() {
         
         setMembers(membersData);
       } catch (error) {
-        console.error('Error fetching community and members:', error);
+        console.error('Error fetching members:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCommunityAndMembers();
-  }, [handle]);
+    fetchMembers();
+  }, [community?.communityId, accessLoading]);
   
   useEffect(() => {
     const newSelectedMembers = members.filter(m => selection.has(m.id));
@@ -115,8 +111,12 @@ function BroadcastContent() {
     </div>
   );
 
-  if (isLoading) {
+  if (accessLoading || isLoading) {
     return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!hasAccess) {
+    return null;
   }
 
   if (!community) {

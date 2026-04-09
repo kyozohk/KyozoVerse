@@ -15,56 +15,25 @@ import { DeleteCommunityDialog } from '@/components/community/delete-community-d
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { useAuth } from '@/hooks/use-auth';
-import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 
 export default function SettingsPage() {
   const params = useParams();
   const router = useRouter();
   const handle = params.handle as string;
-  const { user, loading: authLoading } = useAuth();
-  const [community, setCommunity] = useState<Community | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  
+  // Access control hook - only owner/admin can access settings
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin'],
+    redirectOnDenied: true,
+  });
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'guest'>('guest');
-  const { toast } = useToast();
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    const fetchCommunity = async () => {
-      try {
-        const communitiesRef = collection(db, 'communities');
-        const q = query(communitiesRef, where('handle', '==', handle));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const communityData = { communityId: doc.id, ...doc.data() } as Community;
-          setCommunity(communityData);
-
-          // Get user role if user is logged in
-          if (user) {
-            const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-            setUserRole(role);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching community:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load community data.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (handle) {
-      fetchCommunity();
-    }
-  }, [handle, user, authLoading, toast]);
 
   const handleDeleteSuccess = () => {
     toast({
@@ -74,8 +43,16 @@ export default function SettingsPage() {
     router.push('/');
   };
 
-  if (loading || authLoading) {
+  if (accessLoading) {
     return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (!community) {
+    return null;
   }
 
   if (!community) {

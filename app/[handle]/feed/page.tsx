@@ -8,7 +8,7 @@ import { collection, query, where, onSnapshot, orderBy, doc, getDoc, getDocs } f
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { FeedSkeletons } from '@/components/community/feed/skeletons';
-import { getUserRoleInCommunity, getCommunityByHandle } from '@/lib/community-utils';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 import { type Post, type User, type Community } from '@/lib/types';
 import { PostType } from '@/components/community/feed/create-post-buttons';
 import { CreatePostDialog } from '@/components/community/feed/create-post-dialog';
@@ -30,6 +30,14 @@ export default function CommunityFeedPage() {
   const params = useParams();
   const handle = params.handle as string;
 
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+
   const [posts, setPosts] = useState<(Post & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [communityLoading, setCommunityLoading] = useState(true);
@@ -37,8 +45,6 @@ export default function CommunityFeedPage() {
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [postType, setPostType] = useState<PostType>('text');
   const [editingPost, setEditingPost] = useState<(Post & { id: string }) | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [community, setCommunity] = useState<Community | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -47,41 +53,31 @@ export default function CommunityFeedPage() {
   const [memberCount, setMemberCount] = useState<number>(0);
 
   useEffect(() => {
-    async function fetchCommunityAndRole() {
-      if (!handle) return;
+    async function fetchMembers() {
+      if (!community?.communityId || accessLoading) return;
 
       try {
-        const communityData = await getCommunityByHandle(handle);
-        setCommunity(communityData);
-
-        if (communityData && user) {
-          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-          setUserRole(role);
-        }
-        
         // Fetch actual member count from communityMembers collection
-        if (communityData) {
-          const membersQuery = query(
-            collection(db, "communityMembers"), 
-            where("communityId", "==", communityData.communityId)
-          );
-          const membersSnapshot = await getDocs(membersQuery);
-          // Exclude owner from count
-          const nonOwnerCount = membersSnapshot.docs.filter(doc => {
-            const data = doc.data();
-            return data.role !== 'owner';
-          }).length;
-          setMemberCount(nonOwnerCount);
-        }
+        const membersQuery = query(
+          collection(db, "communityMembers"), 
+          where("communityId", "==", community.communityId)
+        );
+        const membersSnapshot = await getDocs(membersQuery);
+        // Exclude owner from count
+        const nonOwnerCount = membersSnapshot.docs.filter(doc => {
+          const data = doc.data();
+          return data.role !== 'owner';
+        }).length;
+        setMemberCount(nonOwnerCount);
       } catch (error) {
-        console.error('Error fetching community data:', error);
+        console.error('Error fetching member count:', error);
       } finally {
         setCommunityLoading(false);
       }
     }
 
-    fetchCommunityAndRole();
-  }, [handle, user]);
+    fetchMembers();
+  }, [community?.communityId, accessLoading]);
 
   useEffect(() => {
     if (!community?.communityId) {
@@ -224,8 +220,18 @@ export default function CommunityFeedPage() {
   const nonOwnerMembers = members.filter(m => m.role !== 'owner');
   const memberCountExcludingOwner = nonOwnerMembers.length;
 
-  if (communityLoading) {
+  // Show loading state while checking access
+  if (accessLoading || communityLoading) {
     return <PageLoadingSkeleton showFeed={true} />;
+  }
+
+  // If no access, hook will redirect automatically
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (!community) {
+    return null;
   }
 
   return (

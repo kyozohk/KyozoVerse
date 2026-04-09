@@ -12,6 +12,7 @@ import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleto
 import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
 import { GuestlistDetailDialog } from '@/components/guestlist/guestlist-detail-dialog';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 
 interface MemberData {
   id: string;
@@ -52,7 +53,15 @@ interface Guestlist {
 export default function GuestlistPage() {
   const params = useParams();
   const handle = params.handle as string;
-  const [community, setCommunity] = useState<Community | null>(null);
+  
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+  
   const [members, setMembers] = useState<MemberData[]>([]);
   const [guestlists, setGuestlists] = useState<Guestlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,23 +70,15 @@ export default function GuestlistPage() {
   const [editingGuestlist, setEditingGuestlist] = useState<Guestlist | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
-  // Fetch community and members
+  // Fetch members
   useEffect(() => {
-    const fetchCommunityAndMembers = async () => {
+    const fetchMembers = async () => {
+      if (!community?.communityId || accessLoading) return;
+      
       try {
-        const communitiesRef = collection(db, 'communities');
-        const q = query(communitiesRef, where('handle', '==', handle));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const communityData = { communityId: doc.id, ...doc.data() } as Community;
-          setCommunity(communityData);
-
-          // Fetch community members
-          const membersQuery = query(
-            collection(db, 'communityMembers'),
-            where('communityId', '==', communityData.communityId)
+        const membersQuery = query(
+          collection(db, 'communityMembers'),
+          where('communityId', '==', community.communityId)
           );
           const membersSnapshot = await getDocs(membersQuery);
           
@@ -97,16 +98,15 @@ export default function GuestlistPage() {
             };
           });
           setMembers(membersData);
-        }
       } catch (error) {
-        console.error('Error fetching community:', error);
+        console.error('Error fetching members:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCommunityAndMembers();
-  }, [handle]);
+    fetchMembers();
+  }, [community?.communityId, accessLoading]);
 
   // Subscribe to guestlists
   useEffect(() => {
@@ -156,6 +156,20 @@ export default function GuestlistPage() {
     setEditingGuestlist(guestlist);
     setIsCreateDialogOpen(true);
   };
+
+  // Show loading state while checking access
+  if (accessLoading || loading) {
+    return <PageLoadingSkeleton />;
+  }
+
+  // If no access, hook will redirect automatically
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (!community) {
+    return null;
+  }
 
   // Render functions for EnhancedListView
   const renderGuestlistGridItem = (guestlist: Guestlist) => (

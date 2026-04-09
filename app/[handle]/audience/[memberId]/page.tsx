@@ -27,7 +27,7 @@ import { Banner } from '@/components/ui/banner';
 import { MemberDialog } from '@/components/community/member-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,16 +55,21 @@ const getDefaultBanner = (memberId: string): string => {
 export default function MemberProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const { toast } = useToast();
   const { handle, memberId } = params as { handle: string; memberId: string };
   
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+  
   const [member, setMember] = useState<CommunityMember | null>(null);
-  const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {

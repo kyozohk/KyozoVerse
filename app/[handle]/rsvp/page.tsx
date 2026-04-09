@@ -14,7 +14,7 @@ import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleto
 import { CreateGuestlistDialog } from '@/components/guestlist/create-guestlist-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,7 +65,15 @@ export default function RsvpPage() {
   const handle = params.handle as string;
   const { user } = useAuth();
   const { toast } = useToast();
-  const [community, setCommunity] = useState<Community | null>(null);
+  
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+  
   const [members, setMembers] = useState<MemberData[]>([]);
   const [rsvpLists, setRsvpLists] = useState<RsvpList[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,26 +81,14 @@ export default function RsvpPage() {
   const [editingRsvp, setEditingRsvp] = useState<RsvpList | null>(null);
   const [expandedRsvp, setExpandedRsvp] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null); // tracks 'rsvpId' or 'rsvpId-memberId'
-  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'guest'>('guest');
   const [deleteTarget, setDeleteTarget] = useState<RsvpList | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!community?.communityId || accessLoading) return;
+      
       try {
-        const commQ = query(collection(db, 'communities'), where('handle', '==', handle));
-        const commSnap = await getDocs(commQ);
-        if (commSnap.empty) { setLoading(false); return; }
-
-        const commDoc = commSnap.docs[0];
-        const communityData = { communityId: commDoc.id, ...commDoc.data() } as Community;
-        setCommunity(communityData);
-
-        if (user) {
-          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-          setUserRole(role);
-        }
-
-        const memQ = query(collection(db, 'communityMembers'), where('communityId', '==', communityData.communityId));
+        const memQ = query(collection(db, 'communityMembers'), where('communityId', '==', community.communityId));
         const memSnap = await getDocs(memQ);
         const membersData: MemberData[] = memSnap.docs.map(d => {
           const data = d.data();
@@ -117,7 +113,7 @@ export default function RsvpPage() {
       }
     };
     fetchData();
-  }, [handle, user]);
+  }, [community?.communityId, accessLoading]);
 
   useEffect(() => {
     if (!community?.communityId || !user) return;
@@ -133,6 +129,27 @@ export default function RsvpPage() {
   }, [community?.communityId, user]);
 
   const canManage = userRole === 'owner' || userRole === 'admin';
+
+  // Show loading state while checking access
+  if (accessLoading || loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no access, hook will redirect automatically
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (!community) {
+    return null;
+  }
 
   const handleRsvpCreated = async (rsvp: any) => {
     if (!community || !rsvp.id) return;
@@ -272,9 +289,9 @@ export default function RsvpPage() {
           />
 
           <div className="px-6 pt-6 pb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-4 max-w-full">
               {rsvpLists.length === 0 ? (
-                <div className="col-span-full text-center py-16 rounded-xl" style={{ backgroundColor: '#FAF8F5', border: '1px dashed #E8DFD1' }}>
+                <div className="text-center py-16 rounded-xl" style={{ backgroundColor: '#FAF8F5', border: '1px dashed #E8DFD1' }}>
                   <Mail className="h-12 w-12 mx-auto mb-3" style={{ color: '#D8CFC0' }} />
                   <p className="text-base font-medium" style={{ color: '#8B7355' }}>No RSVP lists yet</p>
                   {canManage && <p className="text-sm mt-1" style={{ color: '#B0A090' }}>Create an RSVP list to send confirmation emails to members</p>}

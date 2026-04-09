@@ -18,7 +18,7 @@ import { addTagsToCommunity } from '@/lib/community-tags';
 import { useAuth } from '@/hooks/use-auth';
 import { Tag, Zap, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getUserRoleInCommunity } from '@/lib/community-utils';
+import { useCommunityAccess } from '@/hooks/use-community-access';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 import { ImportMembersDialog } from '@/components/community/import-members-dialog';
@@ -41,14 +41,21 @@ function MembersContent() {
   const handle = params.handle as string;
   const { user } = useAuth();
   const { toast } = useToast();
-  const [community, setCommunity] = useState<Community | null>(null);
+  
+  // Access control hook
+  const { community, userRole, loading: accessLoading, hasAccess } = useCommunityAccess({
+    handle,
+    requireAuth: true,
+    allowedRoles: ['owner', 'admin', 'member'],
+    redirectOnDenied: true,
+  });
+  
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
@@ -75,34 +82,21 @@ function MembersContent() {
     };
   };
 
-  // Initial load - fetch community and first page of members
+  // Initial load - fetch first page of members
   useEffect(() => {
-    const fetchCommunityAndMembers = async () => {
+    const fetchMembers = async () => {
+      if (!community?.communityId || accessLoading) return;
+      
       try {
         setIsLoading(true);
         setMembers([]);
         setLastDoc(null);
         setHasMore(true);
 
-        // Fetch community by handle
-        const communityQuery = query(collection(db, 'communities'), where('handle', '==', handle));
-        const communitySnapshot = await getDocs(communityQuery);
-        
-        if (communitySnapshot.empty) {
-          setIsLoading(false);
-          return;
-        }
-
-        const communityData = {
-          communityId: communitySnapshot.docs[0].id,
-          ...communitySnapshot.docs[0].data()
-        } as Community;
-        setCommunity(communityData);
-
-        // Fetch first page of community members using userDetails from the member doc
+        // Fetch first page of community members
         const membersQuery = query(
           collection(db, 'communityMembers'),
-          where('communityId', '==', communityData.communityId),
+          where('communityId', '==', community.communityId),
           orderBy('joinedAt', 'desc'),
           limit(PAGE_SIZE)
         );
@@ -116,21 +110,15 @@ function MembersContent() {
         setMembers(membersData);
         setLastDoc(membersSnapshot.docs[membersSnapshot.docs.length - 1] || null);
         setHasMore(membersSnapshot.docs.length === PAGE_SIZE);
-        
-        // Fetch user role
-        if (user && communityData) {
-          const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
-          setUserRole(role);
-        }
       } catch (error) {
-        console.error('Error fetching community and members:', error);
+        console.error('Error fetching members:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCommunityAndMembers();
-  }, [handle, user, refreshKey]);
+    fetchMembers();
+  }, [community?.communityId, accessLoading, refreshKey]);
 
   // Load more members (infinite scroll)
   const loadMoreMembers = async () => {
@@ -264,6 +252,32 @@ function MembersContent() {
   };
 
   const canManage = userRole === 'owner' || userRole === 'admin';
+
+  // Show loading state while checking access
+  if (accessLoading) {
+    return <PageLoadingSkeleton />;
+  }
+
+  // If no access, hook will redirect automatically
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (isLoading) {
+    return <PageLoadingSkeleton showMemberList={true} />;
+  }
+
+  if (!community) {
+    return (
+      <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+        <div className="p-8">
+          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+            <p>Community not found</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Handle member selection toggle
   const handleToggleMemberSelection = (member: MemberData) => {
