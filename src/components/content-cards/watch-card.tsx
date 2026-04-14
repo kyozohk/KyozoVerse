@@ -227,19 +227,20 @@ export function WatchCard({ category, title, imageUrl, imageHint, isPrivate, pos
             </div>
         )}
         
-        {isPlaying && post.content.mediaUrls?.[0] ? (
-            <video 
+        {post.content.mediaUrls?.[0] && (
+            <video
                 ref={videoRef}
                 src={post.content.mediaUrls[0]}
-                className="absolute inset-0 w-full h-full object-cover z-20"
-                autoPlay
-                controls
+                className={`absolute inset-0 w-full h-full object-cover z-20 ${isPlaying ? '' : 'invisible pointer-events-none'}`}
+                autoPlay={isPlaying}
+                controls={isPlaying}
+                preload="metadata"
                 poster={thumbnail}
                 onPause={() => setIsPlaying(false)}
                 onPlay={() => setIsPlaying(true)}
                 onEnded={handleVideoEnded}
             />
-        ) : null}
+        )}
 
         <div className="relative z-10 p-4 md:p-6 flex flex-col justify-between h-full min-h-[400px]">
             <div className="flex justify-between items-start">
