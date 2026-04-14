@@ -11,7 +11,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   
   // Check if we're on a main route (not inside a community)
   // Main routes are exact matches - community routes have handles like /kyozo-demo-community
-  const isMainRoute = pathname === '/communities' || pathname === '/analytics' || pathname === '/subscription' || pathname === '/account';
+  const isMainRoute = pathname === '/communities' || pathname === '/analytics' || pathname === '/subscription' || pathname === '/account' || pathname === '/settings/team';
 
   if (!showSidebar) {
     return <>{children}</>;

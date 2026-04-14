@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { CustomButton, CustomFormDialog, Input, PasswordInput, PhoneInput, Checkbox } from '@/components/ui';
+import { CustomButton, CustomFormDialog, Input, PasswordInput } from '@/components/ui';
 import { RequestAccessDialog } from '@/components/auth/request-access-dialog';
 import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
 import { ResetPasswordDialog } from '@/components/auth/reset-password-dialog';
@@ -27,53 +27,40 @@ export default function Home() {
   const router = useRouter();
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [signUpEmail, setSignUpEmail] = useState('');
-  const [signUpPassword, setSignUpPassword] = useState('');
-  const [signUpFirstName, setSignUpFirstName] = useState('');
-  const [signUpLastName, setSignUpLastName] = useState('');
-  const [signUpPhone, setSignUpPhone] = useState('');
-  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signUpError, setSignUpError] = useState<string | null>(null);
-  const { user, signIn, signOut, signUp, loading } = useAuth();
+  const { user, signIn, signOut, loading, platformAccess } = useAuth();
 
   useEffect(() => {
     // If the user is logged in (owner/leader), redirect them to the communities dashboard
     if (user) {
       router.replace('/communities');
     }
-  }, [user, router]);
+    // Show error if a member-only user attempted to log in
+    if (platformAccess === 'denied') {
+      setIsSignInOpen(true);
+      setError('Access denied. This platform is for community owners and admins only. Please use kyozo.com to access your member account.');
+    }
+  }, [user, router, platformAccess]);
 
 
   const openWaitlist = () => {
     setIsSignInOpen(false);
-    setIsSignUpOpen(false);
     setIsResetPasswordOpen(false);
     setIsWaitlistOpen(true);
   };
 
   const openSignIn = () => {
     setIsWaitlistOpen(false);
-    setIsSignUpOpen(false);
     setIsResetPasswordOpen(false);
     setIsSignInOpen(true);
   };
 
-  const openSignUp = () => {
-    setIsWaitlistOpen(false);
-    setIsSignInOpen(false);
-    setIsResetPasswordOpen(false);
-    setIsSignUpOpen(true);
-  };
-
   const openResetPassword = () => {
     setIsSignInOpen(false);
-    setIsSignUpOpen(false);
     setIsWaitlistOpen(false);
     setIsResetPasswordOpen(true);
   };
@@ -82,8 +69,8 @@ export default function Home() {
     setError(null);
     try {
       await signIn(email, password);
+      // Platform access check happens in onAuthStateChanged — if denied, platformAccess will be 'denied'
       setIsSignInOpen(false);
-      // The auth provider will handle the redirect
     } catch (error: any) {
         let description = "An unexpected error occurred. Please try again.";
         if (error instanceof FirebaseError) {
@@ -94,53 +81,9 @@ export default function Home() {
         setError(description);
     }
   };
-
-  const handleSignUp = async () => {
-    setSignUpError(null);
-    try {
-      if (!signUpFirstName || !signUpLastName || !signUpPhone || !signUpEmail || !signUpPassword) {
-        const missing: string[] = [];
-        if (!signUpFirstName) missing.push('First Name');
-        if (!signUpLastName) missing.push('Last Name');
-        if (!signUpPhone) missing.push('Phone Number');
-        if (!signUpEmail) missing.push('Email');
-        if (!signUpPassword) missing.push('Password');
-        setSignUpError(`Please fill in: ${missing.join(', ')}.`);
-        return;
-      }
-      if (!agreedToPrivacy) {
-        setSignUpError("Please agree to the Privacy Policy to continue.");
-        return;
-      }
-      if (signUpPassword.length < 6) {
-        setSignUpError("Password must be at least 6 characters.");
-        return;
-      }
-      // Clean phone number: remove + and spaces
-      const cleanPhone = signUpPhone.replace(/[\s+]/g, '');
-      const displayName = `${signUpFirstName} ${signUpLastName}`;
-      
-      // TODO: Store cleanPhone in user profile
-      await signUp(signUpEmail, signUpPassword, { displayName });
-      setIsSignUpOpen(false);
-      // The auth provider will handle the redirect
-    } catch (error: any) {
-        let description = "An unexpected error occurred. Please try again.";
-        if (error instanceof FirebaseError) {
-            if (error.code === 'auth/email-already-in-use') {
-                description = "This email is already in use. Please sign in instead.";
-            } else if (error.code === 'auth/invalid-email') {
-                description = "Invalid email address.";
-            } else if (error.code === 'auth/weak-password') {
-                description = "Password is too weak. Please use a stronger password.";
-            }
-        }
-        setSignUpError(description);
-    }
-  };
   
-    // If the user is logged in, we render null while the useEffect redirects
-    if (user || loading) {
+    // Show spinner while auth or platform access check is in progress
+    if (user || loading || platformAccess === 'loading') {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -289,106 +232,7 @@ export default function Home() {
             </div>
 
             <div className="text-center text-sm text-muted-foreground mt-4">
-              Want to create communities? <button type="button" className="text-primary hover:underline" onClick={openSignUp}>Sign Up</button>
-            </div>
-            <div className="text-center text-sm text-muted-foreground mt-2">
-              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
-            </div>
-          </div>
-        </div>
-      </CustomFormDialog>
-
-      <CustomFormDialog 
-        open={isSignUpOpen} 
-        onOpenChange={setIsSignUpOpen}
-        title="Create Your Account"
-        description="Sign up to create and manage your own communities on Kyozo."
-      >
-        <div className="flex flex-col h-full">
-            <div className="flex-grow space-y-4 overflow-y-auto pr-2">
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="First Name"
-                type="text"
-                value={signUpFirstName}
-                onChange={(e) => setSignUpFirstName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-              />
-              <Input
-                label="Last Name"
-                type="text"
-                value={signUpLastName}
-                onChange={(e) => setSignUpLastName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-              />
-            </div>
-            <PhoneInput
-              label="Phone Number"
-              value={signUpPhone}
-              onChange={(value) => setSignUpPhone(value)}
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={signUpEmail}
-              onChange={(e) => setSignUpEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-            />
-            <div>
-              <PasswordInput
-                label="Password"
-                value={signUpPassword}
-                onChange={(e) => setSignUpPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
-              />
-              {signUpPassword && signUpPassword.length < 6 && (
-                <p className="text-xs text-amber-600 mt-1">Password must be at least 6 characters</p>
-              )}
-              {signUpPassword && signUpPassword.length >= 6 && signUpPassword.length < 10 && (
-                <p className="text-xs text-amber-600 mt-1">Tip: Use 10+ characters with numbers and symbols for a stronger password</p>
-              )}
-              {signUpPassword && signUpPassword.length >= 10 && (
-                <p className="text-xs text-green-600 mt-1">Strong password</p>
-              )}
-            </div>
-            <div className="mt-3">
-              <Checkbox
-                checked={agreedToPrivacy}
-                onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
-                label={
-                  <span className="text-sm text-gray-700">
-                    I agree to the{' '}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowPrivacyDialog(true);
-                      }}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Privacy Policy
-                    </button>
-                  </span>
-                }
-              />
-            </div>
-          </div>
-          {signUpError && (
-            <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
-              {signUpError}
-            </div>
-          )}
-          
-          <div className="mt-6 flex-shrink-0">
-            <div className="mb-4">
-              <CustomButton onClick={handleSignUp} className="w-full">Create Account</CustomButton>
-            </div>
-
-            <div className="text-center text-sm text-muted-foreground mt-4">
-              Already have an account? <button type="button" className="text-primary hover:underline" onClick={openSignIn}>Sign In</button>
-            </div>
-            <div className="text-center text-sm text-muted-foreground mt-2">
-              Just browsing? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
+              Don&apos;t have access? <button type="button" className="text-primary hover:underline" onClick={openWaitlist}>Join the waitlist</button>
             </div>
           </div>
         </div>

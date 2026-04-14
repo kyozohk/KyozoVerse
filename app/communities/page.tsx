@@ -11,6 +11,7 @@ import { CreateCommunityDialog } from '@/components/community/create-community-d
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
+import { usePlatformRole } from '@/hooks/use-platform-role';
 import { Community } from '@/lib/types';
 
 type CommunityWithId = Community & { id: string };
@@ -20,6 +21,7 @@ function CommunitiesContent() {
   const [communities, setCommunities] = useState<CommunityWithId[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { role: platformRole, permissions } = usePlatformRole();
 
   const fetchCommunities = async () => {
     if (!user) {
@@ -40,8 +42,21 @@ function CommunitiesContent() {
         ...doc.data(),
       } as CommunityWithId));
 
+      // community_creator only sees their own communities — skip the admin-member lookup
+      if (platformRole === 'community_creator') {
+        const withCounts = await Promise.all(ownedCommunities.map(async (community) => {
+          try {
+            const countSnap = await getCountFromServer(query(collection(db, 'communityMembers'), where('communityId', '==', community.communityId)));
+            return { ...community, memberCount: countSnap.data().count };
+          } catch { return { ...community, memberCount: community.memberCount || 0 }; }
+        }));
+        setCommunities(withCounts);
+        return;
+      }
+
+      // Only include communities where user is admin — NOT plain members
       const membersRef = collection(db, 'communityMembers');
-      const memberQuery = query(membersRef, where('userId', '==', user.uid));
+      const memberQuery = query(membersRef, where('userId', '==', user.uid), where('role', 'in', ['admin', 'owner']));
       
       const memberSnapshot = await getDocs(memberQuery);
       const memberCommunityIds = memberSnapshot.docs.map(doc => doc.data().communityId);
@@ -113,7 +128,8 @@ function CommunitiesContent() {
 
   useEffect(() => {
     fetchCommunities();
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, platformRole]);
 
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -133,10 +149,12 @@ function CommunitiesContent() {
         title="Communities"
         description="Manage your communities or create a new one."
         actions={
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Community
-          </Button>
+          permissions?.canCreateCommunity ? (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Community
+            </Button>
+          ) : undefined
         }
       />
       <EnhancedListView

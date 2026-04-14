@@ -7,11 +7,12 @@ import {
     CreditCard,
     Settings,
     LayoutGrid,
-    User,
+    Users,
     LogOut
 } from 'lucide-react';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { useAuth } from '@/hooks/use-auth';
+import { usePlatformRole } from '@/hooks/use-platform-role';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -22,14 +23,16 @@ interface MainSidebarProps {
 
 export default function MainSidebar({ expanded = false }: MainSidebarProps) {
     const { user } = useAuth();
+    const { role } = usePlatformRole();
     const router = useRouter();
 
     const navItems = [
-        { href: '/communities', icon: <LayoutGrid />, label: 'Communities' },
-        { href: '/analytics', icon: <BarChart3 />, label: 'Analytics' },
-        { href: '/subscription', icon: <CreditCard />, label: 'Subscription' },
-        { href: '/account', icon: <Settings />, label: 'Settings' },
-    ];
+        { href: '/communities', icon: <LayoutGrid />, label: 'Communities', show: true },
+        { href: '/analytics', icon: <BarChart3 />, label: 'Analytics', show: role === 'owner' || role === 'admin' || role === 'read_only' },
+        { href: '/subscription', icon: <CreditCard />, label: 'Subscription', show: role === 'owner' },
+        { href: '/account', icon: <Settings />, label: 'Settings', show: true },
+        { href: '/settings/team', icon: <Users />, label: 'Team', show: role === 'owner' },
+    ].filter(item => item.show);
 
     const handleLogout = async () => {
         try {
