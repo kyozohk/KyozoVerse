@@ -19,9 +19,11 @@ import { CreateCommunityDialog } from '../community/create-community-dialog';
 import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { communityNavItems } from '@/lib/theme-utils';
 import { RoundImage } from '@/components/ui/round-image';
+import { usePlatformRole } from '@/hooks/use-platform-role';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
+  const { permissions, loading: roleLoading } = usePlatformRole();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -30,6 +32,8 @@ export default function CommunitySidebar() {
   const [selectedCommunityHandle, setSelectedCommunityHandle] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [showCommunityList, setShowCommunityList] = useState(false);
+
+  const canCreateCommunity = !roleLoading && !!permissions?.canCreateCommunity;
 
   useEffect(() => {
     const pathParts = pathname.split('/');
@@ -130,7 +134,11 @@ export default function CommunitySidebar() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={() => {
+                if (!canCreateCommunity) return;
+                setIsCreateDialogOpen(true);
+              }}
+              disabled={!canCreateCommunity}
             >
               <PlusCircle className="h-5 w-5" />
             </Button>
@@ -207,7 +215,15 @@ export default function CommunitySidebar() {
               </button>
             ) : (
               <div className="w-full px-2">
-                <Button variant="outline" className="w-full" onClick={() => setIsCreateDialogOpen(true)}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    if (!canCreateCommunity) return;
+                    setIsCreateDialogOpen(true);
+                  }}
+                  disabled={!canCreateCommunity}
+                >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create Community
                 </Button>

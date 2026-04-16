@@ -11,6 +11,7 @@ import { CreateCommunityDialog } from '@/components/community/create-community-d
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
+import { usePlatformRole } from '@/hooks/use-platform-role';
 import { Community } from '@/lib/types';
 
 type CommunityWithId = Community & { id: string; tags?: string[] };
@@ -20,7 +21,10 @@ function CommunitiesContent() {
   const [communities, setCommunities] = useState<CommunityWithId[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { permissions, loading: roleLoading } = usePlatformRole();
   const [availableTags, setAvailableTags] = useState<{ id: string; name: string }[]>([]);
+
+  const canCreateCommunity = !roleLoading && !!permissions?.canCreateCommunity;
 
   const fetchCommunities = async () => {
     if (!user) {
@@ -122,7 +126,13 @@ function CommunitiesContent() {
         title="Communities"
         description="Manage your communities or create a new one."
         actions={
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              if (!canCreateCommunity) return;
+              setIsCreateDialogOpen(true);
+            }}
+            disabled={!canCreateCommunity}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Create Community
           </Button>

@@ -54,7 +54,7 @@ export function CommunityHeader({ community, userRole, onEdit, onDelete, onAddMe
     return unsubscribe;
   }, []);
 
-  const isSuperAdmin = currentUser?.email === 'dev@kyozo.com' || currentUser?.email === 'admin@kyozo.com';
+  const isSuperAdmin = currentUser?.email === 'dev@kyozo.com' || currentUser?.email === 'ashok@kyozo.com';
   const canAccessSettings = userRole === 'owner' || isSuperAdmin;
 
   useEffect(() => {

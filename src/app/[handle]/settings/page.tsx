@@ -12,6 +12,8 @@ import { Settings, Trash2, AlertTriangle } from 'lucide-react';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export default function CommunitySettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -24,6 +26,7 @@ export default function CommunitySettingsPage() {
   const [userRole, setUserRole] = useState<UserRole>('guest');
   const [loading, setLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,12 +42,21 @@ export default function CommunitySettingsPage() {
         if (communityData && user) {
           const role = await getUserRoleInCommunity(user.uid, communityData.communityId);
           setUserRole(role);
-          
-          // Check if user is super admin
-          const isSuperAdmin = user.email === 'dev@kyozo.com' || user.email === 'admin@kyozo.com';
+
+          const superAdminQuery = query(
+            collection(db, 'workspaceMembers'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'active')
+          );
+          const superAdminSnapshot = await getDocs(superAdminQuery);
+          const superAdmin = superAdminSnapshot.docs.some((doc) => {
+            const data = doc.data() as { role?: string };
+            return data.role === 'admin' || data.role === 'owner';
+          });
+          setIsSuperAdmin(superAdmin);
           
           // Only owners or super admins can access settings
-          if (role !== 'owner' && !isSuperAdmin) {
+          if (role !== 'owner' && !superAdmin) {
             toast({
               title: "Access Denied",
               description: "Only community owners can access settings.",
@@ -92,12 +104,9 @@ export default function CommunitySettingsPage() {
     return <div className="p-8 text-center text-foreground">Community not found.</div>;
   }
 
-  if (userRole !== 'owner') {
+  if (userRole !== 'owner' && !isSuperAdmin) {
     return <div className="p-8 text-center text-foreground">Access denied.</div>;
   }
-
-  // Check if user is super admin for enhanced permissions
-  const isSuperAdmin = user?.email === 'dev@kyozo.com' || user?.email === 'admin@kyozo.com';
 
   return (
     <div className="space-y-8">

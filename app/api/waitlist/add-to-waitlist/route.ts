@@ -7,11 +7,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, firstName, lastName, phone, newsletter, whatsapp } = body;
 
-    if (!email || !firstName || !lastName) {
+    const normalizedEmail = (email || '').toString().trim().toLowerCase();
+
+    if (!normalizedEmail || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    console.log('✅ Adding to waitlist:', email);
+    console.log('✅ Adding to waitlist:', normalizedEmail);
 
     // Check if Firebase Admin is properly configured
     if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
@@ -24,21 +26,31 @@ export async function POST(request: Request) {
     }
 
     try {
-      // Store in Firestore
-      const waitlistRef = db.collection('waitlist');
-      
-      // Check if already exists
-      const existingSnapshot = await waitlistRef.where('email', '==', email).get();
-      
-      if (!existingSnapshot.empty) {
-        return NextResponse.json({ 
+      const accessRequestsRef = db.collection('accessRequests');
+      const docRef = accessRequestsRef.doc(normalizedEmail);
+
+      const existingDoc = await docRef.get();
+      if (existingDoc.exists) {
+        await docRef.set(
+          {
+            email: normalizedEmail,
+            firstName,
+            lastName,
+            phone,
+            newsletter: !!newsletter,
+            whatsapp: !!whatsapp,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        return NextResponse.json({
           message: 'User already in waitlist',
-          requestId: existingSnapshot.docs[0].id
+          requestId: docRef.id,
         }, { status: 200 });
       }
 
-      const docRef = await waitlistRef.add({
-        email,
+      await docRef.set({
+        email: normalizedEmail,
         firstName,
         lastName,
         phone,

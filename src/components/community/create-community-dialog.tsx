@@ -104,9 +104,6 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     const [selectedColor, setSelectedColor] = useState('#843484');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [planLimitReached, setPlanLimitReached] = useState(false);
-    const [communityCount, setCommunityCount] = useState(0);
-    const PLAN_LIMIT = 5; // TODO: Fetch from user's subscription plan
     
     useEffect(() => {
         if (isOpen) {
@@ -123,7 +120,6 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 setTags(existingCommunity.tags || []);
                 setProfileImageUrl(existingCommunity.communityProfileImage || null);
                 setBackgroundImageUrl(existingCommunity.communityBackgroundImage || null);
-                setPlanLimitReached(false); // Editing doesn't count against limit
             } else {
                 // Reset form when creating a new community
                 setFormData({ name: '', handle: '', lore: '', mantras: '', location: '', communityPrivacy: 'public', leaderName: '' });
@@ -133,32 +129,6 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 setBackgroundImageFile(null);
                 setProfileImageUrl(null);
                 setBackgroundImageUrl(null);
-                
-                // Check plan limits early for new communities
-                if (user) {
-                    const checkPlanLimit = async () => {
-                        try {
-                            const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
-                            const ownedSnap = await getDocs(ownedQuery);
-                            const count = ownedSnap.size;
-                            setCommunityCount(count);
-                            
-                            if (count >= PLAN_LIMIT) {
-                                setPlanLimitReached(true);
-                                toast({
-                                    title: "Plan Limit Reached",
-                                    description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
-                                    variant: "destructive",
-                                });
-                            } else {
-                                setPlanLimitReached(false);
-                            }
-                        } catch (err) {
-                            console.error('Error checking plan limits:', err);
-                        }
-                    };
-                    checkPlanLimit();
-                }
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,16 +174,6 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     };
 
     const handleNext = async () => {
-        // Check plan limit before allowing to proceed (for new communities)
-        if (!existingCommunity && planLimitReached) {
-            toast({
-                title: "Plan Limit Reached",
-                description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
-                variant: "destructive",
-            });
-            return;
-        }
-        
         // Validate required fields on step 1
         if (currentStep === 0) {
             if (!formData.name.trim()) {
@@ -462,27 +422,6 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             return;
         }
 
-        // Check plan limits before creating (Basic plan = 1 community)
-        if (!existingCommunity) {
-            try {
-                const ownedQuery = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
-                const ownedSnap = await getDocs(ownedQuery);
-                const communityCount = ownedSnap.size;
-                // Basic/Free plan limit: 1 community (can be adjusted per plan)
-                const PLAN_LIMIT = 5; // TODO: Fetch from user's subscription plan
-                if (communityCount >= PLAN_LIMIT) {
-                    toast({
-                        title: "Plan Limit Reached",
-                        description: `You've reached your plan limit of ${PLAN_LIMIT} communities. Upgrade your plan to create more.`,
-                        variant: "destructive",
-                    });
-                    return;
-                }
-            } catch (err) {
-                console.error('Error checking plan limits:', err);
-            }
-        }
-
         setIsSubmitting(true);
 
         const finalHandle = formData.handle || sanitizeHandle(formData.name);
@@ -635,41 +574,24 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
 
     return (
         <CustomFormDialog
-            open={isOpen} 
+            open={isOpen}
             onOpenChange={onOpenChange}
-            title={existingCommunity ? 'Edit Community' : 'Create a New Community'}
-            description={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`}
-            size="xl"
+            title={existingCommunity ? 'Edit Community' : 'Create Community'}
+            description={existingCommunity ? 'Update your community details.' : 'Create a new community and customize it.'}
         >
             <div className="flex flex-col h-full">
-                {/* Plan limit indicator for new communities */}
-                {!existingCommunity && (
-                    <div className={`px-4 py-2 rounded-lg mb-4 text-sm ${planLimitReached ? 'bg-red-50 border border-red-200' : 'bg-blue-50 border border-blue-200'}`}>
-                        {planLimitReached ? (
-                            <p className="text-red-700 font-medium">
-                                ⚠️ Plan limit reached: {communityCount}/{PLAN_LIMIT} communities created. Upgrade to create more.
-                            </p>
-                        ) : (
-                            <p className="text-blue-700">
-                                📊 Communities: {communityCount}/{PLAN_LIMIT} used
-                            </p>
-                        )}
-                    </div>
-                )}
-                
-                <div className="flex-grow space-y-4 pt-4 overflow-y-auto">
-                    
+                <div className="flex-grow overflow-y-auto">
                     {currentStep === 0 && (
-                        <div className="space-y-4">
+                        <div className="space-y-6">
+                            <Input label="Community Name" value={formData.name} onChange={(e) => handleValueChange('name', e.target.value)} />
+                            {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
+
                             <div>
-                                <Input label="Community Name *" value={formData.name} onChange={(e) => { handleValueChange('name', e.target.value); setFormErrors({}); }} />
-                                {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
-                            </div>
-                            <div>
-                                <Input label="Custom Handle (URL slug)" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} />
+                                <Input label="Handle" value={formData.handle} onChange={(e) => handleValueChange('handle', e.target.value)} />
                                 <p className="text-xs text-muted-foreground mt-1">This becomes the URL: pro.kyozo.com/{formData.handle || 'your-handle'}</p>
                                 {formErrors.handle && <p className="text-xs text-red-500 mt-1">{formErrors.handle}</p>}
                             </div>
+
                             <Textarea label="Description" value={formData.lore} onChange={(e) => handleValueChange('lore', e.target.value)} rows={2} placeholder="Tell people what your community is about..." />
                             <Textarea label="Tagline" value={formData.mantras} onChange={(e) => handleValueChange('mantras', e.target.value)} rows={2} placeholder="A short motto or mission statement" />
                             <TagInput tags={tags} setTags={setTags} />
@@ -682,8 +604,9 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                             </div>
                         </div>
                     )}
+
                     {currentStep === 1 && (
-                         <div className="space-y-6">
+                        <div className="space-y-6">
                             <div>
                                 <Input label="Community Leader Name" value={formData.leaderName} onChange={(e) => handleValueChange('leaderName', e.target.value)} />
                                 <p className="text-xs text-muted-foreground mt-1">Name shown in broadcast templates and community emails</p>
@@ -728,7 +651,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     )}
                 </div>
 
-                 <div className="mt-8 grid grid-cols-2 gap-4 flex-shrink-0 pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
+                <div className="mt-8 grid grid-cols-2 gap-4 flex-shrink-0 pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
                     {currentStep > 0 ? (
                         <CustomButton variant="outline" onClick={handlePrev} className="w-full py-3 text-base font-medium" style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>
                             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -737,7 +660,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                     ) : (
                         <CustomButton variant="outline" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium" style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>Cancel</CustomButton>
                     )}
-                    
+
                     {currentStep < STEPS.length - 1 ? (
                         <CustomButton 
                             onClick={handleNext} 

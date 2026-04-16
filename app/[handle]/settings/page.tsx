@@ -2,8 +2,6 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Globe, Lock, Settings, Bell, Shield, Palette, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
@@ -235,16 +233,7 @@ export default function SettingsPage() {
         existingCommunity={community}
         onCommunityUpdated={() => {
           setIsEditDialogOpen(false);
-          const fetchUpdated = async () => {
-            const commRef = collection(db, 'communities');
-            const q = query(commRef, where('handle', '==', handle));
-            const snap = await getDocs(q);
-            if (!snap.empty) {
-              const d = snap.docs[0];
-              setCommunity({ communityId: d.id, ...d.data() } as Community);
-            }
-          };
-          fetchUpdated();
+          router.refresh();
         }}
       />
     </div>

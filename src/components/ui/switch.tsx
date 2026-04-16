@@ -26,7 +26,11 @@ const Switch = React.forwardRef<
       className={cn(
         "pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
       )}
-      style={{ backgroundColor: 'hsl(var(--primary-foreground))' }}
+      style={{
+        backgroundColor: props.checked
+          ? 'hsl(var(--primary-foreground))'
+          : 'hsl(var(--background))',
+      }}
     />
   </SwitchPrimitives.Root>
 ))

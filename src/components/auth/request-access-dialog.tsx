@@ -66,12 +66,13 @@ export function RequestAccessDialog({ open, onOpenChange }: RequestAccessDialogP
       phone: cleanPhone,
       email: formData.get('email') as string,
       newsletter,
-      whatsapp
+      whatsapp,
+      agreedToPrivacy,
+      source: 'kyozoverse_waitlist_modal',
     };
     
     try {
-      // Send notification email to admin with user data
-      const response = await fetch('/api/send-invite', {
+      const response = await fetch('/api/waitlist/join', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

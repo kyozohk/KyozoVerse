@@ -11,11 +11,38 @@ export function initAdmin() {
     try {
       // Try to parse service account if available
       const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
       
       if (serviceAccountKey) {
-        const serviceAccount = JSON.parse(serviceAccountKey);
+        let serviceAccount: any;
+        try {
+          serviceAccount = JSON.parse(serviceAccountKey);
+        } catch {
+          // Some environments inject the JSON with literal newlines inside the private_key string,
+          // which breaks JSON.parse with "Bad control character".
+          serviceAccount = JSON.parse(serviceAccountKey.replace(/\n/g, '\\n'));
+        }
+
+        if (serviceAccount?.private_key && typeof serviceAccount.private_key === 'string') {
+          serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
+
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
+        });
+      } else if (projectId && clientEmail && privateKeyRaw) {
+        const privateKey = privateKeyRaw
+          .replace(/^"|"$/g, '')
+          .replace(/\\n/g, '\n');
+
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          }),
         });
       } else {
         // For development, use a minimal config with a project ID

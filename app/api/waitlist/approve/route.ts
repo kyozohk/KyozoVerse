@@ -7,12 +7,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { requestId } = body;
 
-    if (!requestId) {
+    const normalizedRequestId = (requestId || '').toString().trim().toLowerCase();
+
+    if (!normalizedRequestId) {
       return NextResponse.json({ error: 'Request ID is required' }, { status: 400 });
     }
 
     // Get the waitlist request
-    const requestRef = db.collection('waitlist').doc(requestId);
+    const requestRef = db.collection('accessRequests').doc(normalizedRequestId);
     const requestDoc = await requestRef.get();
 
     if (!requestDoc.exists) {
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
       updatedAt: FieldValue.serverTimestamp()
     });
 
-    console.log('✅ Waitlist request approved:', requestId);
+    console.log('✅ Waitlist request approved:', normalizedRequestId);
 
     // Generate registration link
     const siteUrl = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:8003';
