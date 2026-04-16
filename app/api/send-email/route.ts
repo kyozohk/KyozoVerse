@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const RESEND_FROM = process.env.RESEND_FROM;
 
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY is not configured');
@@ -71,8 +72,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the verified Kyozo domain for sending emails (contact.kyozo.com is verified on Resend)
-    const fromAddress = from || 'Kyozo <noreply@contact.kyozo.com>';
+    // Use the verified Kyozo domain for sending emails (contact.kyozo.com should be verified on Resend)
+    const fromAddress = from || RESEND_FROM || 'Kyozo <noreply@contact.kyozo.com>';
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -108,8 +109,12 @@ export async function POST(request: NextRequest) {
       console.error('[send-email] Resend API error', JSON.stringify({ requestId, status: response.status, data }));
       
       // If domain not verified, retry with fallback
-      if (data.message && data.message.includes('not verified')) {
-        console.log('Domain not verified, retrying with fallback domain...');
+      const resendMessage = typeof data?.message === 'string' ? data.message : '';
+      const isDomainNotVerified = resendMessage.toLowerCase().includes('not verified');
+      const isFromDomainError = response.status === 403 && (data?.name === 'validation_error' || isDomainNotVerified);
+
+      if (isFromDomainError) {
+        console.log('[send-email] Sender domain not verified, retrying with Resend default sender...');
         const fallbackResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -117,11 +122,13 @@ export async function POST(request: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Kyozo <dev@kyozo.com>',
+            // Resend provides this as a verified sender for development/testing.
+            // In production you should verify your domain and set RESEND_FROM.
+            from: 'Kyozo <onboarding@resend.dev>',
             to: Array.isArray(to) ? to : [to],
             subject,
             html,
-            reply_to: 'reply@kyozo.com',
+            // Avoid setting reply_to to an unverified domain.
           }),
         });
         const fallbackData = await fallbackResponse.json().catch(() => null);
@@ -138,7 +145,10 @@ export async function POST(request: NextRequest) {
           })
         );
         if (!fallbackResponse.ok) {
-          return NextResponse.json({ error: fallbackData.message }, { status: fallbackResponse.status });
+          return NextResponse.json(
+            { error: fallbackData?.message || 'Failed to send email' },
+            { status: fallbackResponse.status }
+          );
         }
         return NextResponse.json({ success: true, id: fallbackData.id });
       }

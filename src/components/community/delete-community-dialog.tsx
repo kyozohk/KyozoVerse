@@ -36,6 +36,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   const [confirmText, setConfirmText] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -45,6 +46,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
     if (isOpen) {
       loadCommunityData();
       setConfirmText('');
+      setVerificationEmail('');
     }
   }, [isOpen, community.communityId]);
 
@@ -106,18 +108,15 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   const sendVerificationCode = async () => {
     setSendingCode(true);
     try {
-      // Get owner's email from user document
-      let ownerEmail = 'owner@example.com';
-      if (community.ownerId) {
-        const ownerDoc = await getDocs(query(collection(db, 'users'), where('userId', '==', community.ownerId)));
-        if (!ownerDoc.empty) {
-          ownerEmail = ownerDoc.docs[0].data().email || 'owner@example.com';
-        }
+      const recipientEmail = user?.email || '';
+      if (!recipientEmail) {
+        throw new Error('Logged-in user email not found');
       }
       
       // Generate 6-digit code
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setSentCode(code);
+      setVerificationEmail(recipientEmail);
       
       // Send email with verification code
       if (!user) {
@@ -133,7 +132,8 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
           'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          to: ownerEmail,
+          to: recipientEmail,
+          from: 'Kyozo <delete@kyozo.com>',
           subject: `🔐 Verify Community Deletion - ${community.name}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -363,7 +363,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
                       </CustomButton>
                     ) : (
                       <div className="space-y-2">
-                        <p className="text-sm text-green-700 font-medium">✓ Verification code sent to owner's email</p>
+                        <p className="text-sm text-green-700 font-medium">✓ Verification code sent to {verificationEmail}</p>
                         <div>
                           <label className="block text-sm font-medium mb-1 text-blue-900">
                             Enter 6-digit verification code:
