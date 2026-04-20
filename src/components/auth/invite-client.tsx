@@ -19,12 +19,18 @@ export default function InviteClient({ token }: InviteClientProps) {
 
   useEffect(() => {
     const verifyInvite = async () => {
+      // KYPRO-76: log the full invite handshake so we can see which step breaks
+      // (render, verify-invite fetch, token validity, etc).
+      const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      console.log('[KYPRO-76][invite] mounted', JSON.stringify({ requestId, tokenPreview: token?.slice(0, 8) || null, pathname: typeof window !== 'undefined' ? window.location.pathname : null }));
       try {
         setLoading(true);
         // Make sure to trim any whitespace from the token
         const cleanToken = token.trim();
+        console.log('[KYPRO-76][invite] verify_start', JSON.stringify({ requestId, tokenLength: cleanToken.length }));
         const response = await fetch(`/api/verify-invite?token=${encodeURIComponent(cleanToken)}`);
         const data = await response.json();
+        console.log('[KYPRO-76][invite] verify_response', JSON.stringify({ requestId, status: response.status, ok: response.ok, hasInviteData: !!data?.inviteData, errorMessage: data?.error || null }));
 
         if (!response.ok) {
           throw new Error(data.error || 'Invalid or expired invite link');
@@ -32,7 +38,7 @@ export default function InviteClient({ token }: InviteClientProps) {
 
         setInviteData(data.inviteData);
       } catch (err: any) {
-        console.error('Error verifying invite:', err);
+        console.error('[KYPRO-76][invite] verify_error', JSON.stringify({ message: err?.message, name: err?.name }));
         setError(err.message || 'Failed to verify invite link');
         toast({
           title: 'Error',

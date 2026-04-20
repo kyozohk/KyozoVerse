@@ -57,11 +57,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file size based on type
+    // KYPRO-59: raise image limit from 10MB -> 25MB (modern phones produce 10-20MB photos).
     const maxSizeInBytes = file.type.startsWith('video/')
       ? 100 * 1024 * 1024  // 100MB for videos
       : file.type.startsWith('audio/')
         ? 20 * 1024 * 1024  // 20MB for audio
-        : 10 * 1024 * 1024; // 10MB for images
+        : 25 * 1024 * 1024; // 25MB for images
 
     if (file.size > maxSizeInBytes) {
       const maxSizeMB = maxSizeInBytes / (1024 * 1024);

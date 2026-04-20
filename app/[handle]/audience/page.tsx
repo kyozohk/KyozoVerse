@@ -16,7 +16,7 @@ import { InviteMemberDialog } from '@/components/community/invite-member-dialog'
 import { TagMembersDialog } from '@/components/community/tag-members-dialog';
 import { addTagsToCommunity } from '@/lib/community-tags';
 import { useAuth } from '@/hooks/use-auth';
-import { Tag, Zap, Upload } from 'lucide-react';
+import { Tag, Zap, Upload, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCommunityAccess } from '@/hooks/use-community-access';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -437,20 +437,22 @@ function MembersContent() {
             />
           )}
           <div className="p-6">
-            {/* Automatically Integrate banner — shown when no members yet */}
+            {/* Automatically Integrate banner — shown when no members yet.
+                Visually matches the dialog header so the click-through feels consistent. */}
             {!isLoading && members.length === 0 && canManage && (
               <button
                 onClick={() => setIsImportOpen(true)}
-                className="w-full mb-5 flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all hover:opacity-90 hover:shadow-md"
-                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}
+                className="mx-4 mb-6 flex items-center gap-4 px-6 py-5 rounded-xl text-left transition-all hover:opacity-95 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                style={{ width: 'calc(100% - 2rem)', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}
               >
-                <div className="w-9 h-9 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center">
+                <div className="w-11 h-11 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center">
                   <Zap className="h-5 w-5 text-white" />
                 </div>
-                <div>
-                  <p className="font-bold text-white text-sm">Automatically integrate</p>
-                  <p className="text-white/80 text-xs mt-0.5">Consolidate contacts from CSV, Google Sheets, and platforms like Eventbrite</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white text-base leading-tight">Automatically Integrate</p>
+                  <p className="text-white/80 text-sm mt-1 leading-snug">Consolidate contacts from multiple sources</p>
                 </div>
+                <ChevronRight className="h-5 w-5 text-white/80 flex-shrink-0" />
               </button>
             )}
             <EnhancedListView

@@ -35,17 +35,35 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
   }, [file, existingImageUrl]);
   
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    // KYPRO-36: log drag-and-drop events so we can see if the browser is firing `drop`
+    // at all, and whether files are being accepted or rejected.
+    console.log('[KYPRO-36][dropzone] onDrop fired', JSON.stringify({
+      fileType,
+      accept,
+      acceptedCount: acceptedFiles?.length || 0,
+      rejectedCount: rejectedFiles?.length || 0,
+      acceptedMeta: (acceptedFiles || []).map((f) => ({ name: f.name, type: f.type, size: f.size })),
+      rejectedMeta: (rejectedFiles || []).map((rf: any) => ({
+        name: rf?.file?.name,
+        type: rf?.file?.type,
+        size: rf?.file?.size,
+        errors: (rf?.errors || []).map((e: any) => e?.code || e?.message),
+      })),
+    }));
+
     if (acceptedFiles?.length) {
       const selectedFile = acceptedFiles[0];
       
-      const maxSizeInBytes = selectedFile.type.startsWith('video/') 
+      // KYPRO-59: raise image limit to 25MB (phones routinely produce 10-20MB photos).
+      const maxSizeInBytes = selectedFile.type.startsWith('video/')
         ? 100 * 1024 * 1024
-        : selectedFile.type.startsWith('audio/') 
+        : selectedFile.type.startsWith('audio/')
           ? 20 * 1024 * 1024
-          : 10 * 1024 * 1024;
+          : 25 * 1024 * 1024;
       
       if (selectedFile.size > maxSizeInBytes) {
         const maxSizeMB = maxSizeInBytes / (1024 * 1024);
+        console.warn('[KYPRO-36][dropzone] file too large', JSON.stringify({ name: selectedFile.name, size: selectedFile.size, maxSizeInBytes }));
         alert(`File too large. Maximum size for ${selectedFile.type.split('/')[0]} files is ${maxSizeMB}MB`);
         return;
       }
@@ -54,10 +72,10 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
     }
     
     if (rejectedFiles?.length) {
-      console.error('Rejected files:', rejectedFiles);
+      console.error('[KYPRO-36][dropzone] rejected files', rejectedFiles);
       alert(`File not accepted. Please check the file type and try again.`);
     }
-  }, [onFileChange, fileType]);
+  }, [onFileChange, fileType, accept]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -147,7 +165,7 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
                 <span className="font-semibold text-primary">Click to upload</span> or drag and drop
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                    {fileType === 'image' && 'PNG, JPG, GIF up to 10MB'}
+                    {fileType === 'image' && 'PNG, JPG, GIF up to 25MB'}
                     {fileType === 'video' && 'MP4, MOV, WEBM up to 100MB'}
                     {fileType === 'audio' && 'MP3, WAV, M4A up to 20MB'}
                 </p>

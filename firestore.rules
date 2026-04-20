@@ -98,6 +98,14 @@ service cloud.firestore {
                         isCommunityOwner(resource.data.communityId));
     }
 
+    // Workspace members collection - used for platform-wide roles (admin/community_creator/read_only)
+    match /workspaceMembers/{memberId} {
+      // NOTE: Without an explicit match block, Firestore denies all access by default.
+      // The app reads this collection in `usePlatformRole` and `useAuth`.
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null;
+    }
+
     // Guestlists collection - community members can create/read/update guestlists for their community
     match /guestlists/{guestlistId} {
       allow read: if request.auth != null;

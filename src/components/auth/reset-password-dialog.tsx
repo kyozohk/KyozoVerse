@@ -13,31 +13,66 @@ export function ResetPasswordDialog({ open, onOpenChange, onGoBack }: { open: bo
   const { resetPassword } = useAuth();
 
   const handleSubmit = async () => {
+    const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'submit_start', email: email.replace(/(.{2}).*@/, '$1***@') }));
+    
     setError(null);
     if (!email || !email.includes('@')) {
+      console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'validation_error', reason: 'invalid_email' }));
       setError('Please enter a valid email address.');
       return;
     }
+    
     try {
+      console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'calling_reset_password' }));
       await resetPassword(email);
-    } catch {
+      console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'reset_success', message: 'Password reset email sent successfully' }));
+    } catch (error: any) {
+      console.error('[ResetPasswordDialog]', JSON.stringify({ 
+        requestId, 
+        stage: 'reset_error', 
+        errorCode: error.code,
+        errorMessage: error.message,
+        errorName: error.name
+      }));
       // Silently catch errors to prevent email enumeration attacks.
       // We show the same "check your inbox" message regardless of whether
       // the email exists in our system or not.
     }
     // Always show submitted state to prevent email enumeration
+    console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'setting_submitted_state' }));
     setIsSubmitted(true);
   };
 
   const handleResend = async () => {
-    if (resendStatus === 'sending') return;
+    const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'resend_start', email: email.replace(/(.{2}).*@/, '$1***@') }));
+    
+    if (resendStatus === 'sending') {
+      console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'resend_skipped', reason: 'already_sending' }));
+      return;
+    }
+    
     setResendStatus('sending');
     setError(null);
+    
     try {
+      console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'resend_calling_reset_password' }));
       await resetPassword(email);
+      console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'resend_success', message: 'Password reset email resent successfully' }));
       setResendStatus('sent');
-      setTimeout(() => setResendStatus('idle'), 5000); // Reset after 5 seconds
+      setTimeout(() => {
+        console.log('[ResetPasswordDialog]', JSON.stringify({ requestId, stage: 'resend_status_reset_to_idle' }));
+        setResendStatus('idle');
+      }, 5000); // Reset after 5 seconds
     } catch (error: any) {
+      console.error('[ResetPasswordDialog]', JSON.stringify({ 
+        requestId, 
+        stage: 'resend_error', 
+        errorCode: error.code,
+        errorMessage: error.message,
+        errorName: error.name
+      }));
       setError(error.message);
       setResendStatus('idle');
     }

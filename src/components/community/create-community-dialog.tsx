@@ -282,16 +282,35 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
     }
     
     const handleFileUpload = async (file: File | null, communityId: string, type: 'profile' | 'background') => {
-        if (!file) return null;
-        
+        // KYPRO-59: log every step of the background/profile image upload so we can see
+        // exactly where it fails instead of failing silently.
+        if (!file) {
+            console.log(`[KYPRO-59][${type}] no_file`, JSON.stringify({ communityId }));
+            return null;
+        }
+
+        console.log(`[KYPRO-59][${type}] start`, JSON.stringify({
+            communityId,
+            fileName: file.name,
+            fileType: file.type,
+            fileSizeKB: Math.round(file.size / 1024),
+        }));
+
         try {
             const result = await uploadFile(file, communityId);
-            return typeof result === 'string' ? result : result.url;
-        } catch (error) {
-            console.error(`Error uploading ${type} image:`, error);
+            const url = typeof result === 'string' ? result : result.url;
+            console.log(`[KYPRO-59][${type}] success`, JSON.stringify({ communityId, url }));
+            return url;
+        } catch (error: any) {
+            console.error(`[KYPRO-59][${type}] error`, JSON.stringify({
+                communityId,
+                fileName: file.name,
+                message: error?.message,
+                name: error?.name,
+            }));
             toast({
                 title: 'Upload Failed',
-                description: `Could not upload the ${type} image.`,
+                description: `Could not upload the ${type} image.${error?.message ? ` (${error.message})` : ''}`,
                 variant: 'destructive',
             });
             return null;
@@ -300,6 +319,23 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
 
     const handleUpdateCommunity = async () => {
         if (!user || !existingCommunity) return;
+
+        // KYPRO-59: validate image sizes BEFORE running the update so we fail fast
+        // and don't partially update the community.
+        const IMAGE_LIMIT = 25 * 1024 * 1024;
+        const oversize: string[] = [];
+        if (profileImageFile && profileImageFile.size > IMAGE_LIMIT) oversize.push(`profile image (${Math.round(profileImageFile.size / 1024 / 1024)}MB)`);
+        if (backgroundImageFile && backgroundImageFile.size > IMAGE_LIMIT) oversize.push(`background image (${Math.round(backgroundImageFile.size / 1024 / 1024)}MB)`);
+        if (oversize.length) {
+            console.warn('[KYPRO-59][update] aborted_before_update_oversize', JSON.stringify({ oversize, limitMB: IMAGE_LIMIT / 1024 / 1024 }));
+            toast({
+                title: 'Image too large',
+                description: `Please pick images under 25MB. Too large: ${oversize.join(', ')}.`,
+                variant: 'destructive',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
         
         try {
@@ -348,11 +384,22 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             console.log('[Community Update] New handle:', newHandle);
             console.log('[Community Update] Handle changed:', handleChanged);
 
+            // KYPRO-78: write canonical privacy fields on update too.
+            const isPrivateFlag = formData.communityPrivacy === 'private';
+            console.log('[KYPRO-78][update]', JSON.stringify({
+                communityId: existingCommunity.communityId,
+                communityPrivacy: formData.communityPrivacy,
+                isPrivate: isPrivateFlag,
+                visibility: isPrivateFlag ? 'private' : 'public',
+            }));
+
             const communityRef = doc(db, 'communities', existingCommunity.communityId);
             await updateDoc(communityRef, {
                 ...formData,
                 tags,
                 handle: newHandle,
+                isPrivate: isPrivateFlag,
+                visibility: isPrivateFlag ? 'private' : 'public',
                 communityProfileImage: updatedProfileImageUrl,
                 communityBackgroundImage: updatedBackgroundImageUrl,
                 updatedAt: serverTimestamp(),
@@ -422,6 +469,22 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             return;
         }
 
+        // KYPRO-59: validate image sizes BEFORE creating the Firestore doc so we don't
+        // end up with a half-created community when an upload is rejected.
+        const IMAGE_LIMIT = 25 * 1024 * 1024;
+        const oversize: string[] = [];
+        if (profileImageFile && profileImageFile.size > IMAGE_LIMIT) oversize.push(`profile image (${Math.round(profileImageFile.size / 1024 / 1024)}MB)`);
+        if (backgroundImageFile && backgroundImageFile.size > IMAGE_LIMIT) oversize.push(`background image (${Math.round(backgroundImageFile.size / 1024 / 1024)}MB)`);
+        if (oversize.length) {
+            console.warn('[KYPRO-59][create] aborted_before_create_oversize', JSON.stringify({ oversize, limitMB: IMAGE_LIMIT / 1024 / 1024 }));
+            toast({
+                title: 'Image too large',
+                description: `Please pick images under 25MB. Too large: ${oversize.join(', ')}.`,
+                variant: 'destructive',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
 
         const finalHandle = formData.handle || sanitizeHandle(formData.name);
@@ -450,13 +513,24 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             return;
         }
 
+        // KYPRO-78: also write canonical fields so downstream code that looks at
+        // `isPrivate` or `visibility` respects the toggle.
+        const isPrivateFlag = formData.communityPrivacy === 'private';
         const communityData: any = {
             ...formData,
             tags,
             handle: finalHandle,
             ownerId: user.uid,
+            isPrivate: isPrivateFlag,
+            visibility: isPrivateFlag ? 'private' : 'public',
             createdAt: serverTimestamp(),
         };
+        console.log('[KYPRO-78][create]', JSON.stringify({
+            handle: finalHandle,
+            communityPrivacy: formData.communityPrivacy,
+            isPrivate: isPrivateFlag,
+            visibility: communityData.visibility,
+        }));
 
         try {
             const docRef = await addDoc(collection(db, 'communities'), communityData);
@@ -597,7 +671,10 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                             <TagInput tags={tags} setTags={setTags} />
                             <Input label="Location" value={formData.location} onChange={(e) => handleValueChange('location', e.target.value)} />
                             <div className="flex items-center space-x-2 pt-2">
-                                <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => handleValueChange('communityPrivacy', checked ? 'private' : 'public')} />
+                                <Switch id="privacy-toggle" checked={formData.communityPrivacy === 'private'} onCheckedChange={(checked) => {
+                                    console.log('[KYPRO-78][toggle]', JSON.stringify({ checked, nextValue: checked ? 'private' : 'public' }));
+                                    handleValueChange('communityPrivacy', checked ? 'private' : 'public');
+                                }} />
                                 <label htmlFor="privacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
                                     Private Community
                                 </label>
