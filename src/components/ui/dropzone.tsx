@@ -57,12 +57,16 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
     if (acceptedFiles?.length) {
       const selectedFile = acceptedFiles[0];
       
-      // KYPRO-59: raise image limit to 25MB (phones routinely produce 10-20MB photos).
+      // Image limit: 5MB. See app/api/upload/route.ts — this has to stay
+      // at or below the hosting-platform body-size ceiling (Vercel: ~4.5MB
+      // by default). If we let a 7.6MB file through, Vercel rejects the
+      // request at the edge and our server handler never runs, so the user
+      // just sees "Upload Failed" with no useful detail.
       const maxSizeInBytes = selectedFile.type.startsWith('video/')
         ? 100 * 1024 * 1024
         : selectedFile.type.startsWith('audio/')
           ? 20 * 1024 * 1024
-          : 25 * 1024 * 1024;
+          : 5 * 1024 * 1024;
       
       if (selectedFile.size > maxSizeInBytes) {
         const maxSizeMB = maxSizeInBytes / (1024 * 1024);
@@ -168,7 +172,7 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
                 <span className="font-semibold text-primary">Click to upload</span> or drag and drop
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                    {fileType === 'image' && 'PNG, JPG, GIF up to 25MB'}
+                    {fileType === 'image' && 'PNG, JPG, GIF up to 5MB'}
                     {fileType === 'video' && 'MP4, MOV, WEBM up to 100MB'}
                     {fileType === 'audio' && 'MP3, WAV, M4A up to 20MB'}
                 </p>

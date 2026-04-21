@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc, query, where, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { ArrowLeft, ArrowRight, Palette, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
@@ -345,16 +345,21 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                 description: `Could not upload the ${type} image.${error?.message ? ` (${error.message})` : ''}`,
                 variant: 'destructive',
             });
-            return null;
+            // Apr 21 2026: re-throw so the caller aborts the whole create/update
+            // flow instead of quietly persisting a community with a missing
+            // banner. Previous behavior returned null, which let the orphaned
+            // community document survive an upload failure.
+            throw error;
         }
     };
 
     const handleUpdateCommunity = async () => {
         if (!user || !existingCommunity) return;
 
-        // KYPRO-59: validate image sizes BEFORE running the update so we fail fast
-        // and don't partially update the community.
-        const IMAGE_LIMIT = 25 * 1024 * 1024;
+        // Validate image sizes BEFORE running the update so we fail fast and
+        // don't partially update the community. Limit is 5MB — see
+        // app/api/upload/route.ts for why (Vercel body-size ceiling).
+        const IMAGE_LIMIT = 5 * 1024 * 1024;
         const oversize: string[] = [];
         if (profileImageFile && profileImageFile.size > IMAGE_LIMIT) oversize.push(`profile image (${Math.round(profileImageFile.size / 1024 / 1024)}MB)`);
         if (backgroundImageFile && backgroundImageFile.size > IMAGE_LIMIT) oversize.push(`background image (${Math.round(backgroundImageFile.size / 1024 / 1024)}MB)`);
@@ -362,25 +367,38 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             console.warn('[KYPRO-59][update] aborted_before_update_oversize', JSON.stringify({ oversize, limitMB: IMAGE_LIMIT / 1024 / 1024 }));
             toast({
                 title: 'Image too large',
-                description: `Please pick images under 25MB. Too large: ${oversize.join(', ')}.`,
+                description: `Please pick images under 5MB. Too large: ${oversize.join(', ')}.`,
                 variant: 'destructive',
             });
             return;
         }
 
         setIsSubmitting(true);
-        
+
+        // Apr 21 2026: mirror the create flow — run image uploads in their
+        // own try/catch and bail out BEFORE touching Firestore if any upload
+        // fails. Previously, a failed banner upload threw into the outer
+        // catch and surfaced a misleading "Failed to update community" toast
+        // on top of the real "Upload Failed" toast, and any earlier
+        // successful upload was silently orphaned in storage.
+        let updatedProfileImageUrl: string | null = profileImageUrl;
+        let updatedBackgroundImageUrl: string | null = backgroundImageUrl;
         try {
-            let updatedProfileImageUrl = profileImageUrl;
             if (profileImageFile) {
                 updatedProfileImageUrl = await handleFileUpload(profileImageFile, existingCommunity.communityId, 'profile');
             }
-            
-            let updatedBackgroundImageUrl = backgroundImageUrl;
             if (backgroundImageFile) {
                 updatedBackgroundImageUrl = await handleFileUpload(backgroundImageFile, existingCommunity.communityId, 'background');
             }
+        } catch (uploadError) {
+            // handleFileUpload already surfaced a toast with the real reason;
+            // just stop the update so the existing community is left intact.
+            console.error('[Community Update] image upload failed — community NOT updated', uploadError);
+            setIsSubmitting(false);
+            return;
+        }
 
+        try {
             const newHandle = formData.handle || sanitizeHandle(formData.name);
             const oldHandle = existingCommunity.handle;
             const handleChanged = newHandle !== oldHandle;
@@ -501,9 +519,10 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             return;
         }
 
-        // KYPRO-59: validate image sizes BEFORE creating the Firestore doc so we don't
+        // Validate image sizes BEFORE creating the Firestore doc so we don't
         // end up with a half-created community when an upload is rejected.
-        const IMAGE_LIMIT = 25 * 1024 * 1024;
+        // Limit is 5MB — see app/api/upload/route.ts.
+        const IMAGE_LIMIT = 5 * 1024 * 1024;
         const oversize: string[] = [];
         if (profileImageFile && profileImageFile.size > IMAGE_LIMIT) oversize.push(`profile image (${Math.round(profileImageFile.size / 1024 / 1024)}MB)`);
         if (backgroundImageFile && backgroundImageFile.size > IMAGE_LIMIT) oversize.push(`background image (${Math.round(backgroundImageFile.size / 1024 / 1024)}MB)`);
@@ -511,7 +530,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             console.warn('[KYPRO-59][create] aborted_before_create_oversize', JSON.stringify({ oversize, limitMB: IMAGE_LIMIT / 1024 / 1024 }));
             toast({
                 title: 'Image too large',
-                description: `Please pick images under 25MB. Too large: ${oversize.join(', ')}.`,
+                description: `Please pick images under 5MB. Too large: ${oversize.join(', ')}.`,
                 variant: 'destructive',
             });
             return;
@@ -564,27 +583,43 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             visibility: communityData.visibility,
         }));
 
+        // Apr 21 2026: upload images FIRST, then write the Firestore doc.
+        // Old flow ran addDoc() first and only uploaded the banner afterwards,
+        // so a failed upload (e.g. file >= Vercel's ~4.5MB body-size ceiling,
+        // or any transient storage error) left behind an orphaned community
+        // document with no banner. We now pre-reserve a doc ref so the
+        // storage path stays stable, upload to it, and only commit the
+        // Firestore write if every upload succeeded.
+        const docRef = doc(collection(db, 'communities'));
+        const communityId = docRef.id;
+
+        let finalProfileImageUrl: string | null = null;
+        let finalBackgroundImageUrl: string | null = null;
+
         try {
-            const docRef = await addDoc(collection(db, 'communities'), communityData);
-            const communityId = docRef.id;
-            
-            let finalProfileImageUrl = null;
             if (profileImageFile) {
                 finalProfileImageUrl = await handleFileUpload(profileImageFile, communityId, 'profile');
-            } else if(profileImageUrl) {
-                finalProfileImageUrl = profileImageUrl; // Use pre-selected URL
+            } else if (profileImageUrl) {
+                finalProfileImageUrl = profileImageUrl; // Pre-selected preset URL
             }
-            
-            let finalBackgroundImageUrl = null;
+
             if (backgroundImageFile) {
                 finalBackgroundImageUrl = await handleFileUpload(backgroundImageFile, communityId, 'background');
             } else if (backgroundImageUrl) {
-                finalBackgroundImageUrl = backgroundImageUrl; // Use pre-selected URL
+                finalBackgroundImageUrl = backgroundImageUrl; // Pre-selected preset URL
             }
-            
-            // Update doc with image URLs and communityId
-            await updateDoc(docRef, {
-                communityId: communityId,
+        } catch (uploadError) {
+            // handleFileUpload already surfaced a toast; just bail out without
+            // ever touching Firestore so the community doesn't get created.
+            console.error('[Community Dialog] image upload failed — community NOT created', uploadError);
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            await setDoc(docRef, {
+                ...communityData,
+                communityId,
                 communityProfileImage: finalProfileImageUrl,
                 communityBackgroundImage: finalBackgroundImageUrl,
                 memberCount: 1, // Owner is the first member

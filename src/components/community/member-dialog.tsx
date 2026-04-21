@@ -116,27 +116,80 @@ export function MemberDialog({
     }
     
     console.log(`Uploading ${type} for user ${userId}`);
-    
+
     try {
         const result = await uploadFile(file, `user-media/${userId}/${type}`);
         const url = typeof result === 'string' ? result : result.url;
         console.log(`${type} uploaded successfully:`, url);
         return url;
-    } catch (error) {
-        console.error(`Error uploading ${type} image:`, error);
+    } catch (error: any) {
+        console.error(`[member-dialog][${type}] upload_failed`, JSON.stringify({
+            userId,
+            fileName: file?.name,
+            message: error?.message,
+        }));
         toast({
             title: 'Upload Failed',
-            description: `Could not upload the ${type} image.`,
+            description: `Could not upload the ${type} image.${error?.message ? ` (${error.message})` : ''}`,
             variant: 'destructive',
         });
-        return null;
+        // Apr 21 2026: re-throw so the caller can abort the save instead of
+        // silently writing `null` over an existing avatar/cover URL.
+        throw error;
     }
+  };
+
+  // Shared preflight for avatar/cover. Same 5MB ceiling as community banners
+  // because the server route enforces the same limit and the platform rejects
+  // anything larger at the edge.
+  const PROFILE_IMAGE_LIMIT = 5 * 1024 * 1024;
+  const checkImageSizes = (): string[] => {
+    const oversize: string[] = [];
+    if (avatarFile && avatarFile.size > PROFILE_IMAGE_LIMIT) {
+      oversize.push(`avatar (${Math.round(avatarFile.size / 1024 / 1024)}MB)`);
+    }
+    if (coverFile && coverFile.size > PROFILE_IMAGE_LIMIT) {
+      oversize.push(`cover (${Math.round(coverFile.size / 1024 / 1024)}MB)`);
+    }
+    return oversize;
   };
   
   const handleConfirmAddExistingUser = useCallback(async () => {
       if (!existingUser || !communityName) return;
 
+      // Apr 21 2026: preflight 5MB image check BEFORE touching Firestore so
+      // we never half-join a user and then fail on the avatar upload.
+      const oversize = checkImageSizes();
+      if (oversize.length) {
+        toast({
+          title: 'Image too large',
+          description: `Please pick images under 5MB. Too large: ${oversize.join(', ')}.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setSubmitting(true);
+
+      // Upload images FIRST. If either fails, don't add the user to the
+      // community at all.
+      let finalAvatarUrl = avatarUrl;
+      let finalCoverUrl = coverUrl;
+      try {
+        if (avatarFile) {
+          console.log('Uploading new avatar for existing user...');
+          finalAvatarUrl = await handleFileUpload(avatarFile, existingUser.userId, 'avatar');
+        }
+        if (coverFile) {
+          console.log('Uploading new cover for existing user...');
+          finalCoverUrl = await handleFileUpload(coverFile, existingUser.userId, 'cover');
+        }
+      } catch (uploadError) {
+        console.error('[member-dialog] existing-user image upload failed - NOT joining community', uploadError);
+        setSubmitting(false);
+        return;
+      }
+
       try {
         const communitiesRef = collection(db, "communities");
         const q = query(communitiesRef, where("name", "==", communityName));
@@ -154,18 +207,6 @@ export function MemberDialog({
         await updateDoc(doc(db, "communities", communityId), {
           memberCount: increment(1)
         });
-        
-        let finalAvatarUrl = avatarUrl;
-        let finalCoverUrl = coverUrl;
-
-        if (avatarFile) {
-          console.log('Uploading new avatar for existing user...');
-          finalAvatarUrl = await handleFileUpload(avatarFile, existingUser.userId, 'avatar');
-        }
-        if (coverFile) {
-          console.log('Uploading new cover for existing user...');
-          finalCoverUrl = await handleFileUpload(coverFile, existingUser.userId, 'cover');
-        }
 
         // Update user profile if new images were provided
         if ((finalAvatarUrl && finalAvatarUrl !== existingUser.avatarUrl) || (finalCoverUrl && finalCoverUrl !== existingUser.coverUrl)) {
@@ -212,25 +253,30 @@ export function MemberDialog({
       return;
     }
     setError(null);
-    setSubmitting(true);
-    try {
-      console.log('Starting member save...', {
-        mode,
-        avatarFile: !!avatarFile,
-        coverFile: !!coverFile,
-        currentAvatarUrl: avatarUrl,
-        currentCoverUrl: coverUrl
+
+    // Apr 21 2026: preflight 5MB image check BEFORE any Firestore writes.
+    const oversize = checkImageSizes();
+    if (oversize.length) {
+      toast({
+        title: 'Image too large',
+        description: `Please pick images under 5MB. Too large: ${oversize.join(', ')}.`,
+        variant: 'destructive',
       });
+      return;
+    }
 
-      let finalAvatarUrl = avatarUrl;
-      let finalCoverUrl = coverUrl;
+    setSubmitting(true);
 
+    // Upload images FIRST. If any upload fails, we don't call onSubmit at all,
+    // preventing a half-saved member profile.
+    let finalAvatarUrl = avatarUrl;
+    let finalCoverUrl = coverUrl;
+    try {
       if (mode === 'edit' && initialMember?.userId) {
         if (avatarFile) {
           console.log('Uploading avatar file...');
           finalAvatarUrl = await handleFileUpload(avatarFile, initialMember.userId, 'avatar');
         }
-
         if (coverFile) {
           console.log('Uploading cover file...');
           finalCoverUrl = await handleFileUpload(coverFile, initialMember.userId, 'cover');
@@ -240,7 +286,13 @@ export function MemberDialog({
         finalAvatarUrl = avatarUrl;
         console.log('New member - using preset/uploaded URLs');
       }
+    } catch (uploadError) {
+      console.error('[member-dialog] image upload failed - NOT saving member', uploadError);
+      setSubmitting(false);
+      return;
+    }
 
+    try {
       console.log('Final URLs:', {
         avatarUrl: finalAvatarUrl,
         coverUrl: finalCoverUrl
@@ -264,7 +316,7 @@ export function MemberDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleConfirmAddExistingUser, onOpenChange]);
+  }, [existingUser, firstName, lastName, email, phone, mode, initialMember, avatarFile, coverFile, avatarUrl, coverUrl, onSubmit, handleConfirmAddExistingUser, onOpenChange, toast]);
 
 
   const title = mode === "add" ? "Add member" : "Edit member";

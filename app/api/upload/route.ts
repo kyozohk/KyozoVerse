@@ -56,13 +56,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400, headers });
     }
 
-    // Validate file size based on type
-    // KYPRO-59: raise image limit from 10MB -> 25MB (modern phones produce 10-20MB photos).
+    // Validate file size based on type.
+    //
+    // Image limit dropped from 25MB -> 5MB (Apr 21 2026). A 7.6MB banner
+    // upload was failing silently at the hosting-platform edge (Vercel's
+    // default request-body ceiling is ~4.5MB), so the pretty 25MB number in
+    // our UI was a lie. 5MB is the largest size we can guarantee actually
+    // makes it through to this handler.
     const maxSizeInBytes = file.type.startsWith('video/')
       ? 100 * 1024 * 1024  // 100MB for videos
       : file.type.startsWith('audio/')
         ? 20 * 1024 * 1024  // 20MB for audio
-        : 25 * 1024 * 1024; // 25MB for images
+        : 5 * 1024 * 1024;  // 5MB for images
 
     if (file.size > maxSizeInBytes) {
       const maxSizeMB = maxSizeInBytes / (1024 * 1024);

@@ -338,6 +338,25 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       return;
     }
 
+    // Apr 21 2026: preflight 5MB image check (same limit as community banners)
+    // to avoid Vercel edge rejections and give a clean client-side error.
+    const IMAGE_LIMIT = 5 * 1024 * 1024;
+    const oversize: string[] = [];
+    if (file && file.type.startsWith('image/') && file.size > IMAGE_LIMIT) {
+      oversize.push(`image (${Math.round(file.size / 1024 / 1024)}MB)`);
+    }
+    if (thumbnailFile && thumbnailFile.type.startsWith('image/') && thumbnailFile.size > IMAGE_LIMIT) {
+      oversize.push(`thumbnail (${Math.round(thumbnailFile.size / 1024 / 1024)}MB)`);
+    }
+    if (oversize.length) {
+      toast({
+        title: 'Image too large',
+        description: `Please pick images under 5MB. Too large: ${oversize.join(', ')}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

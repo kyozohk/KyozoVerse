@@ -100,18 +100,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Public paths that don't require owner authentication
-      const isPublicPath = pathname === '/' || 
-                          pathname.startsWith('/c/') || 
-                          pathname.startsWith('/invite');
+      // Public paths that don't require owner authentication.
+      //
+      // Invite-link fix (reported Apr 21 2026): visiting
+      //   https://pro.kyozo.com/<handle>/join?firstName=...&email=...
+      // while logged out used to bounce the visitor to `/` before the signup
+      // form could mount, so invites only "worked" when the recipient was
+      // already authenticated. `/[handle]/join` is now treated as public so
+      // brand-new users can create an account and join in one step.
+      const isJoinPath = /^\/[^/]+\/join(\/.*)?$/.test(pathname);
+      const isPublicPath =
+        pathname === '/' ||
+        pathname.startsWith('/c/') ||
+        pathname.startsWith('/invite') ||
+        isJoinPath;
 
       if (!firebaseUser) {
         setUser(null);
         setPlatformAccess(null);
         setLoading(false);
         if (!isPublicPath) {
+          console.log('[AuthProvider] unauth redirect → /', JSON.stringify({ pathname }));
           router.replace('/');
+        } else {
+          console.log('[AuthProvider] unauth allowed on public path', JSON.stringify({ pathname, isJoinPath }));
         }
+        return;
+      }
+
+      // On join paths, skip platform-access checks entirely.
+      // The invitee is creating a brand-new account so they have no workspace
+      // membership yet. Signing them out here would kill the session before the
+      // Firestore writes (user doc + communityMembers) can complete.
+      if (isJoinPath) {
+        console.log('[AuthProvider] join path — skipping platform-access check for', firebaseUser.uid);
+        setUser(firebaseUser);
+        setPlatformAccess('granted');
+        setLoading(false);
         return;
       }
 

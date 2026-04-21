@@ -1,4 +1,7 @@
+'use client';
+
 import React, { Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 import CommunitySidebar from '@/components/layout/community-sidebar';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 
@@ -9,6 +12,15 @@ export default function CommunityLayout({
   children: React.ReactNode;
   params: { handle: string };
 }) {
+  const pathname = usePathname();
+  // Invite-join flow (`/[handle]/join`) is a PUBLIC signup screen. Skip the
+  // community sidebar chrome so unauthenticated invitees see a clean form.
+  const isJoinPath = /^\/[^/]+\/join(\/.*)?$/.test(pathname);
+
+  if (isJoinPath) {
+    return <div className="min-h-full">{children}</div>;
+  }
+
   return (
     <div className="min-h-full">
       <CommunitySidebar />

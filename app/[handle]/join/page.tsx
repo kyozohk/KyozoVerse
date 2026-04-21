@@ -1,20 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, addDoc, setDoc, doc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
+import { useParams, useSearchParams } from 'next/navigation';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { communityAuth } from '@/firebase/community-auth';
 import { Community } from '@/lib/types';
 import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
-import { Input, CustomButton } from '@/components/ui';
+import { Input, CustomButton, PasswordInput } from '@/components/ui';
 import Image from 'next/image';
 
 export default function JoinCommunityPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const handle = params.handle as string;
 
   // Form state from URL params
@@ -83,77 +80,34 @@ export default function JoinCommunityPage() {
     setSubmitting(true);
 
     try {
-      // Check if user already exists
-      const usersRef = collection(db, 'users');
-      const emailQuery = query(usersRef, where('email', '==', email));
-      const emailSnap = await getDocs(emailQuery);
+      // Use server-side API route (Admin SDK) to create user + membership.
+      // This avoids all client-side auth state issues — community members are NOT
+      // platform users and would be immediately signed out by AuthProvider.
+      const res = await fetch('/api/join-community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          phone,
+          communityId: community.communityId,
+          communityHandle: handle,
+        }),
+      });
 
-      if (!emailSnap.empty) {
-        setError('An account with this email already exists. Please sign in instead.');
-        setSubmitting(false);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to create account. Please try again.');
         return;
       }
 
-      // Normalize phone number
-      let normalizedPhone = phone ? phone.trim().replace(/\s+/g, '') : '';
-      if (normalizedPhone && !normalizedPhone.startsWith('+')) {
-        normalizedPhone = '+' + normalizedPhone;
-      }
-      const wa_id = normalizedPhone ? normalizedPhone.replace(/\+/g, '').replace(/\s+/g, '') : '';
-
-      // Create Firebase user account
-      const userCredential = await createUserWithEmailAndPassword(communityAuth, email, password);
-      const userId = userCredential.user.uid;
-
-      const displayName = `${firstName} ${lastName}`.trim();
-
-      // Create user document
-      await setDoc(doc(db, 'users', userId), {
-        userId,
-        displayName,
-        firstName,
-        lastName,
-        email,
-        phone: normalizedPhone || null,
-        phoneNumber: normalizedPhone || null,
-        wa_id: wa_id || null,
-        createdAt: serverTimestamp(),
-      });
-
-      // Add user as community member
-      await addDoc(collection(db, 'communityMembers'), {
-        userId,
-        communityId: community.communityId,
-        role: 'member',
-        status: 'active',
-        joinedAt: serverTimestamp(),
-        userDetails: {
-          displayName,
-          email,
-          avatarUrl: null,
-          phone: normalizedPhone || null,
-        },
-      });
-
-      // Increment member count
-      await updateDoc(doc(db, 'communities', community.communityId), {
-        memberCount: increment(1),
-      });
-
       setSuccess(true);
-
-      // Redirect to community page after 2 seconds
-      setTimeout(() => {
-        router.push(`/${handle}`);
-      }, 2000);
-
     } catch (error: any) {
       console.error('Error creating account:', error);
-      if (error.code === 'auth/email-already-in-use') {
-        setError('An account with this email already exists. Please sign in instead.');
-      } else {
-        setError(error.message || 'Failed to create account. Please try again.');
-      }
+      setError(error.message || 'Failed to create account. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -196,8 +150,8 @@ export default function JoinCommunityPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F5F0E8' }}>
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen flex flex-col items-center justify-start py-12 px-4" style={{ backgroundColor: '#F5F0E8' }}>
+      <div className="w-full max-w-lg">
         {/* Community Banner */}
         {bannerImage && (
           <div className="relative h-48 w-full">
@@ -225,7 +179,7 @@ export default function JoinCommunityPage() {
         )}
 
         {/* Form Card */}
-        <div className={`bg-white rounded-2xl shadow-xl mx-4 ${bannerImage ? '-mt-4 pt-14' : 'mt-8'} pb-8 px-6`}>
+        <div className={`bg-white rounded-2xl shadow-xl mx-4 ${bannerImage ? 'mt-4 pt-14' : 'mt-8'} pb-8 px-6`}>
           {/* Community Info */}
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold" style={{ color: '#5B4A3A' }}>{community.name}</h1>
@@ -279,45 +233,31 @@ export default function JoinCommunityPage() {
             />
 
             <div className="relative">
-              <Input
+              <PasswordInput 
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+              />             
             </div>
 
             <div className="relative">
-              <Input
+              <PasswordInput
                 label="Confirm Password"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
-              >
-                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+              />             
             </div>
-
-            <CustomButton
+             <CustomButton
               type="submit"
               disabled={submitting}
-              className="w-full"
-              style={{ backgroundColor: primaryColor }}
-            >
+                        className="w-full flex-1"
+                        style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
+                        
+                      >
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
