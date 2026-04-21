@@ -93,7 +93,8 @@ export const AudioPostCard: React.FC<AudioPostCardProps> = ({ post }) => {
       } else {
         audioRef.current.play().catch(err => {
           console.error('Error playing audio:', err);
-          alert('Failed to play audio. Please try again.');
+          // KYPRO-43: see video-post-card.tsx. Transient errors shouldn't block UX.
+          console.warn('[KYPRO-43][audio] playback_failed', err?.message || err);
         });
         if (user && post.id && post.communityId) {
           recordInteraction({

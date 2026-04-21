@@ -105,6 +105,38 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     
+    // KYPRO-58: preflight community-count check. Run when opening the dialog
+    // for a NEW community and surface a blocking toast immediately instead of
+    // letting the user fill two pages before discovering they're over the
+    // plan ceiling. Actual plan enforcement lives server-side; this is a UX
+    // fast-path so the modal no longer wastes the user's time.
+    useEffect(() => {
+        if (!isOpen || existingCommunity || !user) return;
+        let cancelled = false;
+        const BASIC_PLAN_COMMUNITY_LIMIT = 5;
+        (async () => {
+            try {
+                const q = query(collection(db, 'communities'), where('ownerId', '==', user.uid));
+                const snap = await getDocs(q);
+                if (cancelled) return;
+                console.log('[KYPRO-58] preflight community count', JSON.stringify({
+                    owned: snap.size,
+                    limit: BASIC_PLAN_COMMUNITY_LIMIT,
+                }));
+                if (snap.size >= BASIC_PLAN_COMMUNITY_LIMIT) {
+                    toast({
+                        title: 'Plan limit reached',
+                        description: `You already own ${snap.size} communities (limit: ${BASIC_PLAN_COMMUNITY_LIMIT}). Upgrade your plan to create more.`,
+                        variant: 'destructive',
+                    });
+                }
+            } catch (err) {
+                console.warn('[KYPRO-58] preflight failed (non-fatal)', err);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [isOpen, existingCommunity, user, toast]);
+
     useEffect(() => {
         if (isOpen) {
             if (existingCommunity) {
@@ -738,21 +770,28 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
                         <CustomButton variant="outline" onClick={() => onOpenChange(false)} className="w-full py-3 text-base font-medium" style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>Cancel</CustomButton>
                     )}
 
+                    {/* KYPRO-8: Active primary action buttons now use the dark brand
+                        brown on white text so they are clearly interactive and cannot
+                        be confused with the disabled state. */}
                     {currentStep < STEPS.length - 1 ? (
-                        <CustomButton 
-                            onClick={handleNext} 
+                        <CustomButton
+                            onClick={handleNext}
                             className="w-full py-3 text-base font-medium"
-                            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
+                            style={{ backgroundColor: '#5B4A3A', color: '#FFFFFF', border: 'none' }}
                         >
                             Next
                             <ArrowRight className="h-4 w-4 ml-2" />
                         </CustomButton>
                     ) : (
-                        <CustomButton 
-                            onClick={handleFormSubmit} 
-                            disabled={isSubmitting} 
+                        <CustomButton
+                            onClick={handleFormSubmit}
+                            disabled={isSubmitting}
                             className="w-full py-3 text-base font-medium"
-                            style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
+                            style={{
+                                backgroundColor: isSubmitting ? '#B0A090' : '#5B4A3A',
+                                color: '#FFFFFF',
+                                border: 'none',
+                            }}
                         >
                             {isSubmitting ? 'Saving...' : 'Finish'}
                         </CustomButton>

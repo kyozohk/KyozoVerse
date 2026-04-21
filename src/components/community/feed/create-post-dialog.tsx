@@ -17,6 +17,8 @@ import { ReadCard } from '@/components/content-cards/read-card';
 import { ListenCard } from '@/components/content-cards/listen-card';
 import { WatchCard } from '@/components/content-cards/watch-card';
 import { ImageCard } from '@/components/content-cards/image-card';
+// KYPRO-43: replace native alert() with in-app toasts.
+import { useToast } from '@/hooks/use-toast';
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -36,6 +38,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     editPost
 }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -192,7 +195,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       setRecordingMode(mode);
     } catch (error) {
       console.error('Failed to start recording:', error);
-      alert('Failed to access camera/microphone. Please check permissions.');
+      toast({ title: 'Recording blocked', description: 'Failed to access camera/microphone. Please check browser permissions.', variant: 'destructive' });
     }
   };
 
@@ -326,12 +329,12 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     if (!user || !postType || !communityId) return;
 
     if (!title.trim()) {
-      alert('Please enter a title for your post');
+      toast({ title: 'Missing title', description: 'Please enter a title for your post.', variant: 'destructive' });
       return;
     }
 
     if (!editPost && (postType === 'audio' || postType === 'video' || postType === 'image') && !file) {
-      alert(`Please upload a ${postType} file`);
+      toast({ title: 'File required', description: `Please upload a ${postType} file.`, variant: 'destructive' });
       return;
     }
 
@@ -424,7 +427,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         handleClose();
     } catch (error) {
         console.error(`Failed to ${editPost ? 'update' : 'create'} post:`, error);
-        alert(`Failed to ${editPost ? 'update' : 'create'} post. Please try again.`);
+        toast({ title: editPost ? 'Update failed' : 'Create failed', description: `Failed to ${editPost ? 'update' : 'create'} post. Please try again.`, variant: 'destructive' });
     } finally {
         setIsSubmitting(false);
     }

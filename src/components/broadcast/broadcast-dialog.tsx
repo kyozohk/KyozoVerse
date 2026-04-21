@@ -38,6 +38,8 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const [broadcastResults, setBroadcastResults] = useState<BroadcastResult | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<(Member | CommunityMember)[]>([]);
+  // KYPRO-43: replace native window.alert() with in-app toasts.
+  const { toast } = useToast();
 
   
   // Refs for preventing double submissions
@@ -276,7 +278,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
       // Validate header image requirements
       if (hasImageHeader()) {
         if (!headerImageUrl || !headerImageUrl.trim()) {
-          alert('Please provide an image URL for the template header');
+          toast({ title: 'Missing image', description: 'Please provide an image URL for the template header.', variant: 'destructive' });
           setSendingBroadcast(false);
           return;
         }
@@ -284,7 +286,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
         try {
           new URL(headerImageUrl);
         } catch (e) {
-          alert('Please provide a valid image URL (must start with http:// or https://)');
+          toast({ title: 'Invalid image URL', description: 'Image URL must start with http:// or https://.', variant: 'destructive' });
           setSendingBroadcast(false);
           return;
         }
@@ -455,7 +457,7 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
     
     // Check if variables are filled when moving from step 2 to 3
     if (currentStep === BroadcastStep.TEMPLATE && !areVariablesFilled()) {
-      alert('Please fill in all template variables before proceeding.');
+      toast({ title: 'Missing variables', description: 'Please fill in all template variables before proceeding.', variant: 'destructive' });
       return;
     }
     

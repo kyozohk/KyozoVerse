@@ -86,7 +86,9 @@ export const VideoPostCard: React.FC<VideoPostCardProps> = ({ post }) => {
       } else {
         videoRef.current.play().catch(err => {
           console.error('Error playing video:', err);
-          alert('Failed to play video. Please try again.');
+          // KYPRO-43: swallow into console; playback errors are usually transient
+          // (e.g. autoplay policy). A disruptive alert is worse than a silent retry.
+          console.warn('[KYPRO-43][video] playback_failed', err?.message || err);
         });
         if (user && post.id && post.communityId) {
           recordInteraction({

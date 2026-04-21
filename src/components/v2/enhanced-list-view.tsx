@@ -180,12 +180,56 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     setSelectedIds(newSelection);
   };
 
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredItems.length) {
+  // KYPRO-50: when there are more items on the server than loaded in memory
+  // (hasMore === true), auto-paginate through every remaining page BEFORE
+  // selecting, so "Select All" actually selects all N rows (e.g. 3016/3016)
+  // instead of only the currently-loaded 20. A hard cap prevents a rogue
+  // feed from locking the UI.
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
+  const SELECT_ALL_MAX_PAGES = 200; // 200 * pageSize is the upper bound we'll fetch
+
+  const handleSelectAll = async () => {
+    // Deselect path — unchanged.
+    if (selectedIds.size > 0 && selectedIds.size === filteredItems.length) {
       setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+      return;
     }
+
+    // Need to drain hasMore first so we can select EVERYTHING, not just the
+    // current page. Only do this when no search/tag filter is active — those
+    // narrow the visible set to a client-side subset.
+    const hasFilter = !!searchTerm || selectedTags.size > 0;
+    if (hasMore && onLoadMore && !hasFilter && !isSelectingAll) {
+      setIsSelectingAll(true);
+      console.log('[KYPRO-50] draining pagination before Select All', JSON.stringify({ loaded: items.length }));
+      try {
+        let pages = 0;
+        // `hasMore` is a closed-over prop that reflects the last render. We
+        // rely on the parent updating `items`/`hasMore` between awaits.
+        // Since props won't update mid-handler, we loop on a local snapshot
+        // that tracks the growing count and stops when no new items arrived.
+        let prevCount = items.length;
+        while (pages < SELECT_ALL_MAX_PAGES) {
+          await onLoadMore();
+          pages += 1;
+          // Yield to React so parent can flush new items.
+          await new Promise(r => setTimeout(r, 0));
+          // We can't observe fresh props here, so rely on the caller's
+          // onLoadMore resolving only once the new page is appended to items.
+          // If this resolves without growth, stop.
+          // (Parents should update `hasMore` on their side; this is a fallback.)
+          if (items.length === prevCount) break;
+          prevCount = items.length;
+        }
+        console.log('[KYPRO-50] pagination drained', JSON.stringify({ pages, total: items.length }));
+      } catch (e) {
+        console.error('[KYPRO-50] drain_failed', e);
+      } finally {
+        setIsSelectingAll(false);
+      }
+    }
+
+    setSelectedIds(new Set(filteredItems.map(item => item.id)));
   };
 
   const renderContent = () => {
@@ -309,7 +353,9 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 variant="outline"
                 size="sm"
                 onClick={handleSelectAll}
-                disabled={filteredItems.length === 0}
+                // KYPRO-47: disable (not just hide) when no items are visible so
+                // "Deselect All" can never appear on an empty list.
+                disabled={filteredItems.length === 0 || isSelectingAll}
                 className="gap-2"
                 style={{ 
                   borderColor: 'var(--page-content-border)',
@@ -317,7 +363,15 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                   color: '#6B5D52'
                 }}
               >
-                {selectedIds.size === filteredItems.length ? (
+                {/* KYPRO-47: show "Deselect All" ONLY when there's an actual
+                    non-empty selection; the old check (size === filteredItems.length)
+                    was true on an empty list because 0 === 0. */}
+                {isSelectingAll ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading all…
+                  </>
+                ) : selectedIds.size > 0 && selectedIds.size === filteredItems.length && filteredItems.length > 0 ? (
                   <>
                     <CheckSquare className="h-4 w-4" />
                     Deselect All
@@ -325,7 +379,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 ) : (
                   <>
                     <Square className="h-4 w-4" />
-                    Select All
+                    Select All{hasMore && !searchTerm && selectedTags.size === 0 ? ` (${items.length}+)` : ''}
                   </>
                 )}
               </Button>

@@ -12,12 +12,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (tags: string[]) => void, availableTags: string[] }) => {
     const [inputValue, setInputValue] = useState('');
+    // KYPRO-49: autocomplete dropdown visibility
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
     const addTag = (tagName: string) => {
-        if (tagName.trim() && !tags.includes(tagName.trim())) {
-            setTags([...tags, tagName.trim()]);
+        const trimmed = tagName.trim();
+        if (!trimmed) { setInputValue(''); return; }
+        // KYPRO-49: case-insensitive dedup so "vip" and "VIP" aren't both added.
+        const exists = tags.some(t => t.toLowerCase() === trimmed.toLowerCase());
+        if (!exists) {
+            // Prefer the existing-casing from availableTags if it matches.
+            const canonical = availableTags.find(t => t.toLowerCase() === trimmed.toLowerCase()) || trimmed;
+            setTags([...tags, canonical]);
         }
         setInputValue('');
+        setShowSuggestions(false);
     };
 
     const handleAddClick = () => {
@@ -30,6 +39,8 @@ const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (
         if (e.key === 'Enter' && inputValue.trim() !== '') {
             e.preventDefault();
             addTag(inputValue.trim());
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false);
         }
     };
 
@@ -40,12 +51,18 @@ const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (
     // Get unselected tags (available tags that aren't currently selected)
     const unselectedTags = availableTags.filter(tag => !tags.includes(tag));
 
+    // KYPRO-49: live autocomplete matches for the current input value.
+    const suggestions = inputValue.trim()
+        ? unselectedTags.filter(t => t.toLowerCase().includes(inputValue.trim().toLowerCase())).slice(0, 8)
+        : [];
+
     return (
         <div className="space-y-4">
-            {/* Available Tags - Clickable chips */}
-            {unselectedTags.length > 0 && (
-                <div>
-                    <label className="text-xs font-medium mb-2 block" style={{ color: '#6B5D52' }}>Available Tags (click to add)</label>
+            {/* KYPRO-48: always render the Available Tags section (with a placeholder
+                when empty) so the instructional text below it is never misleading. */}
+            <div>
+                <label className="text-xs font-medium mb-2 block" style={{ color: '#6B5D52' }}>Available Tags (click to add)</label>
+                {unselectedTags.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
                         {unselectedTags.map((tag, index) => (
                             <button
@@ -53,8 +70,8 @@ const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (
                                 type="button"
                                 onClick={() => addTag(tag)}
                                 className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors border"
-                                style={{ 
-                                    backgroundColor: '#F5F0E8', 
+                                style={{
+                                    backgroundColor: '#F5F0E8',
                                     borderColor: '#E8DFD1',
                                     color: '#5B4A3A'
                                 }}
@@ -64,8 +81,12 @@ const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (
                             </button>
                         ))}
                     </div>
-                </div>
-            )}
+                ) : (
+                    <p className="text-xs italic" style={{ color: '#8A7A6A' }}>
+                        No existing tags yet — type below to create a new one.
+                    </p>
+                )}
+            </div>
 
             {/* Selected Tags Input */}
             <div className="inputWrapper relative">
@@ -81,13 +102,36 @@ const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (
                     <input
                         type="text"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e) => { setInputValue(e.target.value); setShowSuggestions(true); }}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                         onKeyDown={handleKeyDown}
                         placeholder={tags.length === 0 ? "Type a new tag..." : ""}
                         className="flex-grow bg-transparent focus:outline-none p-1 text-foreground min-w-[120px]"
                         style={{ color: '#5B4A3A' }}
                     />
                 </div>
+                {/* KYPRO-49: autocomplete dropdown of matching existing tags. */}
+                {showSuggestions && suggestions.length > 0 && (
+                    <ul
+                        className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg border shadow-sm max-h-48 overflow-y-auto"
+                        style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
+                    >
+                        {suggestions.map(s => (
+                            <li key={s}>
+                                <button
+                                    type="button"
+                                    // onMouseDown instead of onClick so it fires before the input's onBlur.
+                                    onMouseDown={e => { e.preventDefault(); addTag(s); }}
+                                    className="w-full text-left px-3 py-2 text-sm hover:bg-amber-50/60"
+                                    style={{ color: '#5B4A3A' }}
+                                >
+                                    {s}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
                 <button
                     type="button"
                     onClick={handleAddClick}
@@ -243,9 +287,12 @@ export function TagMembersDialog({
   };
 
   return (
+    // KYPRO-51: CustomFormDialog exposes `onOpenChange`, not `onClose`. The old
+    // prop was silently ignored, so clicking the X (which calls onOpenChange(false))
+    // did nothing. Wiring it correctly closes the modal as expected.
     <CustomFormDialog
       open={isOpen}
-      onClose={onClose}
+      onOpenChange={(open) => { if (!open) onClose(); }}
       title="Tag Members"
       description={`Apply tags to ${selectedCount} selected member(s).`}
       size="large"

@@ -11,6 +11,8 @@ import { type Community, type User } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
+// KYPRO-43: replace native alert() with in-app toasts.
+import { useToast } from '@/hooks/use-toast';
 
 interface MemberWithCommunities extends User {
   communities: string[];
@@ -31,6 +33,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [membersWithCommunities, setMembersWithCommunities] = useState<MemberWithCommunities[]>([]);
   const [postsCount, setPostsCount] = useState(0);
   const [confirmText, setConfirmText] = useState('');
@@ -158,11 +161,11 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
       if (response.ok) {
         setCodeSent(true);
       } else {
-        alert('Failed to send verification code. Please try again.');
+        toast({ title: 'Code send failed', description: 'Failed to send verification code. Please try again.', variant: 'destructive' });
       }
     } catch (error) {
       console.error('Error sending verification code:', error);
-      alert('Failed to send verification code. Please try again.');
+      toast({ title: 'Code send failed', description: 'Failed to send verification code. Please try again.', variant: 'destructive' });
     } finally {
       setSendingCode(false);
     }
@@ -174,7 +177,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
     }
     
     if (!codeSent || verificationCode !== sentCode) {
-      alert('Please verify your email with the correct code.');
+      toast({ title: 'Verification required', description: 'Please verify your email with the correct code.', variant: 'destructive' });
       return;
     }
 
@@ -232,7 +235,7 @@ export const DeleteCommunityDialog: React.FC<DeleteCommunityDialogProps> = ({
       onSuccess();
     } catch (error) {
       console.error('Error deleting community:', error);
-      alert('Failed to delete community. Please try again.');
+      toast({ title: 'Delete failed', description: 'Failed to delete community. Please try again.', variant: 'destructive' });
     } finally {
       setIsDeleting(false);
     }

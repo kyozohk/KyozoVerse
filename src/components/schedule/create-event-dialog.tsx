@@ -486,16 +486,20 @@ export function CreateEventDialog({
                 </div>
               )}
 
-              {/* Date/Time Section - Improved Layout */}
+              {/* KYPRO-23 / KYPRO-24: Date/Time fields are OPTIONAL in this form.
+                  The Create button is only gated on Event Name and the selected
+                  guestlist. Labels now say "(optional)" so users don't get stuck
+                  trying to fight the browser's native picker thinking the times
+                  are blocking submission. */}
               <div className="mb-4 grid grid-cols-2 gap-4">
                 <Input
-                  label="Start Date"
+                  label="Start Date (optional)"
                   type="date"
                   value={startDate}
                   onChange={(e) => handleStartDateChange(e.target.value)}
                 />
                 <Input
-                  label="Start Time"
+                  label="Start Time (optional)"
                   type="time"
                   value={startTime}
                   onChange={(e) => handleStartTimeChange(e.target.value)}
@@ -503,13 +507,13 @@ export function CreateEventDialog({
               </div>
               <div className="mb-4 grid grid-cols-2 gap-4">
                 <Input
-                  label="End Date"
+                  label="End Date (optional)"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
                 <Input
-                  label="End Time"
+                  label="End Time (optional)"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}

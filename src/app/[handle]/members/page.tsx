@@ -462,10 +462,11 @@ function MembersContent() {
       {community && (
         <TagMembersDialog
           isOpen={isTaggingOpen}
-          onClose={() => {
-            setIsTaggingOpen(false);
-            setSelectedMembers([]);
-          }}
+          // KYPRO-52: only close the dialog here — do NOT clear the parent's
+          // selectedMembers, or the ListView's visually-selected rows will go
+          // out of sync with state. selectedMembers is already cleared inside
+          // handleApplyTags after a successful apply.
+          onClose={() => setIsTaggingOpen(false)}
           allMembers={allMembersForDialog as any}
           initialSelectedMembers={selectedMembersForDialog as any}
           communityId={community.communityId}

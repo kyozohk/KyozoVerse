@@ -7,6 +7,8 @@ import { UploadCloud, X, File, Music, Video } from 'lucide-react';
 import { Button } from './button';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+// KYPRO-43: replace native alert() with in-app toasts.
+import { useToast } from '@/hooks/use-toast';
 
 interface DropzoneProps {
   onFileChange: (file: File | null) => void;
@@ -20,6 +22,7 @@ interface DropzoneProps {
 }
 
 export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileType = 'image', existingImageUrl, label, className }: DropzoneProps) {
+  const { toast } = useToast();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
       if (selectedFile.size > maxSizeInBytes) {
         const maxSizeMB = maxSizeInBytes / (1024 * 1024);
         console.warn('[KYPRO-36][dropzone] file too large', JSON.stringify({ name: selectedFile.name, size: selectedFile.size, maxSizeInBytes }));
-        alert(`File too large. Maximum size for ${selectedFile.type.split('/')[0]} files is ${maxSizeMB}MB`);
+        toast({ title: 'File too large', description: `Maximum size for ${selectedFile.type.split('/')[0]} files is ${maxSizeMB}MB.`, variant: 'destructive' });
         return;
       }
       
@@ -73,7 +76,7 @@ export function Dropzone({ onFileChange, onRemoveExisting, file, accept, fileTyp
     
     if (rejectedFiles?.length) {
       console.error('[KYPRO-36][dropzone] rejected files', rejectedFiles);
-      alert(`File not accepted. Please check the file type and try again.`);
+      toast({ title: 'File not accepted', description: 'Please check the file type and try again.', variant: 'destructive' });
     }
   }, [onFileChange, fileType, accept]);
 

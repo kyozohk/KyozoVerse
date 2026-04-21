@@ -27,7 +27,19 @@ export default function CommunityPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const handle = params.handle as string;
+  // KYPRO-61: `useParams` returns already-decoded values from Next.js, but if the
+  // URL contains un-paired percent sequences (e.g. `/!@#$%^&*()` where `%^` is
+  // not a valid %XX), Next throws `URIError: URI malformed`. Wrap in try/catch
+  // and fall back to an empty string so the page renders a friendly "not found"
+  // instead of a full-page client-side crash.
+  let handle = '';
+  try {
+    const raw = params.handle;
+    handle = typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : '';
+  } catch (e) {
+    console.error('[KYPRO-61] handle param decode failed', e);
+    handle = '';
+  }
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [members, setMembers] = useState<CommunityMember[]>([]);
@@ -268,7 +280,7 @@ export default function CommunityPage() {
           open={isAddMemberDialogOpen}
           mode="add"
           communityName={community.name}
-          onClose={() => setIsAddMemberDialogOpen(false)}
+          onOpenChange={setIsAddMemberDialogOpen}
           onSubmit={async (data) => {
             try {
               await handleAddMember(data);

@@ -194,12 +194,21 @@ export function MemberDialog({
         return;
     }
     
+    // KYPRO-14 / KYPRO-39: validate all required fields + email format BEFORE
+    // submitting so the error is raised synchronously and rendered at the top
+    // of the form (see moved error panel below).
     if (!firstName.trim() || !lastName.trim()) {
-      setError("First and last names are required");
+      setError("First and last names are required.");
       return;
     }
     if (!email.trim()) {
-      setError("Email is required");
+      setError("Email is required.");
+      return;
+    }
+    // KYPRO-14: reject "notanemail"-style inputs that previously sailed through.
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!EMAIL_RE.test(email.trim())) {
+      setError("Please enter a valid email address.");
       return;
     }
     setError(null);
@@ -302,20 +311,34 @@ export function MemberDialog({
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex-grow space-y-4 overflow-y-auto pr-2 pb-4">
+                {/* KYPRO-13 / KYPRO-39: render the validation error at the TOP of the
+                    form so it is always visible within the modal viewport. Previously
+                    it lived below the Profile Banner uploader (below the fold). */}
+                {error && (
+                  <div
+                    role="alert"
+                    className="px-3 py-2 rounded-md text-sm"
+                    style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA' }}
+                  >
+                    {error}
+                  </div>
+                )}
+                {/* KYPRO-39: required fields get an asterisk so users know what's mandatory
+                    before attempting submission. */}
                 <div className="grid grid-cols-2 gap-4">
                     <Input
-                        label="First Name"
+                        label="First Name *"
                         value={firstName}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
                     />
                     <Input
-                        label="Last Name"
+                        label="Last Name *"
                         value={lastName}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
                     />
                 </div>
               <Input
-                label="Email"
+                label="Email *"
                 type="email"
                 value={email}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
@@ -420,7 +443,8 @@ export function MemberDialog({
                 </label>
               </div>
               
-              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+              {/* KYPRO-13: the old bottom-of-form error was below the fold; the top
+                  error panel above is the single source of truth now. */}
             </div>
             <div className="flex-shrink-0 mt-auto pt-6 flex flex-row justify-end gap-3">
                 <CustomButton

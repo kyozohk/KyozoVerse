@@ -3,9 +3,17 @@
 
 import { useState, useEffect } from 'react';
 import { CustomFormDialog, Input, CustomButton, Textarea } from '@/components/ui';
-import { Mail, MessageCircle, Copy, Check } from 'lucide-react';
+import { Mail, MessageCircle, Copy, Check, Loader2 } from 'lucide-react';
 import { type Community } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+
+// KYPRO-77: international phone format sanity check. Requires digits only (optionally
+// prefixed with +) and a minimum length so "notaphone" no longer slips through.
+const PHONE_RE = /^\+?[0-9\s\-()]{8,20}$/;
+// KYPRO-40: we manage placeholder state manually — Input shows a floating label
+// AND a placeholder, which overlap. Only show the placeholder when focused.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface InviteMemberDialogProps {
   isOpen: boolean;
@@ -19,13 +27,19 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
   community
 }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [useEmail, setUseEmail] = useState(false);
-  const [useWhatsApp, setUseWhatsApp] = useState(false);
+  // KYPRO-41 / KYPRO-42: single mutually-exclusive channel instead of two toggles.
+  // Defaults to 'email' so the Send button is meaningful on first render.
+  const [channel, setChannel] = useState<'email' | 'whatsapp'>('email');
   const [copied, setCopied] = useState(false);
+  // KYPRO-44: keep the modal open while submitting and show inline errors instead
+  // of closing optimistically + firing a native alert after context is lost.
+  const [isSending, setIsSending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   
@@ -121,15 +135,21 @@ Looking forward to seeing you there!`;
     } catch (error) {
       console.error('❌ COPY - Failed to copy:', error);
       // Show user-friendly error message
-      alert('Failed to copy link. Please copy it manually: ' + urlToCopy);
+      // KYPRO-43: final alert() removed. Show an in-app toast instead and keep
+      // the URL in console for easy manual copy.
+      console.warn('[KYPRO-43][invite] clipboard_failed', urlToCopy);
+      toast({
+        title: 'Could not copy link',
+        description: 'Please copy it manually from the Invite Link field.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleSendEmail = async () => {
-    if (!email) {
-      alert('Please enter an email address');
-      return;
-    }
+  const handleSendEmail = async (): Promise<{ ok: boolean; error?: string }> => {
+    if (!email) return { ok: false, error: 'Please enter an email address.' };
+    // KYPRO-43 / KYPRO-40: inline validation, no native alerts.
+    if (!EMAIL_RE.test(email)) return { ok: false, error: 'Please enter a valid email address.' };
 
     try {
       console.log('📧 Sending email to:', email);
@@ -214,68 +234,64 @@ Looking forward to seeing you there!`;
           console.log('📬 Fallback response:', fallbackData);
           
           if (!fallbackResponse.ok) {
-            throw new Error(fallbackData.error || 'Failed to send email');
+            return { ok: false, error: fallbackData.error || 'Failed to send email.' };
           }
-          
+
           console.log('✅ Email sent successfully using fallback domain!');
-          alert('Invitation email sent successfully!');
-        } else {
-          throw new Error(responseData.error || 'Failed to send email');
+          return { ok: true };
         }
-      } else {
-        console.log('✅ Email sent successfully using community domain!');
-        alert('Invitation email sent successfully!');
+        return { ok: false, error: responseData.error || 'Failed to send email.' };
       }
-    } catch (error) {
+      console.log('✅ Email sent successfully using community domain!');
+      return { ok: true };
+    } catch (error: any) {
       console.error('❌ Error sending email:', error);
-      alert(`Failed to send email: ${error.message}`);
+      return { ok: false, error: error?.message || 'Failed to send email.' };
     }
   };
 
-  const handleSendWhatsApp = () => {
-    if (!phone) {
-      alert('Please enter a phone number');
-      return;
-    }
+  const handleSendWhatsApp = (): { ok: boolean; error?: string } => {
+    if (!phone) return { ok: false, error: 'Please enter a phone number.' };
+    // KYPRO-77: reject obvious garbage like "notaphone". Require digits + optional +.
+    if (!PHONE_RE.test(phone)) return { ok: false, error: 'Please enter a valid international phone number (digits, country code optional).' };
+    // Final sanity: stripped-digits length between 8 and 15 (E.164).
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 8 || digits.length > 15) return { ok: false, error: 'Phone number must be between 8 and 15 digits.' };
 
-    // Remove all non-numeric characters from phone
-    const cleanPhone = phone.replace(/\D/g, '');
     const message = encodeURIComponent(inviteMessage);
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${message}`;
-    
+    const whatsappUrl = `https://wa.me/${digits}?text=${message}`;
     window.open(whatsappUrl, '_blank');
+    return { ok: true };
   };
 
-  const handleSend = () => {
-    if (!useEmail && !useWhatsApp) {
-      alert('Please select at least one method (Email or WhatsApp)');
+  const handleSend = async () => {
+    setFormError(null);
+    // KYPRO-44: validate synchronously first so we don't toggle the loading spinner
+    // for pure client-side errors.
+    if (!firstName.trim() || !lastName.trim()) {
+      setFormError('Please enter first and last name.');
       return;
     }
 
-    if (!firstName || !lastName) {
-      alert('Please enter first and last name');
-      return;
-    }
-
-    if (useEmail) {
-      handleSendEmail();
-    }
-
-    if (useWhatsApp) {
-      handleSendWhatsApp();
-    }
-
-    // Close dialog after sending
-    setTimeout(() => {
+    setIsSending(true);
+    try {
+      console.log('[KYPRO-invite] send_start', JSON.stringify({ channel, firstName, lastName, hasEmail: !!email, hasPhone: !!phone }));
+      const result = channel === 'email' ? await handleSendEmail() : handleSendWhatsApp();
+      if (!result.ok) {
+        // KYPRO-44: error shown INSIDE the modal. Nothing gets dismissed.
+        setFormError(result.error || 'Something went wrong. Please try again.');
+        console.warn('[KYPRO-invite] send_failed', JSON.stringify({ channel, error: result.error }));
+        return;
+      }
+      toast({ title: 'Invite sent', description: channel === 'email' ? `Emailed ${email}.` : `Opened WhatsApp for ${phone}.` });
+      console.log('[KYPRO-invite] send_success', JSON.stringify({ channel }));
+      // Reset + close only on success.
+      setFirstName(''); setLastName(''); setEmail(''); setPhone('');
+      setChannel('email'); setFormError(null);
       onClose();
-      // Reset form
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPhone('');
-      setUseEmail(false);
-      setUseWhatsApp(false);
-    }, 500);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -287,75 +303,70 @@ Looking forward to seeing you there!`;
     >
       <div className="flex flex-col h-full">
         <div className="flex-grow space-y-5 overflow-y-auto">
-          {/* Name Fields */}
+          {/* Name Fields — KYPRO-40: we rely on the floating label; don't pass a
+              placeholder prop, which the Input component would stack on top of it.
+              If a placeholder is still desired, it can be added at focus time later. */}
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="First Name"
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="John"
             />
             <Input
               label="Last Name"
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Doe"
             />
           </div>
 
-          {/* Invite Method Toggle Buttons */}
+          {/* KYPRO-41 / KYPRO-42: single exclusive channel. Default is Email.
+              Selected channel has a filled style; the other stays outlined. */}
           <div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setUseEmail(!useEmail)}
-                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all"
-                style={{
-                  borderColor: useEmail ? '#5B4A3A' : '#E8DFD1',
-                  backgroundColor: useEmail ? '#F5F0E8' : 'white',
-                  color: '#5B4A3A'
-                }}
-              >
-                <Mail className="h-5 w-5" />
-                <span className="font-medium">Email</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUseWhatsApp(!useWhatsApp)}
-                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all"
-                style={{
-                  borderColor: useWhatsApp ? '#5B4A3A' : '#E8DFD1',
-                  backgroundColor: useWhatsApp ? '#F5F0E8' : 'white',
-                  color: '#5B4A3A'
-                }}
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span className="font-medium">WhatsApp</span>
-              </button>
+            <label className="text-xs font-semibold mb-2 block" style={{ color: '#8B7355' }}>Send via</label>
+            <div className="flex gap-3" role="radiogroup" aria-label="Invite channel">
+              {(['email', 'whatsapp'] as const).map(c => {
+                const active = channel === c;
+                const Icon = c === 'email' ? Mail : MessageCircle;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => { setChannel(c); setFormError(null); }}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition-all"
+                    style={{
+                      borderColor: active ? '#5B4A3A' : '#E8DFD1',
+                      backgroundColor: active ? '#5B4A3A' : 'white',
+                      color: active ? 'white' : '#5B4A3A',
+                    }}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="font-medium">{c === 'email' ? 'Email' : 'WhatsApp'}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Email Input (conditional) */}
-          {useEmail && (
+          {/* Only the active channel's input is visible — KYPRO-42. */}
+          {channel === 'email' && (
             <Input
               label="Email Address"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="john@example.com"
             />
           )}
 
-          {/* Phone Input (conditional) */}
-          {useWhatsApp && (
+          {channel === 'whatsapp' && (
             <Input
               label="Phone Number (with country code)"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1234567890"
             />
           )}
 
@@ -396,6 +407,18 @@ Looking forward to seeing you there!`;
           </div>
         </div>
 
+        {/* KYPRO-44: inline error is rendered just above the action row so the
+            user keeps their context and can correct fields without the modal closing. */}
+        {formError && (
+          <div
+            role="alert"
+            className="mt-4 px-3 py-2 rounded-md text-sm"
+            style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA' }}
+          >
+            {formError}
+          </div>
+        )}
+
         {/* Action Buttons - Bottom aligned */}
         <div className="flex gap-3 pt-6 mt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
           <CustomButton
@@ -404,6 +427,7 @@ Looking forward to seeing you there!`;
             variant="outline"
             className="flex-1"
             style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
+            disabled={isSending}
           >
             Cancel
           </CustomButton>
@@ -412,9 +436,15 @@ Looking forward to seeing you there!`;
             onClick={handleSend}
             className="flex-1"
             style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
+            disabled={isSending}
           >
-            <Mail className="h-4 w-4 mr-2" />
-            Send Invite
+            {isSending ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending…</>
+            ) : channel === 'email' ? (
+              <><Mail className="h-4 w-4 mr-2" />Send Email Invite</>
+            ) : (
+              <><MessageCircle className="h-4 w-4 mr-2" />Send WhatsApp Invite</>
+            )}
           </CustomButton>
         </div>
       </div>
