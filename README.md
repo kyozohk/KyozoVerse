@@ -1,57 +1,46 @@
+# Kyozo Pro (KyozoVerse)
 
-# Firebase Studio
+Next.js 15 community platform. Source for `pro.kyozo.com`.
 
-This is a NextJS starter in Firebase Studio.
+## Getting started
 
-To get started, take a look at src/app/page.tsx.
+```bash
+pnpm install
+pnpm dev   # http://localhost:9003
+```
 
-make the list icon also the current route color
-add a button of same size as the card/list time 'Add New Community' that will load a dialog box clone of login dialog but have following 2 steps to capture the data
+`src/app/page.tsx` is the landing page. App routes live in `app/`.
 
-Step 1:
+## API
 
-name": "Kyozo Demo Community", - text input
-  "tagline": "Perfecting the technology behind the Kyozo platform", custom text area with same style as text input of 2 rows
-  "lore": "Join the Kyozo Announcements Community for updates on new communities and features on Kyozo.", - custom text area with 4 rows
-  "mantras": "Kyozo is on a mission to connect the Cultural Industries.", text area with 2 rows
-  "communityPrivacy": "private", - custom toggle button for public / private
+The public, versioned API lives under `/api/v1/` and is documented by
+`public/openapi.yaml`.
 
-Step 2: (and last step)
-communityBackgroundImage: text area of similar style used in feed, when image selected, show the image in the dropzone with edit/delete icon on topr right
-communityProfileImage: circle with border showing images Parallax1.jpg, Parallax2.jpg, Parallax3.jpg, Parallax4.jpg, Parallax5.jpg and last a plus in circle to browser and choose
-color pallet showing 5 colors in rounded rects, clicking on any color brings chose color dialog
- "colorPalette": {
-              "type": "array",
-              "items": {
-                "type": "map",
-                "fields": {
-                  "colorId": "number",
-                  "hexCode": "string"
-                }
+The interactive playground, self-serve key management, and MCP server live in
+the separate **kyozo-developers** repo (deployed at `developers.kyozo.com`).
 
+For first-party app traffic, all v1 routes accept either an API key
+(`x-api-key`) or a Firebase Bearer token (`Authorization: Bearer <id-token>`),
+so the main app exercises the same v1 surface third parties use.
 
+For local CLI key minting (alternative to the dashboard UI):
 
+```bash
+pnpm mint-api-key --name "local dev" --scopes "*"
+```
 
-curl -X POST 'https://waba.360dialog.io/v1/configs/webhook' \
-  -H 'D360-API-Key: aZ7WxT0jyL2oQlzkHHIbD4zvAK' \
-  -H 'Content-Type: application/json' \
-  -d '{"url": "https://4edf439c13a8.ngrok-free.app/api/whatsapp/webhook"}'
+Spec changes are auto-published to the dev portal via the
+`.github/workflows/publish-openapi.yml` action.
 
+## Open work
 
-#!/bin/bash
-# test-email.sh
+- Remove the mushroom animation
+- SMTP outbound email working end-to-end
+- Show the list of selected members in broadcast/invite flows
 
-curl -X POST 'https://api.resend.com/emails' \
-  -H 'Authorization: Bearer re_BSraSy53_DxkkdnandZ4mmVtb6doJNn7h' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "from": "Welcome <welcome@kyozo.space>",
-    "to": ["ashok.jaiswal@gmail.com"],
-    "subject": "Test Email from Kyozo.space",
-    "html": "<h1>Hello!</h1><p>This is a test email from welcome@kyozo.space</p>"
-  }'
+## Notes
 
-
-1. Get rid off the mushroom animation
-2. E-mail working SMTP
-2. List of selected members should show
+Earlier revisions of this README contained example curl commands with live
+provider keys (360dialog, Resend). Those keys must be considered compromised —
+rotate them at the provider and scrub them from `git.log` and any branches
+that still reference them.

@@ -191,7 +191,7 @@ Looking forward to seeing you there!`;
       const idToken = await user.getIdToken();
       
       // Send email via Resend API
-      const response = await fetch('/api/send-email', {
+      const response = await fetch('/api/v1/email/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ Looking forward to seeing you there!`;
         if (responseData.error && (responseData.error.includes('domain') || responseData.error.includes('from'))) {
           console.log('🔄 Community domain not verified, trying fallback domain...');
           
-          const fallbackResponse = await fetch('/api/send-email', {
+          const fallbackResponse = await fetch('/api/v1/email/send', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

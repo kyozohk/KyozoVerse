@@ -1,157 +1,211 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/api-auth';
+import { verifyApiKeyOrBearer } from '@/lib/api-key-auth';
 
-// API Key validation - in production, store this in environment variables
-const validateApiKey = (apiKey: string | null): boolean => {
-  const validApiKey = process.env.KYOZO_API_KEY;
-  if (!validApiKey) {
-    console.warn('KYOZO_API_KEY not configured - API key validation disabled');
-    return true; // Allow requests if no API key is configured (dev mode)
-  }
-  return apiKey === validApiKey;
-};
+/**
+ * POST /api/v1/email/send
+ *
+ * Send a transactional email via Resend.
+ *
+ * Auth: x-api-key (scope: email:send) OR Authorization: Bearer <Firebase ID token>.
+ *
+ * Body:
+ *   to              string | string[]   required
+ *   subject         string              required
+ *   html            string              required-or-text
+ *   text            string              required-or-html
+ *   from            string              optional, defaults to RESEND_FROM env or `<communityName|Kyozo> <noreply@contact.kyozo.com>`
+ *   replyTo         string              optional; if absent and communityHandle is set, derives `reply@<handle>.kyozo.com`
+ *   communityName   string              optional, used in default `from`
+ *   communityHandle string              optional, used to derive default `replyTo` and for logging
+ *   communityId     string              optional, logged
+ *   recipientName   string              optional, logged
+ *   recipientEmail  string              optional, logged (provider sends to `to`)
+ *
+ * Operational safety net: if Resend returns 403 with `validation_error` or "not verified",
+ * we transparently retry through Resend's default sender so that first-party app traffic
+ * never silently breaks when a custom sending domain has fallen out of verification.
+ */
+
+function safeString(v: unknown): string {
+  if (typeof v !== 'string') return '';
+  return v.length > 80 ? `${v.slice(0, 80)}…` : v;
+}
 
 export async function POST(request: NextRequest) {
-  const authResult = await verifyAuth(request);
-  if (authResult.error) return authResult.error;
+  const auth = await verifyApiKeyOrBearer(request, { scope: 'email:send' });
+  if (!auth.ok) return auth.response;
+
+  const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {
-
     const body = await request.json();
-    const { to, from, subject, html, text, replyTo, communityName } = body;
+    const {
+      to,
+      from,
+      subject,
+      html,
+      text,
+      replyTo,
+      communityName,
+      communityHandle,
+      communityId,
+      recipientName,
+      recipientEmail,
+    } = body || {};
 
-    // Validate required fields
+    console.log(
+      '[v1/email/send]',
+      JSON.stringify({
+        requestId,
+        stage: 'body_parsed',
+        via: auth.via,
+        toCount: Array.isArray(to) ? to.length : to ? 1 : 0,
+        toPreview: Array.isArray(to) ? safeString(to[0]) : safeString(to),
+        subjectPreview: safeString(subject),
+        hasHtml: typeof html === 'string' && html.length > 0,
+        htmlLength: typeof html === 'string' ? html.length : 0,
+        hasText: typeof text === 'string' && text.length > 0,
+        replyToPreview: safeString(replyTo),
+        communityId: safeString(communityId),
+        communityHandle: safeString(communityHandle),
+        recipientNamePreview: safeString(recipientName),
+        recipientEmailPreview: safeString(recipientEmail),
+      })
+    );
+
     if (!to) {
       return NextResponse.json(
-        { error: 'Missing required field: to', code: 'MISSING_FIELD' },
+        { error: 'Missing required field: to', code: 'MISSING_FIELD', requestId },
         { status: 400 }
       );
     }
-
     if (!subject) {
       return NextResponse.json(
-        { error: 'Missing required field: subject', code: 'MISSING_FIELD' },
+        { error: 'Missing required field: subject', code: 'MISSING_FIELD', requestId },
         { status: 400 }
       );
     }
-
     if (!html && !text) {
       return NextResponse.json(
-        { error: 'Missing required field: html or text', code: 'MISSING_FIELD' },
+        { error: 'Provide html or text', code: 'MISSING_FIELD', requestId },
         { status: 400 }
       );
     }
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
+    const RESEND_FROM = process.env.RESEND_FROM;
     if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY is not configured');
       return NextResponse.json(
-        { error: 'Email service not configured', code: 'SERVICE_ERROR' },
+        { error: 'Email service not configured', code: 'SERVICE_ERROR', requestId },
         { status: 500 }
       );
     }
 
-    // Use the provided 'from' address or default to verified Kyozo domain
-    // Format: "Name <email@domain.com>" or just "email@domain.com"
-    const fromAddress = from || `${communityName || 'Kyozo'} <noreply@contact.kyozo.com>`;
+    const fromAddress =
+      from ||
+      RESEND_FROM ||
+      `${communityName || 'Kyozo'} <noreply@contact.kyozo.com>`;
 
-    // Prepare recipients - can be string or array
     const recipients = Array.isArray(to) ? to : [to];
 
-    // Build email payload
-    const emailPayload: any = {
-      from: fromAddress,
-      to: recipients,
-      subject,
+    const derivedReplyTo =
+      replyTo ||
+      (communityHandle ? `reply@${communityHandle}.kyozo.com` : 'reply@kyozo.com');
+
+    const buildPayload = (overrides: Partial<{ from: string }> = {}) => {
+      const payload: Record<string, unknown> = {
+        from: overrides.from ?? fromAddress,
+        to: recipients,
+        subject,
+        reply_to: derivedReplyTo,
+      };
+      if (html) payload.html = html;
+      if (text) payload.text = text;
+      return payload;
     };
 
-    if (html) {
-      emailPayload.html = html;
+    const sendOnce = (overrides: Partial<{ from: string }> = {}) =>
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildPayload(overrides)),
+      });
+
+    let response = await sendOnce();
+    let data = await response.json().catch(() => null);
+
+    console.log(
+      '[v1/email/send]',
+      JSON.stringify({
+        requestId,
+        stage: 'resend_response',
+        status: response.status,
+        ok: response.ok,
+        id: data?.id || null,
+        name: data?.name || null,
+      })
+    );
+
+    // Fallback: domain-not-verified -> retry through Resend's default sender.
+    if (!response.ok) {
+      const resendMessage =
+        typeof data?.message === 'string' ? data.message : '';
+      const isDomainNotVerified = resendMessage.toLowerCase().includes('not verified');
+      const isFromDomainError =
+        response.status === 403 &&
+        (data?.name === 'validation_error' || isDomainNotVerified);
+
+      if (isFromDomainError) {
+        console.log(
+          '[v1/email/send]',
+          JSON.stringify({ requestId, stage: 'fallback_retry' })
+        );
+        response = await sendOnce({ from: 'onboarding@resend.dev' });
+        data = await response.json().catch(() => null);
+      }
     }
-
-    if (text) {
-      emailPayload.text = text;
-    }
-
-    if (replyTo) {
-      emailPayload.reply_to = replyTo;
-    }
-
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(emailPayload),
-    });
-
-    const data = await response.json();
 
     if (!response.ok) {
-      console.error('Resend API error:', data);
       return NextResponse.json(
-        { 
-          error: data.message || 'Failed to send email', 
+        {
+          error: data?.message || 'Failed to send email',
           code: 'SEND_FAILED',
-          details: data 
+          details: data,
+          requestId,
         },
         { status: response.status }
       );
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      id: data.id,
-      message: `Email sent successfully to ${recipients.length} recipient(s)`
+    return NextResponse.json({
+      success: true,
+      id: data?.id,
+      message: `Email sent to ${recipients.length} recipient(s)`,
+      requestId,
     });
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('[v1/email/send] error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
+      {
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        requestId,
+        details: (error as Error).message,
+      },
       { status: 500 }
     );
   }
 }
 
-// GET endpoint for API documentation
-export async function GET(request: NextRequest) {
-  const authResult = await verifyAuth(request);
-  if (authResult.error) return authResult.error;
-
+/** GET — minimal self-description. The full spec lives at /openapi.yaml. */
+export async function GET() {
   return NextResponse.json({
     name: 'Kyozo Email API',
     version: '1.0',
-    description: 'Send emails via Kyozo platform',
-    endpoints: {
-      'POST /api/v1/email/send': {
-        description: 'Send an email',
-        headers: {
-          'x-api-key': 'Your Kyozo API key (required)',
-          'Content-Type': 'application/json'
-        },
-        body: {
-          to: 'string | string[] (required) - Recipient email(s)',
-          subject: 'string (required) - Email subject',
-          html: 'string - HTML content (required if text not provided)',
-          text: 'string - Plain text content (required if html not provided)',
-          from: 'string (optional) - Sender address, defaults to Kyozo',
-          replyTo: 'string (optional) - Reply-to address',
-          communityName: 'string (optional) - Community name for sender'
-        },
-        response: {
-          success: 'boolean',
-          id: 'string - Email ID from provider',
-          message: 'string - Success message'
-        },
-        errors: {
-          401: 'Invalid or missing API key',
-          400: 'Missing required fields',
-          500: 'Server error'
-        }
-      }
-    },
-    documentation: 'https://pro.kyozo.com/docs/api/email'
+    spec: '/openapi.yaml',
+    docs: '/api-docs',
   });
 }

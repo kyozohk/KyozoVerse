@@ -272,7 +272,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
       const idToken = await user.getIdToken();
 
-      await fetch('/api/send-email', {
+      await fetch('/api/v1/email/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

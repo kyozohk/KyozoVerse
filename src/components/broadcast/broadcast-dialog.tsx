@@ -376,14 +376,14 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           });
           
           // Send message
-          const response = await fetch('/api/whatsapp/send-template', {
+          const response = await fetch('/api/v1/whatsapp/send-template', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(recipientPayload),
           });
           
           const data = await response.json();
-          console.log('[BroadcastDialog] Response from /api/whatsapp/send-template', {
+          console.log('[BroadcastDialog] Response from /api/v1/whatsapp/send-template', {
             memberId,
             status: response.status,
             ok: response.ok,

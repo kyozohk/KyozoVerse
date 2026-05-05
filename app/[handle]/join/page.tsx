@@ -142,8 +142,13 @@ export default function JoinCommunityPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4 text-center">
           <CheckCircle className="h-16 w-16 mx-auto mb-4" style={{ color: '#22c55e' }} />
           <h1 className="text-2xl font-bold mb-2" style={{ color: '#5B4A3A' }}>Welcome to {community.name}!</h1>
-          <p className="mb-4" style={{ color: '#8B7355' }}>Your account has been created and you've joined the community.</p>
-          <p className="text-sm" style={{ color: '#8B7355' }}>Redirecting you to the community...</p>
+          <p className="mb-6" style={{ color: '#8B7355' }}>Your account has been created and you've joined the community. You'll receive updates and messages from the community team.</p>
+          <CustomButton
+            onClick={() => window.location.href = '/'}
+            className="w-full"
+          >
+            Go to Community
+          </CustomButton>
         </div>
       </div>
     );

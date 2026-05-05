@@ -7,6 +7,7 @@ import { Input } from '../input';
 import { ChevronDown, Grid3x3, List, MessageSquare, Search, TrendingUp, Users, Plus, X, Send, Mail, Heart, Share2, UserPlus, Settings, Pencil, Trash2, Globe, Bot, Sparkles } from 'lucide-react';
 import { collection, query, where, getDocs, orderBy, limit as fbLimit } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Member {
   id: string;
@@ -140,6 +141,7 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
   const [currentHeroUrl, setCurrentHeroUrl] = useState('https://images.unsplash.com/photo-1557683316-973673baf926?w=1920&h=400&fit=crop');
   const [memberCount, setMemberCount] = useState(0);
   const [dataLoaded, setDataLoaded] = useState(!communityId);
+  const { user } = useAuth();
 
   // Fetch real community data when communityId is provided
   useEffect(() => {
@@ -239,17 +241,22 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
     setAiLoading(true);
     setAiResponse('');
     try {
-      const res = await fetch('/api/ai/generate', {
+      const idToken = user ? await user.getIdToken() : null;
+      const res = await fetch('/api/v1/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           prompt: `You are a community management AI assistant for Kyozo. The user is managing a community${communityHandle ? ` called "${communityHandle}"` : ''}. They asked: "${aiQuery}". Provide a helpful, concise response about how to accomplish this in their community platform. If it involves sending messages, managing members, creating events, or other platform actions, explain the steps. Keep it brief (2-3 sentences).`,
           type: 'long',
         }),
       });
       const data = await res.json();
-      if (data.content) {
-        setAiResponse(data.content);
+      // v1 returns `text`; the legacy field name was `content` and was never populated.
+      if (data.text) {
+        setAiResponse(data.text);
       } else if (data.error) {
         setAiResponse(`Sorry, I couldn't process that: ${data.error}`);
       } else {

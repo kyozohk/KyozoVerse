@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Input } from './input';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface AIInputProps {
   label: string;
@@ -24,6 +25,7 @@ export function AIInput({
 }: AIInputProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleAIGenerate = async () => {
     if (!aiPrompt) {
@@ -37,9 +39,13 @@ export function AIInput({
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/ai/generate', {
+      const idToken = user ? await user.getIdToken() : null;
+      const response = await fetch('/api/v1/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           prompt: aiPrompt,
           currentValue: value,

@@ -94,8 +94,10 @@ grep -r "contact.kyozo.com\|kyozo.com" src/ app/ --include="*.ts" --include="*.t
 
 Run the domain check script anytime:
 ```bash
-RESEND_API_KEY="re_BSraSy53_DxkkdnandZ4mmVtb6doJNn7h" node scripts/check-resend-domains.js
+RESEND_API_KEY="$RESEND_API_KEY" node scripts/check-resend-domains.js
 ```
+
+(Read `RESEND_API_KEY` from your `.env.local` or your shell — never paste raw keys into committed files.)
 
 ## Support
 

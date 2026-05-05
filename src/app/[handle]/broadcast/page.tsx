@@ -173,7 +173,7 @@ function BroadcastContent() {
     // Send emails to each member
     for (const member of membersWithEmail) {
       try {
-        const response = await fetch('/api/send-email', {
+        const response = await fetch('/api/v1/email/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -10,7 +10,8 @@
     "build": "NODE_ENV=production next build && node scripts/fix-client-reference-manifest.js",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "mint-api-key": "tsx scripts/mint-api-key.ts"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.0",

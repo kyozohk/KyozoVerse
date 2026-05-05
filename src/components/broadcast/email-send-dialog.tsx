@@ -100,7 +100,7 @@ export function EmailSendDialog({
 
         const idToken = await user.getIdToken();
 
-        const response = await fetch('/api/send-email', {
+        const response = await fetch('/api/v1/email/send', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',

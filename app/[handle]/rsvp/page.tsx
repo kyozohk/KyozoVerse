@@ -189,7 +189,7 @@ export default function RsvpPage() {
             </div>
             <p style="color:#8B7355;font-size:12px;">This link is unique to you. Do not share it.</p>
           </div>`;
-        const emailRes = await fetch('/api/send-email', {
+        const emailRes = await fetch('/api/v1/email/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
           body: JSON.stringify({

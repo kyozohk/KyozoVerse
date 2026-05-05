@@ -1,0 +1,49 @@
+name: Publish OpenAPI spec
+
+# Whenever public/openapi.yaml changes on the default branch, attach the spec
+# to a rolling `openapi-latest` GitHub release. The kyozo-developers repo
+# fetches it at build time so the playground always documents the current
+# v1 surface.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'public/openapi.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate OpenAPI
+        run: |
+          python3 -c "
+          import sys, yaml
+          with open('public/openapi.yaml') as f:
+              doc = yaml.safe_load(f)
+          assert doc.get('openapi'), 'openapi field missing'
+          assert doc.get('paths'), 'no paths'
+          print(f\"Validated: {doc['info']['title']} v{doc['info']['version']}, {len(doc['paths'])} paths\")
+          "
+
+      - name: Publish to rolling release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Recreate the rolling release so the asset URL is stable
+          # (https://github.com/<org>/<repo>/releases/latest/download/openapi.yaml)
+          # and downstream builds always pick up the latest spec.
+          if gh release view openapi-latest >/dev/null 2>&1; then
+            gh release delete openapi-latest --yes --cleanup-tag
+          fi
+          gh release create openapi-latest \
+            --title "OpenAPI spec — latest" \
+            --notes "Auto-published from public/openapi.yaml on $(git rev-parse --short HEAD)" \
+            --latest=false \
+            public/openapi.yaml

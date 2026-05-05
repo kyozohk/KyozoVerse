@@ -109,7 +109,7 @@ export function EnhancedBroadcastDialog({
 
       const idToken = await user.getIdToken();
 
-      const response = await fetch('/api/broadcast-templates', {
+      const response = await fetch('/api/v1/broadcast-templates', {
         headers: {
           'Authorization': `Bearer ${idToken}`
         }
@@ -164,7 +164,7 @@ export function EnhancedBroadcastDialog({
 
       const idToken = await user.getIdToken();
 
-      const response = await fetch('/api/broadcast-templates', {
+      const response = await fetch('/api/v1/broadcast-templates', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -357,7 +357,7 @@ export function EnhancedBroadcastDialog({
       
       console.log('🌐 Sending POST request to /api/send-email...');
       
-      const response = await fetch('/api/send-email', {
+      const response = await fetch('/api/v1/email/send', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

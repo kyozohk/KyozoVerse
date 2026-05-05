@@ -1,0 +1,563 @@
+openapi: 3.1.0
+info:
+  title: Kyozo Pro API
+  version: "1.0.0"
+  summary: Public API for the Kyozo community platform.
+  description: |
+    The Kyozo Pro API exposes the platform's email, WhatsApp, AI, broadcast, community, and waitlist
+    surfaces for external automation and MCP-driven agents.
+
+    All endpoints are versioned under `/api/v1/`. Authentication is by API key in the
+    `x-api-key` header (or `Authorization: ApiKey <key>`). Mint keys with
+    `pnpm mint-api-key --name "..." --scopes "..."`.
+  contact:
+    name: Kyozo
+    url: https://kyozo.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://pro.kyozo.com
+    description: Production
+  - url: http://localhost:9003
+    description: Local dev
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Email
+    description: Send transactional email and manage sending domains.
+  - name: WhatsApp
+    description: Send WhatsApp templated messages and list templates (via 360dialog).
+  - name: AI
+    description: Generate text snippets with Gemini.
+  - name: Broadcast
+    description: Manage reusable broadcast templates.
+  - name: Communities
+    description: Read communities and their members.
+  - name: Waitlist
+    description: Submit waitlist (access request) entries.
+
+paths:
+  /api/v1/email/send:
+    post:
+      tags: [Email]
+      summary: Send a transactional email
+      operationId: sendEmail
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendEmailRequest"
+            examples:
+              basic:
+                summary: Single recipient, HTML body
+                value:
+                  to: recipient@example.com
+                  subject: Welcome to Kyozo
+                  html: "<h1>Welcome!</h1><p>Glad you're here.</p>"
+                  communityName: My Community
+              multiple:
+                summary: Multiple recipients with reply-to
+                value:
+                  to: ["user1@example.com", "user2@example.com"]
+                  subject: Community Update
+                  html: "<p>Latest news</p>"
+                  replyTo: admin@mycommunity.com
+      responses:
+        "200":
+          description: Email accepted by Resend
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendEmailResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/v1/email/setup-domain:
+    get:
+      tags: [Email]
+      summary: Get sending-domain status
+      operationId: getEmailDomain
+      parameters:
+        - in: query
+          name: domain
+          schema: { type: string }
+          description: FQDN to check (e.g. `acme.kyozo.com`).
+      responses:
+        "200":
+          description: Domain status (or `not_found`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  domain: { type: string }
+                  status: { type: string }
+                  domainId: { type: string }
+                  records:
+                    type: array
+                    items: { $ref: "#/components/schemas/DnsRecord" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      tags: [Email]
+      summary: Add or verify a sending domain
+      operationId: setupEmailDomain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                handle:
+                  type: string
+                  description: Community handle. Implies domain `<handle>.kyozo.com` if `domain` not given.
+                domain:
+                  type: string
+                  description: Full FQDN to set up (overrides `handle`).
+                action:
+                  type: string
+                  enum: [list, get, verify, add]
+                  default: add
+            examples:
+              addByHandle:
+                value: { handle: acme }
+              verifyExisting:
+                value: { domain: acme.kyozo.com, action: verify }
+      responses:
+        "200":
+          description: Setup or status result.
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/v1/whatsapp/send-template:
+    post:
+      tags: [WhatsApp]
+      summary: Send a WhatsApp template message
+      operationId: sendWhatsappTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendWhatsappTemplateRequest"
+            examples:
+              simple:
+                summary: Send sample_1 template with no parameters
+                value:
+                  to: "+15551234567"
+                  template:
+                    name: sample_1
+                    language: en_US
+              withBodyParams:
+                summary: Body with two text parameters
+                value:
+                  to: "+15551234567"
+                  template:
+                    name: appointment_reminder
+                    language: { code: en_US }
+                    components:
+                      - type: BODY
+                        parameters:
+                          - { type: text, text: "Ashok" }
+                          - { type: text, text: "Tuesday" }
+      responses:
+        "200":
+          description: Provider accepted the message.
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502":
+          description: Upstream provider rejected the request.
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/v1/whatsapp/templates:
+    get:
+      tags: [WhatsApp]
+      summary: List available WhatsApp templates
+      operationId: listWhatsappTemplates
+      responses:
+        "200":
+          description: List of templates available on the connected 360dialog account.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  templates:
+                    type: array
+                    items: { $ref: "#/components/schemas/WhatsappTemplate" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502":
+          description: Upstream provider error.
+
+  /api/v1/ai/generate:
+    post:
+      tags: [AI]
+      summary: Generate short or long text with Gemini
+      operationId: aiGenerate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt: { type: string, description: What to write. }
+                currentValue:
+                  type: string
+                  description: Existing draft to refine. Optional.
+                type:
+                  type: string
+                  enum: [short, long]
+                  default: long
+            examples:
+              shortSubject:
+                value:
+                  prompt: Welcome new community member named Mei
+                  type: short
+      responses:
+        "200":
+          description: Generated text.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/v1/broadcast-templates:
+    get:
+      tags: [Broadcast]
+      summary: List broadcast templates
+      operationId: listBroadcastTemplates
+      responses:
+        "200":
+          description: Templates ordered by `createdAt` desc.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items: { $ref: "#/components/schemas/BroadcastTemplate" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      tags: [Broadcast]
+      summary: Create a broadcast template
+      operationId: createBroadcastTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, message]
+              properties:
+                name: { type: string }
+                subject: { type: string }
+                message: { type: string }
+                type: { type: string, enum: [email, whatsapp], default: email }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  message: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/v1/communities/{handle}:
+    get:
+      tags: [Communities]
+      summary: Get a community by handle
+      operationId: getCommunity
+      parameters:
+        - in: path
+          name: handle
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Community document.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  community:
+                    $ref: "#/components/schemas/Community"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/communities/{handle}/members:
+    get:
+      tags: [Communities]
+      summary: List members of a community
+      operationId: listCommunityMembers
+      parameters:
+        - in: path
+          name: handle
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 200 }
+        - in: query
+          name: cursor
+          schema: { type: string }
+          description: Last `id` from previous page.
+      responses:
+        "200":
+          description: Members page.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  communityId: { type: string }
+                  handle: { type: string }
+                  members:
+                    type: array
+                    items: { $ref: "#/components/schemas/CommunityMember" }
+                  nextCursor: { type: string, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/waitlist/join:
+    post:
+      tags: [Waitlist]
+      summary: Submit a waitlist (access request) entry
+      operationId: waitlistJoin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaitlistJoinRequest"
+      responses:
+        "200":
+          description: Submitted (or already submitted/approved).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  requestId: { type: string }
+                  status: { type: string, enum: [pending, approved, rejected] }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: |
+        Issue keys with `pnpm mint-api-key`. Each key has a scope list; routes
+        require specific scopes (e.g. `email:send`, `whatsapp:send`).
+
+  responses:
+    BadRequest:
+      description: Validation error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing, invalid, or revoked API key.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: API key lacks the required scope.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ServerError:
+      description: Server error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        code: { type: string }
+        details: {}
+
+    SendEmailRequest:
+      type: object
+      required: [to, subject]
+      properties:
+        to:
+          oneOf:
+            - { type: string, format: email }
+            - { type: array, items: { type: string, format: email } }
+        subject: { type: string }
+        html: { type: string, description: HTML body. Provide `html` or `text`. }
+        text: { type: string, description: Plain-text body. Provide `html` or `text`. }
+        from:
+          type: string
+          description: Sender header. Defaults to RESEND_FROM env, then `<communityName|Kyozo> <noreply@contact.kyozo.com>`.
+        replyTo:
+          type: string
+          format: email
+          description: Reply-to header. Defaults to `reply@<communityHandle>.kyozo.com` when communityHandle is provided.
+        communityName: { type: string, description: Community name used in the default `from` address. }
+        communityHandle:
+          type: string
+          description: Community handle. Used to derive `reply@<handle>.kyozo.com` when replyTo is absent, and for tracking.
+        communityId: { type: string, description: Community id (for tracking only). }
+        recipientName: { type: string, description: Recipient's display name (for tracking only). }
+        recipientEmail: { type: string, format: email, description: Canonical recipient email (for tracking only). }
+
+    SendEmailResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        id: { type: string, description: Resend message id. }
+        message: { type: string }
+
+    DnsRecord:
+      type: object
+      properties:
+        record: { type: string }
+        name: { type: string }
+        type: { type: string }
+        ttl: { type: string }
+        status: { type: string }
+        value: { type: string }
+        priority: { type: integer }
+
+    SendWhatsappTemplateRequest:
+      type: object
+      required: [to, template]
+      properties:
+        to:
+          type: string
+          description: Recipient phone number in E.164 format.
+        wabaAccountId:
+          type: string
+          description: Optional 360dialog WABA account id (sets `D360-WABA-ACCOUNT-ID`).
+        template:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+            language:
+              oneOf:
+                - { type: string }
+                - {
+                    type: object,
+                    properties: { code: { type: string } },
+                  }
+            components:
+              type: array
+              items:
+                type: object
+                properties:
+                  type: { type: string, enum: [HEADER, BODY, FOOTER, BUTTON] }
+                  text: { type: string }
+                  parameters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          { type: string, enum: [text, image, document, video] }
+                        text: { type: string }
+                        image:
+                          type: object
+                          properties: { link: { type: string, format: uri } }
+                        document:
+                          type: object
+                          properties: { link: { type: string, format: uri } }
+                        video:
+                          type: object
+                          properties: { link: { type: string, format: uri } }
+
+    WhatsappTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        language: { type: string }
+        components:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    BroadcastTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        subject: { type: string }
+        message: { type: string }
+        type: { type: string, enum: [email, whatsapp] }
+        createdAt: {}
+
+    Community:
+      type: object
+      additionalProperties: true
+      properties:
+        id: { type: string }
+        handle: { type: string }
+        name: { type: string }
+        ownerId: { type: string }
+        memberCount: { type: integer }
+
+    CommunityMember:
+      type: object
+      additionalProperties: true
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        communityId: { type: string }
+        role: { type: string }
+
+    WaitlistJoinRequest:
+      type: object
+      required: [email, firstName, lastName, phone, agreedToPrivacy]
+      properties:
+        email: { type: string, format: email }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: string }
+        newsletter: { type: boolean }
+        whatsapp: { type: boolean }
+        agreedToPrivacy: { type: boolean }
+        source: { type: string }
