@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from '@/firebase/firestore';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { db as adminDb } from '@/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+
+/**
+ * Constant-time string comparison to defeat timing attacks on the shared
+ * webhook secret comparison.
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+/**
+ * Verify the inbound 360dialog webhook came from 360dialog by checking the
+ * pre-shared secret configured in the 360dialog partner dashboard
+ * (Settings → Webhooks → Custom headers).
+ *
+ * Returns true if the secret matches OR no secret is configured (dev only).
+ * Returns false to indicate the webhook should be rejected.
+ */
+function verifyWebhookSecret(req: NextRequest): boolean {
+  const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
+  // In production, missing config is a fatal misconfiguration — refuse traffic.
+  if (!expected) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[whatsapp/webhook] WHATSAPP_WEBHOOK_SECRET is not set; rejecting webhook in production.');
+      return false;
+    }
+    // In dev, allow unsigned for local testing.
+    return true;
+  }
+  const provided =
+    req.headers.get('x-webhook-secret') ||
+    req.headers.get('x-360-webhook-secret') ||
+    '';
+  return provided.length > 0 && timingSafeEqual(provided, expected);
+}
 
 /**
  * GET handler for webhook verification
@@ -15,10 +54,19 @@ export async function GET(req: NextRequest) {
 
     console.log('[Webhook] GET verification request:', { mode, token, challenge });
 
-    // Verify token (you can set a custom token in your env)
-    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN || 'kyozo_webhook_token';
+    // Verify token must come from env. The previous hardcoded fallback
+    // ('kyozo_webhook_token') has been removed — refuse if unset in prod.
+    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN;
+    if (!verifyToken) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[whatsapp/webhook] WEBHOOK_VERIFY_TOKEN not configured');
+        return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+      }
+      // Dev fallback so emulator setups still work; never used in prod.
+      console.warn('[whatsapp/webhook] WEBHOOK_VERIFY_TOKEN not set, dev fallback in use');
+    }
 
-    if (mode === 'subscribe' && token === verifyToken) {
+    if (mode === 'subscribe' && token && verifyToken && timingSafeEqual(token, verifyToken)) {
       console.log('[Webhook] Verification successful');
       return new NextResponse(challenge, { status: 200 });
     }
@@ -32,9 +80,22 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * POST handler for incoming WhatsApp messages
+ * POST handler for incoming WhatsApp messages.
+ *
+ * SECURITY: requires the pre-shared `x-webhook-secret` header configured in
+ * the 360dialog partner dashboard. Without a valid secret the request is
+ * rejected.
+ *
+ * SECURITY: writes are now made via the Admin SDK (`@/firebase/admin`)
+ * because firestore.rules locked down direct client SDK writes to
+ * `messages_whatsapp` after the May 2026 audit.
  */
 export async function POST(req: NextRequest) {
+  if (!verifyWebhookSecret(req)) {
+    console.warn('[whatsapp/webhook] Rejected POST: invalid or missing webhook secret');
+    return NextResponse.json({ error: 'Unauthorized webhook' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     console.log('WhatsApp webhook payload:', JSON.stringify(body, null, 2));
@@ -109,14 +170,13 @@ export async function POST(req: NextRequest) {
                   
                   console.log(`[Webhook] Searching for user with wa_id: ${wa_id}`);
                   
-                  const usersRef = collection(db, 'users');
-                  let userId = null;
+                  const usersCollection = adminDb.collection('users');
+                  let userId: string | null = null;
                   let userName = senderName;
-                  
+
                   // Try wa_id first (most reliable)
-                  const waIdQuery = query(usersRef, where('wa_id', '==', wa_id));
-                  let userSnapshot = await getDocs(waIdQuery);
-                  
+                  let userSnapshot = await usersCollection.where('wa_id', '==', wa_id).limit(1).get();
+
                   if (!userSnapshot.empty) {
                     console.log(`[Webhook] ✅ Found user by wa_id: ${wa_id}`);
                   } else {
@@ -125,24 +185,18 @@ export async function POST(req: NextRequest) {
                       `+${senderPhone}`,      // +85260434478
                       senderPhone,            // 85260434478
                     ];
-                    
                     console.log(`[Webhook] wa_id not found, trying phone formats:`, phoneFormats);
-                    
-                    // Try phoneNumber field
+
                     for (const phoneFormat of phoneFormats) {
-                      const phoneQuery = query(usersRef, where('phoneNumber', '==', phoneFormat));
-                      userSnapshot = await getDocs(phoneQuery);
+                      userSnapshot = await usersCollection.where('phoneNumber', '==', phoneFormat).limit(1).get();
                       if (!userSnapshot.empty) {
                         console.log(`[Webhook] Found user by phoneNumber: ${phoneFormat}`);
                         break;
                       }
                     }
-                    
-                    // Try phone field if not found
                     if (userSnapshot.empty) {
                       for (const phoneFormat of phoneFormats) {
-                        const phoneQuery = query(usersRef, where('phone', '==', phoneFormat));
-                        userSnapshot = await getDocs(phoneQuery);
+                        userSnapshot = await usersCollection.where('phone', '==', phoneFormat).limit(1).get();
                         if (!userSnapshot.empty) {
                           console.log(`[Webhook] Found user by phone: ${phoneFormat}`);
                           break;
@@ -150,7 +204,7 @@ export async function POST(req: NextRequest) {
                       }
                     }
                   }
-                  
+
                   if (!userSnapshot.empty) {
                     const userDoc = userSnapshot.docs[0];
                     userId = userDoc.id;
@@ -160,19 +214,18 @@ export async function POST(req: NextRequest) {
                   } else {
                     console.log(`[Webhook] ❌ User not found for wa_id: ${wa_id}`);
                   }
-                  
-                  // Save message to Firestore - using service-specific collection
-                  const messagesRef = collection(db, 'messages_whatsapp');
+
+                  // Save message to Firestore via Admin SDK
                   const messageData: any = {
                     messageId,
                     userId,
                     senderPhone: `+${senderPhone}`,
                     senderName: userName,
                     messageText,
-                    messageType: message.type, // 'text', 'image', 'video', etc.
-                    messagingService: 'whatsapp', // Service type: whatsapp, email, sms, telegram, app, etc.
-                    direction: 'incoming', // incoming from user
-                    timestamp: serverTimestamp(),
+                    messageType: message.type,
+                    messagingService: 'whatsapp',
+                    direction: 'incoming',
+                    timestamp: FieldValue.serverTimestamp(),
                     whatsappTimestamp: timestamp,
                     read: false,
                     metadata: {
@@ -229,8 +282,8 @@ export async function POST(req: NextRequest) {
                     }
                   }
                   
-                  await addDoc(messagesRef, messageData);
-                  
+                  await adminDb.collection('messages_whatsapp').add(messageData);
+
                   console.log(`✅ ${message.type.toUpperCase()} message saved to Firestore for user ${userId || senderPhone}`);
                 }
               }

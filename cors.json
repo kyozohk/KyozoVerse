@@ -1,8 +1,26 @@
 [
   {
-    "origin": ["*"],
-    "method": ["GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"],
+    "origin": [
+      "https://kyozo.com",
+      "https://www.kyozo.com",
+      "https://pro.kyozo.com",
+      "https://developers.kyozo.com",
+      "https://*.kyozo.com",
+      "https://*.vercel.app",
+      "http://localhost:9003",
+      "http://localhost:3000"
+    ],
+    "method": ["GET", "PUT", "POST", "HEAD", "OPTIONS"],
     "maxAgeSeconds": 3600,
-    "responseHeader": ["Content-Type", "Authorization", "Content-Length", "User-Agent", "x-goog-resumable", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers"]
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "User-Agent",
+      "x-goog-resumable",
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Methods",
+      "Access-Control-Allow-Headers"
+    ]
   }
 ]

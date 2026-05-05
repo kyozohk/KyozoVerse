@@ -4,140 +4,233 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for community membership
-    function isCommunityMember(communityId) {
-      return request.auth != null && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
+    // ===========================================================
+    // Helpers
+    // ===========================================================
+
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Helper function to check if user is community owner
+    function isCommunityMember(communityId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
+    }
+
     function isCommunityOwner(communityId) {
-      return request.auth != null && 
+      return isSignedIn() &&
              get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
     }
-    
-    // Helper function to check if user is community admin or owner
+
     function isCommunityAdmin(communityId) {
       let memberDoc = get(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
-      return request.auth != null && 
+      return isSignedIn() &&
              (memberDoc.data.role == 'owner' || memberDoc.data.role == 'admin');
     }
 
-    // Communities can be read by anyone
+    // ===========================================================
+    // communities
+    // ===========================================================
     match /communities/{communityId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      // Owners can update everything; any authenticated user can increment memberCount only.
-      allow update: if request.auth != null && (
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
         resource.data.ownerId == request.auth.uid ||
+        // Any signed-in user can ONLY increment memberCount (e.g. on join).
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount'])
       );
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      
-      // Community tags subcollection
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
       match /tags/{tagId} {
-        allow read, write: if request.auth != null;
+        // Tags are community-scoped metadata; only members may read/write.
+        allow read: if isCommunityMember(communityId) || isCommunityOwner(communityId);
+        allow write: if isCommunityMember(communityId) || isCommunityOwner(communityId);
       }
     }
 
-    // Community members can be read by other members of that same community
+    // Legacy/unused subcollection — keep self-only.
     match /communities/{communityId}/members/{memberId} {
-        allow read, write: if request.auth != null && request.auth.uid == memberId;
+      allow read, write: if isSignedIn() && request.auth.uid == memberId;
     }
 
-    // Blogs (posts) rules
+    // ===========================================================
+    // blogs (posts)
+    // ===========================================================
     match /blogs/{blogId} {
-      // Allow LIST queries for public posts by anyone, and for all posts by authenticated users.
       allow list: if true;
-      
-      // Allow GET requests for public documents, or for the author of a private document.
-      allow get: if resource.data.visibility == 'public' || (request.auth != null && request.auth.uid == resource.data.authorId);
-      
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
-      
-      allow update, delete: if request.auth != null && 
-                               (request.auth.uid == resource.data.authorId || 
-                                (resource.data.communityId != null && isCommunityOwner(resource.data.communityId)));
+      allow get: if resource.data.visibility == 'public' ||
+                    (isSignedIn() && request.auth.uid == resource.data.authorId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if isSignedIn() && (
+        request.auth.uid == resource.data.authorId ||
+        (resource.data.communityId != null && isCommunityOwner(resource.data.communityId))
+      );
 
-      // Subcollections for likes and comments
       match /likes/{likeId} {
         allow read: if true;
-        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
       }
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
       }
     }
-    
-    // User interaction collection rules
+
+    // ===========================================================
+    // userInteractions
+    // ===========================================================
     match /userInteractions/{interactionId} {
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Users collection can be read by anyone authenticated
+    // ===========================================================
+    // users — TIGHTENED
+    // Previously: any signed-in user could read every user record (PII leak).
+    // Now: only the user themselves can read their own record. Display info
+    // for other users is exposed via communityMembers.userDetails (which is
+    // already scoped per community).
+    // ===========================================================
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      // Allow users to update their own profile
-      // Note: Community owners/admins should update via communityMembers collection, not users directly
-      allow update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Messages collections
+    // ===========================================================
+    // messages_whatsapp — TIGHTENED
+    // Previously: write was open (`if true`).
+    // Now: only the Admin SDK (which bypasses these rules) may write.
+    // The /api/whatsapp/webhook route now uses Admin SDK to insert messages.
+    // Reads are limited to the message's user or community owners/admins.
+    // ===========================================================
     match /messages_whatsapp/{messageId} {
-      allow read: if request.auth != null;
-      allow write: if true;
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.communityId != null && (
+          isCommunityOwner(resource.data.communityId) ||
+          isCommunityAdmin(resource.data.communityId)
+        ))
+      );
+      allow write: if false;  // Server-only via Admin SDK.
     }
-    
-    // Community members collection
+
+    // ===========================================================
+    // communityMembers
+    // ===========================================================
     match /communityMembers/{memberId} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null;
-      allow delete: if request.auth != null && 
-                       (resource.data.userId == request.auth.uid || 
-                        isCommunityOwner(resource.data.communityId));
+      // Any signed-in user can list community membership records.
+      allow read: if isSignedIn();
+      // Self-join: a user can create their own membership doc; the doc id
+      // MUST match the canonical `${uid}_${communityId}` pattern.
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        memberId == request.auth.uid + '_' + request.resource.data.communityId;
+      // Update/delete: owner of the community OR the member themselves.
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isCommunityOwner(resource.data.communityId)
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isCommunityOwner(resource.data.communityId)
+      );
     }
 
-    // Workspace members collection - used for platform-wide roles (admin/community_creator/read_only)
+    // ===========================================================
+    // workspaceMembers — TIGHTENED
+    // Controls platform-wide admin/owner/community_creator/read_only roles.
+    // Previously: any signed-in user could read AND write — privilege escalation.
+    // Now:
+    //   * Reads via the client are restricted to the user's own row OR a
+    //     pending email-based invite addressed to them. The
+    //     `usePlatformRole` hook now goes through `/api/me/role` (Admin SDK)
+    //     instead of querying directly.
+    //   * Writes are server-only via Admin SDK. The team management page
+    //     now calls `/api/admin/workspace-members*` endpoints which verify
+    //     the caller is a workspace admin before mutating.
+    //   * One narrow exception: a brand-new user may claim their pending
+    //     email-based invite by setting their own uid on it. Strict guards.
+    // ===========================================================
     match /workspaceMembers/{memberId} {
-      // NOTE: Without an explicit match block, Firestore denies all access by default.
-      // The app reads this collection in `usePlatformRole` and `useAuth`.
-      allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null;
+      // Self-read: user can see any row that's tied to their uid or email.
+      // (Their own active membership, or any pending invite addressed to them.)
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.email == request.auth.token.email
+      );
+
+      // Self-claim of a pending invite: status pending → active, set userId to self.
+      // Only the userId/status/updatedAt fields may change; no role/email tampering.
+      allow update: if isSignedIn() &&
+        resource.data.status == 'pending' &&
+        resource.data.userId == null &&
+        resource.data.email == request.auth.token.email &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId', 'status', 'updatedAt']);
+
+      // All other writes (create, role change, revoke, delete) must come via
+      // the server-side admin endpoints which use the Admin SDK.
+      allow create, delete: if false;
     }
 
-    // Guestlists collection - community members can create/read/update guestlists for their community
+    // ===========================================================
+    // guestlists, rsvps
+    // ===========================================================
     match /guestlists/{guestlistId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && 
-                               isCommunityMember(resource.data.communityId);
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        isCommunityMember(request.resource.data.communityId);
+      allow update, delete: if isSignedIn() &&
+        isCommunityMember(resource.data.communityId);
     }
 
-    // RSVPs collection - community members can read, admins/owners can create/update/delete
     match /rsvps/{rsvpId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null &&
-                               isCommunityMember(resource.data.communityId);
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() &&
+        isCommunityMember(resource.data.communityId);
     }
 
-    // Waitlist collection - allow anyone to submit, only admin to read/update
+    // ===========================================================
+    // waitlist (a.k.a. accessRequests)
+    // Anyone can submit; only workspace admins can read/update via server.
+    // ===========================================================
     match /waitlist/{requestId} {
-      allow create: if true; // Anyone can submit a waitlist request
-      allow read, update: if request.auth != null && request.auth.token.email == 'dev@kyozo.com'; // Only admin can read/update
+      allow create: if true;
+      allow read, update, delete: if false;  // Server-only via Admin SDK.
     }
 
-    // Inbox messages collection - community members can read messages for their community
+    match /accessRequests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if false;  // Server-only via Admin SDK.
+    }
+
+    // ===========================================================
+    // inboxMessages — TIGHTENED
+    // Previously: anyone could create (no auth at all). Now writes must come
+    // through the inbox webhook route via Admin SDK, which validates the
+    // sender first.
+    // ===========================================================
     match /inboxMessages/{messageId} {
-      allow read: if request.auth != null; // Temporarily allow all authenticated users
-      allow create: if true; // Webhook creates messages (no auth)
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read: if isSignedIn() && (
+        resource.data.communityId == null ||
+        isCommunityOwner(resource.data.communityId) ||
+        isCommunityAdmin(resource.data.communityId)
+      );
+      allow write: if false;  // Server-only via Admin SDK.
+    }
+
+    // ===========================================================
+    // apiKeys — already correctly locked down. Reaffirm.
+    // ===========================================================
+    match /apiKeys/{keyHash} {
+      allow read, write: if false;
     }
   }
 }

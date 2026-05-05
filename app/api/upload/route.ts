@@ -6,10 +6,15 @@ import { verifyAuth } from '@/lib/api-auth';
 const STORAGE_BUCKET = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
 // Helper function to validate file types
+//
+// SECURITY: SVG removed from the allow-list. SVG can contain inline JavaScript
+// (`<script>`) and `<foreignObject>`, so user-uploaded SVGs rendered via
+// <img> become a stored-XSS vector if the recipient ever opens the URL
+// directly. If you need vector graphics, sanitize server-side first.
 function isValidFileType(type: string): boolean {
   const validTypes = [
     // Images
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
     // Audio
     'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/mp4',
     // Video
@@ -30,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     // Set CORS headers
     const headers = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL || 'https://pro.kyozo.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
@@ -39,7 +44,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const communityId = formData.get('communityId') as string;
-    const userId = request.headers.get('x-user-id');
+    // Use the verified Firebase Auth uid — never trust a client-supplied
+    // x-user-id header (the previous implementation did, which let any
+    // authenticated user attribute uploads to anybody else).
+    const userId = authResult.uid!;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400, headers });
@@ -87,7 +95,13 @@ export async function POST(request: NextRequest) {
     if (file.type.startsWith('audio/')) fileCategory = 'audio';
     if (file.type.startsWith('video/')) fileCategory = 'videos';
 
-    const filename = `community-media/${communityId}/${fileCategory}/${Date.now()}-${file.name}`;
+    // Sanitize file name: strip path components and control chars to prevent
+    // path traversal (`../../etc/passwd`) and bucket key smuggling.
+    const safeName = (file.name || 'upload')
+      .replace(/[\\/:*?"<>|\x00-\x1f]/g, '_')
+      .replace(/^\.+/, '')
+      .slice(0, 200);
+    const filename = `community-media/${communityId}/${fileCategory}/${Date.now()}-${safeName}`;
     console.log('Target filename:', filename);
     
     try {
@@ -119,13 +133,21 @@ export async function POST(request: NextRequest) {
       });
       console.log('File uploaded successfully');
       
-      // Get the public URL
-      console.log('Generating signed URL...');
-      const [url] = await fileRef.getSignedUrl({
-        action: 'read',
-        expires: '03-01-2500', // Set a far future expiration
-      });
-      console.log('Signed URL generated:', url.substring(0, 50) + '...');
+      // Make the file publicly readable (storage.rules already permits public
+      // read on these paths) and use the public download URL instead of a
+      // long-lived signed URL. Signed URLs are bearer tokens — if the URL is
+      // ever leaked (accidental commit, log line, copy/paste), anyone holding
+      // it can read the object until the URL expires. Year-2500 expirations
+      // make accidental leaks effectively permanent.
+      console.log('Marking object public for download URL...');
+      try {
+        await fileRef.makePublic();
+      } catch (e) {
+        console.warn('Failed to makePublic (may already be public):', e);
+      }
+      // Public URL pattern for default Firebase storage buckets.
+      const url = `https://storage.googleapis.com/${STORAGE_BUCKET}/${encodeURI(filename)}`;
+      console.log('Public download URL:', url);
       
       return NextResponse.json({ 
         success: true, 
@@ -147,7 +169,7 @@ export async function POST(request: NextRequest) {
       error: 'Upload failed', 
       message: error.message || 'Unknown error' 
     }, { status: 500, headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL || 'https://pro.kyozo.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }});
@@ -158,7 +180,7 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL || 'https://pro.kyozo.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },

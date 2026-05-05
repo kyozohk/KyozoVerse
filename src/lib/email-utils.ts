@@ -1,5 +1,6 @@
 
 import { type Post } from '@/lib/types';
+import { escapeHtml } from '@/lib/html-escape';
 
 function getCardStyles() {
     return `
@@ -37,14 +38,14 @@ function renderReadCard(post: Post, communityHandle: string): string {
         <!-- Image if present -->
         ${imageUrl ? `
         <div style="margin-bottom: 16px; border-radius: 12px; overflow: hidden;">
-          <img src="${imageUrl}" alt="${post.title}" style="width: 100%; height: auto; display: block;" />
+          <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" style="width: 100%; height: auto; display: block;" />
         </div>
         ` : ''}
-        
+
         <!-- Title and content -->
-        <h2 style="font-size: 28px; font-weight: 900; color: #433F36; margin-bottom: 12px; line-height: 1.2; letter-spacing: -0.02em;">${post.title}</h2>
-        <p style="color: #433F36; line-height: 1.6; margin-bottom: 24px; opacity: 0.8;">${post.content.text || ''}</p>
-        <a href="${postUrl}" style="color: #504c4c; text-decoration: none; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.35px;">Read Full Article →</a>
+        <h2 style="font-size: 28px; font-weight: 900; color: #433F36; margin-bottom: 12px; line-height: 1.2; letter-spacing: -0.02em;">${escapeHtml(post.title)}</h2>
+        <p style="color: #433F36; line-height: 1.6; margin-bottom: 24px; opacity: 0.8;">${escapeHtml(post.content.text || '')}</p>
+        <a href="${escapeHtml(postUrl)}" style="color: #504c4c; text-decoration: none; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.35px;">Read Full Article →</a>
       </div>
     </div>
   `;
@@ -65,9 +66,9 @@ function renderListenCard(post: Post, communityHandle: string): string {
         </div>
         
         <!-- Title and content -->
-        <h2 style="font-size: 28px; font-weight: 900; color: #433F36; margin-bottom: 12px; line-height: 1.2; letter-spacing: -0.02em;">${post.title}</h2>
-        <p style="color: #433F36; line-height: 1.6; margin-bottom: 24px; opacity: 0.8;">${post.content.text || ''}</p>
-        <a href="${postUrl}" style="color: #504c4c; text-decoration: none; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.35px;">Listen Now →</a>
+        <h2 style="font-size: 28px; font-weight: 900; color: #433F36; margin-bottom: 12px; line-height: 1.2; letter-spacing: -0.02em;">${escapeHtml(post.title)}</h2>
+        <p style="color: #433F36; line-height: 1.6; margin-bottom: 24px; opacity: 0.8;">${escapeHtml(post.content.text || '')}</p>
+        <a href="${escapeHtml(postUrl)}" style="color: #504c4c; text-decoration: none; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.35px;">Listen Now →</a>
       </div>
     </div>
   `;
@@ -90,16 +91,16 @@ function renderWatchCard(post: Post, communityHandle: string): string {
           
           <!-- Video thumbnail -->
           <div style="margin-bottom: 16px; border-radius: 12px; overflow: hidden; position: relative;">
-            <img src="${imageUrl}" alt="${post.title}" style="width: 100%; height: auto; display: block;" />
+            <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" style="width: 100%; height: auto; display: block;" />
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background-color: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
               <div style="width: 0; height: 0; border-left: 20px solid white; border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 4px;"></div>
             </div>
           </div>
-          
+
           <!-- Title and content -->
-          <h2 style="font-size: 28px; font-weight: 900; color: #433F36; margin-bottom: 12px; line-height: 1.2; letter-spacing: -0.02em;">${post.title}</h2>
-          <p style="color: #433F36; line-height: 1.6; margin-bottom: 24px; opacity: 0.8;">${post.content.text || ''}</p>
-          <a href="${postUrl}" style="color: #504c4c; text-decoration: none; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.35px;">Watch Now →</a>
+          <h2 style="font-size: 28px; font-weight: 900; color: #433F36; margin-bottom: 12px; line-height: 1.2; letter-spacing: -0.02em;">${escapeHtml(post.title)}</h2>
+          <p style="color: #433F36; line-height: 1.6; margin-bottom: 24px; opacity: 0.8;">${escapeHtml(post.content.text || '')}</p>
+          <a href="${escapeHtml(postUrl)}" style="color: #504c4c; text-decoration: none; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.35px;">Watch Now →</a>
         </div>
       </div>
     `;
@@ -119,8 +120,10 @@ export function renderPostToHtml(post: Post & { id: string }, communityHandle: s
     case 'video':
       cardHtml = renderWatchCard(post, communityHandle);
       break;
-    default:
-      cardHtml = `<p>Check out the new post: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/${communityHandle}/${post.id}">${post.title}</a></p>`;
+    default: {
+      const safeUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${communityHandle}/${post.id}`;
+      cardHtml = `<p>Check out the new post: <a href="${escapeHtml(safeUrl)}">${escapeHtml(post.title)}</a></p>`;
+    }
   }
 
   // Wrap card in a full HTML body with background image
@@ -159,7 +162,7 @@ export function renderPostToHtml(post: Post & { id: string }, communityHandle: s
       </head>
       <body>
         <div class="content">
-          <p style="margin-bottom: 16px; color: #4b5563; font-weight: 500;">A new post has been published in the ${communityHandle} community:</p>
+          <p style="margin-bottom: 16px; color: #4b5563; font-weight: 500;">A new post has been published in the ${escapeHtml(communityHandle)} community:</p>
           ${cardHtml}
         </div>
       </body>

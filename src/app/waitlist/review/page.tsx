@@ -72,15 +72,19 @@ export default function WaitlistReviewPage() {
   }, [user, authLoading, router, searchParams, toast]);
 
   const handleApprove = async () => {
-    if (!userData) return;
-    
+    if (!userData || !user) return;
+
     setProcessing(true);
     setAction('approve');
-    
+
     try {
+      const token = await user.getIdToken();
       const response = await fetch('/api/waitlist/approve-direct', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(userData),
       });
 

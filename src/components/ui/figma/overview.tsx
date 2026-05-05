@@ -7,6 +7,7 @@ import { Input } from '../input';
 import { ChevronDown, Grid3x3, List, MessageSquare, Search, TrendingUp, Users, Plus, X, Send, Mail, Heart, Share2, UserPlus, Settings, Pencil, Trash2, Globe, Bot, Sparkles } from 'lucide-react';
 import { collection, query, where, getDocs, orderBy, limit as fbLimit } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Member {
   id: string;
@@ -120,6 +121,7 @@ interface OverviewScreenProps {
 }
 
 export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInviteCustomizerOpen = false, communityHandle, communityId }: OverviewScreenProps = {}) {
+  const { user } = useAuth();
   const [members, setMembers] = useState<Member[]>(communityId ? [] : initialMembers);
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>(communityId ? [] : mockFeedPosts);
   const [inboxMessages, setInboxMessages] = useState<InboxMessage[]>(communityId ? [] : mockInboxMessages);
@@ -239,9 +241,13 @@ export function OverviewScreen({ initialDisplaySettingsOpen = false, initialInvi
     setAiLoading(true);
     setAiResponse('');
     try {
+      const token = user ? await user.getIdToken() : null;
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           prompt: `You are a community management AI assistant for Kyozo. The user is managing a community${communityHandle ? ` called "${communityHandle}"` : ''}. They asked: "${aiQuery}". Provide a helpful, concise response about how to accomplish this in their community platform. If it involves sending messages, managing members, creating events, or other platform actions, explain the steps. Keep it brief (2-3 sentences).`,
           type: 'long',

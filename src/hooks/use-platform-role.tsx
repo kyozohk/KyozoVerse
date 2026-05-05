@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
 import { useAuth } from './use-auth';
 import { PlatformRole, PlatformPermissions, ROLE_PERMISSIONS } from '@/lib/platform-roles';
 
@@ -15,10 +13,12 @@ export interface PlatformRoleState {
 /**
  * Returns the current user's platform role and permissions.
  *
- * Precedence:
- *  1. Active record in `workspaceMembers` → use that explicit role
- *  2. Owns a community (and NOT in workspaceMembers) → 'owner'
- *  3. Neither → null (should not reach this in practice; auth guards deny access)
+ * Resolution happens server-side via `/api/me/role` (which uses the Admin
+ * SDK to bypass tightened workspaceMembers read rules). The server applies
+ * the same precedence the client used to:
+ *   1. Active row in `workspaceMembers` → that explicit role
+ *   2. Owns at least one community → 'owner'
+ *   3. Otherwise → null
  */
 export function usePlatformRole(): PlatformRoleState {
   const { user } = useAuth();
@@ -41,39 +41,20 @@ export function usePlatformRole(): PlatformRoleState {
       setState(prev => ({ ...prev, loading: true }));
 
       try {
-        // Priority 1: Explicit role in workspaceMembers (invited users)
-        const wsQ = query(
-          collection(db, 'workspaceMembers'),
-          where('userId', '==', user.uid),
-          where('status', '==', 'active'),
-          limit(1)
-        );
-        const wsSnap = await getDocs(wsQ);
-        if (!wsSnap.empty) {
-          const role = wsSnap.docs[0].data().role as PlatformRole;
-          if (!cancelled) {
-            setState({ role, permissions: ROLE_PERMISSIONS[role], loading: false });
-          }
-          return;
+        const token = await user.getIdToken();
+        const res = await fetch('/api/me/role', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          throw new Error(`Role lookup failed: ${res.status}`);
         }
-
-        // Priority 2: No workspaceMembers record → original workspace owner
-        const ownedQ = query(
-          collection(db, 'communities'),
-          where('ownerId', '==', user.uid),
-          limit(1)
-        );
-        const ownedSnap = await getDocs(ownedQ);
-        if (!ownedSnap.empty) {
-          if (!cancelled) {
-            setState({ role: 'owner', permissions: ROLE_PERMISSIONS['owner'], loading: false });
-          }
-          return;
-        }
-
-        if (!cancelled) {
-          setState({ role: null, permissions: null, loading: false });
-        }
+        const { role } = (await res.json()) as { role: PlatformRole | null };
+        if (cancelled) return;
+        setState({
+          role,
+          permissions: role ? ROLE_PERMISSIONS[role] : null,
+          loading: false,
+        });
       } catch (error) {
         console.error('[usePlatformRole] Error fetching role:', error);
         if (!cancelled) {

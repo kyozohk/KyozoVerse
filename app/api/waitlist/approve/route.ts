@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { requireWorkspaceAdmin } from '@/lib/api-auth';
+import { escapeHtml } from '@/lib/html-escape';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // SECURITY: this route approves waitlist entries → workspace-admin only.
+  const guard = await requireWorkspaceAdmin(request);
+  if (guard.error) return guard.error;
+
   try {
     const body = await request.json();
     const { requestId } = body;
@@ -75,7 +81,7 @@ export async function POST(request: Request) {
             </div>
             <div class="content">
               <div class="welcome-box">
-                <h2 style="margin-top: 0; color: #7c3aed;">Hi ${requestData.firstName}! 👋</h2>
+                <h2 style="margin-top: 0; color: #7c3aed;">Hi ${escapeHtml(requestData.firstName)}! 👋</h2>
                 <p style="font-size: 16px; color: #4a5568; margin-bottom: 20px;">
                   Great news! Your request to join <strong>KyozoVerse</strong> has been approved. You can now create your account and start building your community.
                 </p>
@@ -89,7 +95,7 @@ export async function POST(request: Request) {
                 <p style="font-size: 14px; color: #6b7280; text-align: center;">
                   Or copy and paste this link into your browser:
                 </p>
-                <div class="link-box">${registrationLink}</div>
+                <div class="link-box">${escapeHtml(registrationLink)}</div>
               </div>
               
               <div class="features">

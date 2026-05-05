@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth as adminAuth } from '@/firebase/admin';
+import { isWorkspaceAdmin } from '@/lib/platform-role-server';
 
 /**
  * Verify Firebase auth token from request headers.
@@ -45,6 +46,30 @@ export async function verifyAuth(request: NextRequest): Promise<{ uid?: string; 
       ),
     };
   }
+}
+
+/**
+ * Verify the request comes from an authenticated user AND that user has the
+ * workspace `admin` or `owner` platform role. Use on routes that mutate
+ * platform-wide state (waitlist approvals, team management, super-admin actions).
+ *
+ * Returns either { uid } on success or { error: NextResponse } on failure.
+ */
+export async function requireWorkspaceAdmin(
+  request: NextRequest
+): Promise<{ uid?: string; error?: NextResponse }> {
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult;
+  const ok = await isWorkspaceAdmin(authResult.uid!);
+  if (!ok) {
+    return {
+      error: NextResponse.json(
+        { error: 'Forbidden: workspace admin role required', code: 'FORBIDDEN' },
+        { status: 403 }
+      ),
+    };
+  }
+  return { uid: authResult.uid };
 }
 
 /**

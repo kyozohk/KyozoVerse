@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, query, getDocs, addDoc, doc, updateDoc, serverTimestamp, orderBy } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { usePlatformRole } from '@/hooks/use-platform-role';
 import { useToast } from '@/hooks/use-toast';
@@ -66,18 +64,32 @@ export default function TeamPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<(WorkspaceMember & { id: string }) | null>(null);
 
+  const authedFetch = useCallback(async (input: RequestInfo, init: RequestInit = {}) => {
+    if (!user) throw new Error('Not signed in');
+    const token = await user.getIdToken();
+    return fetch(input, {
+      ...init,
+      headers: {
+        ...(init.headers || {}),
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }, [user]);
+
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'workspaceMembers'), orderBy('createdAt', 'desc'));
-      const snap = await getDocs(q);
-      setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() } as WorkspaceMember & { id: string })));
+      const res = await authedFetch('/api/admin/workspace-members');
+      if (!res.ok) throw new Error(`List failed: ${res.status}`);
+      const { members } = await res.json();
+      setMembers(members);
     } catch (err) {
       console.error('Error fetching team members:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authedFetch]);
 
   useEffect(() => {
     if (!roleLoading && myRole === 'owner') {
@@ -107,23 +119,25 @@ export default function TeamPage() {
 
     setIsInviting(true);
     try {
-      await addDoc(collection(db, 'workspaceMembers'), {
-        email: normalizedEmail,
-        displayName: inviteDisplayName.trim(),
-        userId: null,
-        role: inviteRole,
-        status: 'pending',
-        invitedBy: user.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      } satisfies Omit<WorkspaceMember, 'id'>);
+      const res = await authedFetch('/api/admin/workspace-members', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: normalizedEmail,
+          displayName: inviteDisplayName.trim(),
+          role: inviteRole,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Invite failed: ${res.status}`);
+      }
       toast({ title: 'Invitation Created', description: `${inviteDisplayName} has been invited as ${ROLE_LABELS[inviteRole]}. They can sign in with their credentials to activate access.` });
       setInviteEmail('');
       setInviteDisplayName('');
       fetchMembers();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating invite:', err);
-      toast({ title: 'Error', description: 'Failed to create invitation.', variant: 'destructive' });
+      toast({ title: 'Error', description: err?.message || 'Failed to create invitation.', variant: 'destructive' });
     } finally {
       setIsInviting(false);
     }
@@ -132,14 +146,18 @@ export default function TeamPage() {
   const handleRevoke = async () => {
     if (!revokeTarget) return;
     try {
-      await updateDoc(doc(db, 'workspaceMembers', revokeTarget.id), {
-        status: 'revoked',
-        updatedAt: new Date(),
+      const res = await authedFetch(`/api/admin/workspace-members/${revokeTarget.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'revoked' }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Revoke failed: ${res.status}`);
+      }
       toast({ title: 'Access Revoked', description: `${revokeTarget.displayName}'s access has been revoked.` });
       fetchMembers();
-    } catch (err) {
-      toast({ title: 'Error', description: 'Failed to revoke access.', variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err?.message || 'Failed to revoke access.', variant: 'destructive' });
     } finally {
       setRevokeTarget(null);
     }
@@ -147,15 +165,18 @@ export default function TeamPage() {
 
   const handleReactivate = async (member: WorkspaceMember & { id: string }) => {
     try {
-      await updateDoc(doc(db, 'workspaceMembers', member.id), {
-        status: 'pending',
-        userId: null,
-        updatedAt: new Date(),
+      const res = await authedFetch(`/api/admin/workspace-members/${member.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'pending' }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Reactivate failed: ${res.status}`);
+      }
       toast({ title: 'Invitation Reactivated', description: `${member.displayName} can now sign in again.` });
       fetchMembers();
-    } catch (err) {
-      toast({ title: 'Error', description: 'Failed to reactivate invitation.', variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err?.message || 'Failed to reactivate invitation.', variant: 'destructive' });
     }
   };
 

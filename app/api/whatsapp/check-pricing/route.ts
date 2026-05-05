@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/lib/api-auth';
 
 // Environment variables should be set in .env.local
 const API_KEY = process.env.D360_API_KEY || '';
@@ -17,9 +18,13 @@ console.log('WhatsApp Pricing API Configuration:', {
 });
 
 export async function POST(request: NextRequest) {
+  // SECURITY: signed-in users only.
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     const body = await request.json();
-    
+
     // Validate required fields
     if (body.recipientCount === undefined) {
       return NextResponse.json(

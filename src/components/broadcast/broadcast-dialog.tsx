@@ -218,11 +218,13 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
     
     try {
       const template = displayTemplates.find(t => t.id === selectedTemplate);
-      
+      const token = user ? await user.getIdToken() : null;
+
       const response = await fetch('/api/whatsapp/check-pricing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           recipientCount: members.length,
@@ -376,9 +378,13 @@ const BroadcastDialog: React.FC<BroadcastModalProps> = ({
           });
           
           // Send message
+          const sendToken = user ? await user.getIdToken() : null;
           const response = await fetch('/api/whatsapp/send-template', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(sendToken ? { Authorization: `Bearer ${sendToken}` } : {}),
+            },
             body: JSON.stringify(recipientPayload),
           });
           

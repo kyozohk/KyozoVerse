@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Textarea } from './textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface AITextareaProps {
   label: string;
@@ -26,6 +27,7 @@ export function AITextarea({
 }: AITextareaProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleAIGenerate = async () => {
     if (!aiPrompt) {
@@ -39,9 +41,13 @@ export function AITextarea({
 
     setIsGenerating(true);
     try {
+      const token = user ? await user.getIdToken() : null;
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           prompt: aiPrompt,
           currentValue: value,

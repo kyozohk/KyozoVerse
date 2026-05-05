@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { usePlatformRole } from '@/hooks/use-platform-role';
 import { useRouter } from 'next/navigation';
-import { db } from '@/firebase/firestore';
-import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { Loader2, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { WaitlistDataTable } from './_components/waitlist-data-table';
@@ -12,21 +11,48 @@ import { getColumns, WaitlistRequest } from './_components/waitlist-columns';
 
 export default function WaitlistPage() {
   const { user, loading: authLoading } = useAuth();
+  const { role: platformRole, loading: roleLoading } = usePlatformRole();
   const router = useRouter();
   const { toast } = useToast();
   const [requests, setRequests] = useState<WaitlistRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  const isAdmin = platformRole === 'admin' || platformRole === 'owner';
+
+  const fetchWaitlist = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/admin/waitlist', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        throw new Error(`List failed: ${res.status}`);
+      }
+      const { requests: items } = await res.json();
+      setRequests(items as WaitlistRequest[]);
+    } catch (error) {
+      console.error('Error fetching waitlist:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load waitlist requests',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/');
       return;
     }
+    if (!user || roleLoading) return;
 
-    if (!user) return;
-
-    if (user.email !== 'dev@kyozo.com') {
+    if (!isAdmin) {
       toast({
         title: 'Access Denied',
         description: 'You do not have permission to access this page.',
@@ -36,36 +62,20 @@ export default function WaitlistPage() {
       return;
     }
 
-    const waitlistRef = collection(db, 'waitlist');
-    const q = query(waitlistRef, orderBy('createdAt', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const requestsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as WaitlistRequest[];
-      
-      setRequests(requestsData);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching waitlist:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load waitlist requests',
-        variant: 'destructive',
-      });
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, authLoading, router, toast]);
+    fetchWaitlist();
+  }, [user, authLoading, roleLoading, isAdmin, router, toast, fetchWaitlist]);
 
   const handleApprove = async (requestId: string) => {
+    if (!user) return;
     setProcessingId(requestId);
     try {
+      const token = await user.getIdToken();
       const response = await fetch('/api/waitlist/approve', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ requestId }),
       });
 
@@ -76,6 +86,7 @@ export default function WaitlistPage() {
           title: 'Request Approved',
           description: 'Registration email sent to user',
         });
+        fetchWaitlist();
       } else {
         throw new Error(data.error || 'Failed to approve request');
       }
@@ -92,11 +103,16 @@ export default function WaitlistPage() {
   };
 
   const handleReject = async (requestId: string) => {
+    if (!user) return;
     setProcessingId(requestId);
     try {
+      const token = await user.getIdToken();
       const response = await fetch('/api/waitlist/reject', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ requestId }),
       });
 
@@ -107,6 +123,7 @@ export default function WaitlistPage() {
           title: 'Request Rejected',
           description: 'User has been notified',
         });
+        fetchWaitlist();
       } else {
         throw new Error(data.error || 'Failed to reject request');
       }

@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { requireWorkspaceAdmin } from '@/lib/api-auth';
+import { escapeHtml } from '@/lib/html-escape';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // SECURITY: this route rejects waitlist entries → workspace-admin only.
+  const guard = await requireWorkspaceAdmin(request);
+  if (guard.error) return guard.error;
+
   try {
     const body = await request.json();
     const { requestId } = body;
@@ -66,7 +72,7 @@ export async function POST(request: Request) {
             </div>
             <div class="content">
               <div class="message-box">
-                <h2 style="margin-top: 0; color: #374151;">Hi ${requestData.firstName},</h2>
+                <h2 style="margin-top: 0; color: #374151;">Hi ${escapeHtml(requestData.firstName)},</h2>
                 <p style="font-size: 16px; color: #4a5568; margin-bottom: 20px;">
                   Thank you for your interest in joining <strong>KyozoVerse</strong>.
                 </p>

@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { verifyAuth, checkRateLimit } from '@/lib/api-auth';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
+  // SECURITY: AI generation incurs Gemini API cost → require authenticated
+  // user and rate-limit per IP.
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+  const rateLimitResponse = checkRateLimit(request, 30, 60_000);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { prompt, currentValue, type } = await request.json();
 

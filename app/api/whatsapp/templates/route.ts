@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/lib/api-auth';
 
 // Reuse the same env pattern as send-template
 const RAW_API_KEY =
@@ -15,7 +16,12 @@ const DIRECT_TEMPLATES_URL = 'https://waba-v2.360dialog.io/message-templates';
 // Fallback endpoint
 const ALT_TEMPLATES_URL = `${WEBHOOK_URL}/v1/configs/templates`;
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  // SECURITY: lists 360dialog templates → require auth so business-account
+  // template inventory isn't exposed publicly.
+  const authResult = await verifyAuth(req);
+  if (authResult.error) return authResult.error;
+
   try {
     if (!API_KEY) {
       console.warn('[whatsapp/templates] No 360dialog API key configured');

@@ -1,8 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { checkRateLimit } from '@/lib/api-auth';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Public signup endpoint — rate-limit per IP to prevent waitlist spam.
+  const rateLimitResponse = checkRateLimit(request, 10, 60_000);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const { email, firstName, lastName, phone, newsletter, whatsapp } = body;

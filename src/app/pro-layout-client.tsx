@@ -37,8 +37,10 @@ export default function ProLayoutClient({ children }: { children: React.ReactNod
   
   const [sidebarOpen, setSidebarOpen] = useState(!isCommunityPage);
 
-  // Early return for public routes BEFORE auth checks
-  if (pathname === '/' || pathname.startsWith('/sa')) {
+  // Early return for public routes BEFORE auth checks.
+  // (The /sa super-admin page was removed in May 2026 — it was dead code
+  // protected only by a hardcoded password and is no longer reachable.)
+  if (pathname === '/') {
     return <>{children}</>;
   }
 

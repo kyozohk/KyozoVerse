@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/firebase/firestore';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db as adminDb } from '@/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+import { verifyAuth, checkRateLimit } from '@/lib/api-auth';
 
 // Environment variables should be set in .env.local
 // Support multiple possible env var names for the 360dialog API key,
@@ -79,6 +80,14 @@ function hasHeaderWithImage(template: any): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  // SECURITY: this route sends paid WhatsApp messages → require authenticated
+  // user (any signed-in workspace user) and rate-limit per user/IP to make
+  // billing-fraud abuse expensive even if a session is compromised.
+  const authResult = await verifyAuth(request);
+  if (authResult.error) return authResult.error;
+  const rateLimitResponse = checkRateLimit(request, 30, 60_000);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
 
@@ -270,26 +279,20 @@ export async function POST(request: NextRequest) {
     // Store the message in Firestore
     if (response.ok && data.messages?.[0]?.id) {
       try {
-        // Find user by phone number or wa_id
+        // Find user by phone number or wa_id (Admin SDK — bypasses tightened rules)
         const recipientPhone = body.to.startsWith('+') ? body.to : `+${body.to}`;
-        const wa_id = body.to.replace(/\+/g, '').replace(/\s+/g, ''); // Remove + and spaces
-        const usersRef = collection(db, 'users');
-        
-        // Try wa_id first (most reliable)
-        const waIdQuery = query(usersRef, where('wa_id', '==', wa_id));
-        let userSnapshot = await getDocs(waIdQuery);
-        
-        // Fallback to phone number formats
+        const wa_id = body.to.replace(/\+/g, '').replace(/\s+/g, '');
+        const usersCollection = adminDb.collection('users');
+
+        let userSnapshot = await usersCollection.where('wa_id', '==', wa_id).limit(1).get();
         if (userSnapshot.empty) {
-          const phoneQuery = query(usersRef, where('phoneNumber', '==', recipientPhone));
-          userSnapshot = await getDocs(phoneQuery);
+          userSnapshot = await usersCollection.where('phoneNumber', '==', recipientPhone).limit(1).get();
         }
         if (userSnapshot.empty) {
-          const phoneQuery2 = query(usersRef, where('phone', '==', recipientPhone));
-          userSnapshot = await getDocs(phoneQuery2);
+          userSnapshot = await usersCollection.where('phone', '==', recipientPhone).limit(1).get();
         }
-        
-        let userId = null;
+
+        let userId: string | null = null;
         let userName = 'Unknown';
         if (!userSnapshot.empty) {
           userId = userSnapshot.docs[0].id;
@@ -298,34 +301,31 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`[Send Template] User not found for ${body.to}`);
         }
-        
+
         // Extract message text from template
         let messageText = '';
         const bodyComponent = body.template.components?.find((c: any) => c.type === 'BODY' || c.type === 'body');
         if (bodyComponent?.text) {
           messageText = bodyComponent.text;
-          // Replace variables with actual values
           bodyComponent.parameters?.forEach((param: any, index: number) => {
             if (param.type === 'text') {
               messageText = messageText.replace(`{{${index + 1}}}`, param.text);
             }
           });
         }
-        
-        // Save outgoing message to Firestore - using service-specific collection
-        const messagesRef = collection(db, 'messages_whatsapp');
-        await addDoc(messagesRef, {
+
+        await adminDb.collection('messages_whatsapp').add({
           messageId: data.messages[0].id,
           userId,
           recipientPhone: body.to,
           recipientName: userName,
           messageText,
-          messageType: 'text', // Templates are text-based
-          messagingService: 'whatsapp', // Service type
+          messageType: 'text',
+          messagingService: 'whatsapp',
           templateName: body.template.name,
-          direction: 'outgoing', // outgoing to user
-          timestamp: serverTimestamp(),
-          read: true, // outgoing messages are always "read" by us
+          direction: 'outgoing',
+          timestamp: FieldValue.serverTimestamp(),
+          read: true,
           status: 'sent',
         });
         

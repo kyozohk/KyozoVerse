@@ -1,6 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { createHmac, timingSafeEqual } from 'crypto';
+
+/**
+ * Verify a Resend (Svix) webhook signature.
+ *
+ * Resend signs every inbound webhook with the Svix scheme:
+ *   - svix-id:        message id
+ *   - svix-timestamp: unix seconds
+ *   - svix-signature: "v1,<base64 hmac-sha256>" (space-separated for multiple)
+ *
+ * The signed payload is the literal string: `${svix-id}.${svix-timestamp}.${rawBody}`
+ *
+ * Configure RESEND_WEBHOOK_SECRET in env (the "Signing Secret" from the
+ * Resend dashboard, format: `whsec_<base64>`).
+ */
+function verifyResendSignature(rawBody: string, headers: Headers): boolean {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[inbox/webhook] RESEND_WEBHOOK_SECRET not configured; rejecting in production.');
+      return false;
+    }
+    return true; // dev only
+  }
+
+  const id = headers.get('svix-id') || headers.get('webhook-id');
+  const timestamp = headers.get('svix-timestamp') || headers.get('webhook-timestamp');
+  const signatureHeader = headers.get('svix-signature') || headers.get('webhook-signature');
+  if (!id || !timestamp || !signatureHeader) return false;
+
+  // Reject replays older than 5 minutes
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts)) return false;
+  const ageSec = Math.abs(Math.floor(Date.now() / 1000) - ts);
+  if (ageSec > 5 * 60) {
+    console.warn('[inbox/webhook] Webhook timestamp out of tolerance:', ageSec, 's');
+    return false;
+  }
+
+  const secretBase64 = secret.startsWith('whsec_') ? secret.slice(6) : secret;
+  let secretBytes: Buffer;
+  try {
+    secretBytes = Buffer.from(secretBase64, 'base64');
+  } catch {
+    return false;
+  }
+
+  const signedContent = `${id}.${timestamp}.${rawBody}`;
+  const expected = createHmac('sha256', secretBytes).update(signedContent).digest('base64');
+
+  // signatureHeader can be space-separated list: "v1,sig1 v1,sig2"
+  const presented = signatureHeader.split(' ').map(p => p.split(',')[1]).filter(Boolean);
+  return presented.some(sig => {
+    try {
+      const a = Buffer.from(sig, 'base64');
+      const b = Buffer.from(expected, 'base64');
+      return a.length === b.length && timingSafeEqual(a, b);
+    } catch {
+      return false;
+    }
+  });
+}
 
 function extractEmail(address: string): string {
   const match = address?.match(/<(.+?)>/);
@@ -20,7 +82,14 @@ function extractCommunityHandle(toAddress: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Read body as text first so we can verify the signature against the raw
+    // bytes before parsing as JSON.
+    const rawBody = await request.text();
+    if (!verifyResendSignature(rawBody, request.headers)) {
+      console.warn('[inbox/webhook] Rejected POST: invalid signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+    const body = rawBody ? JSON.parse(rawBody) : {};
     console.log('📧 Webhook received body:', JSON.stringify(body, null, 2));
 
     // Handle Resend's email.received event wrapper
