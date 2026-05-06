@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<!-- saved from url=(0245)file:///Users/ashokjaiswal/Library/Application%20Support/Claude/local-agent-mode-sessions/9c23f6a7-a7a2-411a-9302-f027f911b2b9/c7538902-1451-442a-b203-7a09dd95a9af/local_7cba2120-3ce4-42ce-b652-02c78893afd9/outputs/kyozo-competitive-deck.html#20 -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kyozo — Competitive Landscape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./Kyozo — Competitive Landscape_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5EFE6;
+    --cream-2: #EFE8DC;
+    --paper: #FBF7F0;
+    --navy: #1E2147;
+    --navy-soft: #2A2E5A;
+    --teal: #5F8E94;
+    --teal-deep: #4A7479;
+    --teal-soft: #94B5BA;
+    --tan: #C9A36B;
+    --tan-soft: #E8D4B0;
+    --ink: #1E2147;
+    --ink-60: rgba(30, 33, 71, 0.6);
+    --ink-40: rgba(30, 33, 71, 0.4);
+    --ink-20: rgba(30, 33, 71, 0.2);
+    --ink-10: rgba(30, 33, 71, 0.1);
+    --ink-05: rgba(30, 33, 71, 0.05);
+    --good: #5F8E94;
+    --warn: #C9A36B;
+    --bad: #B57069;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 64px 88px;
+    display: none;
+    flex-direction: column;
+    background: var(--cream);
+    overflow: hidden;
+  }
+
+  .slide.active { display: flex; }
+
+  /* ===== Typography ===== */
+  .serif {
+    font-family: 'Cormorant Garamond', 'Hoefler Text', Garamond, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  h1.title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 96px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--teal);
+  }
+
+  h1.title .navy { color: var(--navy); }
+
+  h2.section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 60px;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    color: var(--navy);
+    margin-bottom: 32px;
+  }
+
+  h2.section-title em {
+    color: var(--teal);
+    font-style: italic;
+  }
+
+  h3.slide-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 24px;
+  }
+
+  p.lede {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    line-height: 1.35;
+    color: var(--navy-soft);
+    font-weight: 400;
+    max-width: 1100px;
+  }
+
+  p.body, ul.body, ol.body {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink);
+    font-weight: 400;
+  }
+
+  p.body { max-width: 900px; margin-bottom: 16px; }
+  ul.body, ol.body { padding-left: 22px; }
+  ul.body li, ol.body li { margin-bottom: 10px; }
+
+  .small {
+    font-size: 14px;
+    color: var(--ink-60);
+    line-height: 1.5;
+  }
+
+  .micro {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+    font-weight: 500;
+  }
+
+  strong { font-weight: 600; color: var(--navy); }
+
+  /* ===== Header ===== */
+  .slide-header {
+    position: absolute;
+    top: 36px; left: 88px; right: 88px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 5;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--navy);
+  }
+
+  .logo-mark {
+    width: 22px; height: 26px;
+    display: inline-block;
+    position: relative;
+  }
+  .logo-mark svg { display: block; }
+
+  .logo-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+  }
+
+  .deck-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+  }
+
+  /* ===== Footer ===== */
+  .slide-footer {
+    position: absolute;
+    bottom: 32px; left: 88px; right: 88px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 5;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 1px;
+    margin: 0 24px;
+    background: var(--ink-10);
+    position: relative;
+  }
+  .progress-fill {
+    position: absolute;
+    top: 0; left: 0; height: 100%;
+    background: var(--teal);
+    transition: width 0.4s ease;
+  }
+
+  /* ===== Hero (title slide) ===== */
+  .slide.hero {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(180deg, var(--cream) 0%, var(--cream-2) 100%);
+  }
+
+  .hero-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 36px;
+  }
+
+  .hero-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--navy-soft);
+    margin-top: 28px;
+    max-width: 900px;
+  }
+
+  .hero-foot {
+    margin-top: 64px;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+  }
+
+  /* ===== Cards & blocks ===== */
+  .grid {
+    display: grid;
+    gap: 20px;
+    width: 100%;
+  }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--ink-10);
+    border-radius: 12px;
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card.tinted {
+    background: linear-gradient(180deg, var(--paper) 0%, var(--cream-2) 100%);
+  }
+
+  .card .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    color: var(--navy);
+    line-height: 1.1;
+  }
+
+  .card .tagline {
+    font-size: 13px;
+    color: var(--ink-60);
+    line-height: 1.45;
+  }
+
+  .card ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 4px;
+  }
+  .card ul li {
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .card ul li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 9px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: var(--cream-2);
+    border: 1px solid var(--ink-10);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--navy-soft);
+    letter-spacing: 0.04em;
+  }
+
+  .pill.teal { background: rgba(95,142,148,0.12); color: var(--teal-deep); border-color: rgba(95,142,148,0.3); }
+  .pill.tan  { background: rgba(201,163,107,0.15); color: #8C6F3F; border-color: rgba(201,163,107,0.35); }
+
+  /* ===== Two-column layout ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    flex: 1;
+    align-items: start;
+  }
+
+  .col-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 14px;
+  }
+
+  /* ===== Quad layout (2x2 market map) ===== */
+  .quad {
+    display: grid;
+    grid-template-columns: 220px 1fr 1fr;
+    grid-template-rows: 60px 1fr 1fr;
+    gap: 0;
+    flex: 1;
+    width: 100%;
+    margin-top: 10px;
+  }
+  .quad .axis-x { grid-column: 2 / 4; grid-row: 1; display: flex; }
+  .quad .axis-x > div {
+    flex: 1;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--teal-deep);
+    align-self: end;
+    padding-bottom: 14px;
+  }
+  .quad .axis-y {
+    grid-column: 1; grid-row: 2 / 4;
+    display: flex;
+    flex-direction: column;
+  }
+  .quad .axis-y > div {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--teal-deep);
+    padding-right: 16px;
+    text-align: center;
+  }
+
+  .quad .cell {
+    border: 1px solid var(--ink-10);
+    background: var(--paper);
+    padding: 24px 26px;
+    margin: -1px 0 0 -1px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quad .cell .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+    margin-bottom: 4px;
+  }
+  .quad .cell .who {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    line-height: 1.15;
+    color: var(--navy);
+  }
+  .quad .cell .who .accent { color: var(--teal); }
+  .quad .cell .note {
+    font-size: 13px;
+    color: var(--ink-60);
+    line-height: 1.5;
+    margin-top: auto;
+  }
+
+  /* ===== Matrix / heatmap ===== */
+  table.matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+  }
+  table.matrix th, table.matrix td {
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--ink-10);
+  }
+  table.matrix th {
+    font-weight: 500;
+    color: var(--ink-60);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    border-bottom: 1px solid var(--ink-20);
+    padding-bottom: 12px;
+    white-space: nowrap;
+  }
+  table.matrix td.label {
+    text-align: left;
+    color: var(--navy);
+    font-weight: 500;
+    font-size: 13px;
+    padding-left: 0;
+    white-space: nowrap;
+  }
+  table.matrix td.dot { font-size: 16px; line-height: 1; }
+  .dot-3 { color: var(--teal-deep); }
+  .dot-2 { color: var(--teal); }
+  .dot-1 { color: var(--tan); }
+  .dot-0 { color: var(--ink-20); }
+
+  /* ===== Pricing table ===== */
+  table.price {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+  }
+  table.price th, table.price td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--ink-10);
+  }
+  table.price th {
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-60);
+    border-bottom: 1px solid var(--ink-20);
+  }
+  table.price tr td:first-child {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--navy);
+    width: 22%;
+  }
+  table.price td.price-cell {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--teal-deep);
+    font-size: 18px;
+  }
+
+  /* ===== List w/ numbers ===== */
+  .num-list { list-style: none; padding: 0; }
+  .num-list li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--ink-10);
+    align-items: start;
+  }
+  .num-list li:last-child { border-bottom: 0; }
+  .num-list .n {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 44px;
+    color: var(--teal);
+    line-height: 1;
+  }
+  .num-list .h {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    color: var(--navy);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .num-list .d {
+    font-size: 14.5px;
+    color: var(--ink-60);
+    line-height: 1.55;
+    max-width: 880px;
+  }
+
+  /* ===== Big stat block ===== */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 16px;
+  }
+  .stat .num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+  .stat .lbl {
+    font-size: 13px;
+    color: var(--ink-60);
+    line-height: 1.45;
+    max-width: 280px;
+  }
+
+  /* ===== Position cards ===== */
+  .pos-card {
+    background: var(--paper);
+    border: 1px solid var(--ink-10);
+    border-radius: 14px;
+    padding: 28px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    height: 100%;
+  }
+  .pos-card.recommended {
+    background: linear-gradient(180deg, rgba(95,142,148,0.08) 0%, var(--paper) 100%);
+    border-color: rgba(95,142,148,0.35);
+  }
+  .pos-card .pos-tag {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+  }
+  .pos-card .pos-h {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    line-height: 1.18;
+    color: var(--navy);
+  }
+  .pos-card .pos-h em { color: var(--teal); font-style: italic; }
+  .pos-card .pos-b {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .pos-card .pos-meta {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--ink-10);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .pos-card .pos-meta .ml {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+  }
+  .pos-card .pos-meta .mv {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .ribbon {
+    position: absolute;
+    top: -10px; right: 22px;
+    background: var(--teal);
+    color: var(--cream);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+
+  /* ===== Q&A list ===== */
+  .qa-list { list-style: none; padding: 0; }
+  .qa-list li {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--ink-10);
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .qa-list li:last-child { border-bottom: 0; }
+  .qa-list .q-mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--teal);
+    line-height: 1;
+  }
+  .qa-list .q-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--navy);
+  }
+
+  /* ===== Closing ===== */
+  .closing {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .closing .big {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 80px;
+    line-height: 1.1;
+    color: var(--navy);
+    max-width: 1100px;
+    margin-bottom: 32px;
+  }
+  .closing .big em { color: var(--teal); font-style: italic; }
+
+  /* ===== Cluster banner ===== */
+  .cluster-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 16px;
+    background: rgba(95,142,148,0.1);
+    border: 1px solid rgba(95,142,148,0.25);
+    border-radius: 100px;
+    margin-bottom: 24px;
+  }
+  .cluster-banner .num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--teal-deep);
+    line-height: 1;
+  }
+  .cluster-banner .label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    font-weight: 500;
+  }
+
+  /* ===== Nav controls ===== */
+  .nav-hint {
+    position: fixed;
+    bottom: 12px; right: 16px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* ===== Print / export ===== */
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    html, body { overflow: visible; background: var(--cream); }
+    .deck { width: 1280px; height: auto; }
+    .slide {
+      display: flex !important;
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      page-break-after: always;
+      break-after: page;
+    }
+    .nav-hint { display: none; }
+  }
+
+  /* ===== Responsiveness scale ===== */
+  @media (max-width: 1280px) {
+    .slide { padding: 56px 64px; }
+  }
+
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- ============================================ -->
+  <!-- SLIDE 1: TITLE -->
+  <!-- ============================================ -->
+  <section class="slide hero">
+    <div class="slide-header">
+      <div class="logo">
+        <span class="logo-mark">
+          <svg width="22" height="26" viewBox="0 0 22 26" fill="none">
+            <line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line>
+            <line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line>
+            <line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line>
+            <line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line>
+          </svg>
+        </span>
+        <span class="logo-name">Kyozo</span>
+      </div>
+      <div class="deck-meta">Internal · Strategy</div>
+    </div>
+
+    <div class="hero-tag">Competitive landscape · v1</div>
+    <h1 class="title">Where <span class="navy">Kyozo</span><br>fits in the<br><em style="font-style:italic">community</em> map</h1>
+    <p class="hero-sub">A look at the players, the white space, and the wedges most worth pursuing.</p>
+    <div class="hero-foot">Prepared for management · Ashok · 2026</div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 2: THE QUESTION -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">01 · Setup</div>
+    </div>
+
+    <div style="margin-top: 60px; max-width: 1100px;">
+      <h3 class="slide-eyebrow">The question we're answering</h3>
+      <h2 class="section-title">In a market with twelve serious players,<br>where can <em>Kyozo</em> stake unique ground?</h2>
+      <p class="lede" style="margin-top:24px;">This deck maps the field, names the unmet needs, and recommends three positions — composite, with a clear first wedge.</p>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 10%"></div></div>
+      <span>02 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 3: THREE CLUSTERS -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">02 · Landscape</div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <h3 class="slide-eyebrow">The market has consolidated</h3>
+      <h2 class="section-title">Three centers of <em>gravity</em></h2>
+    </div>
+
+    <div class="grid grid-3" style="margin-top: 32px;">
+      <div class="card tinted">
+        <div class="pill teal">Cluster 01</div>
+        <div class="name">Creator clubhouse</div>
+        <p class="small"><strong>Circle, Skool, Mighty Networks, Heartbeat.</strong> All-in-one space (forum, courses, events, payments) sold to creators, coaches, and cohort educators.</p>
+        <p class="small"><strong>Compete on:</strong> bundle breadth, mobile polish, AI features. ~$50–$360/mo SMB, four figures for white-label.</p>
+      </div>
+
+      <div class="card tinted">
+        <div class="pill teal">Cluster 02</div>
+        <div class="name">Open lobby</div>
+        <p class="small"><strong>Discord, Slack.</strong> Synchronous chat at scale. Discord pushes hard into creator monetization. Slack has retreated from public communities.</p>
+        <p class="small"><strong>Trade-off:</strong> huge DAU, weak structure for paid memberships, courses, and durable async content.</p>
+      </div>
+
+      <div class="card tinted">
+        <div class="pill teal">Cluster 03</div>
+        <div class="name">Publishing-first</div>
+        <p class="small"><strong>Substack Chat, Patreon Chats, Kajabi Communities.</strong> Community bolted onto a primary product (newsletter, podcast, course).</p>
+        <p class="small"><strong>Win when:</strong> the primary asset is the publication and community is a retention layer, not the product.</p>
+      </div>
+    </div>
+
+    <p class="small" style="margin-top: 28px; max-width: 1000px;">
+      <em>Plus the B2B benchmark:</em> <strong>Discourse</strong> and <strong>Bettermode</strong> remain the strongest answer when the buyer is a company (dev rel, customer community, partner program) rather than a creator.
+    </p>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 15%"></div></div>
+      <span>03 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 4: MARKET MAP 2x2 -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">02 · Landscape</div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <h3 class="slide-eyebrow">Market map</h3>
+      <h2 class="section-title" style="font-size: 48px;">Sync vs. async, creator vs. <em>brand</em></h2>
+    </div>
+
+    <div class="quad" style="margin-top: 8px;">
+      <div></div>
+      <div class="axis-x">
+        <div>Sync-first</div>
+        <div>Async-first</div>
+      </div>
+      <div class="axis-y">
+        <div>Creator-led<br><span style="font-size:13px; color: var(--ink-40); letter-spacing: 0.1em;">B2C / SMB</span></div>
+        <div>Brand · Org-led<br><span style="font-size:13px; color: var(--ink-40); letter-spacing: 0.1em;">B2B</span></div>
+      </div>
+
+      <div class="cell">
+        <div class="label">Creator · Sync</div>
+        <div class="who"><span class="accent">Discord</span> · Geneva · Heartbeat</div>
+        <div class="note">Real-time chat, voice, video. Best UX, weakest monetization control.</div>
+      </div>
+
+      <div class="cell">
+        <div class="label">Creator · Async</div>
+        <div class="who"><span class="accent">Skool</span> · Circle · Mighty Networks</div>
+        <div class="note">Forums, courses, events. The most crowded quadrant — and where Kyozo will be compared first.</div>
+      </div>
+
+      <div class="cell">
+        <div class="label">Brand · Sync</div>
+        <div class="who">Slack · Slack Connect</div>
+        <div class="note">Enterprise chat. No longer marketed for community use. Source of refugees.</div>
+      </div>
+
+      <div class="cell">
+        <div class="label">Brand · Async</div>
+        <div class="who"><span class="accent">Discourse</span> · Bettermode</div>
+        <div class="note">Customer / dev-rel communities. Highest pricing power, longest sales cycles.</div>
+      </div>
+    </div>
+
+    <p class="small" style="margin-top: 16px; color: var(--ink-60); font-style: italic;">
+      Adjacent: Patreon Chats, Substack Chat/Notes, Kajabi Communities — community as a retention layer on a primary product.
+    </p>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 20%"></div></div>
+      <span>04 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 5: CIRCLE DEEP DIVE -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">03 · Deep dives</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <div class="cluster-banner">
+        <span class="num">01</span>
+        <span class="label">Creator clubhouse · Circle</span>
+      </div>
+      <h2 class="section-title" style="font-size: 52px;">The <em>feature benchmark</em><br>for breadth.</h2>
+    </div>
+
+    <div class="two-col" style="margin-top: 8px;">
+      <div>
+        <div class="col-label">What it is</div>
+        <p class="body">"All-in-one community platform for creators and brands." Polished web app with deep customization. The default choice for course creators, coaches, and brand communities outgrowing a Facebook Group.</p>
+
+        <div class="col-label" style="margin-top: 24px;">Headline features</div>
+        <ul class="body">
+          <li>Spaces (forum, chat, events, courses) with deep customization</li>
+          <li>Native paywalls, bundles, recurring subs, trials, coupons</li>
+          <li>Circle AI: agents, summaries, Activity Score</li>
+          <li>Branded mobile app on Plus tier</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="col-label">Pricing shape · verify</div>
+        <p class="body">Roughly four tiers: <strong>~$50</strong> Basic · <strong>~$100</strong> Professional · <strong>~$360</strong> Business · <strong>$700+</strong> Plus / branded app.</p>
+
+        <div class="col-label" style="margin-top: 24px;">Recurring complaints</div>
+        <ul class="body">
+          <li>Mobile lags web; native app feels like a wrapper</li>
+          <li>Live chat is functional but feels secondary</li>
+          <li>Pricing escalates fast for branded app or zero-fee</li>
+          <li>Search and notification routing get noisy past a few thousand members</li>
+        </ul>
+
+        <div style="margin-top: 28px; padding: 16px 20px; background: rgba(95,142,148,0.08); border-left: 3px solid var(--teal); border-radius: 4px;">
+          <div class="col-label" style="margin-bottom: 4px;">For Kyozo</div>
+          <p class="body" style="font-size: 15px;">Circle is the breadth benchmark. Match ~80% of the surface; don't try for 100% on day one.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 25%"></div></div>
+      <span>05 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 6: SKOOL DEEP DIVE -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">03 · Deep dives</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <div class="cluster-banner">
+        <span class="num">02</span>
+        <span class="label">Creator clubhouse · Skool</span>
+      </div>
+      <h2 class="section-title" style="font-size: 52px;">The price <em>anchor.</em><br>And the affiliate flywheel.</h2>
+    </div>
+
+    <div class="two-col" style="margin-top: 8px;">
+      <div>
+        <div class="col-label">What it is</div>
+        <p class="body">Single opinionated layout: feed, classroom, calendar, members, leaderboard. Almost no configuration. Owned and championed publicly by Sam Ovens; ridden a heavy creator-affiliate flywheel since 2023.</p>
+
+        <div class="col-label" style="margin-top: 24px;">What's working</div>
+        <ul class="body">
+          <li>Gamification (points, levels, content unlock) is the most copied idea in the cluster</li>
+          <li>Skool Games — public revenue leaderboard — drives evangelism</li>
+          <li>Mobile app improved fastest of any creator platform</li>
+          <li>Search and discovery are surprisingly good for the price</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="col-label">Pricing shape</div>
+        <p class="body">Famously simple: <strong>~$99/mo</strong> per community plus a transaction fee on paid memberships. Few tiers, few add-ons.</p>
+
+        <div class="col-label" style="margin-top: 24px;">Where it falls short</div>
+        <ul class="body">
+          <li>Almost zero customization — the Skool look is the Skool look</li>
+          <li>Limited automation, weak API</li>
+          <li>Course features are basic vs. Kajabi/Teachable</li>
+          <li>Single-community model is awkward for creators with multiple paid offers</li>
+        </ul>
+
+        <div style="margin-top: 28px; padding: 16px 20px; background: rgba(95,142,148,0.08); border-left: 3px solid var(--teal); border-radius: 4px;">
+          <div class="col-label" style="margin-bottom: 4px;">For Kyozo</div>
+          <p class="body" style="font-size: 15px;">Skool sets the price expectation in the prosumer creator segment. Anything materially more expensive needs a clear "why."</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 30%"></div></div>
+      <span>06 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 7: MIGHTY DEEP DIVE -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">03 · Deep dives</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <div class="cluster-banner">
+        <span class="num">03</span>
+        <span class="label">Creator clubhouse · Mighty Networks</span>
+      </div>
+      <h2 class="section-title" style="font-size: 52px;">The white-label <em>play.</em></h2>
+    </div>
+
+    <div class="two-col" style="margin-top: 8px;">
+      <div>
+        <div class="col-label">What it is</div>
+        <p class="body">Self-serve Mighty product plus <strong>Mighty Pro</strong>, a higher-touch white-label branded-app program. Pitches itself as "cultural software."</p>
+
+        <div class="col-label" style="margin-top: 24px;">Headline features</div>
+        <ul class="body">
+          <li>Spaces, courses, events, members, paid memberships, Stripe payouts</li>
+          <li>Best-in-class native iOS/Android in the cluster</li>
+          <li>Mighty Pro ships fully branded apps to App Store / Play Store</li>
+          <li>People Magic AI for member matching and content suggestions</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="col-label">Pricing shape · verify</div>
+        <p class="body">Self-serve <strong>~$41–$179/mo</strong>. Mighty Pro is custom and well into four figures monthly.</p>
+
+        <div class="col-label" style="margin-top: 24px;">Where it falls short</div>
+        <ul class="body">
+          <li>Self-serve product evolves slower than Skool or Circle</li>
+          <li>Web UI density makes it feel heavy</li>
+          <li>Mighty Pro pricing makes it a different sale (and a different competitor) from the SMB tier</li>
+        </ul>
+
+        <div style="margin-top: 28px; padding: 16px 20px; background: rgba(95,142,148,0.08); border-left: 3px solid var(--teal); border-radius: 4px;">
+          <div class="col-label" style="margin-bottom: 4px;">For Kyozo</div>
+          <p class="body" style="font-size: 15px;">Mighty Pro proves there is real budget for branded community apps. Treat white-label as a tier, not an afterthought.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 35%"></div></div>
+      <span>07 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 8: DISCORD DEEP DIVE -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">03 · Deep dives</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <div class="cluster-banner">
+        <span class="num">04</span>
+        <span class="label">Open lobby · Discord</span>
+      </div>
+      <h2 class="section-title" style="font-size: 52px;">Distribution and a <em>wildcard.</em></h2>
+    </div>
+
+    <div class="two-col" style="margin-top: 8px;">
+      <div>
+        <div class="col-label">What it is</div>
+        <p class="body">Default real-time chat for the internet. Has been deliberately courting creators since 2022 via Server Subscriptions, Premium Memberships, and Server Shop.</p>
+
+        <div class="col-label" style="margin-top: 24px;">Strengths</div>
+        <ul class="body">
+          <li>Best-in-class voice/video/text at scale</li>
+          <li>Unmatched bot, slash-command, and developer ecosystem</li>
+          <li>Server Subscriptions + Premium Memberships + Server Shop</li>
+          <li>AutoMod, Stage channels, granular roles</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="col-label">Pricing shape · verify</div>
+        <p class="body">Free to host. Discord takes a platform cut on Server Subscriptions (commonly cited <strong>~10%</strong> after fees). Nitro is per-user.</p>
+
+        <div class="col-label" style="margin-top: 24px;">Structural weaknesses</div>
+        <ul class="body">
+          <li>Async / long-form posts are second-class; threads aren't a forum</li>
+          <li>Identity is anchored to Discord — no portable member list</li>
+          <li>Search and discovery weak past a few thousand members</li>
+          <li><strong>Platform risk:</strong> policy and take-rate changes can ripple through the entire creator cluster</li>
+        </ul>
+
+        <div style="margin-top: 28px; padding: 16px 20px; background: rgba(95,142,148,0.08); border-left: 3px solid var(--teal); border-radius: 4px;">
+          <div class="col-label" style="margin-bottom: 4px;">For Kyozo</div>
+          <p class="body" style="font-size: 15px;">Don't compete on sync chat. Match quality, win on async, ownership, and creator-controlled monetization. Bridge in, don't replace.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 40%"></div></div>
+      <span>08 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 9: B2B BENCHMARK -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">03 · Deep dives</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3 class="slide-eyebrow">B2B benchmark</h3>
+      <h2 class="section-title">Where pricing power <em>lives.</em></h2>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 16px; gap: 28px;">
+      <div class="card">
+        <div class="pill">Open · OSS option</div>
+        <div class="name">Discourse</div>
+        <p class="small"><strong>The default forum software for OSS, dev-rel, and SaaS support.</strong> Mature long-form posts, plugin ecosystem, excellent SEO, granular trust levels, Discourse AI.</p>
+        <p class="small"><strong>Pricing:</strong> hosted ~$50–$300/mo SMB, $1,000+/mo enterprise. Self-host is free.</p>
+        <p class="small"><strong>Where it loses:</strong> not a sync chat product; aesthetic feels "forum software" to creators; onboarding is heavier than Skool.</p>
+        <p class="small" style="color: var(--teal-deep); font-style: italic; margin-top: 8px;">Benchmark for content durability and openness.</p>
+      </div>
+
+      <div class="card">
+        <div class="pill">Customer community</div>
+        <div class="name">Bettermode <span style="font-size:13px; color: var(--ink-40); font-family:Inter">(formerly Tribe)</span></div>
+        <p class="small"><strong>Customer community platform for SaaS companies.</strong> Embeddable widgets, deep Salesforce / HubSpot / Zendesk integrations, Bettermode AI.</p>
+        <p class="small"><strong>Pricing:</strong> SMB $200–$600+/mo, enterprise quoted. Higher than the creator cluster.</p>
+        <p class="small"><strong>Where it loses:</strong> not a creator product; less momentum than Discourse in the same lane; UI feels like SaaS admin.</p>
+        <p class="small" style="color: var(--teal-deep); font-style: italic; margin-top: 8px;">Benchmark for integrations and admin tooling.</p>
+      </div>
+    </div>
+
+    <p class="small" style="margin-top: 28px; max-width: 1100px;">
+      <strong>Why this matters for Kyozo.</strong> The B2B quadrants pay 5–10× the creator cluster but require longer sales cycles and integration depth. Worth treating as year-2 expansion, not year-1 wedge.
+    </p>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 45%"></div></div>
+      <span>09 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 10: ADJACENT THREATS -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">03 · Deep dives</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3 class="slide-eyebrow">Adjacent / publishing-first</h3>
+      <h2 class="section-title">Community as a <em>retention layer.</em></h2>
+    </div>
+
+    <div class="grid grid-3" style="margin-top: 16px;">
+      <div class="card">
+        <div class="pill tan">Take rate · 8–12%</div>
+        <div class="name">Patreon</div>
+        <p class="small"><strong>Membership platform.</strong> Patreon Chats added native group chat in 2024.</p>
+        <ul style="list-style: none; padding:0;">
+          <li><strong>+</strong> Best payout, tax, membership stack</li>
+          <li><strong>+</strong> Strong native mobile</li>
+          <li><strong>−</strong> Thin community features (no spaces, no courses, weak search)</li>
+          <li><strong>−</strong> Take rate expensive at scale</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="pill tan">Take rate · 10%</div>
+        <div class="name">Substack</div>
+        <p class="small"><strong>Publishing platform.</strong> Chat (subscriber-only) + Notes (network social feed).</p>
+        <ul style="list-style: none; padding:0;">
+          <li><strong>+</strong> Substack network distribution &amp; recommendations</li>
+          <li><strong>+</strong> One subscription primitive</li>
+          <li><strong>−</strong> No spaces, courses, events, or roles</li>
+          <li><strong>−</strong> Members are Substack-identity</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="pill teal">Bundled</div>
+        <div class="name">Kajabi Communities</div>
+        <p class="small"><strong>Community inside Kajabi's all-in-one creator suite.</strong></p>
+        <ul style="list-style: none; padding:0;">
+          <li><strong>+</strong> Free to existing Kajabi customers</li>
+          <li><strong>+</strong> Tied to offers, courses, email automations</li>
+          <li><strong>−</strong> Quality lags Circle/Skool</li>
+          <li><strong>−</strong> Not a destination community product</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top: 32px; padding: 18px 22px; background: rgba(201,163,107,0.12); border-left: 3px solid var(--tan); border-radius: 4px; max-width: 1100px;">
+      <div class="col-label" style="margin-bottom: 4px; color: #8C6F3F;">The bundle threat</div>
+      <p class="body" style="font-size: 15px;">Kajabi is a reminder: incumbents who own course / email / funnels will keep adding "good-enough" community for free. Kit, Beehiiv, and Teachable have shipped or telegraphed similar moves.</p>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 50%"></div></div>
+      <span>10 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 11: FEATURE MATRIX -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">04 · Comparison</div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <h3 class="slide-eyebrow">Feature heatmap · selected capabilities</h3>
+      <h2 class="section-title" style="font-size: 44px;">Where each player <em>actually</em> wins.</h2>
+    </div>
+
+    <div style="margin-top: 4px; overflow-x: auto;">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th class="label" style="text-align: left;"></th>
+            <th>Circle</th>
+            <th>Skool</th>
+            <th>Mighty</th>
+            <th>Discord</th>
+            <th>Discourse</th>
+            <th>Heartbeat</th>
+            <th>Bettermode</th>
+            <th>Patreon</th>
+            <th>Substack</th>
+            <th>Kajabi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="label">Real-time chat</td>            <td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-3">●●</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td></tr>
+          <tr><td class="label">Threaded forum</td>            <td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td></tr>
+          <tr><td class="label">Long-form posts</td>           <td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td></tr>
+          <tr><td class="label">Events / calendar</td>         <td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-0">○</td><td class="dot dot-2">●</td></tr>
+          <tr><td class="label">Courses / classroom</td>       <td class="dot dot-2">●</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td><td class="dot dot-0">○</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-3">●●</td></tr>
+          <tr><td class="label">Gamification</td>              <td class="dot dot-1">◐</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-2">●</td></tr>
+          <tr><td class="label">Native paid memberships</td>   <td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td><td class="dot dot-3">●●</td></tr>
+          <tr><td class="label">White-label / branded app</td> <td class="dot dot-2">● $</td><td class="dot dot-0">○</td><td class="dot dot-3">●● $$</td><td class="dot dot-0">○</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-2">● $</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-1">◐</td></tr>
+          <tr><td class="label">Native iOS / Android</td>      <td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-3">●●</td><td class="dot dot-3">●●</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-3">●●</td><td class="dot dot-2">●</td><td class="dot dot-2">●</td></tr>
+          <tr><td class="label">API · webhooks</td>            <td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-3">●●</td><td class="dot dot-3">●●</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-2">●</td></tr>
+          <tr><td class="label">Member portability / export</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-0">○</td><td class="dot dot-3">●●</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td><td class="dot dot-1">◐</td></tr>
+          <tr style="background: rgba(95,142,148,0.08);"><td class="label" style="color: var(--teal-deep);">Federation / open protocol</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-1">◐</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td><td class="dot dot-0">○</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="small" style="margin-top: 14px; color: var(--ink-60);">
+      <span class="dot dot-3">●●</span> leadership · <span class="dot dot-2">●</span> strong / native · <span class="dot dot-1">◐</span> partial · <span class="dot dot-0">○</span> absent. The teal row is where Kyozo can credibly differentiate.
+    </p>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 55%"></div></div>
+      <span>11 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 12: PRICING & BUSINESS MODEL -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">04 · Comparison</div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <h3 class="slide-eyebrow">Business model &amp; pricing — verify before quoting</h3>
+      <h2 class="section-title" style="font-size: 44px;">How each player <em>captures</em> value.</h2>
+    </div>
+
+    <div style="margin-top: 4px;">
+      <table class="price">
+        <thead>
+          <tr>
+            <th>Vendor</th><th>Model</th><th>Headline price</th><th>Take rate</th><th>Primary buyer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Circle</td>           <td>Tiered SaaS</td>     <td class="price-cell">$50–$700+/mo</td>   <td>0–4% (drops on higher tiers)</td><td>Creator · SMB · brand</td></tr>
+          <tr><td>Skool</td>            <td>Flat SaaS</td>       <td class="price-cell">~$99/mo</td>        <td>~2.9% + Stripe</td><td>Creator (info, coaching)</td></tr>
+          <tr><td>Mighty</td>           <td>Tiered + Pro</td>    <td class="price-cell">$41–$179/mo + Pro</td><td>0–3%</td><td>Creator / association / Pro: brand</td></tr>
+          <tr><td>Discord</td>          <td>Free + cut</td>      <td class="price-cell">Free to host</td>   <td>~10% on Server Subs</td><td>Creator / community owner</td></tr>
+          <tr><td>Discourse</td>        <td>SaaS or self-host</td><td class="price-cell">$50–$1,000+/mo</td><td>0% (no native payments)</td><td>Dev rel · OSS · SaaS support</td></tr>
+          <tr><td>Heartbeat</td>        <td>Tiered SaaS</td>     <td class="price-cell">~$50–$200/mo</td>   <td>2–5%</td><td>Creator · cohort programs</td></tr>
+          <tr><td>Bettermode</td>       <td>Tiered SaaS</td>     <td class="price-cell">$200–$600+/mo</td>  <td>n/a</td><td>SaaS · customer / partner community</td></tr>
+          <tr><td>Patreon</td>          <td>Take rate</td>       <td class="price-cell">Free to start</td>  <td>8–12% + processing</td><td>Recurring-membership creators</td></tr>
+          <tr><td>Substack</td>         <td>Take rate</td>       <td class="price-cell">Free to start</td>  <td>10% + processing</td><td>Writers · podcasters · publishers</td></tr>
+          <tr><td>Kajabi</td>           <td>Bundled SaaS</td>    <td class="price-cell">$70–$400/mo</td>    <td>0% on community</td><td>Course creators · coaches</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="small" style="margin-top: 18px; max-width: 1100px;">
+      <strong>Pattern.</strong> Flat-SaaS pricing dominates the creator cluster (Skool, Circle, Mighty). Take-rate is concentrated in publishing-first and Discord. Discourse and Bettermode hold the only real enterprise pricing power.
+    </p>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 60%"></div></div>
+      <span>12 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 13: WHITE SPACE -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">05 · White space</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3 class="slide-eyebrow">Five unmet needs — recurring across reviews</h3>
+      <h2 class="section-title" style="font-size: 48px;">What none of them <em>actually</em> solve.</h2>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 12px; gap: 22px;">
+      <div class="card">
+        <div class="name" style="font-size: 24px;">Cross-community identity</div>
+        <p class="small">Creators run multiple SKUs (free, paid, alumni, premium, partners). Members hate fragmented logins. No incumbent ships a unified inbox across communities.</p>
+      </div>
+
+      <div class="card">
+        <div class="name" style="font-size: 24px;">True portability</div>
+        <p class="small">Every SaaS player locks members and content into a proprietary schema. The SaaS economic model fights this — there's no commercial incentive to make leaving easy.</p>
+      </div>
+
+      <div class="card">
+        <div class="name" style="font-size: 24px;">Sync + async parity</div>
+        <p class="small">Discord nails sync. Circle nails async. Heartbeat is closest to both. None feel native at both modes simultaneously.</p>
+      </div>
+
+      <div class="card">
+        <div class="name" style="font-size: 24px;">Programmability</div>
+        <p class="small">Webhook and API surfaces are thin compared to what Slack offered ten years ago. Discord and Discourse are the only real exceptions.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 22px;">
+      <div class="card" style="background: linear-gradient(180deg, rgba(95,142,148,0.10) 0%, var(--paper) 100%); border-color: rgba(95,142,148,0.3);">
+        <div class="name" style="font-size: 24px; color: var(--teal-deep);">Moderation that scales without hiring</div>
+        <p class="small">AI moderation in this category is mostly summary tools, not action tools. The creator who runs three communities still ends up doing the hard work themselves.</p>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 65%"></div></div>
+      <span>13 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 14: THREE POSITIONS -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">06 · Positioning</div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <h3 class="slide-eyebrow">Three credible positions for Kyozo</h3>
+      <h2 class="section-title" style="font-size: 44px;">From narrowest to <em>broadest.</em></h2>
+    </div>
+
+    <div class="grid grid-3" style="margin-top: 10px; gap: 20px; flex: 1;">
+      <div class="pos-card">
+        <div class="pos-tag">Position A · Surface</div>
+        <div class="pos-h">Discord for grown-ups, <em>Circle without the lock-in.</em></div>
+        <div class="pos-b">Polished SaaS community app, priced with Circle/Skool. Protocol is invisible to users — shows up as "you can export everything" and "your members own their participation."</div>
+        <div class="pos-meta">
+          <span class="ml">Why it works</span>
+          <span class="mv">Buyers don't need to understand the protocol to feel the benefits. Avoids the Mastodon trap.</span>
+          <span class="ml" style="margin-top: 6px;">Risk</span>
+          <span class="mv">Reads as "incremental Circle." Needs a real second proof point.</span>
+        </div>
+      </div>
+
+      <div class="pos-card">
+        <div class="pos-tag">Position B · Long-term</div>
+        <div class="pos-h">The community <em>protocol</em> with a flagship app on top.</div>
+        <div class="pos-b">Lean into the protocol. Open standard for community membership, content, identity. Hosted app is the reference client. Court bridges from Discord/Slack/Discourse early.</div>
+        <div class="pos-meta">
+          <span class="ml">Why it works</span>
+          <span class="mv">Differentiation is unmistakable, defensible long-term. Strong with developer audiences.</span>
+          <span class="ml" style="margin-top: 6px;">Risk</span>
+          <span class="mv">Creator/SMB buyers don't care. Dual narratives are historically hard to run.</span>
+        </div>
+      </div>
+
+      <div class="pos-card recommended">
+        <span class="ribbon">Wedge</span>
+        <div class="pos-tag">Position C · Wedge</div>
+        <div class="pos-h">Operating system for someone with <em>multiple communities.</em></div>
+        <div class="pos-b">Optimize for creators/brands running 3–10 community SKUs. One identity per member, one inbox, one analytics view, paid memberships that move between SKUs.</div>
+        <div class="pos-meta">
+          <span class="ml">Why it works</span>
+          <span class="mv">Real, painful, under-served job. No incumbent can ship this without re-architecting.</span>
+          <span class="ml" style="margin-top: 6px;">Risk</span>
+          <span class="mv">Smaller TAM early. Has to graduate into single-community use later.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 70%"></div></div>
+      <span>14 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 15: RECOMMENDED COMPOSITE POSITION -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">06 · Positioning</div>
+    </div>
+
+    <div style="margin-top: 60px; max-width: 1100px;">
+      <h3 class="slide-eyebrow">Recommended composite</h3>
+      <h2 class="section-title" style="font-size: 56px; line-height: 1.05;">
+        <em>A on the surface,</em><br>
+        <em>C as the wedge,</em><br>
+        <em>B as the long-term technical narrative.</em>
+      </h2>
+    </div>
+
+    <div style="margin-top: 24px; max-width: 1100px; padding: 28px 32px; background: linear-gradient(135deg, rgba(95,142,148,0.10) 0%, rgba(95,142,148,0.02) 100%); border: 1px solid rgba(95,142,148,0.25); border-radius: 14px;">
+      <div class="col-label" style="margin-bottom: 12px;">In one sentence</div>
+      <p class="lede" style="font-size: 30px; color: var(--navy);">
+        A polished SaaS community app for people running <em style="color:var(--teal-deep); font-style: italic;">more than one community</em>, built on an open protocol so the member relationship is theirs.
+      </p>
+    </div>
+
+    <p class="small" style="margin-top: 24px; max-width: 1100px;">
+      The protocol is <strong>quiet</strong> in the marketing. It shows up as portability claims, embeddable widgets, and developer surface. Once the wedge customers are anchored, the protocol narrative steps forward to widen the platform — bridges from Discord/Slack, federation, and a published standard.
+    </p>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 75%"></div></div>
+      <span>15 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 16: FIVE WEDGES -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">07 · Wedges</div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <h3 class="slide-eyebrow">Five concrete wedges, ranked</h3>
+      <h2 class="section-title" style="font-size: 44px;">Where to <em>hit first.</em></h2>
+    </div>
+
+    <ol class="num-list" style="margin-top: 0;">
+      <li>
+        <span class="n">01</span>
+        <div>
+          <div class="h">Migrations from Slack and Facebook Groups.</div>
+          <div class="d">Build the best importer in the category. Both audiences are actively shopping — Discourse owns the Slack/dev-rel migration; Circle owns the FB Group migration. Both importers are still mediocre.</div>
+        </div>
+      </li>
+      <li>
+        <span class="n">02</span>
+        <div>
+          <div class="h">Cross-community identity.</div>
+          <div class="d">Sign in once, get a unified inbox across every Kyozo community a member belongs to. No incumbent can ship this without re-architecting; the most defensible early product wedge.</div>
+        </div>
+      </li>
+      <li>
+        <span class="n">03</span>
+        <div>
+          <div class="h">Embeddable community.</div>
+          <div class="d">Bettermode and Discourse have proven the demand for community embedded in the product/site. Make it one line of JavaScript and price on member-seats, not page-views.</div>
+        </div>
+      </li>
+      <li>
+        <span class="n">04</span>
+        <div>
+          <div class="h">Programmability and webhooks at every tier.</div>
+          <div class="d">Slack-grade developer surface, exposed for free or near-free, attracts the integrators and technical creators who set the tone for the platform.</div>
+        </div>
+      </li>
+      <li>
+        <span class="n">05</span>
+        <div>
+          <div class="h">Member-owned export.</div>
+          <div class="d">Make every member able to download their own posts, messages, and relationships. SaaS vendors won't do this because it hurts retention. Kyozo can use it as a trust signal.</div>
+        </div>
+      </li>
+    </ol>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 80%"></div></div>
+      <span>16 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 17: WHAT WE'RE BETTING ON -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">07 · Synthesis</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3 class="slide-eyebrow">The core bet</h3>
+      <h2 class="section-title" style="font-size: 48px;">Three things have to be <em>true.</em></h2>
+    </div>
+
+    <div class="stat-row" style="margin-top: 32px;">
+      <div class="stat">
+        <div class="num">01</div>
+        <div style="font-family: &#39;Cormorant Garamond&#39;, serif; font-size: 26px; color: var(--navy); margin-bottom: 8px; line-height: 1.2;">The pain is real.</div>
+        <div class="lbl">Creators running 3+ community SKUs are willing to switch to a single platform that solves identity and inbox fragmentation.</div>
+      </div>
+      <div class="stat">
+        <div class="num">02</div>
+        <div style="font-family: &#39;Cormorant Garamond&#39;, serif; font-size: 26px; color: var(--navy); margin-bottom: 8px; line-height: 1.2;">Polish matches incumbents.</div>
+        <div class="lbl">UX and feature breadth land within ~80% of Circle on day one. Below that bar, "open" doesn't matter.</div>
+      </div>
+      <div class="stat">
+        <div class="num">03</div>
+        <div style="font-family: &#39;Cormorant Garamond&#39;, serif; font-size: 26px; color: var(--navy); margin-bottom: 8px; line-height: 1.2;">Protocol earns the next chapter.</div>
+        <div class="lbl">Once the wedge is anchored, federation and bridges turn Kyozo from a SaaS app into the default substrate.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 36px; max-width: 1100px; padding: 22px 26px; background: var(--paper); border: 1px solid var(--ink-10); border-radius: 12px;">
+      <div class="col-label" style="margin-bottom: 8px;">Failure modes to monitor</div>
+      <p class="small">
+        <strong>1.</strong> Bundle threats — Kit, Beehiiv, Kajabi keep adding "good-enough" community.&nbsp;&nbsp;
+        <strong>2.</strong> Discord ships native paid courses or async forums.&nbsp;&nbsp;
+        <strong>3.</strong> The protocol story consumes engineering bandwidth that should ship product polish.
+      </p>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 85%"></div></div>
+      <span>17 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 18: OPEN QUESTIONS -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">08 · Asks</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3 class="slide-eyebrow">Decisions to make this quarter</h3>
+      <h2 class="section-title">Five open <em>questions.</em></h2>
+    </div>
+
+    <ul class="qa-list" style="margin-top: 16px;">
+      <li>
+        <span class="q-mark">¶</span>
+        <div>
+          <div class="q-text">Who are the first 100 customers?</div>
+          <p class="small" style="margin-top: 4px;">Multi-SKU creators is a sharp wedge but small. Comfortable selling there for 12 months, or do we need a parallel beachhead (dev-rel, OSS, coaching cohorts)?</p>
+        </div>
+      </li>
+      <li>
+        <span class="q-mark">¶</span>
+        <div>
+          <div class="q-text">What's our take-rate posture?</div>
+          <p class="small" style="margin-top: 4px;">Match Skool's ~2.9%? Undercut at 0% on higher tiers like Circle? The answer materially changes GTM and product priorities.</p>
+        </div>
+      </li>
+      <li>
+        <span class="q-mark">¶</span>
+        <div>
+          <div class="q-text">Is white-label a year-1 motion?</div>
+          <p class="small" style="margin-top: 4px;">Mighty Pro proves the budget exists. But the sale is longer and the build is custom. Year 1, or year 2?</p>
+        </div>
+      </li>
+      <li>
+        <span class="q-mark">¶</span>
+        <div>
+          <div class="q-text">How visible is the protocol in marketing?</div>
+          <p class="small" style="margin-top: 4px;">Position A says "invisible." Position B says "front and center." This is the single biggest narrative decision in the deck.</p>
+        </div>
+      </li>
+      <li>
+        <span class="q-mark">¶</span>
+        <div>
+          <div class="q-text">What's our AI thesis?</div>
+          <p class="small" style="margin-top: 4px;">Match the table-stakes summaries quietly, or pick one capability — e.g., a member-facing agent that acts across communities — and build a moat around it.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 90%"></div></div>
+      <span>18 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 19: APPENDIX / METHODOLOGY -->
+  <!-- ============================================ -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">09 · Appendix</div>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3 class="slide-eyebrow">Methodology &amp; caveats</h3>
+      <h2 class="section-title">How this was <em>built.</em></h2>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 16px; gap: 32px;">
+      <div>
+        <div class="col-label">Sources</div>
+        <ul class="body">
+          <li>Vendor pricing pages and product docs (publicly available)</li>
+          <li>G2 and Capterra reviews — recurring complaints, not headlines</li>
+          <li>Creator forum threads and migration-story posts</li>
+          <li>Public earnings, fundraising announcements, and product changelogs</li>
+        </ul>
+
+        <div class="col-label" style="margin-top: 28px;">Scope</div>
+        <ul class="body">
+          <li>Community SaaS (Circle, Skool, Mighty, Heartbeat, Geneva, Bettermode, Discourse)</li>
+          <li>Synchronous chat (Discord, Slack)</li>
+          <li>Creator/membership platforms with strong community features (Patreon, Substack, Kajabi)</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="col-label">Caveats</div>
+        <ul class="body">
+          <li><strong>Pricing changes frequently.</strong> Verify each headline figure against the vendor's pricing page before quoting externally.</li>
+          <li><strong>Take rates have asterisks.</strong> Discord, Patreon, Substack, and Skool all add payment-processing fees on top of the platform cut.</li>
+          <li><strong>"AI" claims are aging fast.</strong> Most incumbents shipped material AI features in the last 12 months; treat the matrix as a snapshot.</li>
+          <li><strong>Out of scope.</strong> Open communication protocols (Matrix, ActivityPub, AT Protocol, Nostr, Farcaster). Available as a follow-up if useful.</li>
+        </ul>
+
+        <div class="col-label" style="margin-top: 28px;">Confidence</div>
+        <p class="body">
+          <strong style="color: var(--teal-deep);">High</strong> on positioning, structural strengths/weaknesses, and clusters.
+          <strong style="color: var(--tan);">Medium</strong> on specific pricing figures and recent feature launches.
+          <strong style="color: var(--bad);">Lower</strong> on user-base scale numbers; only cited where credibly published.
+        </p>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>Kyozo · Competitive Landscape</span>
+      <div class="progress-track"><div class="progress-fill" style="width: 95%"></div></div>
+      <span>19 / 20</span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SLIDE 20: CLOSING -->
+  <!-- ============================================ -->
+  <section class="slide closing active">
+    <div class="slide-header">
+      <div class="logo"><span class="logo-mark"><svg width="22" height="26" viewBox="0 0 22 26"><line x1="3" y1="4" x2="14" y2="4" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="2" y1="10" x2="20" y2="10" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="4" y1="16" x2="18" y2="16" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line><line x1="11" y1="10" x2="11" y2="24" stroke="#1E2147" stroke-width="2" stroke-linecap="round"></line></svg></span><span class="logo-name">Kyozo</span></div>
+      <div class="deck-meta">Thank you</div>
+    </div>
+
+    <div class="hero-tag">The recommendation, in one line</div>
+    <h1 class="big">A community app for the<br>people who run more than one<br><em>— quietly built on an open protocol.</em></h1>
+    <p class="hero-sub">Discussion, please.</p>
+    <div class="hero-foot">Ashok · Kyozo · 2026</div>
+  </section>
+
+</div>
+
+<div class="nav-hint">← → arrow keys · or click</div>
+
+<script>
+  (function () {
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let i = 0;
+
+    function go(n) {
+      slides[i].classList.remove('active');
+      i = Math.max(0, Math.min(slides.length - 1, n));
+      slides[i].classList.add('active');
+      try {
+        history.replaceState(null, '', '#' + (i + 1));
+      } catch (e) {}
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(i + 1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(i - 1); }
+      else if (e.key === 'Home') { go(0); }
+      else if (e.key === 'End') { go(slides.length - 1); }
+    });
+
+    document.addEventListener('click', function (e) {
+      // ignore clicks on links
+      if (e.target.closest('a')) return;
+      const w = window.innerWidth;
+      if (e.clientX > w * 0.5) go(i + 1); else go(i - 1);
+    });
+
+    // honor hash on load
+    const m = (location.hash || '').match(/(\d+)/);
+    if (m) go(parseInt(m[1], 10) - 1);
+  })();
+</script>
+
+
+</body></html>

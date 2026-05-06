@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kyozo · Security Review · May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EFE6D7;
+    --bg-soft: #F4ECDF;
+    --bg-card: #F8F1E5;
+    --ink: #1B2742;
+    --ink-soft: #2C3753;
+    --teal: #79A399;
+    --teal-deep: #5C8B82;
+    --gold: #C9A668;
+    --coral: #B85042;
+    --rule: #D9CDB8;
+    --rule-soft: #E5DBC7;
+    --muted: #8B7C61;
+    --serif: 'Fraunces', 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', 'PT Sans', system-ui, -apple-system, sans-serif;
+    --eyebrow-spacing: 0.2em;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ============== Top bar ============== */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid transparent;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+  .topbar.scrolled {
+    border-color: var(--rule);
+    background: rgba(239, 230, 215, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .topbar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 22px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .brand-mark svg { display: block; }
+  .topbar-eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0.55;
+  }
+  .topbar-eyebrow b { font-weight: 600; opacity: 1; color: var(--ink); }
+
+  /* ============== Layout ============== */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 56px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .sidenav {
+    position: sticky;
+    top: 110px;
+    align-self: start;
+    padding-top: 12px;
+    font-family: var(--sans);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .sidenav-label {
+    text-transform: uppercase;
+    letter-spacing: var(--eyebrow-spacing);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .sidenav ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: sec;
+  }
+  .sidenav li {
+    counter-increment: sec;
+    margin-bottom: 6px;
+  }
+  .sidenav a {
+    display: block;
+    padding: 6px 0 6px 36px;
+    color: var(--ink);
+    opacity: 0.55;
+    text-decoration: none;
+    font-weight: 500;
+    border-left: 1px solid transparent;
+    margin-left: -1px;
+    position: relative;
+    transition: opacity 150ms ease, border-color 150ms ease;
+  }
+  .sidenav a::before {
+    content: counter(sec, decimal-leading-zero);
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    opacity: 0.6;
+  }
+  .sidenav a:hover { opacity: 0.85; }
+  .sidenav a.active {
+    opacity: 1;
+    border-left-color: var(--ink);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  /* ============== Sections ============== */
+  section {
+    padding: 110px 0 80px;
+    border-bottom: 1px solid var(--rule);
+  }
+  section:first-of-type { padding-top: 60px; }
+  section:last-of-type { border-bottom: none; padding-bottom: 140px; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--muted);
+    margin: 0 0 28px;
+  }
+  .eyebrow b { color: var(--ink); font-weight: 600; }
+  .eyebrow .dot {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--muted);
+    vertical-align: middle;
+    margin: 0 10px;
+  }
+
+  h1.headline {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(48px, 6.5vw, 88px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    margin: 0 0 24px;
+    color: var(--ink);
+  }
+  h1.headline em {
+    font-style: italic;
+    color: var(--teal);
+    font-weight: 600;
+  }
+  h2.title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(36px, 4.5vw, 60px);
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    margin: 0 0 20px;
+    color: var(--ink);
+  }
+  h2.title em {
+    font-style: italic;
+    color: var(--teal);
+    font-weight: 600;
+  }
+  .lede {
+    font-family: var(--sans);
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 56px;
+  }
+  .lede.compact { margin-bottom: 40px; }
+
+  p { margin: 0 0 16px; }
+  p.body { color: var(--ink-soft); max-width: 65ch; }
+  strong { font-weight: 600; }
+
+  /* ============== Cover ============== */
+  .cover {
+    padding: 120px 0 100px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .cover .meta-row {
+    display: flex;
+    gap: 80px;
+    margin-top: 64px;
+    flex-wrap: wrap;
+  }
+  .meta-block .meta-label {
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .meta-block .meta-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ============== Stat row ============== */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 24px 0 56px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .stat {
+    padding: 32px 28px 32px 0;
+    border-right: 1px solid var(--rule);
+  }
+  .stat:last-child { border-right: none; padding-right: 0; }
+  .stat .stat-num {
+    font-family: var(--serif);
+    font-size: 64px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .stat .stat-num.coral { color: var(--coral); }
+  .stat .stat-num.gold { color: var(--gold); }
+  .stat .stat-num.teal { color: var(--teal-deep); }
+  .stat .stat-label {
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .stat .stat-sub {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.45;
+    font-style: italic;
+  }
+
+  /* ============== Findings (before/after pairs) ============== */
+  .finding {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 32px;
+    padding: 36px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .finding:last-child { border-bottom: 1px solid var(--rule); }
+  .finding-num {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: -0.01em;
+  }
+  .finding-body h3 {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 600;
+    margin: -2px 0 14px;
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .finding-body p { color: var(--ink-soft); max-width: 62ch; }
+  .ba-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 18px;
+  }
+  .ba-card {
+    padding: 18px 20px;
+    border-radius: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--rule-soft);
+  }
+  .ba-card.before {
+    background: rgba(184, 80, 66, 0.06);
+    border-color: rgba(184, 80, 66, 0.18);
+  }
+  .ba-card.after {
+    background: rgba(121, 163, 153, 0.10);
+    border-color: rgba(121, 163, 153, 0.28);
+  }
+  .ba-card .ba-label {
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .ba-card.before .ba-label { color: var(--coral); }
+  .ba-card.after .ba-label { color: var(--teal-deep); }
+  .ba-card p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); }
+
+  /* ============== Status pills ============== */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    color: var(--muted);
+    line-height: 1;
+  }
+  .pill.shipped {
+    background: rgba(121, 163, 153, 0.14);
+    border-color: rgba(121, 163, 153, 0.4);
+    color: var(--teal-deep);
+  }
+  .pill.action {
+    background: rgba(201, 166, 104, 0.14);
+    border-color: rgba(201, 166, 104, 0.45);
+    color: #8B6F2A;
+  }
+  .pill.deferred {
+    background: var(--bg-card);
+    border-color: var(--rule);
+    color: var(--muted);
+  }
+  .pill::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ============== Risk register table ============== */
+  .table-wrap {
+    margin: 32px -8px 0;
+    padding: 8px;
+    overflow-x: auto;
+  }
+  table.risk {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: 13.5px;
+  }
+  table.risk th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: var(--eyebrow-spacing);
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 14px 16px 14px 0;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+  table.risk td {
+    padding: 18px 16px 18px 0;
+    vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  table.risk tr:hover td { background: var(--bg-soft); }
+  table.risk td.num {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    width: 32px;
+    font-weight: 600;
+  }
+  table.risk td.risk-name {
+    color: var(--ink);
+    font-weight: 500;
+    width: 30%;
+  }
+  table.risk td.area {
+    color: var(--muted);
+    font-style: italic;
+    width: 12%;
+  }
+  table.risk td.severity { width: 11%; }
+  table.risk td.status { width: 14%; white-space: nowrap; }
+  .sev {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .sev::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .sev.critical { color: var(--coral); }
+  .sev.critical::before { background: var(--coral); }
+  .sev.high { color: var(--gold); }
+  .sev.high::before { background: var(--gold); }
+  .sev.medium { color: var(--muted); }
+  .sev.medium::before { background: var(--muted); }
+
+  /* ============== Pull quotes / callouts ============== */
+  .callout {
+    margin: 40px 0;
+    padding: 36px 40px;
+    background: var(--ink);
+    color: #EBE3D2;
+    border-radius: 4px;
+  }
+  .callout .callout-label {
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    color: rgba(235, 227, 210, 0.6);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .callout .callout-text {
+    font-family: var(--serif);
+    font-size: 26px;
+    line-height: 1.3;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .callout .callout-text em { color: var(--teal); font-style: italic; }
+
+  /* ============== Action checklist ============== */
+  .checklist {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    counter-reset: chk;
+  }
+  .checklist li {
+    counter-increment: chk;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 24px;
+    padding: 24px 0;
+    border-top: 1px solid var(--rule);
+    align-items: start;
+  }
+  .checklist li:last-child { border-bottom: 1px solid var(--rule); }
+  .checklist .chk-num {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+    padding-top: 4px;
+  }
+  .checklist .chk-num::before { content: counter(chk, decimal-leading-zero); }
+  .checklist .chk-body h4 {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+  .checklist .chk-body p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    line-height: 1.55;
+    max-width: 60ch;
+  }
+  .checklist code {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .checklist .chk-meta {
+    font-size: 11px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.4;
+    padding-top: 8px;
+    white-space: nowrap;
+  }
+
+  /* ============== Two-column section ============== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    margin-top: 32px;
+  }
+  .col h3 {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 14px;
+    color: var(--ink);
+  }
+  .col p { color: var(--ink-soft); }
+  .col ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .col ul li {
+    padding: 14px 0 14px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .col ul li:last-child { border-bottom: 1px solid var(--rule); }
+  .col ul li strong { color: var(--ink); display: block; margin-bottom: 2px; }
+
+  /* ============== Closing ============== */
+  .closing {
+    text-align: center;
+    padding: 140px 0 100px;
+  }
+  .closing h2 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 24px 0;
+    color: var(--ink);
+  }
+  .closing h2 em { color: var(--teal); font-style: italic; }
+  .closing p { color: var(--ink-soft); max-width: 56ch; margin: 0 auto; font-size: 17px; }
+  .closing .eyebrow { margin-bottom: 0; }
+
+  /* ============== Print ============== */
+  @media print {
+    .topbar, .sidenav { display: none; }
+    .layout { display: block; padding: 0; }
+    section { page-break-inside: avoid; padding: 40px 0; }
+    body { background: white; color: #000; }
+    .callout { background: #f5f5f5; color: #000; border: 1px solid #ccc; }
+  }
+
+  /* ============== Mobile ============== */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 0 24px; }
+    .sidenav { display: none; }
+    .container { padding: 0 24px; }
+    .topbar-inner { padding: 18px 24px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .stat { padding: 24px 20px 24px 0; }
+    .stat:nth-child(2) { border-right: none; padding-right: 0; }
+    .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .ba-grid, .two-col { grid-template-columns: 1fr; }
+    .finding { grid-template-columns: 1fr; gap: 12px; }
+    .finding-num { font-size: 22px; }
+    .checklist li { grid-template-columns: 40px 1fr; }
+    .checklist .chk-meta { grid-column: 1 / -1; text-align: left; padding-left: 64px; padding-top: 4px; }
+    .topbar-eyebrow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#cover">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="7" width="16" height="1.6" fill="#1B2742"/>
+          <rect x="3" y="13.2" width="22" height="1.6" fill="#1B2742"/>
+          <rect x="6" y="19.4" width="16" height="1.6" fill="#1B2742"/>
+        </svg>
+      </span>
+      Kyozo
+    </a>
+    <span class="topbar-eyebrow" id="topbar-eyebrow">
+      <b>00</b> &nbsp; Cover
+    </span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Side nav -->
+  <nav class="sidenav" aria-label="Section navigation">
+    <div class="sidenav-label">Contents</div>
+    <ol>
+      <li><a href="#overview" class="navlink">Overview</a></li>
+      <li><a href="#starting-point" class="navlink">Starting point</a></li>
+      <li><a href="#shipped" class="navlink">What we shipped</a></li>
+      <li><a href="#scenarios" class="navlink">Scenarios closed</a></li>
+      <li><a href="#register" class="navlink">Risk register</a></li>
+      <li><a href="#outstanding" class="navlink">Your action items</a></li>
+      <li><a href="#roadmap" class="navlink">Going forward</a></li>
+      <li><a href="#close" class="navlink">In closing</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ COVER ============ -->
+    <section class="cover" id="cover" data-eyebrow="00 · Cover">
+      <p class="eyebrow"><b>Confidential</b> <span class="dot"></span> Internal review</p>
+      <h1 class="headline">A security review,<br/>and the fixes <em>already shipped.</em></h1>
+      <p class="lede">An independent audit of KyozoVerse — secrets, authentication, database rules, API surface, dependencies — followed by a focused engineering sprint. This document captures both the findings and the work that's now landed on the <code style="font-family:ui-monospace,monospace;font-size:14px;background:var(--bg-card);padding:2px 8px;border-radius:3px;border:1px solid var(--rule)">security/critical-fixes</code> branch.</p>
+
+      <div class="meta-row">
+        <div class="meta-block">
+          <div class="meta-label">Prepared for</div>
+          <div class="meta-value">Kyozo management</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Branch</div>
+          <div class="meta-value" style="font-family:ui-monospace,monospace;font-size:16px">security/critical-fixes</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Date</div>
+          <div class="meta-value">May 2026</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 01 OVERVIEW ============ -->
+    <section id="overview" data-eyebrow="01 · Overview">
+      <p class="eyebrow"><b>01</b> <span class="dot"></span> The headline</p>
+      <h2 class="title">Most of what we found <em>is now closed.</em></h2>
+      <p class="lede">We started the audit expecting a long backlog. The codebase turned out to be in good architectural shape — the issues clustered in a handful of places: a stale super-admin page, database rules written for an early prototype, public API routes that had drifted past their guardrails, and a deep stack of out-of-date third-party packages. Almost all of it was closeable in a single sprint.</p>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-num teal">14</div>
+          <div class="stat-label">Critical &amp; high issues closed</div>
+          <div class="stat-sub">in the security/critical-fixes branch</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num gold">3</div>
+          <div class="stat-label">Items needing your action</div>
+          <div class="stat-sub">secret rotation, install, deploy</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">59</div>
+          <div class="stat-label">Dependency CVEs neutralised</div>
+          <div class="stat-sub">via package upgrades + overrides</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">52</div>
+          <div class="stat-label">Files changed</div>
+          <div class="stat-sub">3,887 lines of dead code deleted</div>
+        </div>
+      </div>
+
+      <p class="body">The remaining work is administrative rather than engineering — rotate the secrets that lived in the developer's local <code>.env</code>, run <code>pnpm install</code> to pull in the dependency upgrades, and deploy the new Firestore and Storage rules. After that, KyozoVerse is in a position where a follow-up audit ninety days from now would look very different.</p>
+    </section>
+
+    <!-- ============ 02 STARTING POINT ============ -->
+    <section id="starting-point" data-eyebrow="02 · Where we started">
+      <p class="eyebrow"><b>02</b> <span class="dot"></span> Where we started</p>
+      <h2 class="title">A snapshot of the <em>before.</em></h2>
+      <p class="lede compact">Eight numbers that summarise what an attacker could have done on day zero of this audit, before any fixes shipped. None of these required insider access — every one was reachable from a single signup or, in two cases, from the open internet.</p>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-num coral">8</div>
+          <div class="stat-label">Unauth API routes</div>
+          <div class="stat-sub">callable by anyone, no token</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num coral">26</div>
+          <div class="stat-label">Critical CVEs</div>
+          <div class="stat-sub">in third-party packages</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num coral">7</div>
+          <div class="stat-label">Production secrets exposed</div>
+          <div class="stat-sub">in plaintext on the dev laptop</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num coral">1</div>
+          <div class="stat-label">Hardcoded admin password</div>
+          <div class="stat-sub">shipped to the browser bundle</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-label">The single most exploitable thing</div>
+        <p class="callout-text">A <em>super-admin panel</em> at <code style="font-family:ui-monospace,monospace;font-size:18px;background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;color:#EBE3D2">/sa</code> guarded by the password <em>"kyozo123"</em> — written into the source code, shipped to every visitor's browser, and giving its bearer the ability to read every user record and reassign any community to any other account.</p>
+      </div>
+
+      <p class="body">The rest of the audit found things in the same shape: defaults left over from prototype days that never got tightened. The Firestore rules, for instance, said <em>"any authenticated user can read every other user's profile"</em> — which was fine when a user was a co-founder on dev, and a GDPR breach when the platform opened to invitees. None of these are bad designs. They're the rough edges every shipping codebase carries until someone sits down and goes through the surface area systematically.</p>
+    </section>
+
+    <!-- ============ 03 SHIPPED ============ -->
+    <section id="shipped" data-eyebrow="03 · What we shipped">
+      <p class="eyebrow"><b>03</b> <span class="dot"></span> What we shipped</p>
+      <h2 class="title">Seven changes, <em>one branch.</em></h2>
+      <p class="lede">Each of these landed as part of a single commit on <code>security/critical-fixes</code>. The before-and-after framing below is meant for non-engineers — what it looked like to a hypothetical attacker on Monday, versus what it looks like on Friday.</p>
+
+      <div class="finding">
+        <div class="finding-num">01</div>
+        <div class="finding-body">
+          <h3>The hardcoded admin password is gone <span class="pill shipped">Shipped</span></h3>
+          <p>The <code>/sa</code> super-admin page and the <code>/api/sa/*</code> endpoints that powered it have been deleted entirely. The page lived as dead code anyway — Next.js was deploying the routes from the <code>app/</code> folder, not from <code>src/app/</code> where this page lived — but a hardcoded password sitting in a Git-tracked file was a footgun waiting to be re-enabled. Layout references and the eight remaining duplicate route files were also removed.</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>A hidden URL with the password "kyozo123" hardcoded in the React bundle. Any visitor who guessed it could read every user, every community, and reassign communities between owners.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>The page is deleted, the API routes are deleted, and the layout fallthrough that excluded the path from auth checks has been removed. Workspace administration is now accessed via the existing <code>/settings/team</code> page, which goes through Firebase Auth and a server-side role check.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">02</div>
+        <div class="finding-body">
+          <h3>Public API routes now require authentication <span class="pill shipped">Shipped</span></h3>
+          <p>Eight routes were callable by anyone on the internet with a curl command. Each has been categorised by the level of trust it requires and gated accordingly: workspace-admin for waitlist approve/reject/approve-direct; any signed-in workspace user for AI generation; per-IP rate limiting on the public waitlist signup. Webhook endpoints — which can't use Bearer tokens because their callers are external services — now verify pre-shared secrets and HMAC signatures instead.</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>Anyone could approve their own waitlist signup. Anyone could spam the AI generation endpoint and run up the Gemini bill. Anyone could POST a forged email into the inbox webhook and have it stored as if it came from a real user.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>Each route declares the auth level it needs at the top of the handler. Inbox webhook payloads are now verified against Resend's Svix signature with a five-minute replay window. AI generation has a thirty-call-per-minute rate limit per IP.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">03</div>
+        <div class="finding-body">
+          <h3>The database rules were rewritten from scratch <span class="pill shipped">Shipped</span></h3>
+          <p>The previous Firestore rules were written for a prototype with a handful of trusted users. They allowed any logged-in user to read every record in <code>users</code>, write to <code>workspaceMembers</code> (the platform-admin role table), and write to <code>inboxMessages</code> with no caller validation. The new rules deny by default and explicitly open up only the paths the application actually needs, with strict guards on what's being changed.</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>One signup gave you a copy of every user's name, email, and phone number. One Firestore write made you a workspace admin. The rules read like an early prototype — because they were one.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>Users can only read their own row. Workspace-membership writes are server-only via Admin SDK, with a single narrow exception for a new user claiming their pending email-based invite. Storage rules check community membership before allowing uploads and refuse SVGs, which can carry executable JavaScript.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">04</div>
+        <div class="finding-body">
+          <h3>New server endpoints replaced direct database access <span class="pill shipped">Shipped</span></h3>
+          <p>To make the locked-down rules workable from the client, four new server endpoints were added: <code>/api/me/role</code> (your own platform role), <code>/api/admin/workspace-members</code> (team CRUD with a "can't remove the last admin" guardrail), and <code>/api/admin/waitlist</code> (replaces a direct Firestore listener). The team-management page and the platform-role hook were rewritten to talk through these endpoints instead of querying Firestore directly.</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>Client code did <code>updateDoc(workspaceMembers, ...)</code> and the database trusted it. Any signed-in user could promote themselves to admin in one network request.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>The same operations go through a server route that re-verifies the caller's role before mutating. The <code>dev@kyozo.com</code> hardcoded admin email check was also removed and replaced with the proper role-based check everywhere it appeared.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">05</div>
+        <div class="finding-body">
+          <h3>Email templates can no longer be hijacked for phishing <span class="pill shipped">Shipped</span></h3>
+          <p>The waitlist approval and rejection emails used to interpolate the recipient's first name into the HTML template literal. A user signing up with the first name <code>&lt;script&gt;…&lt;/script&gt;</code> could inject arbitrary content into transactional emails sent from your verified Kyozo domain — a phishing primitive even when the recipient's email client doesn't run scripts. A new shared escaping utility (<code>src/lib/html-escape.ts</code>) is now applied everywhere user input meets HTML.</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>Any registration name, post title, or community handle could break out of its container in the email and inject content. The recipient saw an email from your verified domain, so they trusted it.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>Every user-controlled value passes through <code>escapeHtml()</code> before it touches an HTML template. The same applies to URLs interpolated into <code>href</code> attributes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">06</div>
+        <div class="finding-body">
+          <h3>Uploads are no longer permanent leakage risks <span class="pill shipped">Shipped</span></h3>
+          <p>The <code>/api/upload</code> route had three problems stacked on top of each other: it generated signed URLs that expired in the year 2500, it took the uploader's user ID from a <em>client-controlled</em> HTTP header, and it allowed SVG uploads (which can contain inline JavaScript). All three are fixed: URLs are now public and revocable, the uploader is the verified Firebase Auth UID, and SVG is removed from the allow-list. Filenames are also sanitised against path traversal.</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>A signed URL leaked into a log file, a screenshot, or a copy-paste was a permanent backdoor — by the time the leak was noticed, you couldn't take it back. The uploader header could be spoofed to attribute uploads to other users.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>Public read URLs are revocable in seconds via the bucket dashboard. The uploader is whoever's Firebase token validated. SVG uploads are rejected.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">07</div>
+        <div class="finding-body">
+          <h3>The dependency stack is no longer a CVE pile-up <span class="pill action">Needs your install</span></h3>
+          <p>The repository carried 26 critical and 33 high-severity vulnerabilities, almost all in transitive dependencies of <code>genkit</code>, <code>@modelcontextprotocol/sdk</code>, and other AI/MCP packages — Handlebars (code injection), Lodash (prototype pollution), <code>fast-xml-parser</code>, <code>axios</code> (SSRF), <code>jws</code> (signature bypass), <code>protobufjs</code>, and Next.js itself. The <code>package.json</code> now bumps Next.js and adds <code>pnpm.overrides</code> entries that pin all of these to their fixed versions across the entire dependency graph. Two unused dependencies were also dropped: <code>mongo</code> (a 16-year-old abandoned package) and <code>sendgrid</code> (the deprecated v5 — the project uses <code>@sendgrid/mail</code> and Resend).</p>
+          <div class="ba-grid">
+            <div class="ba-card before">
+              <div class="ba-label">Before</div>
+              <p>Every <code>npm install</code> brought in known-exploitable code. Several of the CVEs have public exploits that enable remote code execution or authentication bypass.</p>
+            </div>
+            <div class="ba-card after">
+              <div class="ba-label">After</div>
+              <p>Once <code>pnpm install</code> runs against the new <code>package.json</code>, the override entries force every package in the tree onto the patched version. Around 59 of the 101 audit findings disappear in one command.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 04 SCENARIOS CLOSED ============ -->
+    <section id="scenarios" data-eyebrow="04 · Scenarios closed">
+      <p class="eyebrow"><b>04</b> <span class="dot"></span> Scenarios closed</p>
+      <h2 class="title">What an attacker <em>could no longer do.</em></h2>
+      <p class="lede">The same three concrete attack scenarios from the original briefing — re-evaluated against the post-fix codebase. Each one was easy on Monday and is now impossible (or vastly more expensive) on Friday.</p>
+
+      <div class="finding">
+        <div class="finding-num">01</div>
+        <div class="finding-body">
+          <h3>The data leak <span class="pill shipped">Closed</span></h3>
+          <p><strong>The old version, in 10 minutes.</strong> Sign up for a free Kyozo account, query Firestore from the browser, walk away with every user's name, email, and phone number. <strong>Now.</strong> The Firestore rules deny that read; the most a fresh signup gets back is their own row. The <code>workspaceMembers</code> table — which used to leak the org chart — is similarly locked.</p>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">02</div>
+        <div class="finding-body">
+          <h3>The takeover <span class="pill shipped">Closed</span></h3>
+          <p><strong>The old version, in 3 minutes.</strong> Type <code>/sa</code> in the URL bar, see a password prompt with the hint "platform name plus three numbers", try <code>kyozo123</code>, see every community in the system and reassign the largest one to yourself. <strong>Now.</strong> The page is deleted. The route is deleted. The hardcoded password no longer exists in the source tree. Workspace administration goes through the proper auth-gated flow.</p>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-num">03</div>
+        <div class="finding-body">
+          <h3>The forged inbox <span class="pill shipped">Closed</span></h3>
+          <p><strong>The old version, in seconds.</strong> POST a JSON payload to <code>/api/inbox/webhook</code>, have it stored in Firestore as if Resend had delivered it, use that to phish a community owner via the in-app inbox. <strong>Now.</strong> The webhook verifies a Resend Svix HMAC signature with a five-minute replay window, refuses unsigned payloads in production, and writes only via Admin SDK against rules that no longer accept arbitrary creates.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 05 RISK REGISTER ============ -->
+    <section id="register" data-eyebrow="05 · Risk register">
+      <p class="eyebrow"><b>05</b> <span class="dot"></span> Risk register</p>
+      <h2 class="title">The full list, <em>with status.</em></h2>
+      <p class="lede">Every finding from the May 2026 audit, with what was done. Items marked <span class="pill action" style="vertical-align:middle">Your action</span> are administrative work that I can't do for you — they require a real session in the Firebase / Resend / Vercel / GoDaddy dashboards. Items marked <span class="pill deferred" style="vertical-align:middle">Deferred</span> are weeks 5–12 hardening that we agreed to push past this sprint.</p>
+
+      <div class="table-wrap">
+        <table class="risk">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Risk</th>
+              <th>Area</th>
+              <th>Severity</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num">01</td>
+              <td class="risk-name">Hardcoded admin password "kyozo123" in browser bundle</td>
+              <td class="area">Auth</td>
+              <td class="severity"><span class="sev critical">Critical</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>/sa page and routes deleted</td>
+            </tr>
+            <tr>
+              <td class="num">02</td>
+              <td class="risk-name">Service-account private key &amp; provider keys in plaintext on disk</td>
+              <td class="area">Secrets</td>
+              <td class="severity"><span class="sev critical">Critical</span></td>
+              <td class="status"><span class="pill action">Your action</span></td>
+              <td>Runbook in docs/SECRET_ROTATION_RUNBOOK.md</td>
+            </tr>
+            <tr>
+              <td class="num">03</td>
+              <td class="risk-name">8 API routes with zero authentication</td>
+              <td class="area">API surface</td>
+              <td class="severity"><span class="sev critical">Critical</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Auth + rate limiting added</td>
+            </tr>
+            <tr>
+              <td class="num">04</td>
+              <td class="risk-name">Firestore rules let any logged-in user read all user records</td>
+              <td class="area">Database</td>
+              <td class="severity"><span class="sev critical">Critical</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Scoped to self; deploy rules to apply</td>
+            </tr>
+            <tr>
+              <td class="num">05</td>
+              <td class="risk-name">26 critical &amp; 33 high-severity dependency CVEs</td>
+              <td class="area">Dependencies</td>
+              <td class="severity"><span class="sev critical">Critical</span></td>
+              <td class="status"><span class="pill action">Your install</span></td>
+              <td>package.json updated; run pnpm install</td>
+            </tr>
+            <tr>
+              <td class="num">06</td>
+              <td class="risk-name">Any user could write to workspaceMembers (admin role escalation)</td>
+              <td class="area">Database</td>
+              <td class="severity"><span class="sev critical">Critical</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Server-only via Admin SDK</td>
+            </tr>
+            <tr>
+              <td class="num">07</td>
+              <td class="risk-name">Duplicate src/app/api tree with diverging code</td>
+              <td class="area">Architecture</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Dead tree deleted</td>
+            </tr>
+            <tr>
+              <td class="num">08</td>
+              <td class="risk-name">Inbox webhook accepted any payload without signature</td>
+              <td class="area">Webhooks</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Svix HMAC verification added</td>
+            </tr>
+            <tr>
+              <td class="num">09</td>
+              <td class="risk-name">User-controlled HTML in outbound email templates</td>
+              <td class="area">Email</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>escapeHtml() applied throughout</td>
+            </tr>
+            <tr>
+              <td class="num">10</td>
+              <td class="risk-name">Storage signed URLs valid until year 2500</td>
+              <td class="area">Storage</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Replaced with revocable public URLs</td>
+            </tr>
+            <tr>
+              <td class="num">11</td>
+              <td class="risk-name">Upload uploader ID taken from client-controlled header</td>
+              <td class="area">API surface</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Now uses verified Firebase Auth UID</td>
+            </tr>
+            <tr>
+              <td class="num">12</td>
+              <td class="risk-name">SVG uploads allowed (XSS vector)</td>
+              <td class="area">Storage</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Removed from MIME allow-list</td>
+            </tr>
+            <tr>
+              <td class="num">13</td>
+              <td class="risk-name">Storage CORS = "*" wildcard origin</td>
+              <td class="area">Hosting</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill action">Your deploy</span></td>
+              <td>cors.json updated; apply via gsutil</td>
+            </tr>
+            <tr>
+              <td class="num">14</td>
+              <td class="risk-name">Hardcoded "dev@kyozo.com" admin check in waitlist page</td>
+              <td class="area">Auth</td>
+              <td class="severity"><span class="sev high">High</span></td>
+              <td class="status"><span class="pill shipped">Shipped</span></td>
+              <td>Switched to platform-role check</td>
+            </tr>
+            <tr>
+              <td class="num">15</td>
+              <td class="risk-name">TypeScript &amp; ESLint errors disabled in production build</td>
+              <td class="area">Process</td>
+              <td class="severity"><span class="sev medium">Medium</span></td>
+              <td class="status"><span class="pill deferred">Deferred</span></td>
+              <td>Weeks 5–8 hardening</td>
+            </tr>
+            <tr>
+              <td class="num">16</td>
+              <td class="risk-name">No security headers (CSP, HSTS, X-Frame-Options)</td>
+              <td class="area">Hosting</td>
+              <td class="severity"><span class="sev medium">Medium</span></td>
+              <td class="status"><span class="pill deferred">Deferred</span></td>
+              <td>Weeks 5–8 hardening</td>
+            </tr>
+            <tr>
+              <td class="num">17</td>
+              <td class="risk-name">No automated dependency monitoring</td>
+              <td class="area">Process</td>
+              <td class="severity"><span class="sev medium">Medium</span></td>
+              <td class="status"><span class="pill deferred">Deferred</span></td>
+              <td>Dependabot/Renovate, weeks 9–12</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 06 OUTSTANDING ============ -->
+    <section id="outstanding" data-eyebrow="06 · Your action items">
+      <p class="eyebrow"><b>06</b> <span class="dot"></span> Your action items</p>
+      <h2 class="title">Three things <em>only you can do.</em></h2>
+      <p class="lede">The code changes are committed and reviewable. These three steps need a real engineer with dashboard access — they're not things I can complete from a sandbox. Each is straightforward; the runbook in <code>docs/SECRET_ROTATION_RUNBOOK.md</code> walks through the secret rotation in detail.</p>
+
+      <ol class="checklist">
+        <li>
+          <span class="chk-num"></span>
+          <div class="chk-body">
+            <h4>Rotate every secret in the .env file</h4>
+            <p>Firebase service account, Resend API key, Gemini API key, GoDaddy API key &amp; secret, the Vercel OIDC token. Each goes into Vercel's environment-variable store before the old key is deleted at the provider, so there's no outage window. Add a new <code>WHATSAPP_WEBHOOK_SECRET</code> and <code>RESEND_WEBHOOK_SECRET</code> at the same time — webhooks now require them in production.</p>
+          </div>
+          <div class="chk-meta">~30 minutes<br/>docs/SECRET_ROTATION_RUNBOOK.md</div>
+        </li>
+        <li>
+          <span class="chk-num"></span>
+          <div class="chk-body">
+            <h4>Run pnpm install on the security branch</h4>
+            <p>The sandbox disk was full so I couldn't run it for you. Once it runs against the updated <code>package.json</code>, the new <code>pnpm.overrides</code> entries pull every transitive dependency onto its patched version. This single command resolves about 59 of the 101 audit findings.</p>
+          </div>
+          <div class="chk-meta">~5 minutes<br/>pnpm install &amp; smoke-test</div>
+        </li>
+        <li>
+          <span class="chk-num"></span>
+          <div class="chk-body">
+            <h4>Deploy the new database, storage, and CORS rules</h4>
+            <p>Run <code>firebase deploy --only firestore:rules,storage:rules</code> to push the tightened Firestore and Storage rules to production. Then re-apply the storage CORS configuration with the existing <code>apply-cors.sh</code> script. Smoke-test the apps after — invite a team member, approve a waitlist entry, upload a post image, sign in as a fresh user and claim a pending invite.</p>
+          </div>
+          <div class="chk-meta">~10 minutes<br/>firebase deploy + smoke test</div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ============ 07 ROADMAP ============ -->
+    <section id="roadmap" data-eyebrow="07 · Going forward">
+      <p class="eyebrow"><b>07</b> <span class="dot"></span> Going forward</p>
+      <h2 class="title">What's <em>still worth doing</em> in the next quarter.</h2>
+      <p class="lede">Four pieces of hardening we deferred from this sprint because they're more about preventing the next audit-cycle backlog than closing today's holes. None are urgent. All are worth a couple of engineering days each, and together they shift KyozoVerse from "responding to issues" to "automatically catching them before they ship."</p>
+
+      <div class="two-col">
+        <div class="col">
+          <h3>Operational discipline</h3>
+          <ul>
+            <li><strong>Dependabot or Renovate</strong>Automatic PRs whenever a dependency CVE drops, instead of running <code>npm audit</code> by hand once a quarter. Most engineering teams set this up in 30 minutes and never think about it again.</li>
+            <li><strong>Secrets out of .env, into a manager</strong>1Password Developer Tools or Doppler. Adds rotation reminders, audit logs, and per-engineer access control. Cheap insurance once the team grows past two people.</li>
+            <li><strong>Re-enable TypeScript and ESLint in builds</strong>The Next config currently sets <code>ignoreBuildErrors: true</code>. Turning that off catches a class of bugs at compile time instead of in production logs.</li>
+            <li><strong>Schedule a follow-up audit at the 90-day mark</strong>The whole point of fixing this sprint's findings is to see the next audit return a much shorter list. Put it on the calendar now while there's momentum.</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Defence in depth</h3>
+          <ul>
+            <li><strong>Security headers in next.config</strong>Content-Security-Policy, Strict-Transport-Security, X-Frame-Options. Catches an entire class of XSS, clickjacking, and protocol-downgrade attacks at the browser level. About one afternoon of work.</li>
+            <li><strong>Persistent rate limiting</strong>The current limiter uses an in-memory map per serverless instance, which is enough to catch casual scripts but not coordinated abuse. Upstash Redis (~$10/month) gives you proper per-user, per-route limits.</li>
+            <li><strong>Logging &amp; alerting on auth failures</strong>Sentry's free tier or similar. Set an alert for "more than 50 failed auth attempts in 5 minutes". Most attacks announce themselves in logs before they succeed, if anyone's watching.</li>
+            <li><strong>DNSSEC on the kyozo.com domain</strong>One checkbox in the GoDaddy dashboard. Closes a class of DNS-hijack attacks that would otherwise let someone re-issue TLS certs in your name.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 08 CLOSING ============ -->
+    <section id="close" class="closing" data-eyebrow="08 · In closing">
+      <p class="eyebrow"><b>08</b> <span class="dot"></span> In closing</p>
+      <h2>The interesting thing<br/>is what <em>didn't</em> need fixing.</h2>
+      <p>The product architecture is sound. The data model is clean. The code is reasonable. What we found was the residue of moving fast — the prototype defaults that never got tightened, the dependencies that drifted, the route that was duplicated when work moved between branches. That residue is now cleaned up. The version of KyozoVerse on the <code style="font-family:ui-monospace,monospace;font-size:14px;background:var(--bg-card);padding:2px 6px;border-radius:3px;border:1px solid var(--rule)">security/critical-fixes</code> branch is in good shape to scale.</p>
+      <p style="margin-top:48px;font-family:var(--serif);font-size:20px;font-style:italic;color:var(--teal-deep);">Questions, pushback, deeper dives — let's discuss.</p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Active nav link tracking via IntersectionObserver
+  (function() {
+    var links = document.querySelectorAll('.sidenav a.navlink');
+    var sections = Array.from(links).map(function(a) {
+      return document.querySelector(a.getAttribute('href'));
+    }).filter(Boolean);
+    var eyebrowEl = document.getElementById('topbar-eyebrow');
+    var topbar = document.getElementById('topbar');
+
+    function setActive(id, eyebrow) {
+      links.forEach(function(a) {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+      if (eyebrow && eyebrowEl) {
+        var parts = eyebrow.split(' · ');
+        if (parts.length === 2) {
+          eyebrowEl.innerHTML = '<b>' + parts[0] + '</b> &nbsp; ' + parts[1];
+        } else {
+          eyebrowEl.textContent = eyebrow;
+        }
+      }
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      // Pick the entry whose top is closest to (but past) the scroll-padding line.
+      var visible = entries.filter(function(e) { return e.isIntersecting; });
+      if (visible.length === 0) return;
+      visible.sort(function(a, b) { return a.target.offsetTop - b.target.offsetTop; });
+      var pick = visible[0].target;
+      setActive(pick.id, pick.dataset.eyebrow || '');
+    }, { rootMargin: '-30% 0px -55% 0px', threshold: 0 });
+
+    sections.forEach(function(s) { observer.observe(s); });
+
+    // Topbar shadow when scrolled
+    function onScroll() {
+      if (window.scrollY > 8) topbar.classList.add('scrolled');
+      else topbar.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

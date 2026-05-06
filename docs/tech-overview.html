@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kyozo · Technology Overview · May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EFE6D7;
+    --bg-soft: #F4ECDF;
+    --bg-card: #F8F1E5;
+    --ink: #1B2742;
+    --ink-soft: #2C3753;
+    --teal: #79A399;
+    --teal-deep: #5C8B82;
+    --gold: #C9A668;
+    --coral: #B85042;
+    --rule: #D9CDB8;
+    --rule-soft: #E5DBC7;
+    --muted: #8B7C61;
+    --serif: 'Fraunces', 'Playfair Display', Georgia, serif;
+    --sans: 'DM Sans', 'PT Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'DM Mono', ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    --eyebrow-spacing: 0.2em;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ============== Top bar ============== */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid transparent;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+  .topbar.scrolled {
+    border-color: var(--rule);
+    background: rgba(239, 230, 215, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .topbar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 22px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .brand-mark { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
+  .brand-mark svg { display: block; }
+  .topbar-eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0.55;
+  }
+  .topbar-eyebrow b { font-weight: 600; opacity: 1; color: var(--ink); }
+
+  /* ============== Layout ============== */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 56px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .sidenav {
+    position: sticky;
+    top: 110px;
+    align-self: start;
+    padding-top: 12px;
+    font-family: var(--sans);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .sidenav-label {
+    text-transform: uppercase;
+    letter-spacing: var(--eyebrow-spacing);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .sidenav ol { list-style: none; margin: 0; padding: 0; counter-reset: sec; }
+  .sidenav li { counter-increment: sec; margin-bottom: 6px; }
+  .sidenav a {
+    display: block;
+    padding: 6px 0 6px 36px;
+    color: var(--ink);
+    opacity: 0.55;
+    text-decoration: none;
+    font-weight: 500;
+    border-left: 1px solid transparent;
+    margin-left: -1px;
+    position: relative;
+    transition: opacity 150ms ease, border-color 150ms ease;
+  }
+  .sidenav a::before {
+    content: counter(sec, decimal-leading-zero);
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    opacity: 0.6;
+  }
+  .sidenav a:hover { opacity: 0.85; }
+  .sidenav a.active {
+    opacity: 1;
+    border-left-color: var(--ink);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  /* ============== Sections ============== */
+  section { padding: 110px 0 80px; border-bottom: 1px solid var(--rule); }
+  section:first-of-type { padding-top: 60px; }
+  section:last-of-type { border-bottom: none; padding-bottom: 140px; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--muted);
+    margin: 0 0 28px;
+  }
+  .eyebrow b { color: var(--ink); font-weight: 600; }
+  .eyebrow .dot {
+    display: inline-block; width: 4px; height: 4px;
+    border-radius: 50%; background: var(--muted);
+    vertical-align: middle; margin: 0 10px;
+  }
+
+  h1.headline {
+    font-family: var(--serif); font-weight: 600;
+    font-size: clamp(48px, 6.5vw, 88px);
+    line-height: 1.02; letter-spacing: -0.02em;
+    margin: 0 0 24px; color: var(--ink);
+  }
+  h1.headline em { font-style: italic; color: var(--teal); font-weight: 600; }
+  h2.title {
+    font-family: var(--serif); font-weight: 600;
+    font-size: clamp(36px, 4.5vw, 60px);
+    line-height: 1.05; letter-spacing: -0.018em;
+    margin: 0 0 20px; color: var(--ink);
+  }
+  h2.title em { font-style: italic; color: var(--teal); font-weight: 600; }
+
+  .lede {
+    font-family: var(--sans); font-size: 18px; line-height: 1.55;
+    color: var(--ink-soft); max-width: 64ch; margin: 0 0 56px;
+  }
+  .lede.compact { margin-bottom: 32px; }
+
+  p { margin: 0 0 16px; }
+  p.body { color: var(--ink-soft); max-width: 65ch; }
+
+  code { font-family: var(--mono); font-size: 0.92em;
+    background: var(--bg-card); border: 1px solid var(--rule-soft);
+    padding: 1px 6px; border-radius: 3px; color: var(--ink);
+  }
+
+  /* ============== Cover ============== */
+  .cover { padding: 120px 0 100px; border-bottom: 1px solid var(--rule); }
+  .cover .meta-row {
+    display: flex; gap: 80px; margin-top: 64px; flex-wrap: wrap;
+  }
+  .meta-block .meta-label {
+    font-size: 10px; letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase; color: var(--muted);
+    font-weight: 600; margin-bottom: 8px;
+  }
+  .meta-block .meta-value {
+    font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink);
+  }
+
+  /* ============== Stat row ============== */
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    margin: 24px 0 40px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  }
+  .stat { padding: 32px 28px 32px 0; border-right: 1px solid var(--rule); }
+  .stat:last-child { border-right: none; padding-right: 0; }
+  .stat .stat-num {
+    font-family: var(--serif); font-size: 56px; font-weight: 600;
+    line-height: 1; letter-spacing: -0.02em; color: var(--ink);
+  }
+  .stat .stat-num.gold { color: var(--gold); }
+  .stat .stat-num.teal { color: var(--teal-deep); }
+  .stat .stat-label {
+    margin-top: 14px; font-size: 11px; letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase; font-weight: 600; color: var(--ink);
+  }
+  .stat .stat-sub {
+    margin-top: 6px; font-size: 13px; color: var(--muted);
+    line-height: 1.45; font-style: italic;
+  }
+
+  /* ============== Architecture diagram boxes ============== */
+  .diagram-wrap {
+    margin: 36px 0 12px; padding: 32px 24px;
+    background: var(--bg-soft); border: 1px solid var(--rule);
+    border-radius: 6px; overflow-x: auto;
+  }
+  .diagram-wrap .diagram-caption {
+    font-size: 12px; color: var(--muted); font-style: italic;
+    margin-top: 16px; text-align: center;
+  }
+  .diagram-wrap svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+
+  /* ============== Cards & lists ============== */
+  .stack-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px;
+  }
+  .stack-card {
+    padding: 24px 26px; background: var(--bg-card);
+    border: 1px solid var(--rule); border-radius: 4px;
+  }
+  .stack-card h3 {
+    font-family: var(--serif); font-size: 22px; font-weight: 600;
+    margin: 0 0 6px; color: var(--ink); letter-spacing: -0.01em;
+  }
+  .stack-card .stack-role {
+    font-size: 11px; letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase; font-weight: 600; color: var(--teal-deep);
+    margin-bottom: 14px;
+  }
+  .stack-card p { font-size: 14.5px; color: var(--ink-soft); margin: 0 0 10px; }
+  .stack-card .stack-pkgs {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    margin-top: 10px; line-height: 1.7;
+  }
+
+  /* ============== Pros/Cons cols ============== */
+  .pros-cons {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;
+  }
+  .pc-col {
+    padding: 24px 26px; border-radius: 4px;
+    background: var(--bg-card); border: 1px solid var(--rule);
+  }
+  .pc-col.pros { background: rgba(121, 163, 153, 0.08); border-color: rgba(121, 163, 153, 0.28); }
+  .pc-col.cons { background: rgba(184, 80, 66, 0.06); border-color: rgba(184, 80, 66, 0.22); }
+  .pc-col h4 {
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    letter-spacing: var(--eyebrow-spacing); text-transform: uppercase;
+    margin: 0 0 14px; color: var(--ink);
+  }
+  .pc-col.pros h4 { color: var(--teal-deep); }
+  .pc-col.cons h4 { color: var(--coral); }
+  .pc-col ul { margin: 0; padding: 0; list-style: none; }
+  .pc-col li {
+    padding: 10px 0 10px 22px; border-top: 1px solid var(--rule-soft);
+    font-size: 14px; color: var(--ink-soft); line-height: 1.5; position: relative;
+  }
+  .pc-col li:first-child { border-top: none; }
+  .pc-col.pros li::before {
+    content: ""; position: absolute; left: 0; top: 16px;
+    width: 12px; height: 1.5px; background: var(--teal-deep);
+  }
+  .pc-col.cons li::before {
+    content: ""; position: absolute; left: 0; top: 16px;
+    width: 12px; height: 1.5px; background: var(--coral);
+  }
+
+  /* ============== Pills (status) ============== */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; line-height: 1;
+  }
+  .pill::before {
+    content: ""; width: 6px; height: 6px;
+    border-radius: 50%; background: currentColor;
+  }
+  .pill.live { background: rgba(121, 163, 153, 0.14); border: 1px solid rgba(121, 163, 153, 0.4); color: var(--teal-deep); }
+  .pill.next { background: rgba(201, 166, 104, 0.14); border: 1px solid rgba(201, 166, 104, 0.45); color: #8B6F2A; }
+  .pill.future { background: var(--bg-card); border: 1px solid var(--rule); color: var(--muted); }
+  .pill.deferred { background: var(--bg-card); border: 1px solid var(--rule); color: var(--muted); }
+
+  /* ============== Big dependency table ============== */
+  .table-wrap { margin: 24px -8px 0; padding: 8px; overflow-x: auto; }
+  table.deps {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--sans); font-size: 13px;
+  }
+  table.deps th {
+    text-align: left; font-weight: 600; color: var(--muted);
+    letter-spacing: var(--eyebrow-spacing); font-size: 10px;
+    text-transform: uppercase; padding: 14px 12px 14px 0;
+    border-bottom: 1px solid var(--ink); white-space: nowrap;
+  }
+  table.deps td {
+    padding: 14px 12px 14px 0; vertical-align: top;
+    border-bottom: 1px solid var(--rule); color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  table.deps tr:hover td { background: var(--bg-soft); }
+  table.deps td.pkg {
+    color: var(--ink); font-family: var(--mono); font-size: 12px; font-weight: 500;
+    white-space: nowrap; padding-right: 16px;
+  }
+  table.deps td.cat { color: var(--muted); font-style: italic; white-space: nowrap; }
+  table.deps td.role { color: var(--ink); font-weight: 500; }
+  table.deps td.notes { color: var(--ink-soft); font-size: 12.5px; }
+  table.deps td.health { white-space: nowrap; }
+  table.deps tr.section-row td {
+    background: var(--bg-soft); padding: 10px 12px;
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    letter-spacing: var(--eyebrow-spacing); text-transform: uppercase;
+    color: var(--ink); border-bottom: 1px solid var(--rule);
+  }
+  .health-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600;
+  }
+  .health-dot::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+  }
+  .health-dot.good { color: var(--teal-deep); }
+  .health-dot.good::before { background: var(--teal-deep); }
+  .health-dot.ok { color: var(--gold); }
+  .health-dot.ok::before { background: var(--gold); }
+  .health-dot.watch { color: var(--coral); }
+  .health-dot.watch::before { background: var(--coral); }
+  .health-dot.drop { color: var(--muted); }
+  .health-dot.drop::before { background: var(--muted); }
+
+  /* ============== Roadmap timeline ============== */
+  .timeline {
+    margin: 32px 0; position: relative;
+  }
+  .timeline::before {
+    content: ""; position: absolute;
+    left: 12px; top: 24px; bottom: 24px;
+    width: 1.5px; background: var(--rule);
+  }
+  .tl-item {
+    display: grid; grid-template-columns: 80px 1fr; gap: 28px;
+    padding: 28px 0; position: relative;
+  }
+  .tl-item::before {
+    content: ""; position: absolute;
+    left: 8px; top: 38px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--gold);
+  }
+  .tl-item.live::before { border-color: var(--teal-deep); background: var(--teal-deep); }
+  .tl-item.next::before { border-color: var(--gold); background: var(--gold); }
+  .tl-item.future::before { border-color: var(--muted); background: var(--bg); }
+  .tl-when {
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    letter-spacing: var(--eyebrow-spacing); text-transform: uppercase;
+    color: var(--muted); padding-top: 36px; padding-left: 32px;
+  }
+  .tl-body { padding-top: 28px; }
+  .tl-body h4 {
+    font-family: var(--serif); font-size: 22px; font-weight: 600;
+    margin: 0 0 6px; color: var(--ink); letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .tl-body p { color: var(--ink-soft); font-size: 14.5px; max-width: 60ch; margin: 0; }
+
+  /* ============== Callout ============== */
+  .callout {
+    margin: 40px 0; padding: 36px 40px;
+    background: var(--ink); color: #EBE3D2; border-radius: 4px;
+  }
+  .callout .callout-label {
+    font-size: 10px; letter-spacing: var(--eyebrow-spacing); text-transform: uppercase;
+    color: rgba(235, 227, 210, 0.6); font-weight: 600; margin-bottom: 14px;
+  }
+  .callout .callout-text {
+    font-family: var(--serif); font-size: 26px; line-height: 1.3;
+    font-weight: 500; margin: 0; letter-spacing: -0.01em;
+  }
+  .callout .callout-text em { color: var(--teal); font-style: italic; }
+
+  /* ============== Two col ============== */
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 56px; margin-top: 32px;
+  }
+  .col h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600;
+    margin: 0 0 14px; color: var(--ink);
+  }
+  .col p { color: var(--ink-soft); }
+
+  /* ============== Recommendation list ============== */
+  .reco-list {
+    list-style: none; margin: 24px 0 0; padding: 0; counter-reset: rec;
+  }
+  .reco-list li {
+    counter-increment: rec;
+    display: grid; grid-template-columns: 56px 1fr auto; gap: 24px;
+    padding: 24px 0; border-top: 1px solid var(--rule);
+    align-items: start;
+  }
+  .reco-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .reco-list .rec-num {
+    font-family: var(--serif); font-size: 28px; font-weight: 600;
+    color: var(--gold); line-height: 1; padding-top: 4px;
+  }
+  .reco-list .rec-num::before { content: counter(rec, decimal-leading-zero); }
+  .reco-list .rec-body h4 {
+    font-family: var(--serif); font-size: 20px; font-weight: 600;
+    margin: 0 0 6px; color: var(--ink); line-height: 1.25;
+  }
+  .reco-list .rec-body p {
+    margin: 0; color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; max-width: 60ch;
+  }
+  .reco-list .rec-meta {
+    font-size: 11px; letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase; font-weight: 600; color: var(--muted);
+    text-align: right; line-height: 1.4; padding-top: 8px; white-space: nowrap;
+  }
+
+  /* ============== Closing ============== */
+  .closing { text-align: center; padding: 140px 0 100px; }
+  .closing h2 {
+    font-family: var(--serif); font-size: clamp(40px, 5vw, 64px);
+    font-weight: 600; line-height: 1.1; letter-spacing: -0.02em;
+    margin: 24px 0; color: var(--ink);
+  }
+  .closing h2 em { color: var(--teal); font-style: italic; }
+  .closing p { color: var(--ink-soft); max-width: 56ch; margin: 0 auto; font-size: 17px; }
+  .closing .eyebrow { margin-bottom: 0; }
+
+  /* ============== Mobile ============== */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 0 24px; }
+    .sidenav { display: none; }
+    .topbar-inner { padding: 18px 24px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .stat { padding: 24px 20px 24px 0; }
+    .stat:nth-child(2) { border-right: none; padding-right: 0; }
+    .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .stack-grid, .pros-cons, .two-col { grid-template-columns: 1fr; gap: 16px; }
+    .tl-item { grid-template-columns: 1fr; gap: 8px; padding-left: 32px; }
+    .tl-when { padding-top: 0; padding-left: 0; }
+    .tl-item::before { left: 6px; top: 18px; }
+    .timeline::before { left: 11px; }
+    .reco-list li { grid-template-columns: 40px 1fr; }
+    .reco-list .rec-meta { grid-column: 1 / -1; text-align: left; padding-left: 64px; padding-top: 4px; }
+    .topbar-eyebrow { display: none; }
+  }
+
+  @media print {
+    .topbar, .sidenav { display: none; }
+    .layout { display: block; padding: 0; }
+    section { page-break-inside: avoid; padding: 40px 0; }
+    body { background: white; color: #000; }
+    .callout { background: #f5f5f5; color: #000; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#cover">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="7" width="16" height="1.6" fill="#1B2742"/>
+          <rect x="3" y="13.2" width="22" height="1.6" fill="#1B2742"/>
+          <rect x="6" y="19.4" width="16" height="1.6" fill="#1B2742"/>
+        </svg>
+      </span>
+      Kyozo
+    </a>
+    <span class="topbar-eyebrow" id="topbar-eyebrow">
+      <b>00</b> &nbsp; Cover
+    </span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidenav" aria-label="Section navigation">
+    <div class="sidenav-label">Contents</div>
+    <ol>
+      <li><a href="#architecture" class="navlink">Architecture</a></li>
+      <li><a href="#frontend" class="navlink">Frontend</a></li>
+      <li><a href="#backend" class="navlink">Backend &amp; infra</a></li>
+      <li><a href="#deps" class="navlink">Dependency map</a></li>
+      <li><a href="#domains" class="navlink">Domain per community</a></li>
+      <li><a href="#inbox" class="navlink">Unified inbox</a></li>
+      <li><a href="#ai" class="navlink">AI features</a></li>
+      <li><a href="#future" class="navlink">What's coming next</a></li>
+      <li><a href="#recos" class="navlink">Recommendations</a></li>
+      <li><a href="#close" class="navlink">In closing</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ COVER ============ -->
+    <section class="cover" id="cover" data-eyebrow="00 · Cover">
+      <p class="eyebrow"><b>Internal</b> <span class="dot"></span> Technology overview</p>
+      <h1 class="headline">The technology<br/>behind <em>Kyozo.</em></h1>
+      <p class="lede">A full management-level view of how KyozoVerse is built today, what it costs, what each piece is good and bad at, what's working, what's deferred, and what's worth building next. Written for a mixed audience — plain-English summaries up top, the libraries, trade-offs, and engineering opinions where they matter.</p>
+
+      <div class="meta-row">
+        <div class="meta-block">
+          <div class="meta-label">Prepared for</div>
+          <div class="meta-value">Kyozo management</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Codebase</div>
+          <div class="meta-value" style="font-family:var(--mono);font-size:16px">KyozoVerse · main</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Date</div>
+          <div class="meta-value">May 2026</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 01 ARCHITECTURE ============ -->
+    <section id="architecture" data-eyebrow="01 · Architecture">
+      <p class="eyebrow"><b>01</b> <span class="dot"></span> The shape of the thing</p>
+      <h2 class="title">A serverless app on top<br/>of <em>managed services.</em></h2>
+      <p class="lede">Kyozo is a Next.js application hosted on Vercel, talking to Firebase for authentication, database, and file storage, Resend for transactional and inbound email, GoDaddy for DNS-driven custom domains, and Google's Gemini for AI generation. There is no traditional backend server — every API endpoint is a serverless function, every database call goes directly from the browser or a function to Firebase. The thirty-thousand-foot picture:</p>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" width="760" height="320">
+          <style>
+            .lbl { font-family: 'DM Sans', sans-serif; font-size: 12px; fill: #1B2742; }
+            .ttl { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; fill: #1B2742; }
+            .sub { font-family: 'DM Sans', sans-serif; font-size: 10px; fill: #8B7C61; letter-spacing: 0.05em; text-transform: uppercase; }
+            .box-bg { fill: #F8F1E5; stroke: #D9CDB8; }
+            .box-bg-d { fill: #1B2742; }
+            .arrow { stroke: #5C8B82; stroke-width: 1.5; fill: none; }
+            .arrow-head { fill: #5C8B82; }
+          </style>
+          <!-- User -->
+          <rect class="box-bg" x="20" y="135" width="100" height="50" rx="4"/>
+          <text class="ttl" x="70" y="158" text-anchor="middle">Browser</text>
+          <text class="sub" x="70" y="174" text-anchor="middle">User</text>
+
+          <!-- Vercel/Next.js -->
+          <rect class="box-bg-d" x="200" y="55" width="180" height="210" rx="4"/>
+          <text class="ttl" x="290" y="80" text-anchor="middle" fill="#EBE3D2">Vercel · Next.js 15</text>
+          <text class="sub" x="290" y="95" text-anchor="middle" fill="#C9A668">Serverless host</text>
+          <line x1="220" y1="108" x2="360" y2="108" stroke="#3a4a6c" stroke-width="0.8"/>
+          <text x="290" y="128" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#EBE3D2">App Router pages</text>
+          <text x="290" y="146" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#EBE3D2">/api/* route handlers</text>
+          <text x="290" y="164" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#EBE3D2">Server actions</text>
+          <text x="290" y="182" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#EBE3D2">Middleware (CORS)</text>
+          <text x="290" y="200" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#EBE3D2">Image optimization</text>
+          <text x="290" y="226" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#79A399" font-style="italic">React 18 · Tailwind · Radix</text>
+          <text x="290" y="246" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#79A399" font-style="italic">TypeScript · pnpm</text>
+
+          <!-- Firebase -->
+          <rect class="box-bg" x="460" y="20" width="170" height="115" rx="4"/>
+          <text class="ttl" x="545" y="42" text-anchor="middle">Firebase</text>
+          <text class="sub" x="545" y="56" text-anchor="middle">Database · Auth · Storage</text>
+          <line x1="475" y1="68" x2="615" y2="68" stroke="#D9CDB8"/>
+          <text class="lbl" x="545" y="86" text-anchor="middle">Auth (id tokens)</text>
+          <text class="lbl" x="545" y="104" text-anchor="middle">Firestore (NoSQL)</text>
+          <text class="lbl" x="545" y="122" text-anchor="middle">Cloud Storage</text>
+
+          <!-- Resend -->
+          <rect class="box-bg" x="460" y="155" width="170" height="55" rx="4"/>
+          <text class="ttl" x="545" y="177" text-anchor="middle">Resend</text>
+          <text class="sub" x="545" y="192" text-anchor="middle">Transactional email</text>
+
+          <!-- Gemini -->
+          <rect class="box-bg" x="460" y="230" width="170" height="55" rx="4"/>
+          <text class="ttl" x="545" y="252" text-anchor="middle">Google Gemini</text>
+          <text class="sub" x="545" y="267" text-anchor="middle">AI generation</text>
+
+          <!-- GoDaddy -->
+          <rect class="box-bg" x="660" y="20" width="80" height="115" rx="4"/>
+          <text class="ttl" x="700" y="42" text-anchor="middle" font-size="13">GoDaddy</text>
+          <text class="sub" x="700" y="56" text-anchor="middle" font-size="9">DNS</text>
+          <text class="lbl" x="700" y="86" text-anchor="middle" font-size="11">A · CNAME</text>
+          <text class="lbl" x="700" y="104" text-anchor="middle" font-size="11">MX · SPF</text>
+          <text class="lbl" x="700" y="122" text-anchor="middle" font-size="11">DKIM · DMARC</text>
+
+          <!-- Arrows -->
+          <path class="arrow" d="M 120 160 L 200 160"/>
+          <polygon class="arrow-head" points="200,160 192,156 192,164"/>
+          <path class="arrow" d="M 380 105 L 460 75"/>
+          <polygon class="arrow-head" points="460,75 451,77 454,84"/>
+          <path class="arrow" d="M 380 160 L 460 182"/>
+          <polygon class="arrow-head" points="460,182 451,179 449,187"/>
+          <path class="arrow" d="M 380 215 L 460 255"/>
+          <polygon class="arrow-head" points="460,255 451,251 448,259"/>
+          <path class="arrow" d="M 630 75 L 660 75"/>
+          <polygon class="arrow-head" points="660,75 652,71 652,79"/>
+
+          <!-- Labels -->
+          <text class="sub" x="155" y="156" text-anchor="middle" fill="#79A399">HTTPS</text>
+          <text class="sub" x="425" y="86" text-anchor="middle" fill="#79A399">Admin SDK</text>
+          <text class="sub" x="425" y="170" text-anchor="middle" fill="#79A399">REST</text>
+          <text class="sub" x="425" y="244" text-anchor="middle" fill="#79A399">REST</text>
+        </svg>
+        <p class="diagram-caption">Five managed services. No always-on backend. Every request handled by a Vercel serverless function or directly by a managed API.</p>
+      </div>
+
+      <p class="body">The strength of this shape is that it scales itself — there's no server to size, no database to provision, no email infrastructure to maintain. The weakness is that we depend heavily on five vendors, and each one is a single-point-of-failure for whatever it owns. Section 9 returns to the trade-off.</p>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-num teal">5</div>
+          <div class="stat-label">Managed vendors</div>
+          <div class="stat-sub">Vercel · Firebase · Resend · GoDaddy · Google AI</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">35</div>
+          <div class="stat-label">API route handlers</div>
+          <div class="stat-sub">in app/api/, all serverless</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num gold">~50</div>
+          <div class="stat-label">Production npm dependencies</div>
+          <div class="stat-sub">plus ~40 more in pnpm overrides</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num teal">0</div>
+          <div class="stat-label">Always-on backend servers</div>
+          <div class="stat-sub">no Docker, no Kubernetes, no PM2</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 02 FRONTEND ============ -->
+    <section id="frontend" data-eyebrow="02 · Frontend">
+      <p class="eyebrow"><b>02</b> <span class="dot"></span> Frontend</p>
+      <h2 class="title">Modern, but <em>not bleeding edge.</em></h2>
+      <p class="lede">The frontend is built on the React + Next.js App Router stack — the same one Vercel, OpenAI, Hashnode, and most newer SaaS products use. We're on Next.js 15, React 18, Tailwind CSS, and Radix UI for accessibility primitives. TypeScript is enabled across the codebase. There's nothing exotic here, which is good: hiring is easy, the docs are excellent, and the patterns are well-understood.</p>
+
+      <div class="stack-grid">
+        <div class="stack-card">
+          <div class="stack-role">Framework</div>
+          <h3>Next.js 15 · App Router</h3>
+          <p>The web framework that wraps React. App Router is the post-2023 way of building Next apps — server components, server actions, file-based routing. Mature, well-documented, the default choice for new React work.</p>
+          <p class="stack-pkgs">next ^15.5.4<br/>react ^18.3.1<br/>react-dom ^18.3.1</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">UI primitives</div>
+          <h3>Radix UI</h3>
+          <p>Headless accessibility-first building blocks: dialogs, dropdowns, tooltips, tabs. Solves the deep accessibility problems (focus management, ARIA, keyboard navigation) so the team focuses on appearance. Standard in modern React apps.</p>
+          <p class="stack-pkgs">@radix-ui/react-* (16 packages)</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Styling</div>
+          <h3>Tailwind CSS</h3>
+          <p>Utility-first CSS — instead of writing stylesheets, classes are composed inline. Pairs perfectly with Radix and is fast for solo or small teams. Trade-off: HTML can look noisy until you internalise the conventions.</p>
+          <p class="stack-pkgs">tailwindcss ^3.4.1<br/>tailwindcss-animate ^1.0.7<br/>tailwind-merge · clsx · cva</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Forms &amp; validation</div>
+          <h3>React Hook Form + Zod</h3>
+          <p>The de-facto standard pair: RHF for form state and submission, Zod for schema validation that's typed end-to-end. The same Zod schemas can validate API request bodies on the server.</p>
+          <p class="stack-pkgs">react-hook-form ^7.54.2<br/>@hookform/resolvers ^4.1.3<br/>zod ^3.24.2</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Icons &amp; visuals</div>
+          <h3>Lucide · Recharts · DiceBear</h3>
+          <p>Lucide for the line-icon system; Recharts for analytics charts; DiceBear for procedurally generated avatars when users don't upload one. All open-source, all standards.</p>
+          <p class="stack-pkgs">lucide-react · react-icons<br/>recharts ^2.15.1<br/>@dicebear/core · @dicebear/collection</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Media handling</div>
+          <h3>Dropzone · Embla · Day Picker</h3>
+          <p>react-dropzone for drag-and-drop file upload UI; embla-carousel for image carousels; react-day-picker for calendar/date selection. All purpose-built, all maintained.</p>
+          <p class="stack-pkgs">react-dropzone ^14.2.3<br/>embla-carousel-react ^8.6.0<br/>react-day-picker ^8.10.1</p>
+        </div>
+      </div>
+
+      <p class="body" style="margin-top:32px"><strong>The opinion.</strong> The frontend stack is well-chosen and current. The two things worth tightening: the Next.js build currently has TypeScript and ESLint errors silently ignored (turning that off catches a class of bugs at compile time, not in production logs); and we depend on two icon libraries (<code>lucide-react</code> + <code>react-icons</code>) — picking one would shed a few megabytes of unused code from the bundle. Neither is urgent.</p>
+    </section>
+
+    <!-- ============ 03 BACKEND ============ -->
+    <section id="backend" data-eyebrow="03 · Backend &amp; infra">
+      <p class="eyebrow"><b>03</b> <span class="dot"></span> Backend &amp; infrastructure</p>
+      <h2 class="title">Five vendors <em>doing the heavy lifting.</em></h2>
+      <p class="lede">There's no "Kyozo backend server" in the conventional sense. The application talks directly to managed APIs, and our serverless functions are mostly thin orchestration layers — accept a request, validate it, talk to one or two of the vendors, return JSON. Each vendor is paid per-use, so cost scales smoothly with usage rather than in step-function jumps when adding a server.</p>
+
+      <div class="stack-grid">
+        <div class="stack-card">
+          <div class="stack-role">Database, auth, files</div>
+          <h3>Firebase</h3>
+          <p>The single biggest dependency. Firebase Auth handles signups and sessions; Firestore stores users, communities, posts, members, messages; Cloud Storage stores uploaded media. The Admin SDK lets server-side code bypass the client security rules. Generous free tier, predictable scaling, hard to misuse with the post-audit rules.</p>
+          <p class="stack-pkgs">firebase ^11.9.1<br/>firebase-admin ^13.6.0</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Hosting</div>
+          <h3>Vercel</h3>
+          <p>Hosts the Next.js app. Each git push to <code>main</code> triggers a build; each pull request gets its own preview URL. Edge network, automatic HTTPS, environment variables managed in the dashboard. The trade-off is vendor lock-in to Vercel's specific Next.js features and pricing.</p>
+          <p class="stack-pkgs">No npm package — handled at the platform level.</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Email</div>
+          <h3>Resend</h3>
+          <p>Sends transactional and broadcast email and receives inbound replies. Modern, developer-friendly API, good deliverability. One key per environment, signed webhooks (now verified). We also have a per-community-domain pattern that depends on Resend's "add domain" API — see section 5.</p>
+          <p class="stack-pkgs">resend ^6.4.2</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">DNS &amp; domain</div>
+          <h3>GoDaddy</h3>
+          <p>Owns the <code>kyozo.com</code> domain and provides the DNS records that wire it together. Importantly, we drive GoDaddy's API programmatically when a community is created, automatically adding SPF, DKIM, and MX records for that community's subdomain. See section 5 for what happens when a community gets <code>handle.kyozo.com</code>.</p>
+          <p class="stack-pkgs">No npm package — direct REST integration.</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">AI inference</div>
+          <h3>Google Gemini · Genkit</h3>
+          <p>Gemini Flash is the language model that powers the "improve this email" and AI assistant features. Genkit is Google's open-source orchestration library — it handles streaming, tool calling, and observability around model calls so we don't have to write that infrastructure ourselves.</p>
+          <p class="stack-pkgs">@google/generative-ai ^0.24.1<br/>genkit ^1.20.0<br/>@genkit-ai/google-genai ^1.20.0<br/>@genkit-ai/next ^1.20.0</p>
+        </div>
+        <div class="stack-card">
+          <div class="stack-role">Messaging (deferred)</div>
+          <h3>360dialog · WhatsApp <span class="pill deferred" style="font-size:9px;margin-left:6px;vertical-align:middle">Deferred</span></h3>
+          <p>Integration code exists for the WhatsApp Business API via 360dialog — broadcast templates, inbound webhook, signature verification. Not actively shipped or promoted. Kept as the foundation for the unified-inbox vision in section 6.</p>
+          <p class="stack-pkgs">No npm package — direct REST integration.</p>
+        </div>
+      </div>
+
+      <p class="body" style="margin-top:32px"><strong>The opinion.</strong> The backend choices are conservative and correct for the current scale. Firebase is the highest-leverage decision — it gives us a database, auth, file storage, and a generous free tier in one bill. The risk to flag is that a serious migration off Firebase would be expensive (rewriting security rules, re-implementing auth, moving objects) — so any plan to grow past Firebase's sweet spot needs to be started early.</p>
+    </section>
+
+    <!-- ============ 04 DEPENDENCY MAP ============ -->
+    <section id="deps" data-eyebrow="04 · Dependency map">
+      <p class="eyebrow"><b>04</b> <span class="dot"></span> Full dependency map</p>
+      <h2 class="title">Every package, <em>and what it earns.</em></h2>
+      <p class="lede">A complete inventory of the production dependencies, grouped by purpose, with a one-line role and a maintenance read. The "health" column reflects three things together: how recently the package was updated, the size of its userbase, and whether anything in it surfaced in our most recent <code>npm audit</code>.</p>
+
+      <p style="margin:12px 0 24px;font-size:13px;color:var(--muted)">
+        <span class="health-dot good">Healthy</span> &nbsp;
+        <span class="health-dot ok">Acceptable</span> &nbsp;
+        <span class="health-dot watch">Watch</span> &nbsp;
+        <span class="health-dot drop">Drop</span>
+      </p>
+
+      <div class="table-wrap">
+        <table class="deps">
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th>Version</th>
+              <th>Role</th>
+              <th>Notes</th>
+              <th>Health</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="section-row"><td colspan="5">Framework &amp; runtime</td></tr>
+            <tr><td class="pkg">next</td><td>^15.5.4</td><td class="role">React framework</td><td class="notes">App Router, server components, image optimization, edge middleware</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">react</td><td>^18.3.1</td><td class="role">UI library</td><td class="notes">Stable LTS-equivalent. React 19 available; no urgent reason to bump.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">react-dom</td><td>^18.3.1</td><td class="role">DOM bindings</td><td class="notes">Pairs with React. Bumps in lockstep.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">typescript</td><td>^5.x</td><td class="role">Type system</td><td class="notes">Currently set to ignore build errors — recommend re-enabling.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+
+            <tr class="section-row"><td colspan="5">UI primitives (Radix)</td></tr>
+            <tr><td class="pkg">@radix-ui/react-accordion</td><td>^1.2.3</td><td class="role">Accordion</td><td class="notes">Accessible expand/collapse</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-alert-dialog</td><td>^1.1.6</td><td class="role">Modal alerts</td><td class="notes">Used for delete confirmations</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-avatar</td><td>^1.1.3</td><td class="role">Avatar</td><td class="notes">Image with fallback initials</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-checkbox</td><td>^1.1.4</td><td class="role">Checkbox</td><td class="notes">Form primitive</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-collapsible</td><td>^1.1.11</td><td class="role">Collapsible</td><td class="notes">Lighter than accordion</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-dialog</td><td>^1.1.6</td><td class="role">Modal dialog</td><td class="notes">Most common modal surface</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-dropdown-menu</td><td>^2.1.6</td><td class="role">Dropdown menu</td><td class="notes">Context menus, action menus</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-label</td><td>^2.1.2</td><td class="role">Form label</td><td class="notes">Accessible label-input pairing</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-menubar</td><td>^1.1.6</td><td class="role">Menu bar</td><td class="notes">Top-level app menus</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-popover</td><td>^1.1.6</td><td class="role">Popover</td><td class="notes">Floating panels</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-progress</td><td>^1.1.2</td><td class="role">Progress bar</td><td class="notes">Upload &amp; loading indicators</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-radio-group</td><td>^1.2.3</td><td class="role">Radio group</td><td class="notes">Form primitive</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-scroll-area</td><td>^1.2.3</td><td class="role">Scroll area</td><td class="notes">Custom scrollbars</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-select</td><td>^2.1.6</td><td class="role">Select</td><td class="notes">Dropdown form input</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-separator</td><td>^1.1.2</td><td class="role">Separator</td><td class="notes">Visual divider</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-slider</td><td>^1.2.3</td><td class="role">Slider</td><td class="notes">Range input</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-slot</td><td>^1.2.3</td><td class="role">Component composition</td><td class="notes">Used by cva pattern</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-switch</td><td>^1.1.3</td><td class="role">Toggle switch</td><td class="notes">On/off settings</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-tabs</td><td>^1.1.3</td><td class="role">Tabs</td><td class="notes">Tab navigation</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-toast</td><td>^1.2.6</td><td class="role">Toast notifications</td><td class="notes">Transient messages</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@radix-ui/react-tooltip</td><td>^1.1.8</td><td class="role">Tooltip</td><td class="notes">Hover hints</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+
+            <tr class="section-row"><td colspan="5">Styling</td></tr>
+            <tr><td class="pkg">tailwindcss</td><td>^3.4.1</td><td class="role">CSS framework</td><td class="notes">Utility-first. v4 is out — bump is a separate project.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">tailwindcss-animate</td><td>^1.0.7</td><td class="role">Animation utilities</td><td class="notes">Required by some Radix presets</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">tailwind-merge</td><td>^3.0.1</td><td class="role">Class merging</td><td class="notes">Resolves conflicting Tailwind classes</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">class-variance-authority</td><td>^0.7.1</td><td class="role">Variant composition</td><td class="notes">Type-safe component variants</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">clsx</td><td>^2.1.1</td><td class="role">Conditional classes</td><td class="notes">Tiny utility used everywhere</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">postcss</td><td>^8.x</td><td class="role">CSS processor</td><td class="notes">Tailwind dependency</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+
+            <tr class="section-row"><td colspan="5">Forms, validation, dates</td></tr>
+            <tr><td class="pkg">react-hook-form</td><td>^7.54.2</td><td class="role">Form state</td><td class="notes">Industry standard, performant</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@hookform/resolvers</td><td>^4.1.3</td><td class="role">Schema integration</td><td class="notes">Bridges RHF with Zod, Yup, etc.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">zod</td><td>^3.24.2</td><td class="role">Schema validation</td><td class="notes">Used for both form &amp; API validation</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">react-day-picker</td><td>^8.10.1</td><td class="role">Date picker</td><td class="notes">v9 available; current works fine.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">date-fns</td><td>^3.6.0</td><td class="role">Date manipulation</td><td class="notes">Tree-shakable; lighter than moment.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+
+            <tr class="section-row"><td colspan="5">Icons, charts, media</td></tr>
+            <tr><td class="pkg">lucide-react</td><td>^0.475.0</td><td class="role">Icon library</td><td class="notes">Primary icon set</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">react-icons</td><td>^5.5.0</td><td class="role">Multi-library icons</td><td class="notes">Second icon library — consider consolidating with Lucide.</td><td class="health"><span class="health-dot ok">Acceptable</span></td></tr>
+            <tr><td class="pkg">recharts</td><td>^2.15.1</td><td class="role">Charts</td><td class="notes">Bar/line/pie for analytics dashboard</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">embla-carousel-react</td><td>^8.6.0</td><td class="role">Carousel</td><td class="notes">Lightweight, performant</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">react-dropzone</td><td>^14.2.3</td><td class="role">Drag-and-drop uploads</td><td class="notes">UI for upload flow</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">video-thumbnail-generator</td><td>^1.1.3</td><td class="role">Video thumbnails</td><td class="notes">Auto-extract preview frames</td><td class="health"><span class="health-dot ok">Acceptable</span></td></tr>
+            <tr><td class="pkg">@dicebear/core</td><td>^9.4.0</td><td class="role">Procedural avatars</td><td class="notes">Default avatars when user doesn't upload one</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@dicebear/collection</td><td>^9.4.0</td><td class="role">Avatar styles</td><td class="notes">Pairs with @dicebear/core</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+
+            <tr class="section-row"><td colspan="5">Backend SDKs &amp; integrations</td></tr>
+            <tr><td class="pkg">firebase</td><td>^11.9.1</td><td class="role">Client Firebase SDK</td><td class="notes">Auth, Firestore, Storage from the browser</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">firebase-admin</td><td>^13.6.0</td><td class="role">Server Firebase SDK</td><td class="notes">Bypasses client security rules; used in API routes</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">resend</td><td>^6.4.2</td><td class="role">Email API client</td><td class="notes">We mostly use direct fetch calls — consider standardising on the SDK.</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@google/generative-ai</td><td>^0.24.1</td><td class="role">Gemini SDK</td><td class="notes">Direct model calls</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">genkit</td><td>^1.20.0</td><td class="role">AI orchestration</td><td class="notes">Streaming, tools, observability</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@genkit-ai/google-genai</td><td>^1.20.0</td><td class="role">Genkit ↔ Gemini bridge</td><td class="notes">Lets Genkit drive Gemini</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">@genkit-ai/next</td><td>^1.20.0</td><td class="role">Genkit ↔ Next.js</td><td class="notes">Wires Genkit flows into route handlers</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+
+            <tr class="section-row"><td colspan="5">Utility</td></tr>
+            <tr><td class="pkg">dotenv</td><td>^16.5.0</td><td class="role">Env file loader</td><td class="notes">Used in scripts; Next handles env natively in app code</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">events</td><td>^3.3.0</td><td class="role">Browser EventEmitter</td><td class="notes">Polyfill for libraries that expect Node's events</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">form-data</td><td>^4.0.4</td><td class="role">Multipart form bodies</td><td class="notes">Used for upload requests in scripts</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">node-fetch</td><td>^3.3.2</td><td class="role">Fetch in Node scripts</td><td class="notes">Bumped from v2 in the security sprint</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">xlsx</td><td>^0.18.5</td><td class="role">Excel parsing</td><td class="notes">Used for member CSV/XLSX imports</td><td class="health"><span class="health-dot ok">Acceptable</span></td></tr>
+            <tr><td class="pkg">patch-package</td><td>^8.0.0</td><td class="role">Lockfile patches</td><td class="notes">Persists local fixes to upstream packages</td><td class="health"><span class="health-dot good">Healthy</span></td></tr>
+            <tr><td class="pkg">mongodb</td><td>^6.8.0</td><td class="role">MongoDB driver</td><td class="notes">Listed but not actively used. Candidate for removal — would shed ~5MB.</td><td class="health"><span class="health-dot drop">Drop</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="body" style="margin-top:32px"><strong>The opinion.</strong> The dependency footprint is reasonable for a product of this scope. The standout cleanup candidate is <code>mongodb</code> — left over from an earlier exploration, still bundled, still pulling in transitive dependencies. Removing it is a one-line change. Beyond that, consolidating to a single icon library and standardising on the Resend SDK (instead of mixing it with raw <code>fetch</code> calls) would shave a few rough edges. None of these are urgent.</p>
+    </section>
+
+    <!-- ============ 05 CUSTOM DOMAIN PER COMMUNITY ============ -->
+    <section id="domains" data-eyebrow="05 · Domain per community">
+      <p class="eyebrow"><b>05</b> <span class="dot"></span> Custom domain per community</p>
+      <h2 class="title">Every community gets <em>its own subdomain.</em></h2>
+      <p class="lede">When a community owner creates <code>aqua-splash</code>, our system automatically provisions <code>aqua-splash.kyozo.com</code> as a real, working subdomain — capable of receiving email at <code>reply@aqua-splash.kyozo.com</code> and presenting a branded experience. This is one of the more distinctive technical choices in the product, and it's worth understanding what it gives us, what it costs, and where the risks live.</p>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" width="760" height="280">
+          <style>
+            .lbl { font-family: 'DM Sans', sans-serif; font-size: 11px; fill: #1B2742; }
+            .ttl { font-family: 'Fraunces', serif; font-size: 13px; font-weight: 600; fill: #1B2742; }
+            .sub { font-family: 'DM Sans', sans-serif; font-size: 9px; fill: #8B7C61; letter-spacing: 0.05em; text-transform: uppercase; }
+            .step { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; fill: #C9A668; }
+            .box { fill: #F8F1E5; stroke: #D9CDB8; }
+            .arrow { stroke: #5C8B82; stroke-width: 1.5; fill: none; }
+            .arrow-head { fill: #5C8B82; }
+          </style>
+          <!-- Step 1: User -->
+          <text class="step" x="40" y="48" text-anchor="middle">01</text>
+          <rect class="box" x="20" y="60" width="130" height="70" rx="4"/>
+          <text class="ttl" x="85" y="84" text-anchor="middle">Owner creates</text>
+          <text class="ttl" x="85" y="100" text-anchor="middle">community</text>
+          <text class="sub" x="85" y="116" text-anchor="middle">aqua-splash</text>
+
+          <!-- Step 2: Resend -->
+          <text class="step" x="220" y="48" text-anchor="middle">02</text>
+          <rect class="box" x="180" y="60" width="160" height="70" rx="4"/>
+          <text class="ttl" x="260" y="84" text-anchor="middle">Resend</text>
+          <text class="lbl" x="260" y="103" text-anchor="middle">"Add domain" API call</text>
+          <text class="sub" x="260" y="119" text-anchor="middle">aqua-splash.kyozo.com</text>
+
+          <!-- Step 3: GoDaddy -->
+          <text class="step" x="430" y="48" text-anchor="middle">03</text>
+          <rect class="box" x="370" y="60" width="180" height="70" rx="4"/>
+          <text class="ttl" x="460" y="84" text-anchor="middle">GoDaddy DNS API</text>
+          <text class="lbl" x="460" y="103" text-anchor="middle">SPF · DKIM · MX records</text>
+          <text class="sub" x="460" y="119" text-anchor="middle">added to kyozo.com</text>
+
+          <!-- Step 4: Verify -->
+          <text class="step" x="650" y="48" text-anchor="middle">04</text>
+          <rect class="box" x="590" y="60" width="160" height="70" rx="4"/>
+          <text class="ttl" x="670" y="84" text-anchor="middle">Resend verifies</text>
+          <text class="lbl" x="670" y="103" text-anchor="middle">DNS records resolve</text>
+          <text class="sub" x="670" y="119" text-anchor="middle">domain ready to send</text>
+
+          <!-- Arrows -->
+          <path class="arrow" d="M 150 95 L 180 95"/>
+          <polygon class="arrow-head" points="180,95 172,91 172,99"/>
+          <path class="arrow" d="M 340 95 L 370 95"/>
+          <polygon class="arrow-head" points="370,95 362,91 362,99"/>
+          <path class="arrow" d="M 550 95 L 590 95"/>
+          <polygon class="arrow-head" points="590,95 582,91 582,99"/>
+
+          <!-- Bottom: ongoing usage -->
+          <line x1="40" y1="180" x2="720" y2="180" stroke="#D9CDB8" stroke-dasharray="2 4"/>
+          <text class="sub" x="40" y="170">Once live</text>
+
+          <rect class="box" x="40" y="200" width="200" height="55" rx="4"/>
+          <text class="ttl" x="140" y="222" text-anchor="middle">Outbound</text>
+          <text class="lbl" x="140" y="240" text-anchor="middle">From: aqua-splash@kyozo.com</text>
+
+          <rect class="box" x="280" y="200" width="200" height="55" rx="4"/>
+          <text class="ttl" x="380" y="222" text-anchor="middle">Inbound</text>
+          <text class="lbl" x="380" y="240" text-anchor="middle">reply@aqua-splash.kyozo.com</text>
+
+          <rect class="box" x="520" y="200" width="200" height="55" rx="4"/>
+          <text class="ttl" x="620" y="222" text-anchor="middle">Web</text>
+          <text class="lbl" x="620" y="240" text-anchor="middle">aqua-splash.kyozo.com (future)</text>
+        </svg>
+        <p class="diagram-caption">From the owner clicking "create community" to a working subdomain takes about 15 seconds and three API calls.</p>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pc-col pros">
+          <h4>Why we do it</h4>
+          <ul>
+            <li>Each community feels independent — emails to its members come from <code>aqua-splash@kyozo.com</code>, not a shared no-reply address. Higher open rates, better deliverability.</li>
+            <li>The reputation of one community's mail can't poison another's. If a community owner triggers spam complaints, only that subdomain's reputation suffers.</li>
+            <li>Inbound replies route directly into that community's inbox. We can tell which community a reply belongs to from the recipient address alone.</li>
+            <li>The pattern extends naturally to white-label custom domains in the future ("send from <code>community@mycoolclub.com</code>") without rewriting the email layer.</li>
+            <li>SPF / DKIM / DMARC are configured automatically; community owners never see DNS.</li>
+          </ul>
+        </div>
+        <div class="pc-col cons">
+          <h4>What it costs us</h4>
+          <ul>
+            <li>The setup flow depends on three external APIs in sequence (Resend, GoDaddy, then back to Resend for verification). Any one of them being slow or down delays community creation.</li>
+            <li>DNS propagation typically takes seconds with GoDaddy but can stretch to minutes — owners occasionally see "domain not yet verified" briefly after creating.</li>
+            <li>The <code>kyozo.com</code> DNS zone gradually fills up with records. We're well within GoDaddy's limits, but at 10,000+ communities this becomes a record-management problem.</li>
+            <li>Renaming a community handle requires deleting the old DNS records and creating new ones. The renaming code path is 250+ lines and is a frequent source of bugs.</li>
+            <li>Couples us to GoDaddy's API specifically. Switching registrars would require rewriting that integration.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="body" style="margin-top:24px"><strong>The opinion.</strong> The pattern is a net win at our current scale and a strategic differentiator — most competitors share a single mail domain across all their customers. The risk to plan for is the ten-thousand-communities case: at some point we'll want to either move to dynamic DNS records (Cloudflare's API is more permissive than GoDaddy's), or move to a model where small communities share a domain and only paid-tier communities get their own. Either is a quarter of work — easier to plan now than scramble later.</p>
+    </section>
+
+    <!-- ============ 06 UNIFIED INBOX ============ -->
+    <section id="inbox" data-eyebrow="06 · Unified inbox">
+      <p class="eyebrow"><b>06</b> <span class="dot"></span> The unified inbox</p>
+      <h2 class="title">One thread per member, <em>across every channel.</em></h2>
+      <p class="lede">A community owner today gets emails, will tomorrow get WhatsApp messages, will eventually get in-app messages from a mobile app, and in some cases gets SMS replies. The unified-inbox vision is that all of those land in a single thread per member — the owner reads the whole conversation in one place and responds without having to remember which channel the message came from.</p>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" width="760" height="320">
+          <style>
+            .lbl { font-family: 'DM Sans', sans-serif; font-size: 11px; fill: #1B2742; }
+            .ttl { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; fill: #1B2742; }
+            .sub { font-family: 'DM Sans', sans-serif; font-size: 9px; fill: #8B7C61; letter-spacing: 0.05em; text-transform: uppercase; }
+            .source-box { fill: #F8F1E5; stroke: #D9CDB8; }
+            .deferred-box { fill: #F4ECDF; stroke: #D9CDB8; stroke-dasharray: 4 3; }
+            .center-box { fill: #1B2742; }
+            .arrow { stroke: #5C8B82; stroke-width: 1.5; fill: none; }
+            .arrow-head { fill: #5C8B82; }
+          </style>
+
+          <!-- Sources -->
+          <rect class="source-box" x="20" y="30" width="150" height="50" rx="4"/>
+          <text class="ttl" x="95" y="52" text-anchor="middle">Email (Resend)</text>
+          <text class="sub" x="95" y="68" text-anchor="middle">live</text>
+
+          <rect class="deferred-box" x="20" y="100" width="150" height="50" rx="4"/>
+          <text class="ttl" x="95" y="122" text-anchor="middle">WhatsApp (360dialog)</text>
+          <text class="sub" x="95" y="138" text-anchor="middle">deferred</text>
+
+          <rect class="deferred-box" x="20" y="170" width="150" height="50" rx="4"/>
+          <text class="ttl" x="95" y="192" text-anchor="middle">Mobile app push</text>
+          <text class="sub" x="95" y="208" text-anchor="middle">on roadmap</text>
+
+          <rect class="deferred-box" x="20" y="240" width="150" height="50" rx="4"/>
+          <text class="ttl" x="95" y="262" text-anchor="middle">SMS (Twilio?)</text>
+          <text class="sub" x="95" y="278" text-anchor="middle">future</text>
+
+          <!-- Center: webhook + admin SDK -->
+          <rect class="center-box" x="270" y="80" width="220" height="160" rx="4"/>
+          <text class="ttl" x="380" y="110" text-anchor="middle" fill="#EBE3D2">Inbox webhooks</text>
+          <text class="sub" x="380" y="126" text-anchor="middle" fill="#C9A668">/api/inbox/webhook</text>
+          <line x1="290" y1="138" x2="470" y2="138" stroke="#3a4a6c"/>
+          <text class="lbl" x="380" y="158" text-anchor="middle" fill="#EBE3D2">Verify signature</text>
+          <text class="lbl" x="380" y="176" text-anchor="middle" fill="#EBE3D2">Match member by address</text>
+          <text class="lbl" x="380" y="194" text-anchor="middle" fill="#EBE3D2">Resolve community</text>
+          <text class="lbl" x="380" y="212" text-anchor="middle" fill="#EBE3D2">Write via Admin SDK</text>
+
+          <!-- Right: storage + UI -->
+          <rect class="source-box" x="580" y="60" width="160" height="80" rx="4"/>
+          <text class="ttl" x="660" y="86" text-anchor="middle">Firestore</text>
+          <text class="lbl" x="660" y="106" text-anchor="middle">inboxMessages collection</text>
+          <text class="sub" x="660" y="125" text-anchor="middle">canonical storage</text>
+
+          <rect class="source-box" x="580" y="180" width="160" height="80" rx="4"/>
+          <text class="ttl" x="660" y="206" text-anchor="middle">Inbox UI</text>
+          <text class="lbl" x="660" y="226" text-anchor="middle">/[handle]/inbox</text>
+          <text class="sub" x="660" y="245" text-anchor="middle">grouped by member</text>
+
+          <!-- Arrows from sources to center -->
+          <path class="arrow" d="M 170 55 L 270 110"/>
+          <polygon class="arrow-head" points="270,110 261,108 263,116"/>
+          <path class="arrow" d="M 170 125 L 270 145"/>
+          <polygon class="arrow-head" points="270,145 261,142 261,150"/>
+          <path class="arrow" d="M 170 195 L 270 175"/>
+          <polygon class="arrow-head" points="270,175 261,170 261,178"/>
+          <path class="arrow" d="M 170 265 L 270 210"/>
+          <polygon class="arrow-head" points="270,210 261,212 263,204"/>
+
+          <!-- Arrow to firestore -->
+          <path class="arrow" d="M 490 130 L 580 100"/>
+          <polygon class="arrow-head" points="580,100 571,99 573,107"/>
+
+          <!-- Arrow firestore to ui -->
+          <path class="arrow" d="M 660 140 L 660 180"/>
+          <polygon class="arrow-head" points="660,180 656,172 664,172"/>
+          <text class="sub" x="700" y="162">realtime</text>
+        </svg>
+        <p class="diagram-caption">All channels feed the same Firestore collection. Adding a new channel is a new webhook route, not a new data model.</p>
+      </div>
+
+      <div class="two-col">
+        <div class="col">
+          <h3>Live today</h3>
+          <p>Email (inbound and outbound) flows end-to-end through the inbox. When a member replies to a broadcast, Resend's inbound webhook fires <code>/api/inbox/webhook</code>, the route verifies the Svix signature, looks up the member by sender email, and writes a row into the <code>inboxMessages</code> collection. The community owner sees it appear in real time in the inbox UI, threaded with anything else that member has sent or received.</p>
+          <p style="margin-top:12px;color:var(--ink-soft)">Outbound replies from the inbox UI go through <code>/api/send-email</code>, also storing the outgoing message in the same collection so the thread reads chronologically.</p>
+        </div>
+        <div class="col">
+          <h3>Coming next</h3>
+          <p><strong>WhatsApp</strong> is plumbed but not active. The webhook route, signature verification, and writes are all built — turning it on requires the WhatsApp Business API account from 360dialog and a product decision about whether to promote it.</p>
+          <p style="margin-top:12px;color:var(--ink-soft)"><strong>Mobile app push</strong> would arrive as another webhook (or, more likely, a server action triggered by the app itself). The data model already supports it: <code>messagingService: 'app'</code> alongside <code>'email'</code>, <code>'whatsapp'</code>, etc.</p>
+          <p style="margin-top:12px;color:var(--ink-soft)"><strong>SMS, Telegram, Slack-Connect-style integrations</strong> are all natural extensions of the same pattern. Each is one webhook route plus dashboard UI for the owner to enable it.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-label">The thing this unlocks</div>
+        <p class="callout-text">A community owner can <em>broadcast on email,</em> get replies on WhatsApp, follow up via the mobile app, and never lose context — the thread reads as one conversation. Most platforms force the owner to track which channel a member uses; we plan not to.</p>
+      </div>
+    </section>
+
+    <!-- ============ 07 AI FEATURES ============ -->
+    <section id="ai" data-eyebrow="07 · AI features">
+      <p class="eyebrow"><b>07</b> <span class="dot"></span> AI features</p>
+      <h2 class="title">Gemini, on tap, <em>where it earns its keep.</em></h2>
+      <p class="lede">The AI integration is intentionally narrow: where a human would obviously benefit from a draft, a model is offered. The premise is that an AI feature should save a community owner time on something they were going to do anyway, not invent work. Today that means polishing email subjects, drafting broadcast bodies, and answering "how do I do X in this product" questions inside the dashboard.</p>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" width="760" height="220">
+          <style>
+            .lbl { font-family: 'DM Sans', sans-serif; font-size: 11px; fill: #1B2742; }
+            .ttl { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; fill: #1B2742; }
+            .sub { font-family: 'DM Sans', sans-serif; font-size: 9px; fill: #8B7C61; letter-spacing: 0.05em; text-transform: uppercase; }
+            .box { fill: #F8F1E5; stroke: #D9CDB8; }
+            .box-d { fill: #1B2742; }
+            .arrow { stroke: #5C8B82; stroke-width: 1.5; fill: none; }
+            .arrow-head { fill: #5C8B82; }
+          </style>
+          <rect class="box" x="20" y="80" width="140" height="60" rx="4"/>
+          <text class="ttl" x="90" y="103" text-anchor="middle">UI surface</text>
+          <text class="lbl" x="90" y="121" text-anchor="middle">AIInput · AITextarea</text>
+          <text class="sub" x="90" y="135" text-anchor="middle">"sparkle" button</text>
+
+          <rect class="box-d" x="200" y="40" width="180" height="140" rx="4"/>
+          <text class="ttl" x="290" y="68" text-anchor="middle" fill="#EBE3D2">/api/ai/generate</text>
+          <text class="sub" x="290" y="84" text-anchor="middle" fill="#C9A668">Auth + rate limit</text>
+          <line x1="220" y1="98" x2="360" y2="98" stroke="#3a4a6c"/>
+          <text class="lbl" x="290" y="118" text-anchor="middle" fill="#EBE3D2">verifyAuth()</text>
+          <text class="lbl" x="290" y="136" text-anchor="middle" fill="#EBE3D2">checkRateLimit()</text>
+          <text class="lbl" x="290" y="154" text-anchor="middle" fill="#EBE3D2">build prompt</text>
+          <text class="lbl" x="290" y="172" text-anchor="middle" fill="#EBE3D2">return text</text>
+
+          <rect class="box" x="420" y="60" width="160" height="60" rx="4"/>
+          <text class="ttl" x="500" y="82" text-anchor="middle">Genkit</text>
+          <text class="lbl" x="500" y="100" text-anchor="middle">orchestration · streaming</text>
+          <text class="sub" x="500" y="114" text-anchor="middle">flows, tools, traces</text>
+
+          <rect class="box" x="420" y="140" width="160" height="60" rx="4"/>
+          <text class="ttl" x="500" y="162" text-anchor="middle">Gemini Flash</text>
+          <text class="lbl" x="500" y="180" text-anchor="middle">model inference</text>
+          <text class="sub" x="500" y="194" text-anchor="middle">via Google AI Studio</text>
+
+          <rect class="box" x="620" y="100" width="120" height="60" rx="4"/>
+          <text class="ttl" x="680" y="122" text-anchor="middle">Future</text>
+          <text class="lbl" x="680" y="140" text-anchor="middle">Tools / RAG / agents</text>
+          <text class="sub" x="680" y="154" text-anchor="middle">when warranted</text>
+
+          <path class="arrow" d="M 160 110 L 200 110"/>
+          <polygon class="arrow-head" points="200,110 192,106 192,114"/>
+          <path class="arrow" d="M 380 90 L 420 90"/>
+          <polygon class="arrow-head" points="420,90 412,86 412,94"/>
+          <path class="arrow" d="M 580 90 L 580 145"/>
+          <polygon class="arrow-head" points="580,145 576,138 584,138"/>
+          <path class="arrow" d="M 580 160 L 620 130"/>
+          <polygon class="arrow-head" points="620,130 611,131 614,138"/>
+        </svg>
+        <p class="diagram-caption">A simple pipeline today; the right place to grow it is where users actually ask for more help.</p>
+      </div>
+
+      <div class="stack-grid">
+        <div class="stack-card">
+          <h3>Email subject polish <span class="pill live" style="font-size:10px;margin-left:6px;vertical-align:middle">Live</span></h3>
+          <p>The subject input field on broadcast and invite forms has a sparkle button. Click it, the model sees the rest of the context (community name, recipient list, body draft) and returns a shorter, livelier subject. Fastest-path AI feature — high frequency, immediately useful.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Broadcast body drafting <span class="pill live" style="font-size:10px;margin-left:6px;vertical-align:middle">Live</span></h3>
+          <p>Same UI pattern on the body textarea. Generates an email or WhatsApp template draft from a prompt the owner provides ("Welcome new members and tell them about Saturday's event"). The owner edits and sends; the model is a starting point, not an autopilot.</p>
+        </div>
+        <div class="stack-card">
+          <h3>In-dashboard AI assistant <span class="pill live" style="font-size:10px;margin-left:6px;vertical-align:middle">Live</span></h3>
+          <p>The community overview has a chat box: "How do I add a tag to multiple members?" The model answers in plain English about the product. Currently a hand-written prompt, no retrieval — but a clear path to upgrade with RAG over our docs.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Member-list summaries <span class="pill next" style="font-size:10px;margin-left:6px;vertical-align:middle">Next</span></h3>
+          <p>"Show me which members haven't posted in 30 days but were active before that" — natural-language filtering of the member list. Requires giving the model tool access to the member-query API. Genkit makes this two days of work, not two weeks.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Auto-reply suggestions <span class="pill next" style="font-size:10px;margin-left:6px;vertical-align:middle">Next</span></h3>
+          <p>When a member replies in the inbox, the model proposes 2–3 short replies the owner can pick from. Same pattern as Gmail's smart replies. Inbox UI is already the right surface for this; the model has the thread context.</p>
+        </div>
+        <div class="stack-card">
+          <h3>RAG over community content <span class="pill future" style="font-size:10px;margin-left:6px;vertical-align:middle">Future</span></h3>
+          <p>Members ask questions, the model answers based on the community's own posts and pinned content. Worth building once communities have enough content to make it a real time-saver — probably six months out. Vector storage in Firestore (or Vertex AI Vector Search) is the obvious path.</p>
+        </div>
+      </div>
+
+      <p class="body" style="margin-top:32px"><strong>The opinion.</strong> The right way to grow this is to watch what users do with the existing AI buttons and add the next feature where the data says they want it. Genkit gives us streaming, tools, and traces effectively for free, so the marginal cost of adding an AI feature is small once the orchestration is in place. The risk is the cost line: at scale, AI inference is the only piece of infrastructure where bills can grow non-linearly. Worth setting per-community budgets early.</p>
+    </section>
+
+    <!-- ============ 08 WHAT'S COMING NEXT ============ -->
+    <section id="future" data-eyebrow="08 · What's coming next">
+      <p class="eyebrow"><b>08</b> <span class="dot"></span> What's coming next</p>
+      <h2 class="title">Five capabilities <em>worth a plan.</em></h2>
+      <p class="lede">Beyond the current product, the technical foundation is well-positioned for several specific extensions. Each of these is a known roadmap item — not speculative — and each builds on infrastructure that's already in place.</p>
+
+      <div class="stack-grid">
+        <div class="stack-card">
+          <h3>QR-code member onboarding <span class="pill next" style="font-size:10px;margin-left:6px;vertical-align:middle">Next quarter</span></h3>
+          <p>An owner shows a QR code at an event; an attendee scans it with their phone camera; they're taken to a pre-filled signup form for that specific community, opt in to email or WhatsApp, and are added as a member without typing anything. The QR encodes a signed token tied to the community handle and a short-lived expiry.</p>
+          <p style="margin-top:10px"><strong>Pieces involved:</strong> a signed-token-mint endpoint, the QR rendering on the owner dashboard, a public landing page that consumes the token, and the existing waitlist / member-creation flow as the destination.</p>
+          <p style="margin-top:10px"><strong>Time:</strong> ~2 engineering weeks. <strong>Why it matters:</strong> in-person events are how most communities really grow, and the friction at signup tables today is enormous.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Public API · v1 <span class="pill next" style="font-size:10px;margin-left:6px;vertical-align:middle">Started on API_V1 branch</span></h3>
+          <p>An external API (under <code>/api/v1/</code>) so community owners can integrate Kyozo into their own tooling. The branch <code>API_V1</code> already has the foundation: API-key auth (<code>kyz_</code> prefixed keys, hashed at rest), scope system (<code>email:send</code>, <code>communities:read</code>, etc.), and the first three endpoints. Pulling this onto <code>main</code> is the next step.</p>
+          <p style="margin-top:10px"><strong>What it unlocks:</strong> Zapier integrations, custom dashboards, programmatic member imports, embedding Kyozo in a customer's own product. Also the foundation for the MCP server below.</p>
+          <p style="margin-top:10px"><strong>Time:</strong> ~3 weeks to merge, document, and ship. <strong>Plus:</strong> an OpenAPI spec, hosted docs, and rate limits per key.</p>
+        </div>
+        <div class="stack-card">
+          <h3>MCP server <span class="pill future" style="font-size:10px;margin-left:6px;vertical-align:middle">After v1 ships</span></h3>
+          <p>Once the public API is solid, exposing it as a Model Context Protocol server lets ChatGPT, Claude, Cursor, Cowork, and other AI clients work with a community owner's Kyozo workspace as a tool. "Send a welcome email to new members from yesterday" becomes a single sentence in the user's preferred AI assistant.</p>
+          <p style="margin-top:10px"><strong>Pieces involved:</strong> a thin MCP wrapper around the v1 API, OAuth or API-key bridging to the user's Kyozo identity, hosting (likely the same Vercel functions). MCP TypeScript SDK is already in the dependency tree.</p>
+          <p style="margin-top:10px"><strong>Time:</strong> ~1 week once v1 is stable. <strong>Why now:</strong> early MCP adoption gives Kyozo presence in the AI tool directories most users will spend the next year inside.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Mobile app <span class="pill future" style="font-size:10px;margin-left:6px;vertical-align:middle">2026 H2</span></h3>
+          <p>A React Native (or Expo) app for community members. Read posts, get notifications, reply in the unified inbox, scan QR codes, view events. The app shares the existing API surface — the same endpoints the web app uses can serve a mobile client with no changes.</p>
+          <p style="margin-top:10px"><strong>Why this shape:</strong> existing scaffolding for it (<code>/api/mobile/*</code> routes for push tokens) is already laid down. Firebase Auth has native iOS/Android SDKs that pair cleanly with the same identity model.</p>
+          <p style="margin-top:10px"><strong>Time:</strong> ~3 months for an MVP. <strong>Decision:</strong> whether to lead with a member app or an owner app; we recommend member-first because that's where the daily-active surface lives.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Owner-facing analytics &amp; insights <span class="pill future" style="font-size:10px;margin-left:6px;vertical-align:middle">2026 H2</span></h3>
+          <p>Engagement charts already exist; the next layer is "what's actually working." Most-engaged members, post types that drive replies, broadcast send-time optimization, member-churn alerts. Mostly aggregations on top of the data we're already collecting — no new data sources needed.</p>
+          <p style="margin-top:10px"><strong>Pieces involved:</strong> scheduled functions to compute aggregates, a few new collections, and chart components built on Recharts (already in the stack).</p>
+          <p style="margin-top:10px"><strong>Time:</strong> ~4 weeks for v1. <strong>Recommendation:</strong> ship the rough version early and iterate — the right metrics aren't obvious until owners use them.</p>
+        </div>
+        <div class="stack-card">
+          <h3>Other community-owner wins <span class="pill future" style="font-size:10px;margin-left:6px;vertical-align:middle">Backlog</span></h3>
+          <p>Smaller items each owner asks for once: scheduled posts, cross-community broadcasts (for owners running multiple), Stripe-style subscription billing for paid memberships, custom-domain white-labelling beyond <code>{handle}.kyozo.com</code> (e.g. <code>community.theirbrand.com</code>), Eventbrite ticket sync, Zoom integration for events. Each is one or two engineering weeks if prioritised.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 09 RECOMMENDATIONS & ROADMAP ============ -->
+    <section id="recos" data-eyebrow="09 · Recommendations">
+      <p class="eyebrow"><b>09</b> <span class="dot"></span> Recommendations &amp; roadmap</p>
+      <h2 class="title">A 12-month <em>technical horizon.</em></h2>
+      <p class="lede">Tying everything together: the roadmap below sequences the items most worth doing, ordered by a rough "user-visible impact divided by engineering cost". Some are reliability work, some are growth features. Both kinds matter.</p>
+
+      <div class="timeline">
+        <div class="tl-item live">
+          <div class="tl-when">Now</div>
+          <div class="tl-body">
+            <h4>Land the security sprint <span class="pill live" style="font-size:10px">Shipped, awaiting deploy</span></h4>
+            <p>Merge <code>security/critical-fixes</code> into main, rotate the secrets per the runbook, deploy the new Firestore rules, run <code>pnpm install</code>. This unblocks any further changes from getting tangled in the same files.</p>
+          </div>
+        </div>
+
+        <div class="tl-item next">
+          <div class="tl-when">Month 1</div>
+          <div class="tl-body">
+            <h4>Merge API_V1 into main</h4>
+            <p>Take the public-API foundation out of its branch and into the main product. Document the v1 endpoints, set up rate limits per API key, and write the first integration partner-facing docs.</p>
+          </div>
+        </div>
+
+        <div class="tl-item next">
+          <div class="tl-when">Month 1</div>
+          <div class="tl-body">
+            <h4>QR member onboarding</h4>
+            <p>Highest-leverage owner-facing feature on the list. Two engineering weeks if the team focuses; opens the in-person growth channel that the product currently has no story for.</p>
+          </div>
+        </div>
+
+        <div class="tl-item next">
+          <div class="tl-when">Month 2</div>
+          <div class="tl-body">
+            <h4>Defence-in-depth hardening</h4>
+            <p>Re-enable TypeScript and ESLint in builds, add the security headers (CSP, HSTS, X-Frame-Options) to <code>next.config.ts</code>, replace the in-memory rate limiter with Upstash Redis, set up Sentry for failed-auth alerting. Each item is a half-day of work; collectively they're a major improvement.</p>
+          </div>
+        </div>
+
+        <div class="tl-item next">
+          <div class="tl-when">Month 2–3</div>
+          <div class="tl-body">
+            <h4>MCP server v1</h4>
+            <p>Wrap the v1 API as an MCP server so AI clients (Claude, ChatGPT, Cursor, Cowork) can drive Kyozo workspaces. Distinguishing factor in a market where every community platform looks the same on the surface.</p>
+          </div>
+        </div>
+
+        <div class="tl-item future">
+          <div class="tl-when">Month 3–4</div>
+          <div class="tl-body">
+            <h4>Auto-reply &amp; inbox AI</h4>
+            <p>Smart-reply suggestions in the inbox, member-list natural-language search, auto-summarise long threads. All build on the existing Genkit + Gemini plumbing.</p>
+          </div>
+        </div>
+
+        <div class="tl-item future">
+          <div class="tl-when">Month 4–6</div>
+          <div class="tl-body">
+            <h4>Mobile app · MVP</h4>
+            <p>React Native / Expo app for members. Push notifications, post reading, inbox replies, QR scanning. Three months to MVP if dedicated; longer if shared with web work.</p>
+          </div>
+        </div>
+
+        <div class="tl-item future">
+          <div class="tl-when">Month 6–9</div>
+          <div class="tl-body">
+            <h4>Activate WhatsApp inbox</h4>
+            <p>The integration is built; what's needed is the 360dialog Business account, the product positioning, and a rollout plan. WhatsApp is where most community conversation actually happens internationally — turning this on is a meaningful product expansion.</p>
+          </div>
+        </div>
+
+        <div class="tl-item future">
+          <div class="tl-when">Month 9–12</div>
+          <div class="tl-body">
+            <h4>Owner analytics, RAG, scheduled posts</h4>
+            <p>The second wave of features once the platform shape is set: deeper insights for owners, member-facing AI Q&amp;A grounded in the community's own content, scheduled and recurring posts, Stripe-style paid memberships.</p>
+          </div>
+        </div>
+
+        <div class="tl-item future">
+          <div class="tl-when">Continuous</div>
+          <div class="tl-body">
+            <h4>Hygiene that should never stop</h4>
+            <p>Dependabot/Renovate auto-PRs for CVE updates. Quarterly secret rotation. Annual external security audit. Performance budget on the Vercel build. None of these are urgent; all of them prevent next year's audit being as long as this year's.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-family:var(--serif);font-size:28px;font-weight:600;margin:64px 0 16px;letter-spacing:-0.01em">Three strategic recommendations</h3>
+
+      <ol class="reco-list">
+        <li>
+          <span class="rec-num"></span>
+          <div class="rec-body">
+            <h4>Treat the v1 API and the MCP server as one product release</h4>
+            <p>Most of our competitors don't have either. Shipping them together — plus the QR onboarding — is a coherent "Kyozo for the AI era" story rather than a series of feature drops. It also makes the API documentation effort pay for itself across both surfaces.</p>
+          </div>
+          <div class="rec-meta">2–3 months<br/>Product positioning</div>
+        </li>
+        <li>
+          <span class="rec-num"></span>
+          <div class="rec-body">
+            <h4>Decide on the mobile-app order of operations now</h4>
+            <p>The scaffolding is there but the strategic question (member-first vs. owner-first) drives different UX investments. Member-first builds daily-active engagement and creates an obvious upsell path; owner-first deepens the existing customer relationship. Recommendation: member-first, but the decision changes the next six months of roadmap.</p>
+          </div>
+          <div class="rec-meta">Decide this quarter<br/>Mobile strategy</div>
+        </li>
+        <li>
+          <span class="rec-num"></span>
+          <div class="rec-body">
+            <h4>Set a calendar reminder for the 90-day security re-audit</h4>
+            <p>The fixes shipped this sprint will hold for a quarter. After that, dependency drift, new features, and code rot accumulate. Schedule the next pass now while there's organisational memory of why this work mattered. A re-audit takes about a day if the foundations are still in place.</p>
+          </div>
+          <div class="rec-meta">August 2026<br/>Calendar item</div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ============ 10 CLOSING ============ -->
+    <section id="close" class="closing" data-eyebrow="10 · In closing">
+      <p class="eyebrow"><b>10</b> <span class="dot"></span> In closing</p>
+      <h2>Boring choices in the<br/>foundation, <em>interesting ones</em><br/>where it matters.</h2>
+      <p>The technology behind Kyozo is intentionally unflashy in the parts that have to work — Next.js, React, Firebase, Vercel, all proven and well-staffed. The interesting decisions are higher up: a custom domain per community, a unified inbox across email and (eventually) every other channel, a public API and MCP server that turn Kyozo into a building block other tools can use. That layering is what separates a defensible product from a thin CRUD app, and it's the part most worth investing in next.</p>
+      <p style="margin-top:48px;font-family:var(--serif);font-size:20px;font-style:italic;color:var(--teal-deep);">Questions, push-back, alternative plans — let's discuss.</p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function() {
+    var links = document.querySelectorAll('.sidenav a.navlink');
+    var sections = Array.from(links).map(function(a) {
+      return document.querySelector(a.getAttribute('href'));
+    }).filter(Boolean);
+    var eyebrowEl = document.getElementById('topbar-eyebrow');
+    var topbar = document.getElementById('topbar');
+
+    function setActive(id, eyebrow) {
+      links.forEach(function(a) {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+      if (eyebrow && eyebrowEl) {
+        var parts = eyebrow.split(' · ');
+        if (parts.length === 2) {
+          eyebrowEl.innerHTML = '<b>' + parts[0] + '</b> &nbsp; ' + parts[1];
+        } else {
+          eyebrowEl.textContent = eyebrow;
+        }
+      }
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      var visible = entries.filter(function(e) { return e.isIntersecting; });
+      if (visible.length === 0) return;
+      visible.sort(function(a, b) { return a.target.offsetTop - b.target.offsetTop; });
+      var pick = visible[0].target;
+      setActive(pick.id, pick.dataset.eyebrow || '');
+    }, { rootMargin: '-30% 0px -55% 0px', threshold: 0 });
+
+    sections.forEach(function(s) { observer.observe(s); });
+
+    function onScroll() {
+      if (window.scrollY > 8) topbar.classList.add('scrolled');
+      else topbar.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>
