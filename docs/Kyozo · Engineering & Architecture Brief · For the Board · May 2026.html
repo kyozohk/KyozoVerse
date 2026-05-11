@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<!-- saved from url=(0233)file:///Users/ashokjaiswal/Library/Application%20Support/Claude/local-agent-mode-sessions/9c23f6a7-a7a2-411a-9302-f027f911b2b9/c7538902-1451-442a-b203-7a09dd95a9af/local_1b605d4f-f1fd-47e2-a170-b625e9da0a47/outputs/tech-overview.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kyozo · Engineering &amp; Architecture Brief · For the Board · May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./Kyozo · Engineering &amp; Architecture Brief · For the Board · May 2026_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1A1A1A;
+    --ink-soft: #2C2C2C;
+    --ink-muted: #6B6B6B;
+    --muted: #8A8475;
+    --rule: #D9CFBC;
+    --rule-soft: #E8E0CE;
+    --paper: #FFFFFF;
+    --bg-soft: #FAFAF7;
+    --bg-card: #F8F4EB;
+    --keystone: #B85042;
+    --keystone-soft: #FBEFEC;
+    --accent: #2C4A7A;
+    --accent-soft: #E8EEF8;
+    --teal: #5C8B82;
+    --teal-soft: #E8F0EE;
+    --gold: #C9A668;
+    --gold-deep: #8B6F2A;
+    --purple: #6B5B95;
+    --purple-soft: #EFEBF4;
+    --green: #4A7C59;
+    --green-soft: #EAF1ED;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    --eyebrow-spacing: 0.18em;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #E5E5E0;
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .page {
+    width: 1300px;
+    min-height: 950px;
+    margin: 24px auto;
+    background: var(--paper);
+    padding: 56px 88px 56px;
+    position: relative;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    break-after: page;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-bottom: 28px;
+  }
+  .page-header .ph-left b { color: var(--ink); font-weight: 700; }
+
+  .page-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  .page-body { flex: 1 1 auto; }
+
+  h1.h-title {
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ink);
+    margin: 0 0 10px;
+  }
+  h2.h-title {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.012em;
+    line-height: 1.2;
+    color: var(--ink);
+    margin: 0 0 8px;
+  }
+  h3.sub-title {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: var(--ink);
+    margin: 22px 0 6px;
+  }
+
+  .lede {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 100ch;
+    margin: 0 0 24px;
+    font-weight: 400;
+  }
+  .lede.compact { margin-bottom: 18px; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 10.5px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-muted);
+    margin: 0 0 14px;
+  }
+  .eyebrow.tight { margin: 0 0 10px; }
+  .eyebrow b { color: var(--ink); font-weight: 700; }
+
+  p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
+  p.body { color: var(--ink-soft); max-width: 100ch; }
+  strong { color: var(--ink); font-weight: 700; }
+  em { font-style: italic; }
+  code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--bg-card);
+    padding: 1px 4px;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  .pullquote {
+    border-left: 3px solid var(--ink);
+    padding: 4px 0 4px 20px;
+    margin: 0 0 24px;
+  }
+  .pullquote h3 {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .pullquote p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .diagram-wrap {
+    margin: 16px 0 8px;
+    padding: 22px 22px 14px;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  .diagram-wrap svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .diagram-wrap .diagram-caption {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    font-style: italic;
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .stack-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .stack-card {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px 16px;
+    background: var(--paper);
+  }
+  .stack-card .stack-role {
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .stack-card h3 {
+    font-family: var(--sans);
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    line-height: 1.3;
+  }
+  .stack-card p {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+    line-height: 1.5;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .pill::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .pill.live { background: var(--green-soft); border: 1px solid var(--green); color: var(--green); }
+  .pill.next { background: rgba(201, 166, 104, 0.18); border: 1px solid var(--gold); color: var(--gold-deep); }
+  .pill.future { background: var(--bg-card); border: 1px solid var(--rule); color: var(--ink-muted); }
+
+  table.deps {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    margin-top: 14px;
+  }
+  table.deps th {
+    text-align: left;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: var(--eyebrow-spacing);
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 10px 10px 10px 0;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+  table.deps td {
+    padding: 10px 10px 10px 0;
+    vertical-align: top;
+    border-bottom: 1px solid var(--rule-soft);
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  table.deps td.pkg {
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    padding-right: 14px;
+  }
+  table.deps td.role { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  table.deps td.notes { color: var(--ink-soft); font-size: 11.5px; }
+  table.deps td.health { white-space: nowrap; font-size: 11px; }
+  table.deps tr.section-row td {
+    background: var(--bg-soft);
+    padding: 8px 10px;
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    color: var(--ink);
+    border-bottom: 1px solid var(--rule);
+    border-top: 1px solid var(--rule);
+  }
+
+  .health-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .health-dot::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .health-dot.good { color: var(--green); }
+  .health-dot.good::before { background: var(--green); }
+  .health-dot.ok { color: var(--gold-deep); }
+  .health-dot.ok::before { background: var(--gold); }
+  .health-dot.watch { color: var(--keystone); }
+  .health-dot.watch::before { background: var(--keystone); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 18px;
+  }
+  .col h3 {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .col p { color: var(--ink-soft); font-size: 12.5px; }
+
+  .callout {
+    margin: 20px 0 6px;
+    padding: 18px 22px;
+    border: 1px solid var(--ink);
+    border-left: 3px solid var(--ink);
+    border-radius: 4px;
+    background: var(--bg-soft);
+  }
+  .callout .callout-label {
+    font-size: 10px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .callout .callout-text {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.4;
+    font-weight: 500;
+    margin: 0;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .callout .callout-text em { color: var(--keystone); font-style: italic; font-weight: 600; }
+
+  .timeline {
+    margin: 14px 0 0;
+  }
+  .tl-item {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 4px 22px;
+    padding: 11px 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .tl-item:first-child { border-top: 1px solid var(--ink); }
+  .tl-item:last-child { border-bottom: 1px solid var(--rule-soft); }
+  .tl-item .tl-when {
+    font-family: var(--sans);
+    font-size: 10.5px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+  .tl-item.live .tl-when { color: var(--green); }
+  .tl-item.next .tl-when { color: var(--gold-deep); }
+  .tl-item.future .tl-when { color: var(--ink-muted); }
+  .tl-item .tl-body h4 {
+    font-family: var(--sans);
+    font-size: 13.5px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--ink);
+    line-height: 1.3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tl-item .tl-body p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .closing {
+    text-align: center;
+    padding: 60px 0 0;
+  }
+  .closing h2 {
+    font-family: var(--sans);
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 16px 0 18px;
+    color: var(--ink);
+  }
+  .closing h2 em { color: var(--keystone); font-style: italic; font-weight: 700; }
+  .closing p {
+    color: var(--ink-soft);
+    max-width: 80ch;
+    margin: 0 auto 14px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .closing .signoff {
+    margin-top: 28px;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .section-label {
+    font-family: var(--sans);
+    font-size: 10.5px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-muted);
+    margin: 18px 0 6px;
+  }
+
+  .qa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 30px;
+    margin-top: 8px;
+  }
+  .qa-card {
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 6px 16px;
+  }
+  .qa-card.keystone { border-left-color: var(--keystone); }
+  .qa-card.green { border-left-color: var(--green); }
+  .qa-card h4 {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 0 5px;
+    color: var(--ink);
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+  }
+  .qa-card p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .qa-card p strong { color: var(--ink); font-weight: 700; }
+
+  /* Pillar accent helpers */
+  .pillar-band {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 14px 0 16px;
+  }
+  .pillar-chip {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border-top: 3px solid var(--accent);
+  }
+  .pillar-chip.p2 { border-top-color: var(--green); }
+  .pillar-chip.p3 { border-top-color: var(--purple); }
+  .pillar-chip.p4 { border-top-color: var(--keystone); }
+  .pillar-chip .pl-num {
+    font-size: 9.5px;
+    letter-spacing: var(--eyebrow-spacing);
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .pillar-chip.p2 .pl-num { color: var(--green); }
+  .pillar-chip.p3 .pl-num { color: var(--purple); }
+  .pillar-chip.p4 .pl-num { color: var(--keystone); }
+  .pillar-chip h4 {
+    font-family: var(--sans);
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 4px 0 4px;
+    color: var(--ink);
+  }
+  .pillar-chip p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  @media print {
+    html, body { background: #fff; }
+    .page {
+      box-shadow: none;
+      margin: 0;
+      width: 100%;
+      min-height: auto;
+      height: auto;
+      padding: 32px 56px 32px;
+      page-break-after: always;
+      break-after: page;
+    }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  @media (max-width: 1340px) {
+    .page {
+      width: calc(100% - 32px);
+      max-width: 1300px;
+      padding: 40px 48px 40px;
+    }
+  }
+  @media (max-width: 900px) {
+    .stack-grid, .stack-grid.cols-2, .pillar-band { grid-template-columns: 1fr; }
+    .two-col, .qa-grid { grid-template-columns: 1fr; gap: 16px; }
+    .tl-item { grid-template-columns: 1fr; }
+    .page { padding: 28px 22px; }
+    h1.h-title { font-size: 24px; }
+    h2.h-title { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PAGE 1 — Cover
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">For the Board · May 2026</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>00</b> · Cover</p>
+    <h1 class="h-title">Engineering &amp; architecture, end-to-end.</h1>
+    <p class="lede">A management view of where Kyozo is built, where it is going, and the trade-offs the CEO and CTO made together to get here. Written for the board, the next investor, and the next engineer joining the team — three audiences who all need to see the same picture and be able to verify it from the codebase, the repo, and the Friday log.</p>
+
+    <div class="pullquote">
+      <h3>"If you can't audit it, you can't sell it."</h3>
+      <p>The brief that prompted this document. The pages that follow are the audit chain between the product Kyozo sells today and the vision Kyozo sells to customers — strict emphasis on security, on the integrity of that bridge, and on the demonstrable alignment between Will (CEO) and Ashok (CTO) on every architectural decision.</p>
+    </div>
+
+    <div class="section-label">This document does four jobs · every section feeds at least one</div>
+    <div class="stack-grid" style="grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px;">
+      <div class="stack-card">
+        <div class="stack-role">Job 01</div>
+        <h3>Architecture · today + tomorrow</h3>
+        <p>Current state and future state across the four pillars (APIs, Unified App, Agentic, MCP). Every step tied to data-security commitments.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Job 02</div>
+        <h3>CEO ↔ CTO connectivity</h3>
+        <p>Decisions framed as jointly owned. Trade-offs as jointly made. No daylight between Will and Ashok on any architectural call.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Job 03</div>
+        <h3>Audit chain</h3>
+        <p>What has been built · what has been agreed · what is going to be done · who is accountable for each. The bridge between product and vision.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Job 04</div>
+        <h3>Scaling the engineering function</h3>
+        <p>Anna's contribution across the four pillars. Hires 2 and 3 against which pillar, when. The structural code that scales before the team does.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Document map</div>
+    <div class="stack-grid cols-2" style="grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px;">
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">01</div><h3 style="font-size:12.5px;margin:0">Vision &amp; mission</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">02</div><h3 style="font-size:12.5px;margin:0">The four pillars</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">03</div><h3 style="font-size:12.5px;margin:0">Current &amp; future state</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">04</div><h3 style="font-size:12.5px;margin:0">Data-security commitments</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">05</div><h3 style="font-size:12.5px;margin:0">CEO ↔ CTO alignment</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">06</div><h3 style="font-size:12.5px;margin:0">Audit chain</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">07</div><h3 style="font-size:12.5px;margin:0">Engineering function</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">08</div><h3 style="font-size:12.5px;margin:0">12-month milestones</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">09</div><h3 style="font-size:12.5px;margin:0">Architectural decisions</h3></div>
+      <div class="stack-card" style="padding:10px 12px"><div class="stack-role">10</div><h3 style="font-size:12.5px;margin:0">In closing</h3></div>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 1 of 11 · Cover</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 2 — 01 Vision & mission
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">01 · Vision &amp; mission</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>01</b> · Vision &amp; mission</p>
+    <h2 class="h-title">Own your audience. Fill the room.</h2>
+    <p class="lede">The bet is structural. Instagram owns your followers. Eventbrite owns your ticket buyers. Substack owns the email addresses but not the relationship behind them. Kyozo owns nothing — the creative does. That difference is the shape no competitor will copy, because none of them are built for it.</p>
+
+    <div class="pullquote">
+      <h3>The mission · the relationship layer in the AI stack</h3>
+      <p>Notion is the page library. Claude is the reasoning layer. <strong>Kyozo is the relationship layer.</strong> Plugged into whatever AI client the user prefers, structured the way assistants will need to plan a member's week. That positioning is what every architectural decision in this document protects.</p>
+    </div>
+
+    <div class="two-col" style="margin-top: 28px;">
+      <div class="col">
+        <h3>Why now</h3>
+        <p>The audience asset is finally addressable. Direct relationships scale through AI rather than collapse under it. Two timing forces converge:</p>
+        <p style="margin-top: 10px;"><strong>Member-side AI.</strong> Personal assistants are already planning weeks ("what's on this weekend from people I follow?"). Kyozo Pros' structured event data is the perfect signal — Substack, Patreon, Mailchimp don't have this shape.</p>
+        <p><strong>Creative-side AI.</strong> Agentic features lift the audience-management work that doesn't need a human, leaving the creative free to do the part that does. Symbiosis, not substitution.</p>
+      </div>
+      <div class="col">
+        <h3>What we are building</h3>
+        <p>A six-block product — Audience, Tags, Schedule, Guest List + RSVP, Broadcast, Inbox — plus a public Feed. Tags is the keystone: every action below pulls on it.</p>
+        <p style="margin-top: 10px;">The loop: Feed → Audience → Tags → Schedule → Guest List → Broadcast → Inbox → Feed again. Audience data gets smarter every cycle. That is the product.</p>
+        <p>The platform shape: <strong>API-first, multi-tenant, event-emitting, MCP-ready.</strong> The seven invariants in section 09 exist because Phase 2 must be extension, not rewrite.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">The investor read</div>
+      <p class="callout-text">Kyozo is the only platform that gives creatives an audience asset they own, structured for the AI clients members will increasingly use to plan their lives. <em>Direct relationships, not rented attention.</em> The architectural choices on the pages that follow are what make this defensible.</p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 2 of 11 · Vision &amp; mission</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 3 — 02 The four pillars
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">02 · The four pillars</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>02</b> · The four pillars</p>
+    <h2 class="h-title">APIs · Unified App · Agentic · MCP.</h2>
+    <p class="lede compact">Four columns the rest of this document is read against. Every architectural decision sits on one of these pillars. Every roadmap item builds one up. Every security commitment cuts across all four. This is the lens.</p>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg" width="1100" height="360">
+        <style>
+          .pl-ttl { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; }
+          .pl-sub { font-family: 'Inter', sans-serif; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; }
+          .pl-body { font-family: 'Inter', sans-serif; font-size: 11px; }
+        </style>
+
+        <rect x="40" y="40" width="240" height="260" rx="6" fill="#E8EEF8" stroke="#2C4A7A" stroke-width="1.2"></rect>
+        <text class="pl-sub" x="160" y="64" text-anchor="middle" fill="#2C4A7A">Pillar 01</text>
+        <text class="pl-ttl" x="160" y="88" text-anchor="middle" fill="#2C4A7A">APIs</text>
+        <line x1="60" y1="102" x2="260" y2="102" stroke="#2C4A7A" opacity="0.3"></line>
+        <text class="pl-body" x="160" y="124" text-anchor="middle" fill="#1A1A1A">The backend surface.</text>
+        <text class="pl-body" x="160" y="142" text-anchor="middle" fill="#2C2C2C">Web is one of N clients.</text>
+        <text class="pl-body" x="160" y="160" text-anchor="middle" fill="#2C2C2C">Mobile · MCP · partners</text>
+        <text class="pl-body" x="160" y="178" text-anchor="middle" fill="#2C2C2C">all call the same routes.</text>
+        <text class="pl-sub" x="160" y="220" text-anchor="middle" fill="#2C4A7A">Today</text>
+        <text class="pl-body" x="160" y="240" text-anchor="middle" fill="#2C2C2C">35 serverless routes</text>
+        <text class="pl-body" x="160" y="256" text-anchor="middle" fill="#2C2C2C">API_V1 branch ready</text>
+        <text class="pl-sub" x="160" y="278" text-anchor="middle" fill="#2C4A7A">Next 12 months</text>
+        <text class="pl-body" x="160" y="294" text-anchor="middle" fill="#2C2C2C">Public v1 · OpenAPI</text>
+
+        <rect x="300" y="40" width="240" height="260" rx="6" fill="#EAF1ED" stroke="#4A7C59" stroke-width="1.2"></rect>
+        <text class="pl-sub" x="420" y="64" text-anchor="middle" fill="#4A7C59">Pillar 02</text>
+        <text class="pl-ttl" x="420" y="88" text-anchor="middle" fill="#4A7C59">Unified App</text>
+        <line x1="320" y1="102" x2="520" y2="102" stroke="#4A7C59" opacity="0.3"></line>
+        <text class="pl-body" x="420" y="124" text-anchor="middle" fill="#1A1A1A">The creative's workspace.</text>
+        <text class="pl-body" x="420" y="142" text-anchor="middle" fill="#2C2C2C">Web today, mobile next.</text>
+        <text class="pl-body" x="420" y="160" text-anchor="middle" fill="#2C2C2C">One audience, one inbox,</text>
+        <text class="pl-body" x="420" y="178" text-anchor="middle" fill="#2C2C2C">one loop, any device.</text>
+        <text class="pl-sub" x="420" y="220" text-anchor="middle" fill="#4A7C59">Today</text>
+        <text class="pl-body" x="420" y="240" text-anchor="middle" fill="#2C2C2C">Web + unified inbox</text>
+        <text class="pl-body" x="420" y="256" text-anchor="middle" fill="#2C2C2C">Domain per community</text>
+        <text class="pl-sub" x="420" y="278" text-anchor="middle" fill="#4A7C59">Next 12 months</text>
+        <text class="pl-body" x="420" y="294" text-anchor="middle" fill="#2C2C2C">Mobile · QR onboarding</text>
+
+        <rect x="560" y="40" width="240" height="260" rx="6" fill="#EFEBF4" stroke="#6B5B95" stroke-width="1.2" stroke-dasharray="3,3"></rect>
+        <text class="pl-sub" x="680" y="64" text-anchor="middle" fill="#6B5B95">Pillar 03</text>
+        <text class="pl-ttl" x="680" y="88" text-anchor="middle" fill="#6B5B95">Agentic</text>
+        <line x1="580" y1="102" x2="780" y2="102" stroke="#6B5B95" opacity="0.3"></line>
+        <text class="pl-body" x="680" y="124" text-anchor="middle" fill="#1A1A1A">AI extends the human.</text>
+        <text class="pl-body" x="680" y="142" text-anchor="middle" fill="#2C2C2C">Removes the work that</text>
+        <text class="pl-body" x="680" y="160" text-anchor="middle" fill="#2C2C2C">doesn't need a human —</text>
+        <text class="pl-body" x="680" y="178" text-anchor="middle" fill="#2C2C2C">symbiosis, not substitution.</text>
+        <text class="pl-sub" x="680" y="220" text-anchor="middle" fill="#6B5B95">Today</text>
+        <text class="pl-body" x="680" y="240" text-anchor="middle" fill="#2C2C2C">Subject polish · drafting</text>
+        <text class="pl-body" x="680" y="256" text-anchor="middle" fill="#2C2C2C">In-dashboard assistant</text>
+        <text class="pl-sub" x="680" y="278" text-anchor="middle" fill="#6B5B95">Next 12 months</text>
+        <text class="pl-body" x="680" y="294" text-anchor="middle" fill="#2C2C2C">Tagger · Sublist · Triage</text>
+
+        <rect x="820" y="40" width="240" height="260" rx="6" fill="#FBEFEC" stroke="#B85042" stroke-width="1.2"></rect>
+        <text class="pl-sub" x="940" y="64" text-anchor="middle" fill="#B85042">Pillar 04</text>
+        <text class="pl-ttl" x="940" y="88" text-anchor="middle" fill="#B85042">MCP</text>
+        <line x1="840" y1="102" x2="1040" y2="102" stroke="#B85042" opacity="0.3"></line>
+        <text class="pl-body" x="940" y="124" text-anchor="middle" fill="#1A1A1A">Kyozo as a tool</text>
+        <text class="pl-body" x="940" y="142" text-anchor="middle" fill="#2C2C2C">in any AI client.</text>
+        <text class="pl-body" x="940" y="160" text-anchor="middle" fill="#2C2C2C">Hedges the AI race —</text>
+        <text class="pl-body" x="940" y="178" text-anchor="middle" fill="#2C2C2C">part of every stack.</text>
+        <text class="pl-sub" x="940" y="220" text-anchor="middle" fill="#B85042">Today</text>
+        <text class="pl-body" x="940" y="240" text-anchor="middle" fill="#2C2C2C">SDK in deps · design done</text>
+        <text class="pl-body" x="940" y="256" text-anchor="middle" fill="#2C2C2C">(waits on Pillar 01)</text>
+        <text class="pl-sub" x="940" y="278" text-anchor="middle" fill="#B85042">Next 12 months</text>
+        <text class="pl-body" x="940" y="294" text-anchor="middle" fill="#2C2C2C">Live server · directory</text>
+
+        <rect x="40" y="320" width="1020" height="32" rx="4" fill="#1A1A1A"></rect>
+        <text class="pl-sub" x="60" y="340" fill="#fff">Cross-cutting · data-security commitments</text>
+        <text class="pl-body" x="420" y="340" fill="#C9A668">Multi-tenant · auditable · pluggable auth · event-logged · breach-ready</text>
+      </svg>
+      <p class="diagram-caption">Four pillars. One cross-cutting commitment band. Every roadmap item, every hire, every architectural decision maps onto this picture.</p>
+    </div>
+
+    <p class="body" style="margin-top: 12px;"><strong>The CEO/CTO read.</strong> The four pillars are not engineering pillars — they are product pillars with engineering implications. Will owns what each pillar promises customers; Ashok owns what each pillar delivers in code. The pages that follow keep those two columns visible at all times.</p>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 3 of 11 · The four pillars</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 4 — 03 Current & future state
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">03 · Current &amp; future state</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>03</b> · Architecture · today and tomorrow</p>
+    <h2 class="h-title">Where we are. Where we are going. The path between.</h2>
+    <p class="lede compact">Today's architecture is a serverless app on top of five managed services — Vercel, Firebase, Resend, GoDaddy, and Google AI — chosen because they let a small team ship a defensible product without operating infrastructure. Tomorrow's is the same skeleton with three additions: a public API surface that promotes the web app to "one of N clients," an MCP server that exposes that surface to AI clients, and an agentic strip that sits on the Kyozo Pro lane behind a feature flag. <strong>Everything extends; nothing rewrites.</strong></p>
+
+    <table class="deps" style="margin-top: 10px;">
+      <thead>
+        <tr>
+          <th style="width: 13%;">Pillar</th>
+          <th style="width: 36%;">Today · what's in production</th>
+          <th style="width: 36%;">Next 12 months · what's being built</th>
+          <th style="width: 15%;">Security cut</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pkg" style="color: var(--accent);">01 · APIs</td>
+          <td class="notes">Next.js 15 on Vercel. 35 serverless route handlers. Server actions. Firebase Admin SDK. Signed Resend webhooks. Genkit-bridged Gemini for AI routes.</td>
+          <td class="notes">Promote <code>/api/v1/</code> to canonical surface (branch ready). OpenAPI spec + hosted docs. Per-key rate limits via Upstash Redis. Webhook subscription endpoint per Pro.</td>
+          <td class="notes">Auth on every route · post-audit Firestore rules · per-domain DKIM/SPF/DMARC</td>
+        </tr>
+        <tr>
+          <td class="pkg" style="color: var(--green);">02 · Unified App</td>
+          <td class="notes">React web app (Next.js · Tailwind · Radix). Unified inbox across email channels live. Custom subdomain per community auto-provisioned in ~15s. Member consent via Google SSO.</td>
+          <td class="notes">React Native / Expo mobile app for members (push, inbox replies, QR scan). Owner mobile in parallel. WhatsApp inbox activated. Owner analytics layer on existing data.</td>
+          <td class="notes">Member-consent screen on opt-in · per-community mail reputation · 99.5% delivery</td>
+        </tr>
+        <tr>
+          <td class="pkg" style="color: var(--purple);">03 · Agentic</td>
+          <td class="notes">AI subject polish, broadcast body drafting, in-dashboard assistant — all live on Gemini Flash via Genkit. Auth + per-Pro rate limit on every model call. Prompts version-controlled.</td>
+          <td class="notes">One agent per sprint after V1: Importer · Tagger · Sublist · Drafter · Triage · Curator. Each prototyped by Will on Willer.fm, ported by Ashok behind feature flags.</td>
+          <td class="notes">Per-Pro inference budget · no autonomous writes without confirm · prompts auditable</td>
+        </tr>
+        <tr>
+          <td class="pkg" style="color: var(--keystone);">04 · MCP</td>
+          <td class="notes">MCP TypeScript SDK already in dependency tree. Design complete. Pre-condition: API_V1 must land first — MCP is a thin wrapper, not a parallel codebase.</td>
+          <td class="notes">MCP server v1 wrapping the public API. Hosted on the same Vercel functions. OAuth or API-key bridging to Kyozo identity. Listed in Claude · Cursor · Cowork directories.</td>
+          <td class="notes">Scope-gated tokens (<code>kyz_*</code>) · per-tenant isolation enforced at API · revocable</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">The path between · stated plainly</div>
+    <div class="two-col">
+      <div class="col">
+        <h3>Done · in production</h3>
+        <p>Security sprint landed. Firestore rules audited. Custom domain per community live. Unified inbox shipping for email. AI features live behind auth and rate limits. Friday cadence in place. The audit chain on page 06 lists every shipped commitment.</p>
+      </div>
+      <div class="col">
+        <h3>Agreed · doing next</h3>
+        <p>API_V1 → main (Month 1). QR onboarding (Month 1). Tags as polymorphic entity (Month 1). Domain events table (Month 1). MCP server v1 (Month 2–3). Mobile app MVP (Month 4–6). Page 08 sequences the full 12 months.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 4 of 11 · Current &amp; future state</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 5 — 04 Data-security commitments
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">04 · Data-security commitments</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>04</b> · Data-security commitments</p>
+    <h2 class="h-title">The promises behind the product.</h2>
+    <p class="lede">These are the security commitments Kyozo makes to every creative who pays for Pro, and to every member who opts into a community. The four pillars are the surface; this page is the foundation under all of them. Every architectural decision in this brief protects one of these promises, and every row in the audit chain on page 06 maps back to one of them.</p>
+
+    <div class="stack-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="stack-card" style="border-left: 3px solid var(--accent);">
+        <div class="stack-role">Commitment 01</div>
+        <h3>Multi-tenant isolation · enforced at the database</h3>
+        <p>Every Firestore read and write is scoped by <code>communityId</code> in security rules. Cross-tenant access is server-rejected, not hidden by client filters. Admin SDK calls verify the requesting user's membership before reading or writing. Cross-tenant attack scenarios are tested on every release.</p>
+        <p><strong>Auditable.</strong> Rules versioned in git · last audit pass April 2026 · next quarterly review July 2026.</p>
+      </div>
+      <div class="stack-card" style="border-left: 3px solid var(--green);">
+        <div class="stack-role">Commitment 02</div>
+        <h3>Member consent · explicit and revocable</h3>
+        <p>No one becomes a Member without clicking the "Join [Pro]'s community" consent screen via Google SSO. Opt-out is one button in every email and every member-facing surface. Member data leaving a community is the member's right, not a request to support.</p>
+        <p><strong>Auditable.</strong> Consent timestamp + provider stored on every Member record · exportable on request.</p>
+      </div>
+      <div class="stack-card" style="border-left: 3px solid var(--purple);">
+        <div class="stack-role">Commitment 03</div>
+        <h3>Pluggable auth · humans, machines, AI clients</h3>
+        <p>Firebase Auth handles humans (Google, Apple, email). The <code>kyz_*</code> API-key system handles machines and MCP clients (hashed at rest, scope-gated). One <code>verifyAuth()</code> adapter on every route — adding a new auth path is a 200-line change, not a rewrite.</p>
+        <p><strong>Auditable.</strong> Every authenticated request logs principal type, scopes, and resource touched.</p>
+      </div>
+      <div class="stack-card" style="border-left: 3px solid var(--keystone);">
+        <div class="stack-role">Commitment 04</div>
+        <h3>Domain-events table · every action recorded</h3>
+        <p>Every state change (member opt-in, broadcast sent, feed post created, RSVP changed, agent action taken) writes a row in the <code>events</code> collection. Cheap now; the foundation for webhooks, integrations, agent triggers, anomaly detection, and audit replay. Being built this month.</p>
+        <p><strong>Auditable.</strong> Immutable, append-only, replayable. Available to compliance review on request.</p>
+      </div>
+      <div class="stack-card" style="border-left: 3px solid var(--gold);">
+        <div class="stack-role">Commitment 05</div>
+        <h3>Email infrastructure done right</h3>
+        <p>Resend handles outbound and inbound. SPF / DKIM / DMARC configured automatically per community subdomain. Bounces and complaints handled via signed webhook. Per-community mail reputation isolated — one community's spam complaints don't poison another's.</p>
+        <p><strong>Auditable.</strong> Delivery telemetry available to each Pro · 99.5% delivery observed last 30 days.</p>
+      </div>
+      <div class="stack-card" style="border-left: 3px solid var(--teal);">
+        <div class="stack-role">Commitment 06</div>
+        <h3>Breach-ready operations</h3>
+        <p>Secrets rotated quarterly per runbook. Sentry alerting on failed-auth bursts. CSP, HSTS, X-Frame-Options live. Dependabot / Renovate auto-PRs on CVE updates. Annual external security audit committed (next: August 2026).</p>
+        <p><strong>Auditable.</strong> Runbook in repo · last secret rotation logged · next external audit scheduled.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">If you can't audit it, you can't sell it</div>
+      <p class="callout-text">These six commitments are the bridge between the product Kyozo sells today and the vision Kyozo sells to customers. Every architectural call in the pages that follow is defensible against this list — and <em>every column in the audit chain on page 06 maps back to one of them.</em></p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 5 of 11 · Data-security commitments</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 6 — 05 CEO ↔ CTO alignment
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">05 · CEO ↔ CTO alignment</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>05</b> · CEO ↔ CTO alignment</p>
+    <h2 class="h-title">No daylight between Will and Ashok.</h2>
+    <p class="lede">Investors look for this. The next engineer joining looks for this. The decisions below are framed as decisions we own jointly; the trade-offs as trade-offs we made together. Each row notes the call, the alternative we declined, and the joint owner. Where one of us led, the other signed off on the page.</p>
+
+    <table class="deps" style="margin-top: 8px;">
+      <thead>
+        <tr>
+          <th style="width: 19%;">Decision</th>
+          <th style="width: 28%;">What we chose · jointly</th>
+          <th style="width: 28%;">Trade-off · what we declined</th>
+          <th style="width: 12%;">CEO (Will)</th>
+          <th style="width: 12%;">CTO (Ashok)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="role">Serverless on managed services</td>
+          <td class="notes">Vercel + Firebase as the spine. Cost scales with usage. Zero ops overhead for V1.</td>
+          <td class="notes">Self-hosted Postgres on Render / Railway. Cheaper at scale; expensive in early-stage time.</td>
+          <td class="health">Signed off</td>
+          <td class="health"><strong>Led</strong></td>
+        </tr>
+        <tr>
+          <td class="role">Custom domain per community</td>
+          <td class="notes">Every community gets <code>handle.kyozo.com</code>. Isolated mail reputation. Strategic differentiator.</td>
+          <td class="notes">Shared <code>kyozo.com</code> mail domain. Simpler ops; one bad actor poisons the well.</td>
+          <td class="health"><strong>Led</strong></td>
+          <td class="health">Signed off</td>
+        </tr>
+        <tr>
+          <td class="role">API-first architecture (in flight)</td>
+          <td class="notes">Web becomes one of N clients of API_V1. Same code path for mobile, MCP, partners.</td>
+          <td class="notes">Keep web tightly coupled to Firebase. Faster web iteration; rewrite on every new client.</td>
+          <td class="health">Signed off</td>
+          <td class="health"><strong>Led</strong></td>
+        </tr>
+        <tr>
+          <td class="role">Tags as first-class entity</td>
+          <td class="notes">Top-level <code>tags</code> collection + polymorphic <code>tagAttachments</code>. Migration in progress.</td>
+          <td class="notes">Keep tags as a JSON array on member. Faster to ship; regret it inside a quarter — agentic features blocked.</td>
+          <td class="health"><strong>Led</strong></td>
+          <td class="health">Signed off</td>
+        </tr>
+        <tr>
+          <td class="role">Resend for email infrastructure</td>
+          <td class="notes">Modern API, DKIM/SPF/DMARC automated, signed webhooks, per-domain reputation. 99.5% delivery.</td>
+          <td class="notes">Postmark, SendGrid, AWS SES. All viable; Resend's DX and per-community-domain support won.</td>
+          <td class="health">Signed off</td>
+          <td class="health"><strong>Led</strong></td>
+        </tr>
+        <tr>
+          <td class="role">Member-first mobile app</td>
+          <td class="notes">Build the member app before the owner app. Daily-active surface; obvious upsell path back to Pro.</td>
+          <td class="notes">Owner-first app. Deepens existing customer relationship; misses the engagement loop.</td>
+          <td class="health"><strong>Led</strong></td>
+          <td class="health">Signed off</td>
+        </tr>
+        <tr>
+          <td class="role">Agentic prototype model</td>
+          <td class="notes">Will prototypes each agent on Willer.fm (single-tenant, throwaway). Ashok ports prompts + data shapes behind feature flags.</td>
+          <td class="notes">Build agents directly in main codebase. Faster to ship; slower to learn; expensive to throw away.</td>
+          <td class="health"><strong>Led</strong></td>
+          <td class="health">Signed off</td>
+        </tr>
+        <tr>
+          <td class="role">Friday cadence · 30 minutes weekly</td>
+          <td class="notes">Standing Friday 10am UK slot. Three numbers, three lines each on shipped / next / blocked. Documented in <code>/docs/sprint-log.md</code>.</td>
+          <td class="notes">Ad-hoc Slack updates. Faster signal; loses the audit trail and the rhythm.</td>
+          <td class="health"><strong>Joint</strong></td>
+          <td class="health"><strong>Joint</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-label">The standard we hold</div>
+      <p class="callout-text">If a board member or new engineer asks <em>"who decided this and why?"</em> — both names appear on the page, both reasons read as one. The trade-offs are visible because the alternative is on the page next to the choice. <strong>This is what alignment looks like in documentation.</strong></p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 6 of 11 · CEO ↔ CTO alignment</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 7 — 06 Audit chain
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">06 · Audit chain</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>06</b> · Audit chain</p>
+    <h2 class="h-title">Built · Agreed · Doing · Accountable.</h2>
+    <p class="lede compact">The audit chain is the bridge between the product Kyozo sells today and the vision sold to customers. Each pillar gets one row, plus rows for the cross-cutting commitments. Each row names the person accountable. If a board member, a customer, or a regulator asks "where are you on X?" — the answer is on this page.</p>
+
+    <table class="deps" style="margin-top: 6px;">
+      <thead>
+        <tr>
+          <th style="width: 13%;">Pillar / commitment</th>
+          <th style="width: 22%;">Built &amp; in production</th>
+          <th style="width: 22%;">Agreed &amp; scoped</th>
+          <th style="width: 22%;">Doing now</th>
+          <th style="width: 11%;">Accountable</th>
+          <th style="width: 10%;">Cadence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pkg" style="color: var(--accent);">01 · APIs</td>
+          <td class="notes">35 serverless routes · Firestore rules · signed webhooks · auth on every route</td>
+          <td class="notes">API_V1 surface · per-key rate limits · OpenAPI spec · webhook subscriptions</td>
+          <td class="notes">Merging API_V1 to main · Month 1 · partner-facing docs</td>
+          <td class="notes"><strong>Ashok</strong><br>Will (positioning)</td>
+          <td class="notes">Friday log · monthly CVE review</td>
+        </tr>
+        <tr>
+          <td class="pkg" style="color: var(--green);">02 · Unified App</td>
+          <td class="notes">Web app · unified inbox · custom domain per community · Google SSO consent</td>
+          <td class="notes">Mobile app (member-first) · QR onboarding · WhatsApp inbox activation</td>
+          <td class="notes">QR onboarding · Month 1 · mobile scaffolding</td>
+          <td class="notes"><strong>Ashok</strong><br>Anna (test)<br>Will (UX w/ Mary)</td>
+          <td class="notes">Friday log · UX review</td>
+        </tr>
+        <tr>
+          <td class="pkg" style="color: var(--purple);">03 · Agentic</td>
+          <td class="notes">Subject polish · body drafting · in-dashboard assistant · auth + rate limit</td>
+          <td class="notes">One agent per sprint post-V1 · Importer first · Tagger second · per-Pro budgets</td>
+          <td class="notes">Tags-as-entity migration unblocks agent #2 · Month 1</td>
+          <td class="notes"><strong>Will</strong> (prompts)<br><strong>Ashok</strong> (wiring)</td>
+          <td class="notes">Per-sprint demo · weekly cost</td>
+        </tr>
+        <tr>
+          <td class="pkg" style="color: var(--keystone);">04 · MCP</td>
+          <td class="notes">SDK in dep tree · design complete · scoped-token system designed</td>
+          <td class="notes">Live MCP server wrapping API_V1 · directory listings · OAuth bridge</td>
+          <td class="notes">Holds for API_V1 to land · scope sketch in <code>/docs/mcp.md</code></td>
+          <td class="notes"><strong>Ashok</strong><br>Will (partnerships)</td>
+          <td class="notes">Quarterly external API review</td>
+        </tr>
+        <tr class="section-row"><td colspan="6">Cross-cutting · data-security commitments</td></tr>
+        <tr>
+          <td class="role">Multi-tenant isolation</td>
+          <td class="notes">Rules audited Apr 2026 · cross-tenant tests every release</td>
+          <td class="notes">Quarterly re-audit · automated drift detection</td>
+          <td class="notes">Closing 3 legacy collections on client-side filter · ~1 day</td>
+          <td class="notes"><strong>Ashok</strong></td>
+          <td class="notes">Quarterly</td>
+        </tr>
+        <tr>
+          <td class="role">Domain-events table</td>
+          <td class="notes">Pattern designed · helper drafted</td>
+          <td class="notes"><code>events</code> collection + <code>emitEvent()</code> on every mutating route</td>
+          <td class="notes">Building this month · ~3 days</td>
+          <td class="notes"><strong>Ashok</strong></td>
+          <td class="notes">Monthly replay test</td>
+        </tr>
+        <tr>
+          <td class="role">Email deliverability</td>
+          <td class="notes">Resend live · DKIM/SPF/DMARC per domain · 99.5% delivery</td>
+          <td class="notes">Per-community delivery dashboard for Pros</td>
+          <td class="notes">Bounce + complaint webhook hardening</td>
+          <td class="notes"><strong>Ashok</strong></td>
+          <td class="notes">Monthly reputation review</td>
+        </tr>
+        <tr>
+          <td class="role">External security audit</td>
+          <td class="notes">Security sprint Apr 2026 · landed</td>
+          <td class="notes">External pen test · Aug 2026</td>
+          <td class="notes">Calendar reminder set · scope drafted</td>
+          <td class="notes"><strong>Will + Ashok</strong></td>
+          <td class="notes">Annual</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-label">If you can't audit it, you can't sell it</div>
+      <p class="callout-text">Every row on this page is independently verifiable from the repo, the runbook, or the Friday log. <em>Nothing on this page is aspirational.</em> The Doing-Now column is what is moving this month; everything else is either shipped or scoped with a named owner.</p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 7 of 11 · Audit chain</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 8 — 07 Engineering function
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">07 · Engineering function</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>07</b> · Engineering function · scaling plan</p>
+    <h2 class="h-title">Structure scales before the team scales.</h2>
+    <p class="lede compact">Three threads sit inside scaling the engineering function: how we use Anna today, what the next two hires look like, and the structural code that has to be in place before either of those is anything but a liability. We are building the scaffolding now, with the headcount we have, so that hires 2 and 3 are productive on day one.</p>
+
+    <div class="section-label">Thread 01 · Anna · developing engineer across the four pillars</div>
+    <div class="two-col" style="margin-top: 6px;">
+      <div class="col">
+        <h3>Today's role</h3>
+        <p>Anna works across all four pillars, not narrowly on QA. Writing tests is one mode, but she also reviews API contracts, ships small features end-to-end, and pairs with Ashok on the harder routes. <strong>The aim is for her to own one pillar by end of Q3 2026.</strong></p>
+      </div>
+      <div class="col">
+        <h3>How we develop her</h3>
+        <p>Pair-coding two mornings a week with Ashok on the routes that cross pillars (API_V1, events table, Tags migration). Owns the test pyramid for the Unified App pillar. Will sits in on a sprint demo monthly so she sees the product reasoning, not just the implementation.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Thread 02 · Hires 2 and 3 · when, and against which pillar</div>
+    <table class="deps" style="margin-top: 6px;">
+      <thead>
+        <tr>
+          <th style="width: 12%;">Hire</th>
+          <th style="width: 18%;">Pillar</th>
+          <th style="width: 12%;">When</th>
+          <th style="width: 40%;">What this person does</th>
+          <th style="width: 18%;">Trigger to hire</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="role"><strong>Hire 02</strong></td>
+          <td class="notes" style="color: var(--green);">02 · Unified App</td>
+          <td class="notes">Q3 2026</td>
+          <td class="notes">Full-stack / mobile engineer. Owns the React Native / Expo MVP. Pairs with Anna on the shared API contract. Ships the member app end-to-end.</td>
+          <td class="notes">API_V1 live · 50+ paying Pros</td>
+        </tr>
+        <tr>
+          <td class="role"><strong>Hire 03</strong></td>
+          <td class="notes" style="color: var(--purple);">03 · Agentic + 04 · MCP</td>
+          <td class="notes">Q4 2026</td>
+          <td class="notes">AI / platform engineer. Owns the agentic strip (one agent per sprint with Will), the MCP server, and the inference cost line. Reports to Ashok.</td>
+          <td class="notes">MCP v1 in production · agent #2 shipped</td>
+        </tr>
+        <tr>
+          <td class="role">Hire 04 (provisional)</td>
+          <td class="notes" style="color: var(--accent);">01 · APIs · DX</td>
+          <td class="notes">H1 2027</td>
+          <td class="notes">Platform / developer-experience engineer. Owns the partner API, integrations, and developer documentation as Kyozo becomes a building block in others' stacks.</td>
+          <td class="notes">First 5 paid API customers</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="body" style="font-size: 12.5px; margin-top: 8px;"><strong>The shape we are hiring into.</strong> Pillar 02 (Unified App) and Pillars 03–04 (Agentic + MCP) are the two surfaces Ashok cannot reasonably own alone past 50 Pros. Hires 02 and 03 are the floor of an engineering org, not the ceiling — every additional headcount adds explicit pillar accountability.</p>
+
+    <div class="section-label">Thread 03 · Structural code · what's in place before the team grows</div>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <div class="stack-role">Practice 01</div>
+        <h3>One canonical schema doc</h3>
+        <p><code>/docs/schema.md</code> generated from Zod, kept in sync via CI check. New entities go through PR review on schema before code. Pillar 01.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Practice 02</div>
+        <h3>Code organisation by pillar</h3>
+        <p>The repo is being reorganised into <code>/src/pillars/{apis,app,agentic,mcp}/</code>. Hires land in their pillar's folder; reviewers know where to look. Pillars 01–04.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Practice 03</div>
+        <h3>Review discipline</h3>
+        <p>Every PR has one reviewer + one signing-off-with-the-product-eye (often Will on agentic, Mary on UX). Reviews land in 24 hours. Cross-pillar.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Practice 04</div>
+        <h3>Documentation standards</h3>
+        <p>Every new endpoint ships with: an OpenAPI entry, an event-emission line, a test, and a paragraph in <code>/docs/changelog.md</code>. No exceptions. Pillar 01.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Practice 05</div>
+        <h3>Sprint cadence as a practice</h3>
+        <p>Friday 30-minute slot. Three numbers (build success, error rate, weekly active Pros). Shipped / next / blocked in 3 lines each. Documented in repo. Cross-pillar.</p>
+      </div>
+      <div class="stack-card">
+        <div class="stack-role">Practice 06</div>
+        <h3>Hire-readiness checklist</h3>
+        <p>Before hire 02 starts: schema.md live, events table live, repo reorganised by pillar, two onboarding tasks pre-scoped. Their first week is a product test of our docs.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">The principle</div>
+      <p class="callout-text">The structure has to scale before the team does. Every practice above is in place — or being put in place this month — so hires 02 and 03 are productive on day one. <em>We are hiring into a system, not into chaos that needs a fixer.</em></p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 8 of 11 · Engineering function</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 9 — 08 12-month milestones
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">08 · 12-month milestones</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>08</b> · The 12-month roadmap</p>
+    <h2 class="h-title">Mapped to pillars · ordered by user-visible impact ÷ engineering cost.</h2>
+    <p class="lede compact">Twelve months of milestones. Each item names the pillar it builds, the owner, and the gate that says "done." Reliability work and growth features sit next to each other because both are how Kyozo becomes defensible.</p>
+
+    <div class="timeline">
+      <div class="tl-item live">
+        <div class="tl-when">Now · landed</div>
+        <div class="tl-body">
+          <h4>Security sprint · cross-cutting <span class="pill live">Shipped</span></h4>
+          <p>Critical fixes merged, secrets rotated, Firestore rules deployed. Unblocks every pillar's roadmap. <strong>Owner: Ashok.</strong></p>
+        </div>
+      </div>
+      <div class="tl-item next">
+        <div class="tl-when">Month 1</div>
+        <div class="tl-body">
+          <h4>API_V1 → main · Pillar 01 <span class="pill next">In flight</span></h4>
+          <p>Public API surface lands in production. OpenAPI documented. Per-key rate limits. First three resources live. <strong>Owners: Ashok (build) · Will (positioning).</strong></p>
+        </div>
+      </div>
+      <div class="tl-item next">
+        <div class="tl-when">Month 1</div>
+        <div class="tl-body">
+          <h4>QR member onboarding · Pillar 02</h4>
+          <p>Owner shows a QR; attendee scans; pre-filled signup form; member without typing. The in-person growth channel the product currently has no story for. <strong>Owners: Ashok · Mary (UX).</strong></p>
+        </div>
+      </div>
+      <div class="tl-item next">
+        <div class="tl-when">Month 1</div>
+        <div class="tl-body">
+          <h4>Tags as first-class entity + events table · cross-cutting</h4>
+          <p>Unblocks Pillar 03 (Tagger, Sublist) and Pillar 04 (event-driven MCP). The two architectural items the V1 invariants demand. <strong>Owner: Ashok.</strong></p>
+        </div>
+      </div>
+      <div class="tl-item next">
+        <div class="tl-when">Month 2</div>
+        <div class="tl-body">
+          <h4>Defence-in-depth hardening · cross-cutting</h4>
+          <p>TypeScript / ESLint in build, security headers in <code>next.config.ts</code>, Upstash Redis rate limiter, Sentry alerting. Half-day items; collectively a major improvement. <strong>Owner: Ashok.</strong></p>
+        </div>
+      </div>
+      <div class="tl-item next">
+        <div class="tl-when">Month 2–3</div>
+        <div class="tl-body">
+          <h4>MCP server v1 · Pillar 04</h4>
+          <p>MCP server wrapping API_V1. Hosted on Vercel. Listed in Claude / Cursor / Cowork directories. <strong>Distinguishing factor in a market where every community platform looks the same.</strong> Owners: Ashok (build) · Will (partnerships).</p>
+        </div>
+      </div>
+      <div class="tl-item future">
+        <div class="tl-when">Month 3–4</div>
+        <div class="tl-body">
+          <h4>Auto-reply &amp; inbox AI · Pillar 03</h4>
+          <p>Smart-reply suggestions, member-list natural-language search, thread summaries. Builds on the existing Genkit + Gemini plumbing. <strong>Owners: Will (prompts on Willer.fm) · Ashok (wiring).</strong></p>
+        </div>
+      </div>
+      <div class="tl-item future">
+        <div class="tl-when">Month 4–6</div>
+        <div class="tl-body">
+          <h4>Mobile app · MVP · Pillar 02</h4>
+          <p>React Native / Expo. Push, post reading, inbox replies, QR scanning. Three months to MVP if dedicated. <strong>Member-first by joint decision (page 06).</strong> Owners: Hire 02 · Ashok.</p>
+        </div>
+      </div>
+      <div class="tl-item future">
+        <div class="tl-when">Month 6–9</div>
+        <div class="tl-body">
+          <h4>WhatsApp inbox activation · Pillar 02</h4>
+          <p>Integration is plumbed; needs the 360dialog account, positioning, and rollout. Where most community conversation actually happens internationally. <strong>Owners: Will (positioning) · Ashok (turn-on).</strong></p>
+        </div>
+      </div>
+      <div class="tl-item future">
+        <div class="tl-when">Month 9–12</div>
+        <div class="tl-body">
+          <h4>Owner analytics, RAG, scheduled posts · cross-pillar</h4>
+          <p>The second wave: deeper insights for Pros, member-facing AI Q&amp;A grounded in community content, scheduled posts, Stripe-style paid memberships. <strong>Owners: Hire 03 · Will.</strong></p>
+        </div>
+      </div>
+      <div class="tl-item future">
+        <div class="tl-when">Continuous</div>
+        <div class="tl-body">
+          <h4>Hygiene that should never stop · cross-cutting</h4>
+          <p>Dependabot / Renovate auto-PRs. Quarterly secret rotation. External security audit next August. Performance budget on Vercel build. <strong>Owner: Ashok.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 9 of 11 · 12-month milestones</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 10 — 09 Architectural decisions (build-brief answers)
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">09 · Architectural decisions</div>
+  </header>
+
+  <div class="page-body">
+    <p class="eyebrow"><b>09</b> · Architectural decisions · in writing</p>
+    <h2 class="h-title">Direct answers to the ten architectural questions.</h2>
+    <p class="lede compact">The questions Will put to Ashok in the V1 build brief, with answers grounded in the codebase today. The seven-invariant status table at the bottom shows what is done, what is partial, and what is being built before V1 ships.</p>
+
+    <div class="section-label">Schema &amp; data model · the core six</div>
+    <div class="qa-grid">
+      <div class="qa-card">
+        <h4>1. Is the web app a client of a backend API?</h4>
+        <p><strong>Partial.</strong> Today the web app is both a client of 35 serverless route handlers <em>and</em> a direct Firebase client for most reads. The pure "API-first, web is one of N clients" shape lands when API_V1 (Pillar 01) merges to <code>main</code>. Targeting end of Month 1.</p>
+      </div>
+      <div class="qa-card">
+        <h4>2. One canonical schema doc?</h4>
+        <p><strong>To write.</strong> Firestore is NoSQL, so today the schema lives implicitly in TypeScript types, Zod validators, and security rules. Plan: <code>schema.md</code> in the repo by next Monday, generated from Zod. Will gets read access then.</p>
+      </div>
+      <div class="qa-card">
+        <h4>3. Multi-tenancy from line one?</h4>
+        <p><strong>Yes.</strong> Every Firestore read/write is scoped by <code>communityId</code> in security rules; post-audit rules tightened this further. Cross-tenant access is server-rejected, not just hidden by client filters. Three legacy collections to close · ~1 day.</p>
+      </div>
+      <div class="qa-card">
+        <h4>4. Domain-events table?</h4>
+        <p><strong>No — biggest gap.</strong> Webhooks fire for specific vendor events, but there is no canonical <code>events</code> collection. Cost to add: ~3 days. One Firestore collection, one <code>emitEvent()</code> helper called from every mutating route. Foundation for the rest.</p>
+      </div>
+      <div class="qa-card keystone">
+        <h4>5. Tags as a first-class entity?</h4>
+        <p><strong>Not yet — needs migration.</strong> Tags are currently a string array on the member document — exactly the JSON-array pattern we flagged we'd regret. Plan: top-level <code>tags</code> collection + polymorphic <code>tagAttachments</code> join. ~1 week. <em>Blocks Pillar 03 agentic features — prioritising it.</em></p>
+      </div>
+      <div class="qa-card">
+        <h4>6. Auth as a pluggable layer?</h4>
+        <p><strong>Partial.</strong> Firebase Auth supports Google, Apple, email/password natively. What's missing for true pluggability is API tokens for MCP and partner integrations. The <code>kyz_*</code> API-key system in API_V1 closes this gap.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Operational</div>
+    <div class="qa-grid">
+      <div class="qa-card green">
+        <h4>7. Email deliverability · provider?</h4>
+        <p><strong>Resend, in production.</strong> SPF/DKIM/DMARC configured automatically per community subdomain. Bounces handled via Resend webhook. ~99.5% delivery in the last 30 days.</p>
+      </div>
+      <div class="qa-card">
+        <h4>8. Webhook endpoint per Pro · day one?</h4>
+        <p><strong>Not yet.</strong> Inbound vendor webhooks exist; outbound (Pro → external system) is not yet exposed. Plan: piggyback on API_V1 — adding a <code>webhooks</code> resource is ~3 days. Events table from Q4 feeds it.</p>
+      </div>
+      <div class="qa-card green">
+        <h4>9. Will building agent prototypes against the schema?</h4>
+        <p><strong>Yes.</strong> Read access to the repo + synced <code>schema.md</code> from Monday. Willer.fm is single-tenant by design. Output (prompts + data shapes) ports back behind feature flags. One agent per sprint after V1.</p>
+      </div>
+      <div class="qa-card green">
+        <h4>10. Friday sprint cadence · 30 minutes weekly?</h4>
+        <p><strong>Confirmed.</strong> Standing slot Friday 10am UK. Three numbers (build success rate, error rate, weekly active Pros). Shipped / next / blocked in 3 lines each. Documented in <code>/docs/sprint-log.md</code>.</p>
+      </div>
+    </div>
+
+    <div class="section-label">The seven invariants · status</div>
+    <table class="deps" style="margin-top: 4px;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Invariant</th>
+          <th>Status today</th>
+          <th>Work to V1-compliant</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="pkg">1</td><td class="role">API-first, web is a client</td><td class="notes">Partial — mixed Firebase direct + 35 route handlers</td><td class="notes"><span class="health-dot ok">Merge API_V1 · ~3 weeks</span></td></tr>
+        <tr><td class="pkg">2</td><td class="role">Canonical schema, multi-tenant</td><td class="notes">Multi-tenancy ✓ · schema doc not yet written</td><td class="notes"><span class="health-dot ok">schema.md · ~1 day</span></td></tr>
+        <tr><td class="pkg">3</td><td class="role">Tags as first-class polymorphic</td><td class="notes">String array on member doc — wrong shape</td><td class="notes"><span class="health-dot watch">Migrate · ~1 week</span></td></tr>
+        <tr><td class="pkg">4</td><td class="role">Domain events table</td><td class="notes">No <code>events</code> collection today</td><td class="notes"><span class="health-dot watch">Build · ~3 days</span></td></tr>
+        <tr><td class="pkg">5</td><td class="role">Pluggable auth</td><td class="notes">Firebase ✓ · API tokens in API_V1</td><td class="notes"><span class="health-dot ok">Merge API_V1</span></td></tr>
+        <tr><td class="pkg">6</td><td class="role">Email deliverability done right</td><td class="notes">Resend in production · DKIM/SPF/DMARC</td><td class="notes"><span class="health-dot good">Done</span></td></tr>
+        <tr><td class="pkg">7</td><td class="role">Webhook endpoint per Pro</td><td class="notes">Inbound exists · outbound not exposed</td><td class="notes"><span class="health-dot watch">Build · ~3 days</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-label">Total work to V1-compliant</div>
+      <p class="callout-text">~3 weeks of focused engineering. Tags migration (Q5 · Inv 3) and the events table (Q4 · Inv 4) are the only items without working code somewhere — the rest is merging API_V1, writing the schema doc, and closing the legacy multi-tenancy gaps. <em>Phase 2 is extension, not rewrite.</em></p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 10 of 11 · Architectural decisions</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 11 — 10 In closing
+============================================================ -->
+<section class="page">
+  <header class="page-header">
+    <div class="ph-left"><b>Kyozo</b> · Engineering &amp; Architecture Brief</div>
+    <div class="ph-right">10 · In closing</div>
+  </header>
+
+  <div class="page-body">
+    <div class="closing">
+      <p class="eyebrow"><b>10</b> · In closing</p>
+      <h2>Boring choices in the foundation, <em>defensible ones</em> where it matters.</h2>
+      <p>The architecture behind Kyozo is intentionally unflashy in the parts that have to work — Next.js, React, Firebase, Vercel, Resend. The defensible decisions are higher up: a custom domain per community, a unified inbox across every channel, an API-first platform, and an MCP surface that turns Kyozo into a building block other AI tools call. That layering is what separates a defensible product from a thin CRUD app.</p>
+      <p>The CEO and CTO own every decision on the pages above jointly. The audit chain is independently verifiable from the repo and the Friday log. The team plan scales structure before headcount. The four pillars are the lens through which every future quarter will be read. <strong>Kyozo is being built to be the relationship layer in the AI stack — and the architecture is shaped to make that defensible, not just promised.</strong></p>
+      <p class="signoff">Will Roach · CEO &nbsp;·&nbsp; Ashok Jaiswal · CTO &nbsp;·&nbsp; Kyozo · May 2026</p>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <div>Page 11 of 11 · In closing</div>
+    <div>tech-overview.html</div>
+  </footer>
+</section>
+
+
+
+</body></html>
