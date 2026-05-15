@@ -279,7 +279,7 @@ export default function MemberProfilePage() {
             {/* Stats Matrix */}
             {stats && (
               <div>
-                <h2 className="text-lg font-semibold mb-4" style={{ color: '#3D2E1E' }}>Activity & Stats</h2>
+                <h2 className="text-lg font-semibold mb-4" style={{ color: '#3D2E1E' }}>Member Memory</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   <StatCard
                     icon={<MessageSquare className="h-5 w-5" />}
@@ -331,7 +331,7 @@ export default function MemberProfilePage() {
             {allCommunities.length > 1 && (
               <div>
                 <h2 className="text-lg font-semibold mb-4" style={{ color: '#3D2E1E' }}>
-                  Member of {allCommunities.length} Communities
+                  Member of {allCommunities.length} Your Communities
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {allCommunities.map((c) => (

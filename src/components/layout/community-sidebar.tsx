@@ -216,6 +216,11 @@ export default function CommunitySidebar() {
           </div>
 
           <div className="flex-1 py-2">
+            <div className="grid items-start px-2 text-sm font-medium">
+                The Loop
+            </div>
+            <hr className="my-2" />
+
             <nav className="grid items-start px-2 text-sm font-medium">
               {selectedCommunityHandle && communityNavItems.map((item) => {
                 const Icon = item.icon;
@@ -235,6 +240,7 @@ export default function CommunitySidebar() {
                 );
               })}
             </nav>
+            <hr className="my-2" />
           </div>
         </div>
       )}
