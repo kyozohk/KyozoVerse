@@ -302,14 +302,11 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
       <div className="p-6">
         {availableTags.length > 0 && (
             <div className="mb-4">
-              <div 
+              <div
                 ref={tagsContainerRef}
-                className={cn(
-                  "flex flex-wrap gap-2",
-                  !showAllTags && "max-h-[38px] overflow-hidden"
-                )}
+                className="flex flex-wrap gap-2"
               >
-                {availableTags.map((tag) => (
+                {(showAllTags ? availableTags : availableTags.slice(0, 5)).map((tag) => (
                   <Button
                     key={tag.id}
                     variant={selectedTags.has(tag.name) ? 'default' : 'outline'}

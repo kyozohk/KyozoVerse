@@ -45,16 +45,16 @@ interface CommunityNavItem {
 
 export const communityNavItems: CommunityNavItem[] = [
     // { href: (handle) => `/${handle}`, icon: OverviewIcon, label: 'Overview', section: 'communities' },
-    { href: (handle) => `/${handle}/audience`, icon: AudienceIcon, label: 'Audience', section: 'communities' },
-    { href: (handle) => `/${handle}/broadcast`, icon: BroadcastIcon, label: 'Broadcast', section: 'communities' },
-    { href: (handle) => `/${handle}/guestlist`, icon: GuestlistIcon, label: 'Guestlist', section: 'communities' },
-    { href: (handle) => `/${handle}/rsvp`, icon: RsvpIcon, label: 'RSVP', section: 'communities' },
+    { href: (handle) => `/${handle}/audience`, icon: AudienceIcon, label: 'Audience & Tags', section: 'communities' },
     { href: (handle) => `/${handle}/schedule`, icon: ScheduleIcon, label: 'Schedule', section: 'communities' },
-    { href: (handle) => `/${handle}/inbox`, icon: InboxIcon, label: 'Inbox', section: 'communities' },
+    { href: (handle) => `/${handle}/guestlist`, icon: GuestlistIcon, label: 'Guests', section: 'communities' },
     { href: (handle) => `/${handle}/feed`, icon: FeedIcon, label: 'Feed', section: 'communities' },    
-    { href: (handle) => `/${handle}/integrations`, icon: IntegrationsIcon, label: 'Integrations', section: 'communities' },
-    { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settings', section: 'communities' },
-    { href: (handle) => `/${handle}/morefeatures`, icon: Plus, label: 'More Features', section: 'morefeatures' },
+    { href: (handle) => `/${handle}/broadcast`, icon: BroadcastIcon, label: 'Communicate', section: 'communities' },
+    // { href: (handle) => `/${handle}/rsvp`, icon: RsvpIcon, label: 'RSVP', section: 'communities' },
+    { href: (handle) => `/${handle}/inbox`, icon: InboxIcon, label: 'Inbox', section: 'communities' },
+    // { href: (handle) => `/${handle}/integrations`, icon: IntegrationsIcon, label: 'Integrations', section: 'communities' },
+    // { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settings', section: 'communities' },
+    // { href: (handle) => `/${handle}/morefeatures`, icon: Plus, label: 'More Features', section: 'morefeatures' },
 ];
 
 export const getThemeForPath = (pathname: string) => {
