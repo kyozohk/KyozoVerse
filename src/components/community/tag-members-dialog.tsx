@@ -68,16 +68,45 @@ export function TagMembersDialog({
 
   // ---- Loading saved tags + initial selection ------------------------------
 
+  /**
+   * Tag-name resolution combines two sources:
+   *   1. communities/{id}/tags subcollection — the canonical store
+   *   2. Tag names already present on `allMembers` (their `tags[]` arrays)
+   *
+   * (2) catches the case where members carry import-time tags (e.g.
+   * "Eventbrite · May 2026", "XLS India") that never made it into the
+   * subcollection — e.g. imports run before the server endpoint started
+   * writing the subcollection. The dialog still surfaces them so the user
+   * isn't surprised by an empty "All Tags" list when the audience page
+   * clearly shows chips.
+   */
   const loadTags = async () => {
     if (!communityId) return;
+
+    // Collect from members first — guaranteed to be in scope.
+    const fromMembers = new Set<string>();
+    for (const m of allMembers) {
+      const tags = (m as { tags?: unknown }).tags;
+      if (Array.isArray(tags)) {
+        for (const t of tags) {
+          if (typeof t === 'string' && t.trim()) fromMembers.add(t.trim());
+        }
+      }
+    }
+
+    let fromSubcollection: string[] = [];
     try {
-      const names = await getCommunityTagNames(communityId);
-      setSavedTags(names);
-      setTagEdits(Object.fromEntries(names.map((n) => [n, n])));
+      fromSubcollection = await getCommunityTagNames(communityId);
     } catch (e) {
       console.error('Error loading community tags:', e);
-      setSavedTags([]);
     }
+
+    // Union, sorted.
+    const union = new Set<string>([...fromSubcollection, ...fromMembers]);
+    const names = [...union].sort((a, b) => a.localeCompare(b));
+
+    setSavedTags(names);
+    setTagEdits(Object.fromEntries(names.map((n) => [n, n])));
   };
 
   useEffect(() => {
@@ -264,7 +293,14 @@ export function TagMembersDialog({
       description=""
       size="xl"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-h-[60vh]">
+      {/*
+        Wrap everything in a flex column with `h-full` so the footer stays
+        anchored at the bottom even when the right-pane member list is long.
+        Without this, the outer `flex-1 overflow-y-auto` in CustomFormDialog
+        scrolls the footer off-screen on shorter viewports.
+      */}
+      <div className="flex flex-col h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 min-h-0">
         {/* ─────────────────────────────── LEFT COLUMN ─────────────────── */}
         <div className="flex flex-col gap-8 md:border-r md:pr-8" style={{ borderColor: '#E8DFD1' }}>
           {/* Add New Tag */}
@@ -490,7 +526,7 @@ export function TagMembersDialog({
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer — flex-shrink-0 + sits outside the grid, so it stays anchored. */}
       <div
         className="mt-6 flex justify-end gap-3 pt-4 border-t flex-shrink-0"
         style={{ borderColor: '#E8DFD1' }}
@@ -504,6 +540,7 @@ export function TagMembersDialog({
         >
           Close
         </CustomButton>
+      </div>
       </div>
     </CustomFormDialog>
   );

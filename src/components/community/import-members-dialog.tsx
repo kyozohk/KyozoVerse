@@ -1,816 +1,1447 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
-import { Dialog, DialogContent, DialogTitle, VisuallyHidden } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+/**
+ * ImportMembersDialog (v0.6 UX — "Automatically Integrate")
+ *
+ * Replaces the older 4-state dialog with the two-panel pattern Mary specced.
+ * Sits inside the shared V06DialogShell so the header (purple gradient,
+ * Zap icon, close), footer, and width are consistent with every other
+ * dialog in the app.
+ *
+ * Flow:
+ *   1. Setup    — source list (left) + source-specific content (right)
+ *      CSV/XLSX → drop zone        | Eventbrite → token paste / event picker
+ *      GSheets  → URL paste
+ *   2. Preview  — filters & bulk action (left) + table (right)
+ *   3. Confirm  — summary (left) + tag + notes form (right)
+ *   4. Done     — modal closes; reopen for another source
+ *
+ * Public API matches the previous component so callers don't change.
+ */
+
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  Calendar, Upload, Plus, X, ChevronLeft, Check,
-  FileSpreadsheet, FileText, AlertCircle, Loader2,
-  Download, Trash2, Edit2, Save, Zap, Users,
+  V06DialogShell,
+  V06,
+  V06PrimaryButton,
+  V06SecondaryButton,
+  V06ActionButton,
+} from '@/components/ui/v06-dialog-shell';
+import {
+  Upload, FileSpreadsheet, FileText, Calendar, Loader2, Check,
+  AlertCircle,
 } from 'lucide-react';
-import { type Community } from '@/lib/types';
-import { addDoc, collection, serverTimestamp, increment, updateDoc, doc, query, where, getDocs, setDoc, writeBatch } from 'firebase/firestore';
-import { db } from '@/firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { communityAuth } from '@/firebase/community-auth';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { type Community } from '@/lib/types';
+import {
+  parseCsv,
+  parseGrid,
+  sanitizeCell,
+  markExistingMembers,
+  type ImportRow,
+  type ParseResult,
+} from '@/lib/import/parse';
 
-// --- Validation constants shared across manual entry, CSV preview, and import ---
-// KYPRO-66 / KYPRO-67: cap lengths so we don't persist 500-char names/emails
-// that later blow up the preview table and profile card layouts.
-const MAX_NAME_LEN  = 100;           // KYPRO-66
-const MAX_EMAIL_LEN = 254;           // KYPRO-66 (RFC 5321)
-const MAX_PHONE_LEN = 20;            // KYPRO-64
-const MAX_TAG_LEN   = 40;
-// KYPRO-74: bulk import perf. We parallelize rows and batch Firestore writes.
-const IMPORT_CONCURRENCY    = 8;     // concurrent row workers
-const FIRESTORE_BATCH_SIZE  = 400;   // Firestore limit is 500 writes / batch
-// Accepted delimiters when we sniff a CSV. KYPRO-30.
-const SUPPORTED_DELIMITERS: Array<',' | '\t' | ';' | '|'> = [',', '\t', ';', '|'];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/* -------------------------------------------------------------------------- */
+/*  Types                                                                     */
+/* -------------------------------------------------------------------------- */
 
-type ImportSource = 'eventbrite' | 'csv' | 'xlsx' | 'manual';
-type DialogStep = 'sources' | 'configure' | 'preview' | 'importing';
-
-interface ImportMember {
-  _id: string; name: string; email: string; phone: string; tags: string; notes: string;
-  [key: string]: string;
-}
-interface SourceDone { count: number; errors: number; }
-
-interface ImportMembersDialogProps {
+interface Props {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   community: Community;
   onSuccess: () => void;
 }
 
-function parseDelimitedFile(text: string, delimiter: string = ','): string[][] {
-  const rows: string[][] = [];
-  for (const line of text.split(/\r?\n/).filter(l => l.trim())) {
-    const cols: string[] = []; let cur = '', inQ = false;
-    for (const ch of line) {
-      if (ch === '"') { inQ = !inQ; } 
-      else if (ch === delimiter && !inQ) { cols.push(cur.trim()); cur = ''; } 
-      else { cur += ch; }
-    }
-    cols.push(cur.trim()); rows.push(cols);
-  }
-  return rows;
+type Step = 'setup' | 'preview' | 'confirm' | 'done';
+type Source = 'csv' | 'xlsx' | 'eventbrite' | 'gsheets';
+
+interface EventbriteEvent {
+  id: string;
+  name: string;
+  start: string;
+  venue?: string;
+  attendeeCount?: number;
 }
 
-// KYPRO-30 / KYPRO-62: robust delimiter sniffing that supports , \t ; | and picks
-// the one that yields the most consistent column counts across the first few lines.
-function detectDelimiter(text: string): ',' | '\t' | ';' | '|' {
-  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 5);
-  let best: { d: ',' | '\t' | ';' | '|'; score: number } = { d: ',', score: -1 };
-  for (const d of SUPPORTED_DELIMITERS) {
-    const counts = lines.map(l => (l.match(new RegExp(d === '|' ? '\\|' : d === '\t' ? '\\t' : d, 'g')) || []).length);
-    const avg = counts.reduce((a, b) => a + b, 0) / (counts.length || 1);
-    if (avg < 1) continue;
-    // Prefer delimiters whose counts are consistent across rows.
-    const variance = counts.reduce((a, c) => a + (c - avg) ** 2, 0) / (counts.length || 1);
-    const score = avg - variance;
-    if (score > best.score) best = { d, score };
-  }
-  console.log('[KYPRO-30][detectDelimiter]', JSON.stringify({ picked: best.d, score: best.score }));
-  return best.d;
-}
+const SOURCE_LABEL: Record<Source, string> = {
+  csv: 'CSV File',
+  xlsx: 'Excel / XLS',
+  eventbrite: 'Eventbrite',
+  gsheets: 'Google Sheets',
+};
 
-interface HeaderValidation {
-  valid: boolean;
-  error?: string;
-  warnings?: string[];
-  hasName: boolean;
-  hasEmail: boolean;
-}
+/* -------------------------------------------------------------------------- */
+/*  Top-level component                                                       */
+/* -------------------------------------------------------------------------- */
 
-// KYPRO-27 / KYPRO-29 / KYPRO-32: header validation is now strict.
-// - Requires BOTH name AND email (was: either).
-// - Rejects files whose "header" row looks like actual data (e.g. first-row-as-data xlsx).
-// - Returns list of unrecognized columns as warnings, not silent drops.
-function validateHeaders(headers: string[]): HeaderValidation {
-  const normalized = headers.map(h => (h || '').toLowerCase().replace(/[^a-z0-9]/g, '_'));
-  const hasName  = normalized.some(h => h.includes('name') || h.includes('first'));
-  const hasEmail = normalized.some(h => h.includes('email'));
-
-  // KYPRO-32: detect "first row is data" — values that contain digits or @ sign
-  // are almost certainly data, not headers.
-  const looksLikeData = headers.some(h => EMAIL_RE.test(h || '') || /\d/.test(h || ''));
-  if (looksLikeData) {
-    return {
-      valid: false, hasName, hasEmail,
-      error: 'The first row looks like data, not headers. Please include a header row with at least "name" and "email" columns.',
-    };
-  }
-
-  if (!hasName || !hasEmail) {
-    const missing = [!hasName && 'name', !hasEmail && 'email'].filter(Boolean).join(' and ');
-    return {
-      valid: false, hasName, hasEmail,
-      error: `File is missing required column${missing.includes('and') ? 's' : ''}: ${missing}.`,
-    };
-  }
-
-  const warnings: string[] = [];
-  const recognizedPatterns = ['name', 'first', 'last', 'email', 'phone', 'mobile', 'tag', 'note', 'comment'];
-  const unrecognized = headers.filter((h, i) => {
-    const norm = normalized[i];
-    return norm && !recognizedPatterns.some(p => norm.includes(p));
-  });
-  if (unrecognized.length > 0) {
-    warnings.push(`Unrecognized columns will be ignored: ${unrecognized.join(', ')}`);
-  }
-  return { valid: true, hasName, hasEmail, warnings };
-}
-
-// KYPRO-66 / KYPRO-67: clip long values while reading rows so downstream UI
-// (preview table, profile card) cannot overflow.
-function clip(val: string, max: number) {
-  if (!val) return '';
-  return val.length > max ? val.slice(0, max) : val;
-}
-
-function rowsToMembers(rows: string[][]): ImportMember[] {
-  if (rows.length < 2) return [];
-  const h = rows[0].map(x => (x || '').toLowerCase().replace(/[^a-z0-9]/g, '_'));
-  const ni = h.findIndex(x => x.includes('name') || x.includes('first'));
-  const ei = h.findIndex(x => x.includes('email'));
-  const pi = h.findIndex(x => x.includes('phone') || x.includes('mobile'));
-  const ti = h.findIndex(x => x.includes('tag'));
-  const oi = h.findIndex(x => x.includes('note') || x.includes('comment'));
-  return rows.slice(1).map((r, i) => ({
-    _id: `imp-${i}`,
-    name:  clip(ni >= 0 ? r[ni] || '' : '', MAX_NAME_LEN),
-    email: clip(ei >= 0 ? r[ei] || '' : '', MAX_EMAIL_LEN),
-    phone: clip(pi >= 0 ? r[pi] || '' : '', MAX_PHONE_LEN),
-    tags:  clip(ti >= 0 ? r[ti] || '' : '', MAX_TAG_LEN * 10),
-    notes: clip(oi >= 0 ? r[oi] || '' : '', 500),
-  }));
-}
-
-// KYPRO-31 / KYPRO-38 / KYPRO-70: de-duplicate incoming rows by (lowercased) email.
-// We keep the first occurrence and surface a warning so the user knows some rows
-// were dropped — instead of silently double-importing.
-function dedupeByEmail(rows: ImportMember[]): { unique: ImportMember[]; duplicates: number } {
-  const seen = new Set<string>();
-  const unique: ImportMember[] = [];
-  let duplicates = 0;
-  for (const r of rows) {
-    const key = (r.email || '').trim().toLowerCase();
-    if (!key) { unique.push(r); continue; }
-    if (seen.has(key)) { duplicates++; continue; }
-    seen.add(key); unique.push(r);
-  }
-  return { unique, duplicates };
-}
-
-const SOURCES = [
-  { id: 'csv' as ImportSource,        label: 'CSV File',    Icon: FileText,        color: '#059669', bg: '#ECFDF5', desc: 'Upload a .csv or .tsv file' },
-  { id: 'xlsx' as ImportSource,       label: 'Excel / XLS', Icon: FileSpreadsheet, color: '#1D6F42', bg: '#F0FDF4', desc: 'Upload .xlsx or .xls file' },
-  { id: 'eventbrite' as ImportSource, label: 'Eventbrite',  Icon: Calendar,        color: '#E07B39', bg: '#FFF3E8', desc: 'Import event attendees' },
-  { id: 'manual' as ImportSource,     label: 'Manual Entry',Icon: Plus,            color: '#7C3AED', bg: '#F5F3FF', desc: 'Add contacts one by one' },
-];
-
-export const ImportMembersDialog: React.FC<ImportMembersDialogProps> = ({ isOpen, onOpenChange, community, onSuccess }) => {
+export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess }: Props) {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState<DialogStep>('sources');
-  const [currentSource, setCurrentSource] = useState<ImportSource | null>(null);
-  const [doneSources, setDoneSources] = useState<Partial<Record<ImportSource, SourceDone>>>({});
-  const [totalImported, setTotalImported] = useState(0);
-  const [pendingMembers, setPendingMembers] = useState<ImportMember[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [ebToken, setEbToken] = useState('');
-  const [ebEventId, setEbEventId] = useState('');
-  const [ebEvents, setEbEvents] = useState<any[]>([]);
-  const [ebLoading, setEbLoading] = useState(false);
-  const [ebError, setEbError] = useState('');
-  const [manualForm, setManualForm] = useState({ name: '', email: '', phone: '', tags: '' });
-  const [importProgress, setImportProgress] = useState(0);
 
-  // ── Helpers ────────────────────────────────────────────────
-  const handleClose = (open: boolean) => {
-    if (!open) {
-      setStep('sources'); setCurrentSource(null); setPendingMembers([]);
-      setDoneSources({}); setTotalImported(0); setEbToken(''); setEbEventId(''); setEbEvents([]);
-      setEbError(''); setManualForm({ name: '', email: '', phone: '', tags: '' });
-      setImportProgress(0);
+  const [step, setStep] = useState<Step>('setup');
+  const [source, setSource] = useState<Source>('csv');
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setStep('setup');
+      setSource('csv');
+      setParseResult(null);
+      setActiveFilter(null);
+      setImporting(false);
     }
-    onOpenChange(open);
-  };
+  }, [isOpen]);
 
-  // KYPRO-27/29/30/31/32/62/28: unified file handling with strict validation,
-  // dedup, and detailed logs for both CSV/TSV and XLSX paths.
-  const handleFileUpload = useCallback(async (file: File) => {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    console.log('[KYPRO-import][upload] start', JSON.stringify({ name: file.name, ext, size: file.size }));
-    try {
-      let rows: string[][] = [];
-      if (ext === 'csv' || ext === 'tsv') {
-        const text = await file.text();
-        // KYPRO-62: TSV files always use tab, never autodetect (files often have commas inside cells).
-        const delimiter = ext === 'tsv' ? '\t' : detectDelimiter(text);
-        rows = parseDelimitedFile(text, delimiter);
-        console.log('[KYPRO-import][upload] parsed', JSON.stringify({ ext, delimiter: delimiter === '\t' ? 'TAB' : delimiter, rowCount: rows.length, firstRowCols: rows[0]?.length }));
-      } else if (ext === 'xlsx' || ext === 'xls') {
-        const XLSX = await import('xlsx');
-        const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' }) as string[][];
-        console.log('[KYPRO-import][upload] xlsx parsed', JSON.stringify({ sheetName: wb.SheetNames[0], rowCount: rows.length }));
-      } else {
-        toast({ title: 'Unsupported file', description: 'Please upload a .csv, .tsv, .xlsx or .xls file.', variant: 'destructive' });
-        return;
-      }
-
-      if (rows.length < 2) {
-        toast({ title: 'Empty file', description: 'File must contain a header row and at least one data row.', variant: 'destructive' });
-        return;
-      }
-
-      // KYPRO-27 / 29 / 32: require a valid header row with both name+email.
-      const validation = validateHeaders(rows[0]);
-      if (!validation.valid) {
-        console.warn('[KYPRO-import][upload] header_invalid', JSON.stringify({ error: validation.error, header: rows[0] }));
-        toast({ title: 'Invalid file', description: validation.error, variant: 'destructive' });
-        return;
-      }
-      if (validation.warnings?.length) {
-        toast({ title: 'Heads up', description: validation.warnings.join(' '), variant: 'default' });
-      }
-
-      // KYPRO-66/67: clip + KYPRO-31/38: dedupe by email.
-      const parsed = rowsToMembers(rows);
-      const { unique, duplicates } = dedupeByEmail(parsed);
-      console.log('[KYPRO-import][upload] parsed_members', JSON.stringify({ parsed: parsed.length, unique: unique.length, duplicates }));
-      if (duplicates > 0) {
-        toast({
-          title: `${duplicates} duplicate${duplicates === 1 ? '' : 's'} removed`,
-          description: `We detected ${duplicates} row${duplicates === 1 ? '' : 's'} with the same email and kept only the first occurrence.`,
-        });
-      }
-      setPendingMembers(unique);
+  const handleParsed = useCallback(
+    async (pr: ParseResult) => {
+      // Move to Preview immediately so the user sees their rows quickly.
+      setParseResult(pr);
       setStep('preview');
-    } catch (e: any) {
-      // KYPRO-28: surface xlsx parse errors instead of swallowing them.
-      console.error('[KYPRO-import][upload] parse_error', JSON.stringify({ ext, message: e?.message, name: e?.name }));
-      toast({ title: 'Could not parse file', description: e?.message || 'Unknown parse error.', variant: 'destructive' });
-    }
-  }, [toast]);
 
-  const fetchEbEvents = async () => {
-    if (!ebToken) return;
-    setEbLoading(true); setEbError('');
-    try {
-      const res = await fetch('/api/eventbrite/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: ebToken }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch events');
-      setEbEvents(data.events || []);
-    } catch (e: any) { setEbError(e.message || 'Failed to fetch events'); }
-    finally { setEbLoading(false); }
-  };
-
-  const fetchEbAttendees = async () => {
-    if (!ebToken || !ebEventId) return;
-    setEbLoading(true); setEbError('');
-    try {
-      const res = await fetch('/api/eventbrite/attendees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: ebToken, eventId: ebEventId }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
-      // KYPRO-70: Eventbrite returns one attendee row per ticket type. De-duplicate
-      // by email so a single person with 2 ticket types doesn't become 2 members.
-      const mapped = (data.attendees || []).map((a: any, i: number) => ({
-        _id: `eb-${i}`,
-        name: clip(`${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim(), MAX_NAME_LEN),
-        email: clip(a.profile?.email || '', MAX_EMAIL_LEN),
-        phone: clip(a.profile?.cell_phone || '', MAX_PHONE_LEN),
-        tags: 'eventbrite',
-        notes: clip(a.ticket_class_name || '', 500),
-      })) as ImportMember[];
-      const { unique, duplicates } = dedupeByEmail(mapped);
-      console.log('[KYPRO-70][eventbrite] attendees', JSON.stringify({ raw: mapped.length, unique: unique.length, duplicates }));
-      if (duplicates > 0) {
-        toast({
-          title: `${duplicates} duplicate attendee${duplicates === 1 ? '' : 's'} merged`,
-          description: `Eventbrite returned the same attendee across multiple ticket types. We kept one copy per email.`,
-        });
-      }
-      setPendingMembers(unique);
-      setStep('preview');
-    } catch (e: any) { setEbError(e.message || 'Failed'); }
-    finally { setEbLoading(false); }
-  };
-
-  const addManualMember = () => {
-    // KYPRO-33 / KYPRO-34: require BOTH a name AND an email. Previously we accepted
-    // "at least one of the two" which let blank rows slip through.
-    const name  = (manualForm.name || '').trim();
-    const email = (manualForm.email || '').trim();
-    const phone = (manualForm.phone || '').trim();
-    const tags  = (manualForm.tags  || '').trim();
-
-    if (!name) {
-      toast({ title: 'Name required', description: 'Please enter a name.', variant: 'destructive' });
-      return;
-    }
-    if (!email) {
-      toast({ title: 'Email required', description: 'Email is now required for all members.', variant: 'destructive' });
-      return;
-    }
-    // KYPRO-26 / KYPRO-37: enforce email format always (not just "if provided").
-    if (!EMAIL_RE.test(email)) {
-      toast({ title: 'Invalid Email', description: 'Please enter a valid email address.', variant: 'destructive' });
-      return;
-    }
-    // KYPRO-66: enforce length limits.
-    if (name.length > MAX_NAME_LEN) {
-      toast({ title: 'Name too long', description: `Names are limited to ${MAX_NAME_LEN} characters.`, variant: 'destructive' });
-      return;
-    }
-    if (email.length > MAX_EMAIL_LEN) {
-      toast({ title: 'Email too long', description: `Emails are limited to ${MAX_EMAIL_LEN} characters.`, variant: 'destructive' });
-      return;
-    }
-    // KYPRO-64: phone must be digits / + / spaces / hyphens / parens only.
-    if (phone && !/^[0-9+\-\s()]+$/.test(phone)) {
-      toast({ title: 'Invalid phone', description: 'Phone may only contain digits, spaces, + - and parentheses.', variant: 'destructive' });
-      return;
-    }
-
-    // KYPRO-38: reject duplicates against rows already in the preview.
-    const existingEmail = pendingMembers.find(m => (m.email || '').trim().toLowerCase() === email.toLowerCase());
-    if (existingEmail) {
-      toast({ title: 'Duplicate contact', description: `${email} is already in this import.`, variant: 'destructive' });
-      return;
-    }
-
-    console.log('[KYPRO-34][manual] add', JSON.stringify({ name, email, phone, tags }));
-    setPendingMembers(p => [...p, {
-      _id: `m-${Date.now()}`,
-      name: clip(name, MAX_NAME_LEN),
-      email: clip(email, MAX_EMAIL_LEN),
-      phone: clip(phone, MAX_PHONE_LEN),
-      tags: clip(tags, MAX_TAG_LEN * 10),
-      notes: '',
-    }]);
-    setManualForm({ name: '', email: '', phone: '', tags: '' });
-  };
-
-  // KYPRO-74: bulk import performance.
-  //
-  // Previous implementation did 4 sequential round-trips per row (users-query,
-  // auth-create, user-write, member-write) in a for/await loop — ~1-2s per row,
-  // ~17min for 1001 rows.
-  //
-  // Fixes applied here:
-  //  1. Pre-query existing users by email in ONE chunked `in` query instead of 1 query/row.
-  //  2. Run row workers with bounded concurrency (IMPORT_CONCURRENCY).
-  //  3. Replace addDoc/setDoc loops with Firestore writeBatch (up to 500 writes).
-  //  4. Still handle per-row errors gracefully and keep the progress bar responsive.
-  const runImport = async () => {
-    if (!community?.communityId || pendingMembers.length === 0) return;
-    const t0 = performance.now();
-    console.log('[KYPRO-74][import] start', JSON.stringify({ total: pendingMembers.length, source: currentSource }));
-    setStep('importing'); setImportProgress(0);
-
-    // 1. Pre-fetch existing user docs by email, in chunks of 10 (Firestore `in` limit).
-    const emails = Array.from(new Set(
-      pendingMembers.map(m => (m.email || '').trim().toLowerCase()).filter(Boolean)
-    ));
-    const existingByEmail = new Map<string, string>(); // email -> userId
-    for (let i = 0; i < emails.length; i += 10) {
-      const chunk = emails.slice(i, i + 10);
+      // Fetch existing community dedup keys and cross-mark in the background.
+      // We don't block the UI on this; the breakdown updates when keys arrive.
+      if (!user) return;
       try {
-        const snap = await getDocs(query(collection(db, 'users'), where('email', 'in', chunk)));
-        snap.forEach(d => {
-          const e = ((d.data() as any).email || '').toLowerCase();
-          if (e) existingByEmail.set(e, d.id);
-        });
-      } catch (e: any) {
-        // Fallback: per-email query chunk if composite index missing.
-        console.warn('[KYPRO-74][import] bulk_email_query_failed_fallback', JSON.stringify({ chunk, message: e?.message }));
-        for (const em of chunk) {
-          try {
-            const s = await getDocs(query(collection(db, 'users'), where('email', '==', em)));
-            if (!s.empty) existingByEmail.set(em, s.docs[0].id);
-          } catch {/* ignore */}
-        }
-      }
-    }
-    console.log('[KYPRO-74][import] existing_users_found', JSON.stringify({ emails: emails.length, matched: existingByEmail.size }));
-
-    // 2. Prepare per-row work. Auth create MUST still be serialised (Firebase SDK
-    //    mutates the app's auth session), but we keep concurrency on the Firestore
-    //    writes and user lookup.
-    interface PreparedRow { m: ImportMember; userId: string; ph: string; needsAuth: boolean; }
-    const prepared: PreparedRow[] = pendingMembers.map((m, i) => {
-      let ph = m.phone?.trim().replace(/\s+/g, '') || '';
-      if (ph && !ph.startsWith('+')) ph = '+' + ph;
-      const emailKey = (m.email || '').trim().toLowerCase();
-      const existingId = emailKey ? existingByEmail.get(emailKey) : null;
-      if (existingId) return { m, userId: existingId, ph, needsAuth: false };
-      // Deterministic fallback id so retries don't duplicate.
-      const fallbackId = `imported-${Date.now()}-${i}`;
-      return { m, userId: fallbackId, ph, needsAuth: !!(emailKey && emailKey.includes('@')) };
-    });
-
-    // 3. Run Firebase Auth creates in a small concurrency pool. We tolerate failures
-    //    (e.g. email-already-in-use means the user exists elsewhere — fall back to
-    //    the fallback id and still create the membership record).
-    let successCount = 0;
-    const errors: string[] = [];
-    let done = 0;
-    const bumpProgress = () => {
-      done++;
-      setImportProgress(Math.round((done / prepared.length) * 100));
-    };
-
-    // Work queue for auth creation (step 3a) + user doc write (step 3b).
-    let cursor = 0;
-    const authWorker = async () => {
-      while (cursor < prepared.length) {
-        const idx = cursor++;
-        const row = prepared[idx];
-        if (!row.needsAuth) continue;
-        try {
-          const cred = await createUserWithEmailAndPassword(communityAuth, row.m.email, Math.random().toString(36).slice(-10));
-          row.userId = cred.user.uid;
-        } catch (e: any) {
-          // auth/email-already-in-use etc. — keep fallback id, continue.
-          console.warn('[KYPRO-74][import] auth_create_failed', JSON.stringify({ email: row.m.email, code: e?.code, message: e?.message }));
-        }
-      }
-    };
-    await Promise.all(Array.from({ length: IMPORT_CONCURRENCY }, authWorker));
-    console.log('[KYPRO-74][import] auth_phase_done', JSON.stringify({ ms: Math.round(performance.now() - t0) }));
-
-    // 4. Firestore writeBatch for users + communityMembers. Up to 400 writes per batch.
-    //    Each row produces at most 2 writes (user doc + member doc), so we pack
-    //    ~200 rows per batch.
-    const ROWS_PER_BATCH = Math.floor(FIRESTORE_BATCH_SIZE / 2);
-    for (let i = 0; i < prepared.length; i += ROWS_PER_BATCH) {
-      const slice = prepared.slice(i, i + ROWS_PER_BATCH);
-      const batch = writeBatch(db);
-      for (const row of slice) {
-        try {
-          // Only write the user doc for brand-new users (needsAuth means we tried to create them).
-          if (row.needsAuth) {
-            batch.set(doc(db, 'users', row.userId), {
-              userId: row.userId,
-              displayName: row.m.name,
-              email: row.m.email,
-              phone: row.ph,
-              phoneNumber: row.ph,
-              wa_id: row.ph.replace(/\+/g, ''),
-              createdAt: serverTimestamp(),
-            }, { merge: true });
+        const idToken = await user.getIdToken();
+        const r = await fetch(
+          `/api/v1/communities/${community.communityId}/audience/dedup-keys`,
+          {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${idToken}` },
           }
-          // Always write the membership.
-          const memberRef = doc(collection(db, 'communityMembers'));
-          batch.set(memberRef, {
-            userId: row.userId,
-            communityId: community.communityId,
-            role: 'member',
-            status: 'active',
-            source: 'import',
-            importedAt: serverTimestamp(),
-            joinedAt: serverTimestamp(),
-            tags: row.m.tags ? row.m.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-            userDetails: {
-              displayName: row.m.name,
-              email: row.m.email,
-              phone: row.ph,
-              avatarUrl: null,
-            },
-          });
-        } catch (e: any) {
-          errors.push(`${row.m.email || row.m.name}: ${e?.message || 'unknown'}`);
-        }
+        );
+        if (!r.ok) return;
+        const data = (await r.json()) as { keys?: string[] };
+        const keys = new Set(data.keys || []);
+        if (keys.size === 0) return;
+        setParseResult((prev) => (prev ? markExistingMembers(prev, keys) : prev));
+      } catch (e) {
+        console.warn('[import] existing-dedup-keys fetch failed (continuing):', e);
       }
-      try {
-        await batch.commit();
-        successCount += slice.length;
-      } catch (e: any) {
-        console.error('[KYPRO-74][import] batch_commit_failed', JSON.stringify({ startIdx: i, size: slice.length, message: e?.message }));
-        errors.push(`Batch ${i}-${i + slice.length - 1}: ${e?.message || 'unknown'}`);
-      }
-      for (let j = 0; j < slice.length; j++) bumpProgress();
-    }
+    },
+    [user, community.communityId]
+  );
 
-    try {
-      await updateDoc(doc(db, 'communities', community.communityId), { memberCount: increment(successCount) });
-    } catch (_) {}
-
-    const elapsedMs = Math.round(performance.now() - t0);
-    console.log('[KYPRO-74][import] done', JSON.stringify({ successCount, errorCount: errors.length, elapsedMs, rowsPerSec: +(prepared.length / (elapsedMs / 1000)).toFixed(2) }));
-
-    setDoneSources(p => ({ ...p, [currentSource!]: { count: successCount, errors: errors.length } }));
-    setTotalImported(p => p + successCount);
-    onSuccess();
-    toast({
-      title: 'Import Complete',
-      description: `${successCount} of ${pendingMembers.length} members imported${errors.length ? ` (${errors.length} failed)` : ''} in ${(elapsedMs / 1000).toFixed(1)}s.`,
+  const toggleRow = useCallback((id: string) => {
+    setParseResult((prev) => {
+      if (!prev) return prev;
+      const rows = prev.rows.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r));
+      return { ...prev, rows, selectedCount: rows.filter((r) => r.selected).length };
     });
-    setTimeout(() => { setStep('sources'); setCurrentSource(null); setPendingMembers([]); setEditingId(null); }, 900);
-  };
+  }, []);
 
-  const selectSource = (src: ImportSource) => {
-    setCurrentSource(src); setPendingMembers([]); setEbError(''); setEbEvents([]);
-    setStep(src === 'manual' ? 'preview' : 'configure');
-  };
+  const toggleAllVisible = useCallback(() => {
+    setParseResult((prev) => {
+      if (!prev) return prev;
+      const visible = prev.rows.filter((r) =>
+        activeFilter ? r.country === activeFilter : true
+      );
+      const anyOff = visible.some((r) => !r.selected);
+      const target = anyOff;
+      const visibleIds = new Set(visible.map((r) => r.id));
+      const rows = prev.rows.map((r) =>
+        visibleIds.has(r.id) ? { ...r, selected: target } : r
+      );
+      return { ...prev, rows, selectedCount: rows.filter((r) => r.selected).length };
+    });
+  }, [activeFilter]);
+
+  const bulkSet = useCallback(
+    (target: boolean) => {
+      setParseResult((prev) => {
+        if (!prev || !activeFilter) return prev;
+        const rows = prev.rows.map((r) =>
+          r.country === activeFilter ? { ...r, selected: target } : r
+        );
+        return { ...prev, rows, selectedCount: rows.filter((r) => r.selected).length };
+      });
+    },
+    [activeFilter]
+  );
+
+  const keepOnly = useCallback(() => {
+    setParseResult((prev) => {
+      if (!prev || !activeFilter) return prev;
+      const rows = prev.rows.map((r) => ({
+        ...r,
+        selected: r.country === activeFilter,
+      }));
+      return { ...prev, rows, selectedCount: rows.filter((r) => r.selected).length };
+    });
+  }, [activeFilter]);
+
+  const handleCommit = useCallback(
+    async (tag: string, note: string) => {
+      if (!parseResult || !user) return;
+      setImporting(true);
+      try {
+        const rows = parseResult.rows
+          .filter((r) => r.selected)
+          .map((r) => ({
+            name: r.name || undefined,
+            email: r.email || undefined,
+            phone: r.phone || undefined,
+            phoneE164: r.phoneE164 || undefined,
+            country: r.country || undefined,
+          }));
+        const token = await user.getIdToken();
+        const res = await fetch(
+          `/api/v1/communities/${community.communityId}/audience/import`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ rows, tag, note, source }),
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+        toast({
+          title: 'Import complete',
+          description: `${data.imported} members added with tag "${tag}".`,
+        });
+        setStep('done');
+        onSuccess();
+        setTimeout(() => onOpenChange(false), 700);
+      } catch (e) {
+        toast({
+          title: 'Import failed',
+          description: (e as Error).message,
+          variant: 'destructive',
+        });
+      } finally {
+        setImporting(false);
+      }
+    },
+    [parseResult, user, community.communityId, source, toast, onSuccess, onOpenChange]
+  );
+
+  // ---- Footer per step ----
+  let footer: React.ReactNode = null;
+  let footerHint: React.ReactNode = null;
+
+  if (step === 'setup') {
+    footerHint = `${SOURCE_LABEL[source]} selected · no file uploaded yet`;
+    footer = <V06PrimaryButton disabled>Continue to preview →</V06PrimaryButton>;
+  } else if (step === 'preview' && parseResult) {
+    footerHint = (
+      <>
+        <strong style={{ color: V06.ink }}>
+          {parseResult.selectedCount.toLocaleString()} selected
+        </strong>
+        {' · '}
+        {parseResult.autoDeselected.total} auto-excluded
+      </>
+    );
+    footer = (
+      <>
+        <V06SecondaryButton onClick={() => setStep('setup')}>Back</V06SecondaryButton>
+        <V06PrimaryButton
+          onClick={() => setStep('confirm')}
+          disabled={parseResult.selectedCount === 0}
+        >
+          Continue →
+        </V06PrimaryButton>
+      </>
+    );
+  }
+  // The confirm step renders its own commit button inside the right panel; no footer.
+
+  // ---- Render ----
+  if (step === 'done') {
+    return (
+      <V06DialogShell
+        open={isOpen}
+        onClose={() => onOpenChange(false)}
+        title="Automatically Integrate"
+        subtitle="Import complete"
+        size="md"
+      >
+        <DoneBody onClose={() => onOpenChange(false)} />
+      </V06DialogShell>
+    );
+  }
+
+  if (step === 'confirm' && parseResult) {
+    return (
+      <V06DialogShell
+        open={isOpen}
+        onClose={() => onOpenChange(false)}
+        title="Automatically Integrate"
+        subtitle="Confirm · tag this import & review"
+        size="xl"
+        leftPanel={<ConfirmSummary result={parseResult} source={source} />}
+        rightPanel={
+          <ConfirmForm
+            result={parseResult}
+            source={source}
+            importing={importing}
+            onCommit={handleCommit}
+            onBack={() => setStep('preview')}
+          />
+        }
+      />
+    );
+  }
+
+  if (step === 'preview' && parseResult) {
+    return (
+      <V06DialogShell
+        open={isOpen}
+        onClose={() => onOpenChange(false)}
+        title="Automatically Integrate"
+        subtitle={`Preview · ${parseResult.totalRows.toLocaleString()} contacts found`}
+        size="xl"
+        leftPanel={
+          <PreviewFilters
+            result={parseResult}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            onBulkSet={bulkSet}
+            onKeepOnly={keepOnly}
+          />
+        }
+        rightPanel={
+          <PreviewTable
+            result={parseResult}
+            activeFilter={activeFilter}
+            onToggleRow={toggleRow}
+            onToggleAllVisible={toggleAllVisible}
+          />
+        }
+        footer={footer}
+        footerHint={footerHint}
+      />
+    );
+  }
+
+  // Default: setup
+  return (
+    <V06DialogShell
+      open={isOpen}
+      onClose={() => onOpenChange(false)}
+      title="Automatically Integrate"
+      subtitle="Consolidate contacts from multiple sources"
+      size="xl"
+      leftPanel={<SourceList active={source} onChange={setSource} />}
+      rightPanel={
+        <>
+          {(source === 'csv' || source === 'xlsx') && (
+            <FileUploadPanel kind={source} onParsed={handleParsed} />
+          )}
+          {source === 'eventbrite' && <EventbritePanel onParsed={handleParsed} />}
+          {source === 'gsheets' && <GoogleSheetsPanel onParsed={handleParsed} />}
+        </>
+      }
+      footer={footer}
+      footerHint={footerHint}
+    />
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Setup — left source list                                                  */
+/* -------------------------------------------------------------------------- */
+
+function SourceList({
+  active,
+  onChange,
+}: {
+  active: Source;
+  onChange: (s: Source) => void;
+}) {
+  const items: Array<{
+    id: Source;
+    name: string;
+    desc: string;
+    Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+    tint: string;
+    inkTint: string;
+  }> = [
+    { id: 'csv', name: 'CSV File', desc: '.csv or .tsv', Icon: FileText, tint: '#D4F4DC', inkTint: '#198754' },
+    { id: 'xlsx', name: 'Excel / XLS', desc: '.xlsx or .xls', Icon: FileSpreadsheet, tint: '#D4F4DC', inkTint: '#198754' },
+    { id: 'eventbrite', name: 'Eventbrite', desc: 'Import event attendees', Icon: Calendar, tint: '#FDD9C1', inkTint: '#B45309' },
+    { id: 'gsheets', name: 'Google Sheets', desc: 'Paste a shared sheet URL', Icon: FileSpreadsheet, tint: '#E8DEF8', inkTint: '#7C3AED' },
+  ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl w-full p-0 gap-0 overflow-hidden [&>button:last-of-type]:hidden" style={{ maxHeight: '90vh' }}>
-        <VisuallyHidden>
-          <DialogTitle>Import Members</DialogTitle>
-        </VisuallyHidden>
-
-        {/* Gradient header */}
-        <div className="px-6 py-5 flex items-center justify-between flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Automatically Integrate</h2>
-              <p className="text-white/80 text-sm">Consolidate contacts from multiple sources</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {totalImported > 0 && (
-              <span className="bg-white/20 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                {totalImported} imported
-              </span>
-            )}
-            <button onClick={() => handleClose(false)} className="text-white/70 hover:text-white">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
-
-          {/* ── Sources hub ── */}
-          {step === 'sources' && (
-            <div className="p-6">
-              <p className="text-sm mb-5" style={{ color: '#8B7355' }}>
-                Choose a source below. You can import from multiple sources — members accumulate.
-              </p>
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {SOURCES.map(({ id, label, Icon, color, bg, desc }) => {
-                  const done = doneSources[id];
-                  return (
-                    <button key={id} onClick={() => selectSource(id)}
-                      className="flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all hover:shadow-md hover:-translate-y-0.5"
-                      style={{ borderColor: done ? '#10b981' : '#E8DFD1', backgroundColor: done ? '#f0fdf4' : 'white' }}>
-                      <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: bg, color }}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm" style={{ color: '#3D2E1E' }}>{label}</p>
-                        <p className="text-xs mt-0.5 truncate" style={{ color: '#8B7355' }}>
-                          {done ? `${done.count} contacts imported` : desc}
-                        </p>
-                      </div>
-                      <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center ${done ? 'bg-green-500' : 'border-2'}`} style={done ? {} : { borderColor: '#E8DFD1' }}>
-                        {done && <Check className="h-3.5 w-3.5 text-white" />}
-                      </div>
-                    </button>
-                  );
-                })}
+    <>
+      <div>
+        <h3 className="text-[13px] font-bold mb-1" style={{ color: V06.ink }}>Source</h3>
+        <p className="text-[11.5px]" style={{ color: V06.warmMid }}>
+          Pick one. Finish, then re-open for another.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2">
+        {items.map((it) => {
+          const isActive = it.id === active;
+          return (
+            <button
+              key={it.id}
+              onClick={() => onChange(it.id)}
+              className="flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors"
+              style={{
+                borderColor: isActive ? V06.warmDeep : V06.ruleSoft,
+                background: isActive ? V06.warmDeep : 'white',
+                color: isActive ? 'white' : V06.ink,
+              }}
+            >
+              <div
+                className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0"
+                style={{ background: it.tint }}
+              >
+                <it.Icon className="w-4 h-4" style={{ color: it.inkTint }} />
               </div>
-              {totalImported > 0 && (
-                <div className="flex gap-3 pt-4 border-t" style={{ borderColor: '#E8DFD1' }}>
-                  <Button variant="outline" className="flex-1" onClick={() => handleClose(false)} style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>Close</Button>
-                  <Button className="flex-1" onClick={() => handleClose(false)} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    <Users className="h-4 w-4 mr-2" />View {totalImported} Members
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Configure: CSV / XLSX ── */}
-          {step === 'configure' && (currentSource === 'csv' || currentSource === 'xlsx') && (
-            <div className="p-6 space-y-4">
-              <button onClick={() => setStep('sources')} className="text-sm flex items-center gap-1 mb-2 hover:underline" style={{ color: '#8B7355' }}>
-                <ChevronLeft className="h-4 w-4" />Back to sources
-              </button>
-              <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>Upload {currentSource === 'csv' ? 'CSV / TSV' : 'Excel'} File</h3>
-              <p className="text-sm" style={{ color: '#8B7355' }}>Columns recognised: <strong>Name, Email, Phone, Tags</strong> (header row required)</p>
-              <div className="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-                style={{ borderColor: '#E8DFD1' }} onClick={() => fileInputRef.current?.click()}>
-                <Upload className="h-8 w-8 mx-auto mb-2" style={{ color: '#B0A090' }} />
-                <p className="text-sm font-medium" style={{ color: '#5B4A3A' }}>Click to browse or drag & drop</p>
-                <p className="text-xs mt-1" style={{ color: '#8B7355' }}>{currentSource === 'csv' ? '.csv, .tsv' : '.xlsx, .xls'} accepted</p>
-                <input ref={fileInputRef} type="file" accept={currentSource === 'csv' ? '.csv,.tsv' : '.xlsx,.xls'} className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
-              </div>
-            </div>
-          )}
-
-          {/* ── Configure: Eventbrite ── */}
-          {step === 'configure' && currentSource === 'eventbrite' && (
-            <div className="p-6 space-y-4">
-              <button onClick={() => setStep('sources')} className="text-sm flex items-center gap-1 mb-2 hover:underline" style={{ color: '#8B7355' }}>
-                <ChevronLeft className="h-4 w-4" />Back to sources
-              </button>
-              <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>Connect Eventbrite</h3>
-              <div>
-                <label className="text-xs font-medium block mb-1" style={{ color: '#8B7355' }}>Private API Token</label>
-                <input value={ebToken} onChange={e => setEbToken(e.target.value)} placeholder="Paste your Eventbrite private token…"
-                  className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none" style={{ borderColor: '#E8DFD1' }} />
-                <p className="text-xs mt-1" style={{ color: '#B0A090' }}>Eventbrite → Account Settings → Developer Links → API Keys</p>
-              </div>
-              {ebEvents.length === 0 ? (
-                // KYPRO-72: removed the redundant 'Back' button — users already have the
-                // '← Back to sources' breadcrumb link at the top of this screen.
-                <div className="flex gap-3 pt-2">
-                  <Button size="sm" onClick={fetchEbEvents} disabled={ebLoading || !ebToken} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    {ebLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Loading Events…</> : 'Load Events'}
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <label className="text-xs font-medium block mb-1" style={{ color: '#8B7355' }}>Select Event</label>
-                    <select value={ebEventId} onChange={e => setEbEventId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none" style={{ borderColor: '#E8DFD1' }}>
-                      <option value="">Choose an event…</option>
-                      {ebEvents.map(evt => (
-                        <option key={evt.id} value={evt.id}>{evt.name?.text || evt.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <Button variant="outline" size="sm" onClick={() => { setEbEvents([]); setEbEventId(''); }} style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}>Change Token</Button>
-                    <Button size="sm" onClick={fetchEbAttendees} disabled={ebLoading || !ebEventId} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                      {ebLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Fetching Attendees…</> : 'Fetch Attendees'}
-                    </Button>
-                  </div>
-                </>
-              )}
-              {ebError && <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" />{ebError}</p>}
-            </div>
-          )}
-
-          {/* ── Preview & Edit ── */}
-          {step === 'preview' && (
-            <div className="p-6 space-y-4">
-              {/* KYPRO-63 / KYPRO-73: a single 'Back' button only. The old header had a
-                  top-right 'Import N' button that duplicated the footer 'Import N Members'
-                  button. Now the import action lives only in the footer. */}
-              <div className="flex items-center justify-between">
-                <button onClick={() => { setStep(currentSource === 'manual' ? 'sources' : 'configure'); setPendingMembers([]); }}
-                  className="text-sm flex items-center gap-1 hover:underline" style={{ color: '#8B7355' }}>
-                  <ChevronLeft className="h-4 w-4" />{currentSource === 'manual' ? 'Back to sources' : 'Back'}
-                </button>
-                <h3 className="font-semibold" style={{ color: '#3D2E1E' }}>
-                  {currentSource === 'manual' ? 'Add Manually' : `Preview — ${pendingMembers.length} contacts`}
-                </h3>
-                {/* spacer to keep the back button left-aligned and header centered */}
-                <span style={{ minWidth: 80 }} />
-              </div>
-
-              {currentSource === 'manual' && (
-                // KYPRO-35: use a real <form> so the browser only responds to Enter in
-                // the way we expect (preventDefault + call addManualMember). The Tags
-                // field no longer triggers "premature import" — it only adds one row.
-                // KYPRO-66: maxLength on each input so the browser itself caps long strings.
-                <form
-                  className="p-4 rounded-xl border space-y-3"
-                  style={{ borderColor: '#E8DFD1', backgroundColor: '#FDFAF7' }}
-                  onSubmit={e => { e.preventDefault(); addManualMember(); }}
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold">{it.name}</div>
+                <div
+                  className="text-[11px]"
+                  style={{ color: isActive ? 'rgba(255,255,255,0.7)' : V06.warmMid }}
                 >
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {(['name', 'email', 'phone', 'tags'] as const).map(f => {
-                      const maxLen = f === 'name' ? MAX_NAME_LEN
-                        : f === 'email' ? MAX_EMAIL_LEN
-                        : f === 'phone' ? MAX_PHONE_LEN
-                        : MAX_TAG_LEN * 10;
-                      return (
-                        <div key={f}>
-                          <label className="text-xs font-medium block mb-1 capitalize" style={{ color: '#8B7355' }}>{f}</label>
-                          <input
-                            value={manualForm[f]}
-                            onChange={e => setManualForm(p => ({ ...p, [f]: e.target.value }))}
-                            placeholder={f === 'tags' ? 'tag1, tag2' : f}
-                            maxLength={maxLen}
-                            type={f === 'email' ? 'email' : f === 'phone' ? 'tel' : 'text'}
-                            className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none"
-                            style={{ borderColor: '#E8DFD1' }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <Button type="submit" size="sm" style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    <Plus className="h-3.5 w-3.5 mr-1" />Add
-                  </Button>
-                </form>
-              )}
-
-              {pendingMembers.length > 0 ? (
-                // KYPRO-67: fixed table layout + per-column widths + cell truncation so
-                // a 500-char name can no longer push the edit/delete buttons off-screen.
-                <div className="overflow-auto rounded-xl border" style={{ borderColor: '#E8DFD1', maxHeight: '40vh' }}>
-                  <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
-                    <colgroup>
-                      <col style={{ width: '32px' }} />
-                      <col style={{ width: '22%' }} />{/* name */}
-                      <col style={{ width: '28%' }} />{/* email */}
-                      <col style={{ width: '15%' }} />{/* phone */}
-                      <col style={{ width: '12%' }} />{/* tags */}
-                      <col style={{ width: '15%' }} />{/* notes */}
-                      <col style={{ width: '64px' }} />
-                    </colgroup>
-                    <thead>
-                      <tr style={{ backgroundColor: '#F5F0EB' }}>
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: '#8B7355' }}>#</th>
-                        {['name', 'email', 'phone', 'tags', 'notes'].map(col => (
-                          <th key={col} className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: '#8B7355' }}>{col}</th>
-                        ))}
-                        <th className="px-4" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pendingMembers.map((m, i) => (
-                        <tr key={m._id} className="border-t hover:bg-amber-50/30" style={{ borderColor: '#F0EBE3' }}>
-                          <td className="px-4 py-2 text-xs" style={{ color: '#B0A090' }}>{i + 1}</td>
-                          {(['name', 'email', 'phone', 'tags', 'notes'] as const).map(col => {
-                            const maxLen = col === 'name' ? MAX_NAME_LEN
-                              : col === 'email' ? MAX_EMAIL_LEN
-                              : col === 'phone' ? MAX_PHONE_LEN
-                              : col === 'tags' ? MAX_TAG_LEN * 10
-                              : 500;
-                            return (
-                              <td key={col} className="px-2 py-1.5" style={{ maxWidth: 0 }}>
-                                {editingId === m._id
-                                  ? <input
-                                      value={m[col]}
-                                      maxLength={maxLen}
-                                      // KYPRO-64: phone must stay numeric-ish even in inline edit.
-                                      onChange={e => {
-                                        const v = col === 'phone' ? e.target.value.replace(/[^0-9+\-\s()]/g, '') : e.target.value;
-                                        setPendingMembers(p => p.map(x => x._id === m._id ? { ...x, [col]: v } : x));
-                                      }}
-                                      className="w-full px-2 py-1 rounded border text-sm focus:outline-none"
-                                      style={{ borderColor: '#E8DFD1' }}
-                                    />
-                                  : <span
-                                      className="px-2 block overflow-hidden text-ellipsis whitespace-nowrap"
-                                      title={m[col] || ''}
-                                      style={{ color: m[col] ? '#3D2E1E' : '#C0B0A0' }}
-                                    >{m[col] || '—'}</span>}
-                              </td>
-                            );
-                          })}
-                          <td className="px-2 py-1.5">
-                            <div className="flex gap-1">
-                              <button onClick={() => setEditingId(editingId === m._id ? null : m._id)}>
-                                {editingId === m._id ? <Save className="h-3.5 w-3.5 text-green-600" /> : <Edit2 className="h-3.5 w-3.5" style={{ color: '#B0A090' }} />}
-                              </button>
-                              <button onClick={() => setPendingMembers(p => p.filter(x => x._id !== m._id))}>
-                                <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {it.desc}
                 </div>
-              ) : currentSource !== 'manual' && (
-                <div className="text-center py-12 text-sm" style={{ color: '#B0A090' }}>No contacts loaded.</div>
-              )}
-
-              {pendingMembers.length > 0 && (
-                <div className="flex justify-end pt-2">
-                  <Button onClick={runImport} style={{ backgroundColor: '#5B4A3A', color: 'white' }}>
-                    <Download className="h-4 w-4 mr-2" />Import {pendingMembers.length} Members
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Importing progress ── */}
-          {step === 'importing' && (
-            <div className="p-10 text-center">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: '#5B4A3A' }} />
-              <h3 className="font-bold text-lg mb-1" style={{ color: '#3D2E1E' }}>Importing Members…</h3>
-              <p className="text-sm mb-5" style={{ color: '#8B7355' }}>Please wait, do not close this window.</p>
-              <div className="w-full max-w-xs mx-auto bg-gray-100 rounded-full h-3 overflow-hidden">
-                <div className="h-3 rounded-full transition-all duration-300" style={{ width: `${importProgress}%`, backgroundColor: '#5B4A3A' }} />
               </div>
-              <p className="text-sm font-semibold mt-2" style={{ color: '#5B4A3A' }}>{importProgress}%</p>
+            </button>
+          );
+        })}
+      </div>
+      <div
+        className="mt-auto p-3 rounded-lg text-[11.5px] leading-snug"
+        style={{ background: V06.bgSoft, color: V06.warmMid }}
+      >
+        <strong style={{ color: V06.ink }}>One source per session.</strong> Members accumulate
+        across sessions in the database.
+      </div>
+    </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Setup right panels                                                        */
+/* -------------------------------------------------------------------------- */
+
+function FileUploadPanel({
+  kind,
+  onParsed,
+}: {
+  kind: 'csv' | 'xlsx';
+  onParsed: (pr: ParseResult) => void;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      setBusy(true);
+      setError(null);
+      try {
+        if (kind === 'csv') {
+          const text = await file.text();
+          const result = parseCsv(text);
+          if (result.rows.length === 0) throw new Error('File has no parseable rows.');
+          onParsed(result);
+        } else {
+          const XLSX = await import('xlsx');
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+          const sheetName = wb.SheetNames[0];
+          if (!sheetName) throw new Error('Workbook has no sheets.');
+          const grid = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[sheetName], {
+            header: 1,
+            defval: '',
+          }) as string[][];
+          if (grid.length === 0) throw new Error('Sheet has no rows.');
+          const stringGrid = grid.map((row) => row.map((cell) => String(cell ?? '')));
+          const result = parseGrid(stringGrid, { hasHeader: true });
+          if (result.rows.length === 0) throw new Error('Sheet has no parseable rows.');
+          onParsed(result);
+        }
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [kind, onParsed]
+  );
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>
+          Upload your {kind === 'csv' ? 'CSV' : 'Excel file'}
+        </h3>
+        <p className="text-[12.5px]" style={{ color: V06.warmMid }}>
+          {kind === 'csv' ? 'Phone export or Google Contacts export.' : 'XLSX or XLS. First sheet is parsed.'}
+        </p>
+      </div>
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const file = e.dataTransfer.files[0];
+          if (file) handleFile(file);
+        }}
+        onClick={() => inputRef.current?.click()}
+        className="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors"
+        style={{
+          borderColor: dragOver ? V06.warmDeep : V06.rule,
+          background: dragOver ? V06.bgSoft : V06.bgCard,
+        }}
+      >
+        {busy ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-7 h-7 animate-spin" style={{ color: V06.warmDeep }} />
+            <div className="text-sm" style={{ color: V06.warmMid }}>Parsing…</div>
+          </div>
+        ) : (
+          <>
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+              style={{ background: V06.bgSoft }}
+            >
+              <Upload className="w-6 h-6" style={{ color: V06.warmDeep }} />
+            </div>
+            <div className="text-[15px] font-semibold mb-1" style={{ color: V06.ink }}>
+              Drop your {kind === 'csv' ? 'CSV' : 'Excel'} here
+            </div>
+            <div className="text-[12px] mb-3" style={{ color: V06.warmMid }}>
+              or click to browse
+            </div>
+            <span
+              className="inline-block px-4 py-2 rounded-md text-[12px] font-semibold"
+              style={{ background: V06.btnActionBg, color: V06.btnActionInk }}
+            >
+              Choose file
+            </span>
+            <div className="text-[10.5px] mt-3" style={{ color: V06.warmLight }}>
+              {kind === 'csv' ? '.CSV · .TSV · UTF-8 preferred' : '.XLSX · .XLS'}
+            </div>
+          </>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={kind === 'csv' ? '.csv,.tsv,text/csv' : '.xlsx,.xls'}
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+          }}
+        />
+      </div>
+
+      {error && <ErrorBlock message={error} />}
+    </div>
+  );
+}
+
+/**
+ * Eventbrite returns event objects with i18n-shaped fields:
+ *   name:  { text: string; html: string }
+ *   start: { timezone: string; local: string; utc: string }
+ * and venues + ticket classes only when explicitly `expand`ed.
+ *
+ * Normalize each event down to the flat shape our UI renders. Anything we
+ * couldn't parse falls back to a sensible empty string — never an object
+ * (React renders strings, not objects).
+ */
+function normalizeEvent(raw: any): EventbriteEvent {
+  let name = '';
+  if (typeof raw?.name === 'string') name = raw.name;
+  else if (typeof raw?.name?.text === 'string') name = raw.name.text;
+
+  let start = '';
+  if (typeof raw?.start === 'string') start = raw.start;
+  else if (typeof raw?.start?.local === 'string') start = raw.start.local;
+  else if (typeof raw?.start?.utc === 'string') start = raw.start.utc;
+
+  let venue = '';
+  if (typeof raw?.venue?.name === 'string') venue = raw.venue.name;
+  else if (typeof raw?.venue?.address?.localized_address_display === 'string') {
+    venue = raw.venue.address.localized_address_display;
+  }
+
+  // Total capacity / sold count when ticket_classes are expanded; otherwise blank.
+  let attendeeCount: number | undefined;
+  if (Array.isArray(raw?.ticket_classes)) {
+    let sold = 0;
+    for (const t of raw.ticket_classes) {
+      const n = typeof t?.quantity_sold === 'number' ? t.quantity_sold : 0;
+      sold += n;
+    }
+    if (sold > 0) attendeeCount = sold;
+  }
+
+  return {
+    id: String(raw?.id || ''),
+    name,
+    start,
+    venue,
+    attendeeCount,
+  };
+}
+
+/**
+ * Attendee response shape is `{ profile: { name, email, cell_phone, ... } }`.
+ * Pull from `profile.*` and fall back to whatever's at the top level.
+ */
+function attendeeRow(raw: any): [string, string, string] {
+  const p = raw?.profile || {};
+  const name =
+    p.name ||
+    [p.first_name, p.last_name].filter(Boolean).join(' ') ||
+    raw?.name ||
+    '';
+  const email = p.email || raw?.email || '';
+  const phone = p.cell_phone || raw?.cell_phone || raw?.phone || '';
+  return [sanitizeCell(String(name)), sanitizeCell(String(email)), sanitizeCell(String(phone))];
+}
+
+function EventbritePanel({ onParsed }: { onParsed: (pr: ParseResult) => void }) {
+  const [phase, setPhase] = useState<
+    'connect' | 'events' | 'loading_events' | 'loading_attendees'
+  >('connect');
+  const [token, setToken] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<EventbriteEvent[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+
+  async function loadEvents() {
+    if (!token.trim()) return;
+    setPhase('loading_events');
+    setError(null);
+    try {
+      const r = await fetch('/api/eventbrite/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token.trim() }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || 'Failed to load events');
+      const normalized = Array.isArray(data.events) ? data.events.map(normalizeEvent) : [];
+      setEvents(normalized);
+      setPhase('events');
+    } catch (e) {
+      setError((e as Error).message);
+      setPhase('connect');
+    }
+  }
+
+  async function loadAttendees(eventId: string) {
+    setSelectedEvent(eventId);
+    setPhase('loading_attendees');
+    setError(null);
+    try {
+      const r = await fetch('/api/eventbrite/attendees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token.trim(), eventId }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || 'Failed to load attendees');
+      const rawAttendees = Array.isArray(data.attendees) ? data.attendees : [];
+      const grid: string[][] = [
+        ['name', 'email', 'phone'],
+        ...rawAttendees.map(attendeeRow),
+      ];
+      const result = parseGrid(grid, { hasHeader: true });
+      if (result.rows.length === 0) {
+        throw new Error(
+          'No attendees with contact info on this event yet. Try a different event.'
+        );
+      }
+      onParsed(result);
+    } catch (e) {
+      setError((e as Error).message);
+      setPhase('events');
+    }
+  }
+
+  if (phase === 'connect' || phase === 'loading_events') {
+    return (
+      <div>
+        <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>Connect Eventbrite</h3>
+        <p className="text-[12.5px] mb-4" style={{ color: V06.warmMid }}>
+          Paste your <strong>Private token</strong> to load your events. Not the API key —
+          Eventbrite uses the Private token to authenticate API calls.
+        </p>
+        <FieldLabel>PRIVATE TOKEN</FieldLabel>
+        <input
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="e.g. ANJ7O62BP4X7CBMZBAOF"
+          className="w-full px-3.5 py-2.5 rounded-lg text-sm font-mono"
+          style={{ background: V06.bgCard, border: `1.5px solid ${V06.ruleSoft}` }}
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <div className="text-[11.5px] mt-1.5 leading-snug" style={{ color: V06.warmMid }}>
+          Eventbrite → <strong>Account Settings</strong> → <strong>Developer Links</strong> →{' '}
+          <strong>API Keys</strong> → expand your key → copy the <strong>Private token</strong>{' '}
+          (not the API key, Client secret, or Public token).
+        </div>
+        <div className="mt-4">
+          <V06ActionButton onClick={loadEvents} disabled={!token.trim() || phase === 'loading_events'}>
+            {phase === 'loading_events' ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Loading events…
+              </span>
+            ) : (
+              'Load events'
+            )}
+          </V06ActionButton>
+        </div>
+        {error && <ErrorBlock message={error} />}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>Pick an event</h3>
+      <p className="text-[12.5px] mb-4" style={{ color: V06.warmMid }}>
+        Attendees flow into the same Preview.
+      </p>
+      <div className="flex flex-col gap-2 rounded-xl overflow-hidden" style={{ border: `1.5px solid ${V06.ruleSoft}` }}>
+        {events.length === 0 && (
+          <div className="text-[12.5px] italic p-4" style={{ color: V06.warmMid }}>
+            No events found on this account.
+          </div>
+        )}
+        {events.map((ev, idx) => {
+          const isLoading = phase === 'loading_attendees' && selectedEvent === ev.id;
+          const isSelected = selectedEvent === ev.id;
+          return (
+            <EventRow
+              key={ev.id}
+              event={ev}
+              isLoading={isLoading}
+              isSelected={isSelected}
+              isFirst={idx === 0}
+              disabled={phase === 'loading_attendees'}
+              onClick={() => loadAttendees(ev.id)}
+            />
+          );
+        })}
+      </div>
+      {error && <ErrorBlock message={error} />}
+    </div>
+  );
+}
+
+/**
+ * Single event row in the Eventbrite picker.
+ *
+ * Layout mirrors the v0.6 mockup:
+ *   [ cream date block ]   bold title          ··· N attendees   ( ◉ )
+ *                          venue · status
+ */
+function EventRow({
+  event,
+  isLoading,
+  isSelected,
+  isFirst,
+  disabled,
+  onClick,
+}: {
+  event: EventbriteEvent;
+  isLoading: boolean;
+  isSelected: boolean;
+  isFirst: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  let month = '';
+  let day = '';
+  if (event.start) {
+    const d = new Date(event.start);
+    if (!Number.isNaN(d.valueOf())) {
+      month = d.toLocaleDateString(undefined, { month: 'short' }).toUpperCase();
+      day = String(d.getDate());
+    }
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-4 px-4 py-3 text-left disabled:opacity-60 transition-colors"
+      style={{
+        background: isSelected ? V06.bgSoft : 'white',
+        borderTop: isFirst ? 'none' : `1px solid ${V06.ruleSoft}`,
+      }}
+    >
+      <div
+        className="w-14 h-14 rounded-lg flex flex-col items-center justify-center flex-shrink-0"
+        style={{ background: V06.bgSoft }}
+      >
+        <div
+          className="text-[10px] font-bold leading-none"
+          style={{ color: V06.warmDeep, letterSpacing: '0.08em' }}
+        >
+          {month || '—'}
+        </div>
+        <div
+          className="text-[20px] font-bold leading-none mt-1"
+          style={{ color: V06.warmDeep, fontFamily: 'Georgia, serif' }}
+        >
+          {day || '?'}
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[14px] font-bold truncate" style={{ color: V06.ink }}>
+          {event.name || 'Untitled event'}
+        </div>
+        <div className="text-[12px] truncate" style={{ color: V06.warmMid }}>
+          {event.venue || ' '}
+        </div>
+      </div>
+      <div
+        className="text-[12.5px] flex-shrink-0 whitespace-nowrap"
+        style={{ color: V06.warmMid }}
+      >
+        <strong style={{ color: V06.ink }}>
+          {typeof event.attendeeCount === 'number' ? event.attendeeCount : '—'}
+        </strong>{' '}
+        attendees
+      </div>
+      <div
+        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{
+          border: `2px solid ${isSelected ? V06.warmDeep : V06.warmLight}`,
+          background: 'white',
+        }}
+      >
+        {isLoading ? (
+          <Loader2 className="w-3 h-3 animate-spin" style={{ color: V06.warmDeep }} />
+        ) : isSelected ? (
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ background: V06.warmDeep }}
+          />
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+function GoogleSheetsPanel({ onParsed }: { onParsed: (pr: ParseResult) => void }) {
+  const [url, setUrl] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function extractSheetId(s: string): string | null {
+    const m = s.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : null;
+  }
+
+  async function load() {
+    setError(null);
+    const id = extractSheetId(url);
+    if (!id) {
+      setError('Could not find a sheet id in that URL. Paste the full Google Sheets URL.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await fetch(
+        `https://docs.google.com/spreadsheets/d/${id}/export?format=csv`,
+        { method: 'GET' }
+      );
+      if (!r.ok) {
+        throw new Error(
+          `Couldn't fetch the sheet (HTTP ${r.status}). Make sure it's shared as "Anyone with the link can view".`
+        );
+      }
+      const text = await r.text();
+      const result = parseCsv(text);
+      if (result.rows.length === 0) throw new Error('Sheet has no parseable rows.');
+      onParsed(result);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>Load a Google Sheet</h3>
+      <p className="text-[12.5px] mb-4" style={{ color: V06.warmMid }}>
+        Share the sheet as <strong>"Anyone with the link can view"</strong>, then paste its URL.
+      </p>
+      <FieldLabel>SHEET URL</FieldLabel>
+      <input
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="https://docs.google.com/spreadsheets/d/…"
+        className="w-full px-3.5 py-2.5 rounded-lg text-sm"
+        style={{ background: V06.bgCard, border: `1.5px solid ${V06.ruleSoft}` }}
+      />
+      <div className="mt-4">
+        <V06ActionButton onClick={load} disabled={!url.trim() || busy}>
+          {busy ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading sheet…
+            </span>
+          ) : (
+            'Load sheet'
+          )}
+        </V06ActionButton>
+      </div>
+      {error && <ErrorBlock message={error} />}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Preview                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const COUNTRY_LABEL: Record<string, string> = {
+  HK: 'HK +852',
+  GB: 'UK +44',
+  US: 'US +1',
+  SG: 'SG +65',
+  AU: 'AU +61',
+  CA: 'CA +1',
+  IN: 'IN +91',
+  FR: 'FR +33',
+  DE: 'DE +49',
+  JP: 'JP +81',
+};
+
+function PreviewFilters({
+  result,
+  activeFilter,
+  onFilterChange,
+  onBulkSet,
+  onKeepOnly,
+}: {
+  result: ParseResult;
+  activeFilter: string | null;
+  onFilterChange: (c: string | null) => void;
+  onBulkSet: (target: boolean) => void;
+  onKeepOnly: () => void;
+}) {
+  const visibleCount = activeFilter
+    ? result.rows.filter((r) => r.country === activeFilter).length
+    : result.totalRows;
+
+  return (
+    <>
+      <div>
+        <h3 className="text-[13px] font-bold mb-1" style={{ color: V06.ink }}>Filter</h3>
+        <p className="text-[11.5px]" style={{ color: V06.warmMid }}>
+          Trim before importing.
+        </p>
+      </div>
+
+      {result.autoDeselected.total > 0 && (
+        <div
+          className="p-3 rounded-md text-[11.5px] leading-snug"
+          style={{ background: V06.bgSoft, color: V06.warmMid }}
+        >
+          <strong style={{ color: V06.ink }}>
+            {result.autoDeselected.total} auto-deselected
+          </strong>
+          {' · '}
+          {[
+            result.autoDeselected.empty > 0
+              ? `${result.autoDeselected.empty} no contact info`
+              : null,
+            result.autoDeselected.duplicates > 0
+              ? `${result.autoDeselected.duplicates} duplicates in file`
+              : null,
+            result.autoDeselected.existing > 0
+              ? `${result.autoDeselected.existing} already members`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(', ')}
+          {result.autoDeselected.existing > 0 && (
+            <div className="mt-1.5 text-[11px]" style={{ color: V06.warmMid }}>
+              Re-tick any row to re-import it (the server merges on email/phone,
+              so no duplicate is created).
             </div>
           )}
-
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+
+      {result.countryGroups.length > 0 && (
+        <div>
+          <div
+            className="text-[10.5px] font-bold uppercase mb-2"
+            style={{ color: V06.warmMid, letterSpacing: '0.12em' }}
+          >
+            By country code
+          </div>
+          <div className="flex flex-col gap-1">
+            <FilterRow
+              label="All"
+              count={result.totalRows}
+              active={activeFilter === null}
+              onClick={() => onFilterChange(null)}
+            />
+            {result.countryGroups.map((g) => (
+              <FilterRow
+                key={g.country}
+                label={COUNTRY_LABEL[g.country] || g.country}
+                count={g.count}
+                active={activeFilter === g.country}
+                onClick={() => onFilterChange(g.country)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeFilter && (
+        <div
+          className="p-3 rounded-lg flex flex-col gap-2"
+          style={{ background: V06.bgSoft, border: `1.5px solid ${V06.rule}` }}
+        >
+          <div className="text-[11.5px]" style={{ color: V06.ink }}>
+            <strong>{visibleCount} contacts match</strong> ·{' '}
+            {COUNTRY_LABEL[activeFilter] || activeFilter}
+          </div>
+          <button
+            onClick={() => onBulkSet(false)}
+            className="px-3 py-1.5 rounded-md text-[11.5px] font-semibold"
+            style={{ background: V06.warmDeep, color: 'white' }}
+          >
+            Deselect all {visibleCount}
+          </button>
+          <button
+            onClick={onKeepOnly}
+            className="px-3 py-1.5 rounded-md text-[11.5px] font-semibold"
+            style={{ background: V06.btnActionBg, color: V06.btnActionInk }}
+          >
+            Keep only these
+          </button>
+          <button
+            onClick={() => onFilterChange(null)}
+            className="px-3 py-1.5 rounded-md text-[11.5px] font-semibold"
+            style={{
+              background: 'white',
+              color: V06.warmMid,
+              border: `1px solid ${V06.ruleSoft}`,
+            }}
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
+
+      <div
+        className="mt-auto p-3 rounded-lg"
+        style={{ background: 'white', border: `1.5px solid ${V06.ruleSoft}` }}
+      >
+        <div className="text-[22px]" style={{ color: V06.warmDeep, fontFamily: 'Georgia, serif' }}>
+          {result.selectedCount.toLocaleString()}{' '}
+          <span className="text-[12.5px]" style={{ color: V06.warmMid }}>
+            / {result.totalRows.toLocaleString()}
+          </span>
+        </div>
+        <div className="text-[11.5px]" style={{ color: V06.warmMid }}>
+          selected to import · {result.totalRows - result.selectedCount} excluded
+        </div>
+      </div>
+    </>
   );
-};
+}
+
+function PreviewTable({
+  result,
+  activeFilter,
+  onToggleRow,
+  onToggleAllVisible,
+}: {
+  result: ParseResult;
+  activeFilter: string | null;
+  onToggleRow: (id: string) => void;
+  onToggleAllVisible: () => void;
+}) {
+  const visibleRows = useMemo(() => {
+    if (!activeFilter) return result.rows;
+    return result.rows.filter((r) => r.country === activeFilter);
+  }, [result.rows, activeFilter]);
+
+  const visibleSelectedCount = visibleRows.filter((r) => r.selected).length;
+  const headerCheckboxState: 'on' | 'off' | 'indeterminate' =
+    visibleSelectedCount === 0
+      ? 'off'
+      : visibleSelectedCount === visibleRows.length
+        ? 'on'
+        : 'indeterminate';
+
+  return (
+    <div className="h-full flex flex-col min-h-0">
+      <div className="mb-3 flex-shrink-0">
+        <h3 className="text-[15px] font-bold" style={{ color: V06.ink }}>
+          {activeFilter
+            ? `${COUNTRY_LABEL[activeFilter] || activeFilter} · ${visibleRows.length} contacts`
+            : `Preview · ${result.totalRows.toLocaleString()} contacts`}
+        </h3>
+        <p className="text-[12px]" style={{ color: V06.warmMid }}>
+          All checked except {result.autoDeselected.total} auto-deselected. Untick to exclude.
+        </p>
+      </div>
+
+      <div
+        className="flex-1 min-h-0 overflow-auto rounded-lg border"
+        style={{ borderColor: V06.ruleSoft }}
+      >
+        <table className="w-full text-[12.5px]">
+          <thead
+            className="sticky top-0 z-10"
+            style={{ background: V06.bgCard, borderBottom: `1px solid ${V06.ruleSoft}` }}
+          >
+            <tr>
+              <th className="w-10 text-center p-2">
+                <Checkbox state={headerCheckboxState} onClick={onToggleAllVisible} />
+              </th>
+              <th className="w-10 text-left p-2 font-semibold" style={{ color: V06.warmMid }}>#</th>
+              <th className="text-left p-2 font-semibold" style={{ color: V06.warmMid }}>Name</th>
+              <th className="text-left p-2 font-semibold" style={{ color: V06.warmMid }}>Email</th>
+              <th className="text-left p-2 font-semibold" style={{ color: V06.warmMid }}>Phone</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.slice(0, 500).map((r) => (
+              <PreviewRow key={r.id} row={r} onToggle={() => onToggleRow(r.id)} />
+            ))}
+          </tbody>
+        </table>
+        {visibleRows.length > 500 && (
+          <div className="text-center text-[10.5px] py-2" style={{ color: V06.warmLight }}>
+            ↓ Showing 500 of {visibleRows.length.toLocaleString()}. Filter to narrow.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilterRow({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center justify-between px-3 py-2 rounded-md text-[12.5px] transition-colors text-left"
+      style={{
+        background: active ? V06.warmDeep : 'transparent',
+        color: active ? 'white' : V06.ink,
+        fontWeight: active ? 600 : 500,
+      }}
+    >
+      <span>{label}</span>
+      <span style={{ color: active ? 'rgba(255,255,255,0.7)' : V06.warmMid }}>
+        {count.toLocaleString()}
+      </span>
+    </button>
+  );
+}
+
+function PreviewRow({ row, onToggle }: { row: ImportRow; onToggle: () => void }) {
+  const dimmed = !row.selected;
+  return (
+    <tr
+      onClick={onToggle}
+      className="cursor-pointer"
+      style={{ borderBottom: `1px solid ${V06.ruleSoft}` }}
+    >
+      <td className="text-center p-2">
+        <Checkbox state={row.selected ? 'on' : 'off'} onClick={onToggle} />
+      </td>
+      <td className="p-2" style={{ color: dimmed ? V06.warmLight : V06.warmMid }}>
+        {row.index}
+      </td>
+      <td
+        className="p-2"
+        style={{
+          color: dimmed ? V06.warmLight : V06.ink,
+          textDecoration: dimmed ? 'line-through' : 'none',
+        }}
+      >
+        {row.name ||
+          (row.deselectedReason === 'empty'
+            ? '(empty)'
+            : row.deselectedReason === 'existing'
+              ? '(existing member)'
+              : '—')}
+      </td>
+      <td
+        className="p-2"
+        style={{
+          color: dimmed ? V06.warmLight : V06.warmMid,
+          textDecoration: dimmed ? 'line-through' : 'none',
+        }}
+      >
+        {row.email || '—'}
+      </td>
+      <td
+        className="p-2"
+        style={{
+          color: dimmed ? V06.warmLight : V06.warmMid,
+          textDecoration: dimmed ? 'line-through' : 'none',
+        }}
+      >
+        {row.country && (
+          <span
+            className="inline-block text-[10px] font-bold rounded px-1 py-0.5 mr-1.5"
+            style={{ background: V06.bgSoft, color: V06.warmMid }}
+          >
+            {row.country}
+          </span>
+        )}
+        {row.phoneE164 || row.phone || '—'}
+      </td>
+    </tr>
+  );
+}
+
+function Checkbox({
+  state,
+  onClick,
+}: {
+  state: 'on' | 'off' | 'indeterminate';
+  onClick?: (e: React.MouseEvent) => void;
+}) {
+  const isOn = state === 'on';
+  const isInd = state === 'indeterminate';
+  return (
+    <span
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(e);
+      }}
+      className="inline-block w-4 h-4 rounded relative cursor-pointer align-middle"
+      style={{
+        border: `2px solid ${isOn || isInd ? V06.warmDeep : V06.warmLight}`,
+        background: isOn || isInd ? V06.warmDeep : 'white',
+      }}
+    >
+      {isOn && (
+        <span className="absolute inset-0 flex items-center justify-center text-white text-[11px] font-bold">
+          ✓
+        </span>
+      )}
+      {isInd && (
+        <span className="absolute inset-0 flex items-center justify-center text-white text-[12px] font-bold leading-none">
+          –
+        </span>
+      )}
+    </span>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Confirm                                                                   */
+/* -------------------------------------------------------------------------- */
+
+function ConfirmSummary({ result, source }: { result: ParseResult; source: Source }) {
+  const excludedManual = result.totalRows - result.selectedCount - result.autoDeselected.total;
+  return (
+    <>
+      <div>
+        <h3 className="text-[13px] font-bold mb-1" style={{ color: V06.ink }}>Summary</h3>
+        <p className="text-[11.5px]" style={{ color: V06.warmMid }}>
+          Review before committing.
+        </p>
+      </div>
+      <div
+        className="rounded-xl p-4"
+        style={{ background: 'white', border: `1.5px solid ${V06.ruleSoft}` }}
+      >
+        <div className="text-[13px] font-bold mb-3" style={{ color: V06.ink }}>Ready to import</div>
+        <SummaryRow k="Source" v={SOURCE_LABEL[source]} />
+        <SummaryRow k="Found" v={`${result.totalRows.toLocaleString()} contacts`} />
+        <SummaryRow k="Auto-deselected" v={result.autoDeselected.total.toLocaleString()} />
+        {excludedManual > 0 && (
+          <SummaryRow k="You excluded" v={excludedManual.toLocaleString()} />
+        )}
+        <SummaryRow k="Importing" v={result.selectedCount.toLocaleString()} big />
+      </div>
+      <div
+        className="p-3 rounded-md text-[11.5px]"
+        style={{ background: V06.bgSoft, color: V06.warmMid }}
+      >
+        Tagging on the right applies to all{' '}
+        <strong style={{ color: V06.ink }}>{result.selectedCount.toLocaleString()}</strong>{' '}
+        imported members.
+      </div>
+    </>
+  );
+}
+
+function ConfirmForm({
+  result,
+  source,
+  importing,
+  onCommit,
+  onBack,
+}: {
+  result: ParseResult;
+  source: Source;
+  importing: boolean;
+  onCommit: (tag: string, note: string) => void;
+  onBack: () => void;
+}) {
+  const defaultTag = `${SOURCE_LABEL[source]} · ${new Date().toLocaleDateString(undefined, {
+    month: 'short',
+    year: 'numeric',
+  })}`;
+  const [tag, setTag] = useState(defaultTag);
+  const [note, setNote] = useState('');
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="mb-4">
+        <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>Tag this import</h3>
+        <p className="text-[12.5px]" style={{ color: V06.warmMid }}>
+          Find this batch in your Audience later by the tag.
+        </p>
+      </div>
+
+      <FieldLabel>TAG NAME</FieldLabel>
+      <input
+        value={tag}
+        onChange={(e) => setTag(e.target.value)}
+        className="w-full px-3.5 py-2.5 rounded-lg text-sm"
+        style={{ background: V06.bgCard, border: `1.5px solid ${V06.ruleSoft}` }}
+      />
+      <div className="text-[11.5px] mt-1.5" style={{ color: V06.warmMid }}>
+        Applies one tag to every contact in this batch.
+      </div>
+
+      <div className="mt-5">
+        <FieldLabel>NOTES (OPTIONAL)</FieldLabel>
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="e.g. cleaned UK numbers out before importing"
+          className="w-full px-3.5 py-2.5 rounded-lg text-sm"
+          style={{ background: V06.bgCard, border: `1.5px solid ${V06.ruleSoft}` }}
+        />
+        <div className="text-[11.5px] mt-1.5" style={{ color: V06.warmMid }}>
+          Stored with the import record. Helps you remember context later.
+        </div>
+      </div>
+
+      <div className="mt-auto pt-6 flex items-center justify-between gap-3">
+        <V06SecondaryButton onClick={onBack} disabled={importing}>Back</V06SecondaryButton>
+        <button
+          onClick={() => onCommit(tag.trim(), note.trim())}
+          disabled={importing || !tag.trim() || result.selectedCount === 0}
+          className="px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 disabled:opacity-60"
+          style={{ background: V06.btnPrimaryBg, color: 'white' }}
+        >
+          {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          Confirm · Import{' '}
+          <span
+            className="px-2 py-0.5 rounded-md text-[11.5px]"
+            style={{ background: 'rgba(255,255,255,0.18)' }}
+          >
+            {result.selectedCount.toLocaleString()}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ k, v, big = false }: { k: string; v: string; big?: boolean }) {
+  return (
+    <div
+      className="flex items-center justify-between py-2"
+      style={{ borderTop: `1px solid ${V06.ruleSoft}` }}
+    >
+      <span className="text-[12px]" style={{ color: V06.warmMid }}>{k}</span>
+      <span
+        className={big ? 'text-[22px] font-semibold' : 'text-[12.5px] font-semibold'}
+        style={{
+          color: big ? V06.warmDeep : V06.ink,
+          fontFamily: big ? 'Georgia, serif' : undefined,
+        }}
+      >
+        {v}
+      </span>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Done                                                                      */
+/* -------------------------------------------------------------------------- */
+
+function DoneBody({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex-1 flex items-center justify-center p-12">
+      <div className="text-center">
+        <div
+          className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4"
+          style={{ background: V06.bgSoft }}
+        >
+          <Check className="w-7 h-7" style={{ color: V06.warmDeep }} />
+        </div>
+        <div className="text-[20px] font-bold mb-1" style={{ color: V06.ink }}>Import complete</div>
+        <div className="text-[13px] mb-5" style={{ color: V06.warmMid }}>
+          Re-open to import another source.
+        </div>
+        <V06PrimaryButton onClick={onClose}>Done</V06PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Small reusable bits                                                       */
+/* -------------------------------------------------------------------------- */
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label
+      className="block text-[10.5px] font-bold mb-1.5"
+      style={{ color: V06.warmMid, letterSpacing: '0.12em' }}
+    >
+      {children}
+    </label>
+  );
+}
+
+function ErrorBlock({ message }: { message: string }) {
+  return (
+    <div
+      className="mt-3 flex items-start gap-2 p-3 rounded-md text-[12px]"
+      style={{ background: '#FEE2E2', color: '#991B1B' }}
+    >
+      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+      <span>{message}</span>
+    </div>
+  );
+}

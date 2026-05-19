@@ -31,6 +31,8 @@ interface MemberData {
   userId: string;
   name: string;
   email?: string;
+  phone?: string;
+  country?: string;
   imageUrl: string;
   role?: string;
   joinedDate?: any;
@@ -74,11 +76,24 @@ function MembersContent() {
     const userDetails = memberData.userDetails || {};
     const name = userDetails.displayName || userDetails.email || 'Unknown User';
     
+    // Phone resolution: userDetails.phone is the canonical bulk-import field
+    // (the new import endpoint writes phoneE164 here). Fall back to legacy
+    // shapes (phoneNumber, wa_id, top-level phone) for older members.
+    const phone =
+      userDetails.phone ||
+      userDetails.phoneNumber ||
+      memberData.phone ||
+      memberData.phoneNumber ||
+      (userDetails.wa_id ? `+${userDetails.wa_id}` : '') ||
+      '';
+
     return {
       id: memberDoc.id,
       userId: memberData.userId,
       name,
       email: userDetails.email || '',
+      phone,
+      country: userDetails.country || '',
       imageUrl: userDetails.avatarUrl || userDetails.photoURL || '',
       role: memberData.role || 'member',
       joinedDate: memberData.joinedAt,
@@ -404,11 +419,23 @@ function MembersContent() {
       render: (m) => <span style={{ color: '#5B4A3A' }}>{m.email || '—'}</span>,
     },
     {
-      key: 'userType',
-      label: 'User Type',
+      key: 'phone',
+      label: 'Phone',
       sortable: true,
-      sortValue: (m) => getUserType(m),
-      render: (m) => <span style={{ color: '#5B4A3A' }}>{getUserType(m)}</span>,
+      sortValue: (m) => m.phone?.replace(/\D/g, '') || '',
+      render: (m) => (
+        <span style={{ color: '#5B4A3A' }} className="font-mono text-[12.5px]">
+          {m.country && (
+            <span
+              className="inline-block text-[10px] font-bold rounded px-1 py-0.5 mr-1.5 font-sans"
+              style={{ backgroundColor: '#F3EDE2', color: '#6B5F52' }}
+            >
+              {m.country}
+            </span>
+          )}
+          {m.phone || '—'}
+        </span>
+      ),
     },
     {
       key: 'tags',
