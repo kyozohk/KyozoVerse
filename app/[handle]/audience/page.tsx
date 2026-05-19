@@ -493,7 +493,6 @@ function MembersContent() {
               },
             ] : []}
           />
-
           <div className="p-6">
             {/* Automatically Integrate banner — shown when no members yet. */}
             {!isLoading && members.length === 0 && canManage && (

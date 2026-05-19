@@ -104,7 +104,9 @@ export function EmailSendDialog({
 
         const idToken = await user.getIdToken();
 
-        // Send from the community's verified domain: message@<handle>.kyozo.com
+        // Build from address from the community handle so emails come from
+        // message@<handle>.kyozo.com (verified per-community Resend domain).
+        // Fall back to the platform default if no handle is available.
         const fromAddress = communityHandle
           ? `${communityName || communityHandle} <message@${communityHandle}.kyozo.com>`
           : 'Kyozo <noreply@contact.kyozo.com>';
