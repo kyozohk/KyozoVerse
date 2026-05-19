@@ -262,7 +262,7 @@ export function TagMembersDialog({
       onOpenChange={(open) => { if (!open) onClose(); }}
       title={title}
       description=""
-      size="large"
+      size="xl"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-h-[60vh]">
         {/* ─────────────────────────────── LEFT COLUMN ─────────────────── */}
@@ -294,15 +294,15 @@ export function TagMembersDialog({
             </div>
           </section>
 
-          {/* Saved Tags */}
+          {/* All Tags */}
           <section className="flex-1 min-h-0 flex flex-col">
             <h3 className="text-base font-semibold mb-3" style={{ color: '#3D2E1F' }}>
-              Saved Tags
+              All Tags
             </h3>
             <div className="flex-1 overflow-y-auto pr-1 space-y-3">
               {savedTags.length === 0 && (
                 <p className="text-sm italic" style={{ color: '#8A7A6A' }}>
-                  No saved tags yet. Use "Add New Tag" above.
+                  You don't have any tags yet.
                 </p>
               )}
               <div className="flex flex-wrap items-center gap-2">

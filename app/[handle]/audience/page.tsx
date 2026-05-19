@@ -532,13 +532,7 @@ function MembersContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    if (selectedMembers.length === 0) {
-                      alert('Please select one or more members to apply tags.');
-                      return;
-                    }
-                    setIsTaggingOpen(true);
-                  }}
+                  onClick={() => setIsTaggingOpen(true)}
                   className="gap-2 rounded-md border-2"
                   style={{
                     borderColor: '#A89882',
@@ -547,7 +541,7 @@ function MembersContent() {
                   }}
                 >
                   <Tag className="h-4 w-4" />
-                  Add Tags{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
+                  Manage Tag{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
                 </Button>
               }
               isLoading={isLoading}
@@ -621,6 +615,7 @@ function MembersContent() {
           initialSelectedMembers={selectedMembersForDialog as any}
           communityId={community.communityId}
           onApplyTags={handleApplyTags}
+          title="Tag Audience Members"
         />
       )}
       
