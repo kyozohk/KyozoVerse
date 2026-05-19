@@ -8,7 +8,8 @@ import { Community } from '@/lib/types';
 import { UserPlus, Mail, Globe, Lock } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
-import { EnhancedListView } from '@/components/v2/enhanced-list-view';
+import { EnhancedListView, type Column } from '@/components/v2/enhanced-list-view';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { MemberGridItem, MemberListItem, MemberCircleItem } from '@/components/v2/member-items';
 import { Button } from '@/components/ui/button';
 import { MemberDialog } from '@/components/community/member-dialog';
@@ -22,6 +23,8 @@ import { useCommunityAccess } from '@/hooks/use-community-access';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 import { ImportMembersDialog } from '@/components/community/import-members-dialog';
+import { EmailSendDialog } from '@/components/broadcast/email-send-dialog';
+import { Send } from 'lucide-react';
 
 interface MemberData {
   id: string;
@@ -57,6 +60,7 @@ function MembersContent() {
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Pagination state
@@ -368,6 +372,70 @@ function MembersContent() {
     },
   }));
 
+  // Column definitions matching the audience design (image 1).
+  const formatJoined = (date: any): string => {
+    if (!date) return '—';
+    const d = date?.seconds ? new Date(date.seconds * 1000) : new Date(date);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  };
+  const getUserType = (m: MemberData): 'Member' | 'Contact' => {
+    if (m.role === 'member' || m.role === 'owner' || m.role === 'admin') return 'Member';
+    return 'Contact';
+  };
+  const memberColumns: Column<MemberData>[] = [
+    {
+      key: 'name',
+      label: 'Name',
+      sortable: true,
+      sortValue: (m) => m.name?.toLowerCase() || '',
+      render: (m) => (
+        <div className="flex items-center gap-3">
+          <UserAvatar imageUrl={m.imageUrl} name={m.name} size={32} />
+          <span className="font-medium">{m.name}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      sortable: true,
+      sortValue: (m) => m.email?.toLowerCase() || '',
+      render: (m) => <span style={{ color: '#5B4A3A' }}>{m.email || '—'}</span>,
+    },
+    {
+      key: 'userType',
+      label: 'User Type',
+      sortable: true,
+      sortValue: (m) => getUserType(m),
+      render: (m) => <span style={{ color: '#5B4A3A' }}>{getUserType(m)}</span>,
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      render: (m) => (
+        <div className="flex flex-wrap gap-1.5">
+          {(m.tags || []).map((t) => (
+            <span
+              key={t}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+              style={{ backgroundColor: '#E3EBF9', color: '#2D6CDF' }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: 'added',
+      label: 'Added',
+      sortable: true,
+      sortValue: (m) => m.joinedDate?.seconds || 0,
+      render: (m) => <span style={{ color: '#5B4A3A' }}>{formatJoined(m.joinedDate)}</span>,
+    },
+  ];
+
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, i) => (
@@ -400,45 +468,34 @@ function MembersContent() {
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
       <div className="p-8 flex-1 overflow-auto">
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          {community && (
-            <Banner
-              backgroundImage={community.communityBackgroundImage}
-              iconImage={community.communityProfileImage}
-              title={community.name}
-              location={(community as any).location}
-              locationExtra={
-                <span className="flex items-center gap-1 text-sm text-white/90">
-                  {(community as any).visibility === 'private' ? (
-                    <><Lock className="h-3.5 w-3.5" /> Private</>
-                  ) : (
-                    <><Globe className="h-3.5 w-3.5" /> Public</>
-                  )}
-                </span>
-              }
-              subtitle={community.tagline || (community as any).mantras}
-              ctas={canManage ? [
-                {
-                  label: 'Import Members',
-                  icon: <Upload className="h-4 w-4" />,
-                  onClick: () => setIsImportOpen(true),
-                },
-                {
-                  label: 'Invite Member',
-                  icon: <Mail className="h-4 w-4" />,
-                  onClick: () => setIsInviteDialogOpen(true),
-                },
-                {
-                  label: 'Add Member',
-                  icon: <UserPlus className="h-4 w-4" />,
-                  onClick: () => setIsAddMemberOpen(true),
-                },
-              ] : []}
-              height="16rem"
-            />
-          )}
+          <Banner
+            title="Audience"
+            ctas={canManage ? [
+              ...(selectedMembers.length > 0 ? [{
+                label: `Message (${selectedMembers.length})`,
+                icon: <Send className="h-4 w-4" />,
+                onClick: () => setIsMessageDialogOpen(true),
+              }] : []),
+              {
+                label: 'Import',
+                icon: <Upload className="h-4 w-4" />,
+                onClick: () => setIsImportOpen(true),
+              },
+              {
+                label: 'Invite Members',
+                icon: <Mail className="h-4 w-4" />,
+                onClick: () => setIsInviteDialogOpen(true),
+              },
+              {
+                label: 'Add Members',
+                icon: <UserPlus className="h-4 w-4" />,
+                onClick: () => setIsAddMemberOpen(true),
+              },
+            ] : []}
+          />
+
           <div className="p-6">
-            {/* Automatically Integrate banner — shown when no members yet.
-                Visually matches the dialog header so the click-through feels consistent. */}
+            {/* Automatically Integrate banner — shown when no members yet. */}
             {!isLoading && members.length === 0 && canManage && (
               <button
                 onClick={() => setIsImportOpen(true)}
@@ -456,49 +513,50 @@ function MembersContent() {
               </button>
             )}
             <EnhancedListView
-            items={members}
-            renderGridItem={(item, isSelected) => (
-              <MemberGridItem item={item} isSelected={isSelected} />
-            )}
-            renderListItem={(item, isSelected) => (
-              <MemberListItem item={item} isSelected={isSelected} />
-            )}
-            renderCircleItem={(item, isSelected) => (
-              <MemberCircleItem item={item} isSelected={isSelected} />
-            )}
-            searchKeys={['name', 'email']}
-            selectable={canManage}
-            defaultViewMode="list"
-            onSelectionChange={(ids, items) => setSelectedMembers(items)}
-            permanentActions={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (selectedMembers.length === 0) {
-                    alert('Please select one or more members to apply tags.');
-                    return;
-                  }
-                  setIsTaggingOpen(true);
-                }}
-                className="gap-2"
-                style={{ 
-                  borderColor: '#E8DFD1',
-                  backgroundColor: '#E8DFD1',
-                  color: '#5B4A3A'
-                }}
-              >
-                <Tag className="h-4 w-4" />
-                Add Tags{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
-              </Button>
-            }
-            isLoading={isLoading}
-            loadingComponent={<LoadingSkeleton />}
-            pageSize={PAGE_SIZE}
-            hasMore={hasMore}
-            onLoadMore={loadMoreMembers}
-            isLoadingMore={isLoadingMore}
-          />
+              items={members}
+              columns={memberColumns}
+              renderGridItem={(item, isSelected) => (
+                <MemberGridItem item={item} isSelected={isSelected} />
+              )}
+              renderListItem={(item, isSelected) => (
+                <MemberListItem item={item} isSelected={isSelected} />
+              )}
+              renderCircleItem={(item, isSelected) => (
+                <MemberCircleItem item={item} isSelected={isSelected} />
+              )}
+              searchKeys={['name', 'email']}
+              selectable={canManage}
+              defaultViewMode="list"
+              onSelectionChange={(ids, items) => setSelectedMembers(items)}
+              permanentActions={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedMembers.length === 0) {
+                      alert('Please select one or more members to apply tags.');
+                      return;
+                    }
+                    setIsTaggingOpen(true);
+                  }}
+                  className="gap-2 rounded-md border-2"
+                  style={{
+                    borderColor: '#A89882',
+                    backgroundColor: '#E8DFD1',
+                    color: '#3D2E1F',
+                  }}
+                >
+                  <Tag className="h-4 w-4" />
+                  Add Tags{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
+                </Button>
+              }
+              isLoading={isLoading}
+              loadingComponent={<LoadingSkeleton />}
+              pageSize={PAGE_SIZE}
+              hasMore={hasMore}
+              onLoadMore={loadMoreMembers}
+              isLoadingMore={isLoadingMore}
+            />
           </div>
         </div>
       </div>
@@ -536,6 +594,18 @@ function MembersContent() {
             setHasMore(true);
             setRefreshKey(k => k + 1);
           }}
+        />
+      )}
+
+      {/* Email Send Dialog — sends to selected members */}
+      {community && (
+        <EmailSendDialog
+          isOpen={isMessageDialogOpen}
+          onClose={() => setIsMessageDialogOpen(false)}
+          members={selectedMembersForDialog as any}
+          communityName={community.name}
+          communityHandle={handle}
+          communityId={community.communityId}
         />
       )}
 

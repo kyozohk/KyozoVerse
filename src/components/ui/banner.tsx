@@ -1,9 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { RoundImage } from './round-image';
-import { CSSProperties, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
 
 export interface BannerCTA {
@@ -30,150 +28,65 @@ export interface BannerProps {
 }
 
 export function Banner({
-  backgroundImage,
-  iconImage,
-  iconSize = 80,
   title,
-  location,
-  locationExtra,
-  subtitle,
-  tags = [],
   ctas = [],
   leftCta,
-  height = '20rem',
   className,
   onDelete,
 }: BannerProps) {
-  const bannerStyle: CSSProperties = {
-    height,
-  };
-
+  // Header is now minimal: title (left) + CTAs (right). All other props
+  // (backgroundImage, iconImage, location, subtitle, tags, height) are still
+  // accepted for backward compatibility but no longer rendered.
   return (
-    <div 
-      className={cn("relative w-full overflow-hidden rounded-t-2xl", className)}
-      style={bannerStyle}
+    <div
+      className={cn(
+        'relative w-full flex items-center justify-between gap-4 px-8 py-6 border-b',
+        className
+      )}
+      style={{ borderColor: '#E8DFD1' }}
     >
-      {/* Background Image */}
-      {backgroundImage ? (
-        <div className="absolute inset-0" style={{ backgroundColor: '#E2D9C9' }}>
-          <Image
-            src={backgroundImage}
-            alt={title}
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      ) : (
-        <div className="absolute inset-0" style={{ backgroundColor: '#E2D9C9' }} />
-      )}
-      
-      {/* Dark overlay for better text visibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
-      
-      {/* Delete Icon - Top Right (comment out to hide) */}
-      {onDelete && (
-        <button
-          onClick={onDelete}
-          className="absolute top-4 right-4 z-20 p-2.5 rounded-lg bg-red-600/70 backdrop-blur-sm hover:bg-red-600 transition-colors group shadow-lg"
-          title="Delete community"
-        >
-          <Trash2 className="h-50 w-50 text-white" />
-        </button>
-      )}
-      
-      {/* Top-left: Icon, Title, Location, Subtitle */}
-      <div className="absolute top-8 left-8 flex items-start gap-4">
-        {iconImage && (
-          <RoundImage 
-            src={iconImage} 
-            alt={title} 
-            size={iconSize}
-            border={true}
-            borderColor="rgba(255, 255, 255, 0.5)"
-            className="border-2 border-white/50"
-          />
-        )}
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold text-white drop-shadow-lg">{title}</h1>
-          {(location || locationExtra) && (
-            <div className="flex items-center gap-3 mt-1">
-              {location && (
-                <span className="text-sm text-white/90">📍 {location}</span>
-              )}
-              {locationExtra}
-            </div>
-          )}
-          {subtitle && (
-            <p className="text-sm text-white/80 mt-2 max-w-md">{subtitle}</p>
-          )}
-        </div>
-      </div>
-      
-      {/* Bottom-left: Left CTA or Tags */}
-      {leftCta ? (
-        <div className="absolute bottom-8 left-8">
+      {/* Left: optional back CTA + title */}
+      <div className="flex items-center gap-4 min-w-0">
+        {leftCta && (
           <button
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1] disabled:opacity-50 disabled:pointer-events-none"
-            style={{ borderColor: '#E8DFD1', color: '#E8DFD1' }}
-            onMouseEnter={(e) => {
-              if (!leftCta.disabled) {
-                e.currentTarget.style.color = '#5B4A3A';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!leftCta.disabled) {
-                e.currentTarget.style.color = '#E8DFD1';
-              }
-            }}
             onClick={leftCta.onClick}
             disabled={leftCta.disabled}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-md text-sm font-medium border-2 transition-colors hover:bg-[#F0E8DA] disabled:opacity-50 disabled:pointer-events-none"
+            style={{ borderColor: '#A89882', color: '#3D2E1F' }}
           >
             {leftCta.icon}
             {leftCta.label}
           </button>
-        </div>
-      ) : tags.length > 0 ? (
-        <div className="absolute bottom-8 left-8 flex flex-wrap gap-2" style={{ maxWidth: ctas.length > 0 ? 'calc(100% - 500px)' : '28rem' }}>
-          {tags.map((tag) => (
-            <span 
-              key={tag} 
-              className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold"
-              style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      
-      {/* Bottom-right: CTA Buttons */}
-      {ctas.length > 0 && (
-        <div className="absolute bottom-8 right-8 flex items-center gap-3">
-          {ctas.map((cta, index) => (
-            <button
-              key={index}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 transition-all border-2 bg-transparent hover:bg-[#E8DFD1] hover:border-[#E8DFD1] disabled:opacity-50 disabled:pointer-events-none"
-              style={{ borderColor: '#E8DFD1', color: '#E8DFD1' }}
-              onMouseEnter={(e) => {
-                if (!cta.disabled) {
-                  e.currentTarget.style.color = '#5B4A3A';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!cta.disabled) {
-                  e.currentTarget.style.color = '#E8DFD1';
-                }
-              }}
-              onClick={cta.onClick}
-              disabled={cta.disabled}
-            >
-              {cta.icon}
-              {cta.label}
-            </button>
-          ))}
-        </div>
-      )}
+        )}
+        <h1 className="text-3xl font-bold tracking-tight truncate" style={{ color: '#3D2E1F' }}>
+          {title}
+        </h1>
+      </div>
+
+      {/* Right: CTAs + optional delete */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {ctas.map((cta, index) => (
+          <button
+            key={index}
+            onClick={cta.onClick}
+            disabled={cta.disabled}
+            className="inline-flex items-center gap-2 h-10 px-5 rounded-md text-sm font-medium border-2 transition-colors hover:bg-[#F0E8DA] disabled:opacity-50 disabled:pointer-events-none"
+            style={{ borderColor: '#A89882', color: '#3D2E1F' }}
+          >
+            {cta.icon}
+            {cta.label}
+          </button>
+        ))}
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="p-2 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+            title="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

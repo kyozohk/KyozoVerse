@@ -1,485 +1,509 @@
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { CustomFormDialog, CustomButton, Badge } from '@/components/ui';
-import { X, Tag, User, Plus, Search, List, Grid, Check } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CustomFormDialog, CustomButton } from '@/components/ui';
+import { X, Tag, Search, Check, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { CommunityMember } from '@/lib/types';
-import { THEME_COLORS } from '@/lib/theme-colors';
 import { useToast } from '@/hooks/use-toast';
-import { getCommunityTagNames } from '@/lib/community-tags';
+import {
+  getCommunityTagNames,
+  addTagToCommunity,
+  deleteTagFromCommunity,
+} from '@/lib/community-tags';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-const TagInput = ({ tags, setTags, availableTags }: { tags: string[], setTags: (tags: string[]) => void, availableTags: string[] }) => {
-    const [inputValue, setInputValue] = useState('');
-    // KYPRO-49: autocomplete dropdown visibility
-    const [showSuggestions, setShowSuggestions] = useState(false);
-
-    const addTag = (tagName: string) => {
-        const trimmed = tagName.trim();
-        if (!trimmed) { setInputValue(''); return; }
-        // KYPRO-49: case-insensitive dedup so "vip" and "VIP" aren't both added.
-        const exists = tags.some(t => t.toLowerCase() === trimmed.toLowerCase());
-        if (!exists) {
-            // Prefer the existing-casing from availableTags if it matches.
-            const canonical = availableTags.find(t => t.toLowerCase() === trimmed.toLowerCase()) || trimmed;
-            setTags([...tags, canonical]);
-        }
-        setInputValue('');
-        setShowSuggestions(false);
-    };
-
-    const handleAddClick = () => {
-        if (inputValue.trim()) {
-            addTag(inputValue.trim());
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && inputValue.trim() !== '') {
-            e.preventDefault();
-            addTag(inputValue.trim());
-        } else if (e.key === 'Escape') {
-            setShowSuggestions(false);
-        }
-    };
-
-    const removeTag = (tagToRemove: string) => {
-        setTags(tags.filter(tag => tag !== tagToRemove));
-    };
-
-    // Get unselected tags (available tags that aren't currently selected)
-    const unselectedTags = availableTags.filter(tag => !tags.includes(tag));
-
-    // KYPRO-49: live autocomplete matches for the current input value.
-    const suggestions = inputValue.trim()
-        ? unselectedTags.filter(t => t.toLowerCase().includes(inputValue.trim().toLowerCase())).slice(0, 8)
-        : [];
-
-    return (
-        <div className="space-y-4">
-            {/* KYPRO-48: always render the Available Tags section (with a placeholder
-                when empty) so the instructional text below it is never misleading. */}
-            <div>
-                <label className="text-xs font-medium mb-2 block" style={{ color: '#6B5D52' }}>Available Tags (click to add)</label>
-                {unselectedTags.length > 0 ? (
-                    <div className="flex flex-wrap gap-3">
-                        {unselectedTags.map((tag, index) => (
-                            <button
-                                key={index}
-                                type="button"
-                                onClick={() => addTag(tag)}
-                                className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors border"
-                                style={{
-                                    backgroundColor: '#F5F0E8',
-                                    borderColor: '#E8DFD1',
-                                    color: '#5B4A3A'
-                                }}
-                            >
-                                <span className="font-medium">{tag}</span>
-                                <Plus className="h-3 w-3" />
-                            </button>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-xs italic" style={{ color: '#8A7A6A' }}>
-                        No existing tags yet — type below to create a new one.
-                    </p>
-                )}
-            </div>
-
-            {/* Selected Tags Input */}
-            <div className="inputWrapper relative">
-                <div className="flex flex-wrap items-center gap-3 p-3 pr-12 border rounded-lg h-auto min-h-[48px]" style={{ borderColor: '#E8DFD1', backgroundColor: '#FAFAFA' }}>
-                    {tags.map((tag, index) => (
-                        <div key={index} className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm" style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
-                            <span className="font-medium">{tag}</span>
-                            <button type="button" onClick={() => removeTag(tag)} className="hover:opacity-70 transition-opacity">
-                                <X className="h-3 w-3" />
-                            </button>
-                        </div>
-                    ))}
-                    <input
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => { setInputValue(e.target.value); setShowSuggestions(true); }}
-                        onFocus={() => setShowSuggestions(true)}
-                        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={tags.length === 0 ? "Type a new tag..." : ""}
-                        className="flex-grow bg-transparent focus:outline-none p-1 text-foreground min-w-[120px]"
-                        style={{ color: '#5B4A3A' }}
-                    />
-                </div>
-                {/* KYPRO-49: autocomplete dropdown of matching existing tags. */}
-                {showSuggestions && suggestions.length > 0 && (
-                    <ul
-                        className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg border shadow-sm max-h-48 overflow-y-auto"
-                        style={{ backgroundColor: 'white', borderColor: '#E8DFD1' }}
-                    >
-                        {suggestions.map(s => (
-                            <li key={s}>
-                                <button
-                                    type="button"
-                                    // onMouseDown instead of onClick so it fires before the input's onBlur.
-                                    onMouseDown={e => { e.preventDefault(); addTag(s); }}
-                                    className="w-full text-left px-3 py-2 text-sm hover:bg-amber-50/60"
-                                    style={{ color: '#5B4A3A' }}
-                                >
-                                    {s}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-                <button
-                    type="button"
-                    onClick={handleAddClick}
-                    disabled={!inputValue.trim()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    style={{ 
-                        backgroundColor: inputValue.trim() ? '#E8DFD1' : 'transparent',
-                        color: '#5B4A3A'
-                    }}
-                >
-                    <Plus className="h-4 w-4" />
-                </button>
-            </div>
-        </div>
-    );
-};
 
 interface TagMembersDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  allMembers: CommunityMember[];  // All community members
-  initialSelectedMembers: CommunityMember[];  // Initially selected members
+  allMembers: CommunityMember[]; // All community members
+  initialSelectedMembers: CommunityMember[]; // Pre-selected members
   communityId: string;
-  onApplyTags: (tagsToAdd: string[], tagsToRemove: string[], selectedMemberIds: string[]) => void;
+  onApplyTags: (
+    tagsToAdd: string[],
+    tagsToRemove: string[],
+    selectedMemberIds: string[]
+  ) => void;
+  /** Dialog title — defaults to "Manage Tags" but the audience page can pass
+   *  "Tag Audience Members" when the entry point is the row-selection CTA. */
+  title?: string;
 }
 
+/**
+ * Manage Tags dialog — three sections (image 2):
+ *   1. Add New Tag      — type a tag, click Save to persist on community
+ *   2. Saved Tags       — list of community tags; rename/delete inline
+ *   3. Apply Tags       — pick recipients (search + multi-select members)
+ *                         and click Save to apply the currently-selected
+ *                         saved tags to them.
+ */
 export function TagMembersDialog({
   isOpen,
   onClose,
   allMembers,
   initialSelectedMembers,
   communityId,
-  onApplyTags
+  onApplyTags,
+  title = 'Manage Tags',
 }: TagMembersDialogProps) {
-  const [tags, setTags] = useState<string[]>([]);
-  const [initialTags, setInitialTags] = useState<string[]>([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const { toast } = useToast();
 
-  // Initialize selected members when dialog opens
+  // === Add New Tag ===
+  const [newTag, setNewTag] = useState('');
+  const [savingNew, setSavingNew] = useState(false);
+
+  // === Saved Tags ===
+  const [savedTags, setSavedTags] = useState<string[]>([]);
+  // Editable copy keyed by original name. Allows in-place rename.
+  const [tagEdits, setTagEdits] = useState<Record<string, string>>({});
+  // Tag currently in inline-edit mode (clicked the pencil). Only one at a time.
+  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [busyTag, setBusyTag] = useState<string | null>(null);
+  // Which saved tags are checked-on for the Apply step.
+  const [tagsToApply, setTagsToApply] = useState<Set<string>>(new Set());
+
+  // === Apply Tags (recipient picker) ===
+  const [memberSearch, setMemberSearch] = useState('');
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+  const [applying, setApplying] = useState(false);
+
+  // ---- Loading saved tags + initial selection ------------------------------
+
+  const loadTags = async () => {
+    if (!communityId) return;
+    try {
+      const names = await getCommunityTagNames(communityId);
+      setSavedTags(names);
+      setTagEdits(Object.fromEntries(names.map((n) => [n, n])));
+    } catch (e) {
+      console.error('Error loading community tags:', e);
+      setSavedTags([]);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(new Set(initialSelectedMembers.map(m => m.id)));
+      loadTags();
+      setSelectedMemberIds(new Set(initialSelectedMembers.map((m) => m.id)));
+      setNewTag('');
+      setMemberSearch('');
+      setTagsToApply(new Set());
     }
-  }, [isOpen, initialSelectedMembers]);
+  }, [isOpen, initialSelectedMembers, communityId]);
 
-  // Load available tags from community
-  useEffect(() => {
-    if (isOpen && communityId) {
-      getCommunityTagNames(communityId)
-        .then(setAvailableTags)
-        .catch(error => {
-          console.error('Error loading community tags:', error);
-          setAvailableTags([]);
-        });
-    }
-  }, [isOpen, communityId]);
+  // ---- Handlers ------------------------------------------------------------
 
-  // Initialize tags with common tags from selected members
-  useEffect(() => {
-    if (isOpen && initialSelectedMembers.length > 0) {
-      const commonTags = initialSelectedMembers.reduce((acc, member) => {
-        return acc.filter(tag => member.tags?.includes(tag));
-      }, initialSelectedMembers[0]?.tags || []);
-      setTags(commonTags);
-      setInitialTags(commonTags);
-    } else {
-      setTags([]);
-      setInitialTags([]);
-    }
-  }, [isOpen, initialSelectedMembers]);
-
-  // Filter and sort members
-  const filteredMembers = allMembers
-    .filter(m => {
-      if (!searchTerm) return true;
-      const name = m.userDetails?.displayName?.toLowerCase() || '';
-      const email = m.userDetails?.email?.toLowerCase() || '';
-      return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
-    })
-    .sort((a, b) => {
-      // Selected members first
-      const aSelected = selectedIds.has(a.id);
-      const bSelected = selectedIds.has(b.id);
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-      return (a.userDetails?.displayName || '').localeCompare(b.userDetails?.displayName || '');
-    });
-
-  const toggleMemberSelection = (memberId: string) => {
-    setSelectedIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(memberId)) {
-        newSet.delete(memberId);
-      } else {
-        newSet.add(memberId);
-      }
-      return newSet;
-    });
-  };
-
-  const selectedCount = selectedIds.size;
-
-  // Check if tags have been modified
-  const tagsModified = () => {
-    if (tags.length !== initialTags.length) return true;
-    const sortedTags = [...tags].sort();
-    const sortedInitial = [...initialTags].sort();
-    return !sortedTags.every((tag, index) => tag === sortedInitial[index]);
-  };
-
-  const handleSubmit = async () => {
-    if (selectedCount === 0) {
+  const handleAddNewTag = async () => {
+    const name = newTag.trim();
+    if (!name) return;
+    if (savedTags.some((t) => t.toLowerCase() === name.toLowerCase())) {
       toast({
-        title: "No members selected",
-        description: "Please select at least one member to apply tags.",
-        variant: "destructive",
+        title: 'Tag already exists',
+        description: `"${name}" is already in your saved tags.`,
+        variant: 'destructive',
       });
       return;
     }
-
-    setIsSubmitting(true);
-    
-    const selectedMembers = allMembers.filter(m => selectedIds.has(m.id));
-    const existingTags = new Set<string>();
-    selectedMembers.forEach((member: CommunityMember) => {
-      member.tags?.forEach((tag: string) => existingTags.add(tag));
-    });
-
-    const tagsToRemove = Array.from(existingTags).filter(tag => !tags.includes(tag));
-
+    setSavingNew(true);
     try {
-      await onApplyTags(tags, tagsToRemove, Array.from(selectedIds));
-      toast({
-        title: "Tags Applied",
-        description: `Tags have been updated for ${selectedCount} members.`,
-      });
-      onClose();
-    } catch (error) {
-      console.error("Error applying tags:", error);
-      toast({
-        title: "Error",
-        description: "Could not apply tags. Please try again.",
-        variant: "destructive",
-      });
+      await addTagToCommunity(communityId, name);
+      setSavedTags((prev) => [...prev, name].sort((a, b) => a.localeCompare(b)));
+      setTagEdits((prev) => ({ ...prev, [name]: name }));
+      setNewTag('');
+    } catch (e) {
+      console.error('Failed to add tag:', e);
+      toast({ title: 'Could not save tag', variant: 'destructive' });
     } finally {
-      setIsSubmitting(false);
+      setSavingNew(false);
     }
   };
 
+  const handleRenameTag = async (original: string) => {
+    const next = (tagEdits[original] || '').trim();
+    if (!next || next === original) return;
+    if (savedTags.some((t) => t.toLowerCase() === next.toLowerCase() && t !== original)) {
+      toast({ title: 'A tag with this name already exists', variant: 'destructive' });
+      return;
+    }
+    setBusyTag(original);
+    try {
+      // Rename = add new + delete old. Members carrying `original` keep it in
+      // their array until the next Apply Tags action; documented limitation.
+      await addTagToCommunity(communityId, next);
+      await deleteTagFromCommunity(communityId, original);
+      setSavedTags((prev) =>
+        prev.map((t) => (t === original ? next : t)).sort((a, b) => a.localeCompare(b))
+      );
+      setTagEdits((prev) => {
+        const { [original]: _, ...rest } = prev;
+        return { ...rest, [next]: next };
+      });
+      // Migrate Apply checkbox state.
+      setTagsToApply((prev) => {
+        if (!prev.has(original)) return prev;
+        const n = new Set(prev);
+        n.delete(original);
+        n.add(next);
+        return n;
+      });
+    } catch (e) {
+      console.error('Failed to rename tag:', e);
+      toast({ title: 'Could not rename tag', variant: 'destructive' });
+    } finally {
+      setBusyTag(null);
+    }
+  };
+
+  const handleDeleteTag = async (name: string) => {
+    setBusyTag(name);
+    try {
+      await deleteTagFromCommunity(communityId, name);
+      setSavedTags((prev) => prev.filter((t) => t !== name));
+      setTagEdits((prev) => {
+        const { [name]: _, ...rest } = prev;
+        return rest;
+      });
+      setTagsToApply((prev) => {
+        if (!prev.has(name)) return prev;
+        const n = new Set(prev);
+        n.delete(name);
+        return n;
+      });
+    } catch (e) {
+      console.error('Failed to delete tag:', e);
+      toast({ title: 'Could not delete tag', variant: 'destructive' });
+    } finally {
+      setBusyTag(null);
+    }
+  };
+
+  const toggleTagToApply = (name: string) => {
+    setTagsToApply((prev) => {
+      const n = new Set(prev);
+      if (n.has(name)) n.delete(name); else n.add(name);
+      return n;
+    });
+  };
+
+  const filteredMembers = useMemo(() => {
+    const q = memberSearch.trim().toLowerCase();
+    const list = q
+      ? allMembers.filter((m) => {
+          const name = m.userDetails?.displayName?.toLowerCase() || '';
+          const email = m.userDetails?.email?.toLowerCase() || '';
+          return name.includes(q) || email.includes(q);
+        })
+      : allMembers;
+    return [...list].sort((a, b) => {
+      const aSel = selectedMemberIds.has(a.id);
+      const bSel = selectedMemberIds.has(b.id);
+      if (aSel && !bSel) return -1;
+      if (!aSel && bSel) return 1;
+      return (a.userDetails?.displayName || '').localeCompare(b.userDetails?.displayName || '');
+    });
+  }, [allMembers, memberSearch, selectedMemberIds]);
+
+  const toggleMember = (id: string) => {
+    setSelectedMemberIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
+  const handleApply = async () => {
+    if (selectedMemberIds.size === 0) {
+      toast({
+        title: 'No members selected',
+        description: 'Pick at least one recipient under Apply Tags.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (tagsToApply.size === 0) {
+      toast({
+        title: 'No tags selected',
+        description: 'Tick at least one saved tag to apply.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setApplying(true);
+    try {
+      await onApplyTags(Array.from(tagsToApply), [], Array.from(selectedMemberIds));
+      toast({
+        title: 'Tags applied',
+        description: `${tagsToApply.size} tag${tagsToApply.size === 1 ? '' : 's'} applied to ${selectedMemberIds.size} member${selectedMemberIds.size === 1 ? '' : 's'}.`,
+      });
+      onClose();
+    } catch (e) {
+      console.error('Failed to apply tags:', e);
+      toast({ title: 'Could not apply tags', variant: 'destructive' });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  // ---- Shared styles -------------------------------------------------------
+
+  const inputClass =
+    'w-full h-10 px-3 rounded-md border-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#A89882]';
+  const inputStyle: React.CSSProperties = { borderColor: '#A89882', color: '#3D2E1F' };
+  const saveBtnClass =
+    'inline-flex items-center justify-center h-10 px-5 rounded-md text-sm font-medium border-2 transition-colors disabled:opacity-50 disabled:pointer-events-none';
+  const saveBtnStyle: React.CSSProperties = {
+    backgroundColor: '#E8DFD1',
+    borderColor: '#A89882',
+    color: '#3D2E1F',
+  };
+
   return (
-    // KYPRO-51: CustomFormDialog exposes `onOpenChange`, not `onClose`. The old
-    // prop was silently ignored, so clicking the X (which calls onOpenChange(false))
-    // did nothing. Wiring it correctly closes the modal as expected.
     <CustomFormDialog
       open={isOpen}
       onOpenChange={(open) => { if (!open) onClose(); }}
-      title="Tag Members"
-      description={`Apply tags to ${selectedCount} selected member(s).`}
+      title={title}
+      description=""
       size="large"
     >
-      <div className="flex flex-col h-[70vh]">
-        {/* Tag Input at the top */}
-        <div className="space-y-4 mb-6 flex-shrink-0">
-          <TagInput tags={tags} setTags={setTags} availableTags={availableTags} />
-          <p className="text-xs" style={{ color: '#8A7A6A' }}>
-            Click existing tags above to add them, or type a new tag name and press Enter to create one.
-          </p>
-        </div>
-
-        {/* Members List with Search and View Mode */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          {/* Search and View Mode Header */}
-          <div className="flex items-center gap-3 mb-3 flex-shrink-0">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: '#8A7A6A' }} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-h-[60vh]">
+        {/* ─────────────────────────────── LEFT COLUMN ─────────────────── */}
+        <div className="flex flex-col gap-8 md:border-r md:pr-8" style={{ borderColor: '#E8DFD1' }}>
+          {/* Add New Tag */}
+          <section>
+            <h3 className="text-base font-semibold mb-3" style={{ color: '#3D2E1F' }}>
+              Add New Tag
+            </h3>
+            <div className="flex items-center gap-3">
               <input
                 type="text"
-                placeholder="Search members..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-                style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
+                placeholder="VIP"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddNewTag(); }}
+                className={inputClass}
+                style={inputStyle}
               />
-            </div>
-            <div className="flex items-center gap-1 rounded-md p-1" style={{ backgroundColor: '#F5F0E8' }}>
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                type="button"
+                onClick={handleAddNewTag}
+                disabled={!newTag.trim() || savingNew}
+                className={saveBtnClass}
+                style={saveBtnStyle}
               >
-                <List className="h-4 w-4" style={{ color: '#5B4A3A' }} />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-              >
-                <Grid className="h-4 w-4" style={{ color: '#5B4A3A' }} />
+                {savingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
               </button>
             </div>
-          </div>
+          </section>
 
-          {/* Selected count */}
-          <div className="mb-2 flex-shrink-0">
-            <span className="text-sm" style={{ color: '#6B5D52' }}>
-              {selectedCount} of {allMembers.length} members selected
-            </span>
-          </div>
+          {/* Saved Tags */}
+          <section className="flex-1 min-h-0 flex flex-col">
+            <h3 className="text-base font-semibold mb-3" style={{ color: '#3D2E1F' }}>
+              Saved Tags
+            </h3>
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+              {savedTags.length === 0 && (
+                <p className="text-sm italic" style={{ color: '#8A7A6A' }}>
+                  No saved tags yet. Use "Add New Tag" above.
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {savedTags.map((name) => {
+                  const isEditing = editingTag === name;
+                  const editing = tagEdits[name] ?? name;
+                  const dirty = editing.trim() !== name && editing.trim().length > 0;
+                  const isBusy = busyTag === name;
+                  const isChecked = tagsToApply.has(name);
 
-          {/* Members List */}
-          <div className="flex-1 overflow-y-auto -mx-2 px-2">
-            {viewMode === 'list' ? (
-              <div className="space-y-2">
-                {filteredMembers.map((member) => {
-                  const isSelected = selectedIds.has(member.id);
+                  if (isEditing) {
+                    return (
+                      <div key={name} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={editing}
+                          onChange={(e) => setTagEdits((prev) => ({ ...prev, [name]: e.target.value }))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleRenameTag(name);
+                              setEditingTag(null);
+                            }
+                            if (e.key === 'Escape') {
+                              setTagEdits((prev) => ({ ...prev, [name]: name }));
+                              setEditingTag(null);
+                            }
+                          }}
+                          className={inputClass + ' w-28'}
+                          style={inputStyle}
+                          disabled={isBusy}
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleRenameTag(name);
+                            setEditingTag(null);
+                          }}
+                          disabled={!dirty || isBusy}
+                          className={saveBtnClass + ' h-8 px-3'}
+                          style={saveBtnStyle}
+                        >
+                          {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                        </button>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div 
-                      key={member.id} 
-                      onClick={() => toggleMemberSelection(member.id)}
-                      className="flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer hover:bg-accent/30"
-                      style={{ 
-                        borderColor: isSelected ? '#5B4A3A' : '#E8DFD1', 
-                        backgroundColor: isSelected ? '#F5F0E8' : '#FAFAFA' 
+                    <div
+                      key={name}
+                      className="inline-flex items-center gap-2 rounded-md border-2 px-3 h-9"
+                      style={{
+                        borderColor: '#A89882',
+                        backgroundColor: isChecked ? '#F0E8DA' : 'transparent',
                       }}
                     >
-                      {/* Checkbox */}
-                      <div 
-                        className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
-                        style={{ 
-                          borderColor: isSelected ? '#5B4A3A' : '#E8DFD1',
-                          backgroundColor: isSelected ? '#5B4A3A' : 'transparent'
-                        }}
+                      <button
+                        type="button"
+                        onClick={() => toggleTagToApply(name)}
+                        className="text-sm font-medium"
+                        style={{ color: '#3D2E1F' }}
+                        title="Tick to include in Apply Tags"
                       >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={member.userDetails?.avatarUrl} />
-                        <AvatarFallback style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
-                          {member.userDetails?.displayName?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-grow min-w-0">
-                        <p className="font-medium text-sm truncate" style={{ color: '#5B4A3A' }}>
-                          {member.userDetails?.displayName || 'Unknown'}
-                        </p>
-                        <p className="text-xs truncate" style={{ color: '#8A7A6A' }}>
-                          {member.userDetails?.email || 'No email'}
-                        </p>
-                      </div>
-                      {member.tags && member.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 justify-end max-w-[120px]">
-                          {member.tags.slice(0, 2).map((tag: string) => (
-                            <Badge 
-                              key={tag} 
-                              variant="secondary" 
-                              className="text-xs px-2 py-0.5"
-                              style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                          {member.tags.length > 2 && (
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs px-2 py-0.5"
-                              style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}
-                            >
-                              +{member.tags.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
+                        {name}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingTag(name)}
+                        title="Rename tag"
+                        className="p-1 rounded hover:bg-[#E8DFD1] transition-colors"
+                        style={{ color: '#5B4A3A' }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTag(name)}
+                        disabled={isBusy}
+                        title="Delete tag"
+                        className="p-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50"
+                        style={{ color: '#9B8A75' }}
+                      >
+                        {isBusy ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </div>
                   );
                 })}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {filteredMembers.map((member) => {
-                  const isSelected = selectedIds.has(member.id);
-                  return (
-                    <div 
-                      key={member.id} 
-                      onClick={() => toggleMemberSelection(member.id)}
-                      className="relative p-4 rounded-lg border transition-colors cursor-pointer hover:bg-accent/30 text-center"
-                      style={{ 
-                        borderColor: isSelected ? '#5B4A3A' : '#E8DFD1', 
-                        backgroundColor: isSelected ? '#F5F0E8' : '#FAFAFA' 
+            </div>
+          </section>
+        </div>
+
+        {/* ─────────────────────────────── RIGHT COLUMN ────────────────── */}
+        <div className="flex flex-col min-h-0">
+          <section className="flex-1 flex flex-col min-h-0">
+            <h3 className="text-base font-semibold mb-3" style={{ color: '#3D2E1F' }}>
+              Apply Tags
+            </h3>
+
+            {/* Search + Save row */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: '#9B8A75' }} />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  className={inputClass + ' pl-9'}
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={
+                  applying ||
+                  selectedMemberIds.size === 0 ||
+                  tagsToApply.size === 0
+                }
+                className={saveBtnClass}
+                style={saveBtnStyle}
+              >
+                {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+              </button>
+            </div>
+
+            {/* Selection summary */}
+            <p className="text-xs mb-2" style={{ color: '#8A7A6A' }}>
+              {selectedMemberIds.size} selected · {tagsToApply.size} tag{tagsToApply.size === 1 ? '' : 's'} ticked
+            </p>
+
+            {/* Member list */}
+            <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-2">
+              {filteredMembers.map((m) => {
+                const selected = selectedMemberIds.has(m.id);
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => toggleMember(m.id)}
+                    className="flex items-center gap-3 p-2.5 rounded-md border-2 cursor-pointer transition-colors"
+                    style={{
+                      borderColor: selected ? '#A89882' : '#E8DFD1',
+                      backgroundColor: selected ? '#F0E8DA' : 'transparent',
+                    }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                      style={{
+                        borderColor: selected ? '#5B4A3A' : '#A89882',
+                        backgroundColor: selected ? '#5B4A3A' : 'transparent',
                       }}
                     >
-                      {/* Checkbox */}
-                      <div 
-                        className="absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-                        style={{ 
-                          borderColor: isSelected ? '#5B4A3A' : '#E8DFD1',
-                          backgroundColor: isSelected ? '#5B4A3A' : 'transparent'
-                        }}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <Avatar className="h-14 w-14 mx-auto mb-2">
-                        <AvatarImage src={member.userDetails?.avatarUrl} />
-                        <AvatarFallback style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
-                          {member.userDetails?.displayName?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="font-medium text-sm truncate" style={{ color: '#5B4A3A' }}>
-                        {member.userDetails?.displayName || 'Unknown'}
+                      {selected && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage src={m.userDetails?.avatarUrl} />
+                      <AvatarFallback style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A' }}>
+                        {m.userDetails?.displayName?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#3D2E1F' }}>
+                        {m.userDetails?.displayName || 'Unknown'}
                       </p>
                       <p className="text-xs truncate" style={{ color: '#8A7A6A' }}>
-                        {member.userDetails?.email || 'No email'}
+                        {m.userDetails?.email || 'No email'}
                       </p>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                  </div>
+                );
+              })}
+              {filteredMembers.length === 0 && (
+                <p className="text-sm italic py-6 text-center" style={{ color: '#8A7A6A' }}>
+                  No members match "{memberSearch}"
+                </p>
+              )}
+            </div>
+          </section>
         </div>
+      </div>
 
-        {/* Action Buttons - Filled style */}
-        <div className="mt-4 flex flex-row justify-end gap-3 pt-4 border-t flex-shrink-0" style={{ borderColor: '#E8DFD1' }}>
-          <CustomButton
-            variant="outline"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-6"
-            style={{ borderColor: '#E8DFD1', color: '#5B4A3A' }}
-          >
-            Cancel
-          </CustomButton>
-          <CustomButton
-            onClick={handleSubmit}
-            disabled={isSubmitting || selectedCount === 0}
-            className="px-6"
-            style={{ 
-              backgroundColor: '#E8DFD1', 
-              color: '#5B4A3A',
-              border: 'none'
-            }}
-          >
-            <Tag className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Applying...' : `Apply Tags (${selectedCount})`}
-          </CustomButton>
-        </div>
+      {/* Footer */}
+      <div
+        className="mt-6 flex justify-end gap-3 pt-4 border-t flex-shrink-0"
+        style={{ borderColor: '#E8DFD1' }}
+      >
+        <CustomButton
+          variant="outline"
+          onClick={onClose}
+          disabled={applying}
+          className="px-6 border-2"
+          style={{ borderColor: '#A89882', color: '#3D2E1F' }}
+        >
+          Close
+        </CustomButton>
       </div>
     </CustomFormDialog>
   );

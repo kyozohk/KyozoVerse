@@ -17,13 +17,17 @@ interface EmailSendDialogProps {
   onClose: () => void;
   members: CommunityMember[];
   communityName?: string;
+  communityHandle?: string;
+  communityId?: string;
 }
 
 export function EmailSendDialog({
   isOpen,
   onClose,
   members,
-  communityName
+  communityName,
+  communityHandle,
+  communityId,
 }: EmailSendDialogProps) {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -100,17 +104,30 @@ export function EmailSendDialog({
 
         const idToken = await user.getIdToken();
 
+        // Send from the community's verified domain: message@<handle>.kyozo.com
+        const fromAddress = communityHandle
+          ? `${communityName || communityHandle} <message@${communityHandle}.kyozo.com>`
+          : 'Kyozo <noreply@contact.kyozo.com>';
+        const replyTo = communityHandle
+          ? `reply@${communityHandle}.kyozo.com`
+          : 'reply@kyozo.com';
+
         const response = await fetch('/api/send-email', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
+            'Authorization': `Bearer ${idToken}`,
           },
           body: JSON.stringify({
             to: [email],
             subject: personalizedSubject,
             html: htmlMessage,
-            from: 'Kyozo <dev@kyozo.com>',
+            from: fromAddress,
+            replyTo,
+            communityHandle: communityHandle || null,
+            communityId: communityId || null,
+            recipientEmail: email,
+            recipientName: member.userDetails?.displayName || null,
           }),
         });
 

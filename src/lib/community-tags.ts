@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, orderBy, Timestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 
 export interface CommunityTag {
@@ -63,6 +63,24 @@ export async function getCommunityTags(communityId: string): Promise<CommunityTa
   } catch (error) {
     console.error(`❌ [getCommunityTags] Error fetching tags:`, error);
     return [];
+  }
+}
+
+/**
+ * Delete a tag from the community's tags subcollection.
+ * Note: this only removes the tag definition; members may still carry the tag
+ * in their `tags` array. Callers should batch-update members separately if a
+ * full purge is desired.
+ */
+export async function deleteTagFromCommunity(communityId: string, tagName: string): Promise<void> {
+  const tagId = tagName.toLowerCase().replace(/\s+/g, '-');
+  const tagRef = doc(db, 'communities', communityId, 'tags', tagId);
+  try {
+    await deleteDoc(tagRef);
+    console.log(`✅ [deleteTagFromCommunity] Tag "${tagName}" deleted`);
+  } catch (error) {
+    console.error(`❌ [deleteTagFromCommunity] Error deleting tag "${tagName}":`, error);
+    throw error;
   }
 }
 

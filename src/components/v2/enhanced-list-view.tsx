@@ -1,15 +1,39 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag, ChevronDown } from 'lucide-react';
+import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+export interface Column<T> {
+  /** Stable key. Used for sort state and React keys. */
+  key: string;
+  /** Header label. */
+  label: string;
+  /** Renderer for the cell. Receives full row item. */
+  render: (item: T) => React.ReactNode;
+  /** Whether the column is sortable; if true, provide sortValue. */
+  sortable?: boolean;
+  /** Pluck a comparable value for sorting (number/string/Date.getTime() etc). */
+  sortValue?: (item: T) => any;
+  /** Optional CSS width (e.g. '40%', '8rem'). */
+  width?: string;
+  /** Optional class for the cell. */
+  className?: string;
+}
 
 interface EnhancedListViewProps<T> {
   items: T[];
   renderGridItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string, selectable?: boolean) => React.ReactNode;
   renderListItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string, selectable?: boolean) => React.ReactNode;
   renderCircleItem: (item: T, isSelected: boolean, onSelect: () => void, urlField?: string, selectable?: boolean) => React.ReactNode;
+  /**
+   * Optional column definitions. When provided AND viewMode is 'list', the
+   * component renders a sortable table instead of stacked cards. Pages that
+   * don't provide columns keep using the legacy `renderListItem` cards for
+   * backward compatibility.
+   */
+  columns?: Column<T>[];
   searchKeys: (keyof T)[];
   selectable?: boolean;
   isLoading?: boolean;
@@ -25,6 +49,8 @@ interface EnhancedListViewProps<T> {
   onLoadMore?: () => Promise<void>;
   isLoadingMore?: boolean;
   defaultViewMode?: 'grid' | 'list' | 'circle';
+  /** Optional row click handler for table mode (selects when selectable). */
+  onRowClick?: (item: T) => void;
 }
 
 export function EnhancedListView<T extends { id: string; tags?: string[] }>({
@@ -32,6 +58,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   renderGridItem,
   renderListItem,
   renderCircleItem,
+  columns,
   searchKeys,
   selectable = false,
   isLoading = false,
@@ -47,9 +74,13 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   onLoadMore,
   isLoadingMore = false,
   defaultViewMode = 'grid',
+  onRowClick,
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>(defaultViewMode);
   const [searchTerm, setSearchTerm] = useState('');
+  // Sort state for table mode. `dir` cycles: asc → desc → null (no sort).
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [internalSelection, setInternalSelection] = useState<Set<string>>(initialSelection || new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
 
@@ -139,8 +170,38 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
       });
     }
 
+    // Apply column sort if active. Falls through to filter-order when no
+    // active sort, preserving the parent's incoming order.
+    if (sortKey && sortDir && columns) {
+      const col = columns.find((c) => c.key === sortKey);
+      if (col?.sortValue) {
+        filtered = [...filtered].sort((a, b) => {
+          const av = col.sortValue!(a);
+          const bv = col.sortValue!(b);
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (av < bv) return sortDir === 'asc' ? -1 : 1;
+          if (av > bv) return sortDir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+    }
+
     return filtered;
-  }, [items, searchTerm, searchKeys, selectedTags]);
+  }, [items, searchTerm, searchKeys, selectedTags, sortKey, sortDir, columns]);
+
+  const toggleSort = useCallback((key: string) => {
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortKey(null);
+      setSortDir(null);
+    }
+  }, [sortKey, sortDir]);
 
   useEffect(() => {
     const visibleIds = new Set(filteredItems.map(item => item.id));
@@ -232,6 +293,19 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     setSelectedIds(new Set(filteredItems.map(item => item.id)));
   };
 
+  // Table-mode select helpers (only used when columns prop is provided).
+  const allVisibleSelected = filteredItems.length > 0 && filteredItems.every((m) => selectedIds.has(m.id));
+  const someVisibleSelected = filteredItems.some((m) => selectedIds.has(m.id));
+  const toggleAllVisible = () => {
+    const next = new Set(selectedIds);
+    if (allVisibleSelected) {
+      filteredItems.forEach((m) => next.delete(m.id));
+    } else {
+      filteredItems.forEach((m) => next.add(m.id));
+    }
+    setSelectedIds(next);
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return loadingComponent || <div className="text-center py-8">Loading...</div>;
@@ -245,7 +319,109 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
       );
     }
 
-    const ItemComponent = 
+    // Table mode: when columns are provided and viewMode is 'list', render a
+    // sortable table matching the audience design.
+    if (columns && viewMode === 'list') {
+      return (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderColor: '#A89882', backgroundColor: '#FAF5EC' }}>
+                {selectable && (
+                  <th className="w-10 px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
+                      onChange={toggleAllVisible}
+                      className="h-4 w-4 rounded border-[#A89882] accent-[#5B4A3A] cursor-pointer"
+                    />
+                  </th>
+                )}
+                {columns.map((col) => {
+                  const isActive = sortKey === col.key;
+                  return (
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 text-left font-medium"
+                      style={{ color: '#5B4A3A', width: col.width }}
+                    >
+                      {col.sortable ? (
+                        <button
+                          onClick={() => toggleSort(col.key)}
+                          className="inline-flex items-center gap-1.5 hover:text-[#3D2E1F] transition-colors"
+                        >
+                          {isActive && sortDir === 'asc'
+                            ? <ChevronUp className="h-3.5 w-3.5" />
+                            : isActive && sortDir === 'desc'
+                              ? <ChevronDown className="h-3.5 w-3.5" />
+                              : <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />}
+                          {col.label}
+                        </button>
+                      ) : (
+                        col.label
+                      )}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item, index) => {
+                const isLastItem = index === filteredItems.length - 1;
+                const selected = selectedIds.has(item.id);
+                return (
+                  <tr
+                    key={item.id}
+                    ref={isLastItem ? (lastItemRef as any) : null}
+                    onClick={() => {
+                      if (onRowClick) onRowClick(item);
+                      else if (selectable) toggleSelection(item.id);
+                    }}
+                    className={cn(
+                      'border-b transition-colors',
+                      selected ? 'bg-[#F0E8DA]' : 'hover:bg-[#FAF5EC]',
+                      (selectable || onRowClick) && 'cursor-pointer'
+                    )}
+                    style={{ borderColor: '#F0E8DA' }}
+                  >
+                    {selectable && (
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleSelection(item.id)}
+                          className="h-4 w-4 rounded border-[#A89882] accent-[#5B4A3A] cursor-pointer"
+                        />
+                      </td>
+                    )}
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={cn('px-4 py-3', col.className)}
+                        style={{ color: '#3D2E1F' }}
+                      >
+                        {col.render(item)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {isLoadingMore && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#9B8A75' }} />
+            </div>
+          )}
+          {hasMore && !isLoadingMore && (
+            <div ref={loadMoreRef} className="h-4" />
+          )}
+        </div>
+      );
+    }
+
+    const ItemComponent =
       viewMode === 'list' ? renderListItem
       : viewMode === 'circle' ? renderCircleItem
       : renderGridItem;
@@ -333,17 +509,21 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
               )}
             </div>
         )}
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-colors"
-            />
-          </div>
+        {/* Search row: full width */}
+        <div className="relative w-full mb-3">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: '#9B8A75' }} />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-12 pl-11 pr-4 rounded-md border-2 bg-transparent text-sm placeholder:text-[#9B8A75] focus:outline-none focus:ring-2 focus:ring-[#A89882] focus:ring-offset-0 transition-colors"
+            style={{ borderColor: '#A89882', color: '#3D2E1F' }}
+          />
+        </div>
+
+        {/* CTA row: select-all (left), permanent actions + view-mode (right) */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             {selectable && !isLoading && (
               <Button
@@ -353,11 +533,11 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 // KYPRO-47: disable (not just hide) when no items are visible so
                 // "Deselect All" can never appear on an empty list.
                 disabled={filteredItems.length === 0 || isSelectingAll}
-                className="gap-2"
-                style={{ 
-                  borderColor: 'var(--page-content-border)',
-                  backgroundColor: 'var(--page-content-bg)',
-                  color: '#6B5D52'
+                className="gap-2 rounded-md border-2"
+                style={{
+                  borderColor: '#A89882',
+                  backgroundColor: 'transparent',
+                  color: '#3D2E1F',
                 }}
               >
                 {/* KYPRO-47: show "Deselect All" ONLY when there's an actual
@@ -381,20 +561,23 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 )}
               </Button>
             )}
+          </div>
+          <div className="flex items-center gap-2">
             {selectable && !isLoading && permanentActions && (
               <div className="flex items-center gap-2">
                 {permanentActions}
               </div>
             )}
-            <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
+            <div className="flex items-center gap-1 rounded-md border-2 p-1" style={{ borderColor: '#A89882', backgroundColor: 'transparent' }}>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  "h-8 w-8",
-                  viewMode === 'list' && "bg-background shadow-sm"
+                  "h-8 w-8 rounded",
+                  viewMode === 'list' && "shadow-sm"
                 )}
+                style={viewMode === 'list' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -403,9 +586,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 size="icon"
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  "h-8 w-8",
-                  viewMode === 'grid' && "bg-background shadow-sm"
+                  "h-8 w-8 rounded",
+                  viewMode === 'grid' && "shadow-sm"
                 )}
+                style={viewMode === 'grid' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
               >
                 <Grid className="h-4 w-4" />
               </Button>
@@ -414,9 +598,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 size="icon"
                 onClick={() => setViewMode('circle')}
                 className={cn(
-                  "h-8 w-8",
-                  viewMode === 'circle' && "bg-background shadow-sm"
+                  "h-8 w-8 rounded",
+                  viewMode === 'circle' && "shadow-sm"
                 )}
+                style={viewMode === 'circle' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
               >
                 <CircleUser className="h-4 w-4" />
               </Button>
