@@ -22,6 +22,8 @@ import { useCommunityAccess } from '@/hooks/use-community-access';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 import { ImportMembersDialog } from '@/components/community/import-members-dialog';
+import { EmailSendDialog } from '@/components/broadcast/email-send-dialog';
+import { Send } from 'lucide-react';
 
 interface MemberData {
   id: string;
@@ -57,6 +59,7 @@ function MembersContent() {
   const [isTaggingOpen, setIsTaggingOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Pagination state
@@ -418,6 +421,14 @@ function MembersContent() {
               subtitle={community.tagline || (community as any).mantras}
               ctas={canManage ? [
                 {
+                  label: selectedMembers.length > 0
+                    ? `Message (${selectedMembers.length})`
+                    : 'Message',
+                  icon: <Send className="h-4 w-4" />,
+                  onClick: () => setIsMessageDialogOpen(true),
+                  disabled: selectedMembers.length === 0,
+                },
+                {
                   label: 'Import Members',
                   icon: <Upload className="h-4 w-4" />,
                   onClick: () => setIsImportOpen(true),
@@ -536,6 +547,18 @@ function MembersContent() {
             setHasMore(true);
             setRefreshKey(k => k + 1);
           }}
+        />
+      )}
+
+      {/* Email Send Dialog — sends to selected members */}
+      {community && (
+        <EmailSendDialog
+          isOpen={isMessageDialogOpen}
+          onClose={() => setIsMessageDialogOpen(false)}
+          members={selectedMembersForDialog as any}
+          communityName={community.name}
+          communityHandle={handle}
+          communityId={community.communityId}
         />
       )}
 

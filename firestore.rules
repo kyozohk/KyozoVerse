@@ -11,15 +11,35 @@ service cloud.firestore {
 
     // Helper function to check if user is community owner
     function isCommunityOwner(communityId) {
-      return request.auth != null && 
+      return request.auth != null &&
              get(/databases/$(database)/documents/communities/$(communityId)).data.ownerId == request.auth.uid;
     }
-    
+
     // Helper function to check if user is community admin or owner
     function isCommunityAdmin(communityId) {
       let memberDoc = get(/databases/$(database)/documents/communityMembers/$(request.auth.uid + '_' + communityId));
-      return request.auth != null && 
+      return request.auth != null &&
              (memberDoc.data.role == 'owner' || memberDoc.data.role == 'admin');
+    }
+
+    // ---- v2 multi-tenant helpers -----------------------------------------
+    // A user belongs to a workspace if either:
+    //   (a) they own the workspace doc (workspaces/{id}.ownerUid == uid), or
+    //   (b) they have an active workspaceMembers record for that workspace.
+    // These helpers are intentionally narrow; v2 collections (contacts,
+    // imports, sourceConnections) are admin-SDK-only and don't rely on them
+    // for client reads, but they're available for narrowly-scoped exceptions.
+    function workspaceExists(workspaceId) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId));
+    }
+    function isWorkspaceOwner(workspaceId) {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerUid == request.auth.uid;
+    }
+    function belongsToWorkspace(workspaceId) {
+      return request.auth != null &&
+        (isWorkspaceOwner(workspaceId) ||
+         exists(/databases/$(database)/documents/workspaceMembers/$(request.auth.uid + '_' + workspaceId)));
     }
 
     // Communities can be read by anyone
@@ -138,6 +158,60 @@ service cloud.firestore {
       allow create: if true; // Webhook creates messages (no auth)
       allow update: if request.auth != null;
       allow delete: if request.auth != null;
+    }
+
+    // API keys collection - server-only.
+    // Only the Firebase Admin SDK (which bypasses these rules) may read or
+    // write here. Client SDK access is denied so raw key hashes never leak.
+    match /apiKeys/{keyHash} {
+      allow read, write: if false;
+    }
+
+    // ===================================================================
+    // v2 collections — Contact Consolidation Tool / multi-tenant workspaces
+    // ===================================================================
+    //
+    // Default posture for v2 PII-heavy collections is admin-SDK-only.
+    // The client SDK is denied across the board; all reads/writes go
+    // through server-side API routes that re-check workspace membership
+    // in code AND stamp `workspaceId` on every doc.
+    //
+    // This is intentionally stricter than v1's pattern: a misconfigured
+    // client app should not be able to leak 10k contacts.
+
+    // Workspaces themselves: the workspace doc is readable by members
+    // (so the dashboard can show its name/branding); writes go through
+    // the server.
+    match /workspaces/{workspaceId} {
+      allow read: if belongsToWorkspace(workspaceId);
+      allow write: if false;
+    }
+
+    // Contacts — the Master Database. Strict admin-SDK only.
+    // A leaked client key reading from here = a 10k-row contact dump,
+    // so we keep the client surface zero.
+    match /contacts/{contactId} {
+      allow read, write: if false;
+    }
+
+    // Imports — audit-trail records for every "push to Kyozo".
+    // Immutable after creation. Admin-SDK only.
+    match /imports/{importId} {
+      allow read, write: if false;
+    }
+
+    // Source connections — encrypted OAuth tokens for Eventbrite, GSheets,
+    // Resident Advisor, 7 Rooms. Even ciphertext never round-trips
+    // through client SDKs; reads go through the server which decrypts.
+    match /sourceConnections/{connectionId} {
+      allow read, write: if false;
+    }
+
+    // Community audience — soft tag of a contact into a community.
+    // The joined `contacts` doc IS PII, so we keep this admin-SDK-only too.
+    // Pages render audience through server routes.
+    match /communityAudience/{audienceId} {
+      allow read, write: if false;
     }
   }
 }
