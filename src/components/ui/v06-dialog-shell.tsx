@@ -146,6 +146,7 @@ export function V06DialogShell(props: V06DialogShellProps) {
       <DialogContent
         className={`!p-0 !overflow-hidden !w-[95vw] !max-h-[92vh] !flex !flex-col ${SIZE_TO_CLASS[size]}`}
         style={{ background: V06.bgModal, borderRadius: 16 }}
+        hideCloseButton
       >
         <VisuallyHidden>
           <DialogTitle>{title}</DialogTitle>
