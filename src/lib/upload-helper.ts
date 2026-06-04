@@ -125,6 +125,7 @@ export async function uploadFile(
       // Open and send the request
       xhr.open('POST', '/api/upload');
       xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+      xhr.setRequestHeader('x-user-id', user.uid);
       xhr.send(formData);
     });
   } catch (error) {

@@ -242,7 +242,7 @@ export default function CommunityFeedPage() {
             <Banner
               backgroundImage={community.communityBackgroundImage}
               iconImage={community.communityProfileImage}
-              title={community.name}
+              title="Feed"
               location={(community as any).location}
               locationExtra={
                 <span className="flex items-center gap-1 text-sm text-white/90">

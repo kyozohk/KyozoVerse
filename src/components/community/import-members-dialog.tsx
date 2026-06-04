@@ -39,8 +39,10 @@ import {
   parseGrid,
   sanitizeCell,
   markExistingMembers,
+  applyCleanResults,
   type ImportRow,
   type ParseResult,
+  type CleanedRow,
 } from '@/lib/import/parse';
 
 /* -------------------------------------------------------------------------- */
@@ -50,8 +52,18 @@ import {
 interface Props {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  community: Community;
+  /**
+   * Target community to import into. When omitted, the dialog runs the
+   * reversed flow (contacts → tag → community): it creates a community at the
+   * confirm step and imports into it.
+   */
+  community?: Community;
   onSuccess: () => void;
+  /** Called with a community handle to navigate to after a create/distribute flow. */
+  onComplete?: (handle: string) => void;
+  /** Existing communities the user can distribute imported contacts into
+   *  (used by the no-community "distribute" flow on /communities). */
+  availableCommunities?: Array<{ communityId: string; handle: string; name: string }>;
 }
 
 type Step = 'setup' | 'preview' | 'confirm' | 'done';
@@ -76,7 +88,14 @@ const SOURCE_LABEL: Record<Source, string> = {
 /*  Top-level component                                                       */
 /* -------------------------------------------------------------------------- */
 
-export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess }: Props) {
+export function ImportMembersDialog({
+  isOpen,
+  onOpenChange,
+  community,
+  onSuccess,
+  onComplete,
+  availableCommunities = [],
+}: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -102,9 +121,38 @@ export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess
       setParseResult(pr);
       setStep('preview');
 
+      if (!user) return;
+
+      // AI cleanup pass (background): normalize names/emails and flag junk rows
+      // so we don't import garbage. Preview updates in place when it returns;
+      // falls back silently to the raw rows on any error.
+      try {
+        const token = await user.getIdToken();
+        const payload = pr.rows.map((r) => ({
+          index: r.index,
+          name: r.name,
+          email: r.email,
+          phone: r.phone,
+        }));
+        const cr = await fetch('/api/v1/import/clean', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ rows: payload }),
+        });
+        if (cr.ok) {
+          const data = (await cr.json()) as { cleaned?: CleanedRow[] };
+          if (data.cleaned && data.cleaned.length) {
+            setParseResult((prev) => (prev ? applyCleanResults(prev, data.cleaned!) : prev));
+          }
+        }
+      } catch (e) {
+        console.warn('[import] AI cleanup failed (continuing with raw rows):', e);
+      }
+
       // Fetch existing community dedup keys and cross-mark in the background.
       // We don't block the UI on this; the breakdown updates when keys arrive.
-      if (!user) return;
+      // Skipped in the reversed flow (no community exists yet to dedup against).
+      if (!community) return;
       try {
         const idToken = await user.getIdToken();
         const r = await fetch(
@@ -123,7 +171,7 @@ export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess
         console.warn('[import] existing-dedup-keys fetch failed (continuing):', e);
       }
     },
-    [user, community.communityId]
+    [user, community]
   );
 
   const toggleRow = useCallback((id: string) => {
@@ -175,7 +223,7 @@ export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess
   }, [activeFilter]);
 
   const handleCommit = useCallback(
-    async (tag: string, note: string) => {
+    async (tag: string, note: string, communityName?: string) => {
       if (!parseResult || !user) return;
       setImporting(true);
       try {
@@ -189,26 +237,45 @@ export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess
             country: r.country || undefined,
           }));
         const token = await user.getIdToken();
-        const res = await fetch(
-          `/api/v1/communities/${community.communityId}/audience/import`,
-          {
+        const authHeaders = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        };
+
+        // Reversed flow: no community yet → create one from this import first.
+        let targetId = community?.communityId;
+        let createdHandle: string | undefined;
+        if (!targetId) {
+          const name = (communityName || '').trim();
+          if (!name) throw new Error('Please name the community');
+          const cRes = await fetch('/api/v1/communities/create', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ rows, tag, note, source }),
-          }
-        );
+            headers: authHeaders,
+            body: JSON.stringify({ name, tags: tag ? [tag] : [] }),
+          });
+          const cData = await cRes.json();
+          if (!cRes.ok) throw new Error(cData?.error || 'Failed to create community');
+          targetId = cData.communityId as string;
+          createdHandle = cData.handle as string;
+        }
+
+        const res = await fetch(`/api/v1/communities/${targetId}/audience/import`, {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({ rows, tag, note, source }),
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
         toast({
-          title: 'Import complete',
-          description: `${data.imported} members added with tag "${tag}".`,
+          title: createdHandle ? 'Community created' : 'Import complete',
+          description: `${data.imported} contacts added with tag "${tag}".`,
         });
         setStep('done');
         onSuccess();
-        setTimeout(() => onOpenChange(false), 700);
+        setTimeout(() => {
+          onOpenChange(false);
+          if (createdHandle) onComplete?.(createdHandle);
+        }, 700);
       } catch (e) {
         toast({
           title: 'Import failed',
@@ -219,7 +286,90 @@ export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess
         setImporting(false);
       }
     },
-    [parseResult, user, community.communityId, source, toast, onSuccess, onOpenChange]
+    [parseResult, user, community, source, toast, onSuccess, onOpenChange, onComplete]
+  );
+
+  // Distribute flow (no community prop): add the chosen contacts to one or more
+  // communities — existing and/or newly created — applying the same set to all.
+  const handleDistribute = useCallback(
+    async (opts: {
+      tag: string;
+      note: string;
+      existingCommunityIds: string[];
+      newCommunityNames: string[];
+      memberRows: Array<{
+        name?: string;
+        email?: string;
+        phone?: string;
+        phoneE164?: string;
+        country?: string;
+      }>;
+    }) => {
+      if (!user) return;
+      const { tag, note, existingCommunityIds, newCommunityNames, memberRows } = opts;
+      setImporting(true);
+      try {
+        const token = await user.getIdToken();
+        const authHeaders = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        };
+
+        // Create any new communities first; collect all target ids (+ a handle
+        // to navigate to afterwards — prefer a freshly created one).
+        const targetIds = [...existingCommunityIds];
+        let routeHandle: string | undefined;
+        for (const name of newCommunityNames) {
+          const cRes = await fetch('/api/v1/communities/create', {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify({ name, tags: tag ? [tag] : [] }),
+          });
+          const cData = await cRes.json();
+          if (!cRes.ok) throw new Error(cData?.error || `Failed to create "${name}"`);
+          targetIds.push(cData.communityId as string);
+          if (!routeHandle) routeHandle = cData.handle as string;
+        }
+        if (targetIds.length === 0) throw new Error('Pick or create at least one community');
+
+        // Import the same member set into each target community.
+        let totalImported = 0;
+        for (const id of targetIds) {
+          const res = await fetch(`/api/v1/communities/${id}/audience/import`, {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify({ rows: memberRows, tag, note, source }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+          totalImported += data.imported || 0;
+        }
+
+        if (!routeHandle && existingCommunityIds[0]) {
+          routeHandle = availableCommunities.find(
+            (c) => c.communityId === existingCommunityIds[0]
+          )?.handle;
+        }
+
+        toast({
+          title: 'Contacts added',
+          description: `${memberRows.length.toLocaleString()} contacts added to ${targetIds.length} ${
+            targetIds.length === 1 ? 'community' : 'communities'
+          }.`,
+        });
+        setStep('done');
+        onSuccess();
+        setTimeout(() => {
+          onOpenChange(false);
+          if (routeHandle) onComplete?.(routeHandle);
+        }, 700);
+      } catch (e) {
+        toast({ title: 'Import failed', description: (e as Error).message, variant: 'destructive' });
+      } finally {
+        setImporting(false);
+      }
+    },
+    [user, source, toast, onSuccess, onOpenChange, onComplete, availableCommunities]
   );
 
   // ---- Footer per step ----
@@ -274,17 +424,29 @@ export function ImportMembersDialog({ isOpen, onOpenChange, community, onSuccess
         open={isOpen}
         onClose={() => onOpenChange(false)}
         title="Automatically Integrate"
-        subtitle="Confirm · tag this import & review"
+        subtitle={community ? 'Confirm · tag this import & review' : 'Assign contacts to communities'}
         size="xl"
         leftPanel={<ConfirmSummary result={parseResult} source={source} />}
         rightPanel={
-          <ConfirmForm
-            result={parseResult}
-            source={source}
-            importing={importing}
-            onCommit={handleCommit}
-            onBack={() => setStep('preview')}
-          />
+          community ? (
+            <ConfirmForm
+              result={parseResult}
+              source={source}
+              importing={importing}
+              needsCommunity={false}
+              onCommit={handleCommit}
+              onBack={() => setStep('preview')}
+            />
+          ) : (
+            <DistributeForm
+              result={parseResult}
+              source={source}
+              importing={importing}
+              availableCommunities={availableCommunities}
+              onDistribute={handleDistribute}
+              onBack={() => setStep('preview')}
+            />
+          )
         }
       />
     );
@@ -971,6 +1133,9 @@ function PreviewFilters({
             result.autoDeselected.existing > 0
               ? `${result.autoDeselected.existing} already members`
               : null,
+            result.autoDeselected.junk > 0
+              ? `${result.autoDeselected.junk} junk rows (AI)`
+              : null,
           ]
             .filter(Boolean)
             .join(', ')}
@@ -1193,7 +1358,9 @@ function PreviewRow({ row, onToggle }: { row: ImportRow; onToggle: () => void })
             ? '(empty)'
             : row.deselectedReason === 'existing'
               ? '(existing member)'
-              : '—')}
+              : row.deselectedReason === 'junk'
+                ? '(junk row)'
+                : '—')}
       </td>
       <td
         className="p-2"
@@ -1299,17 +1466,35 @@ function ConfirmSummary({ result, source }: { result: ParseResult; source: Sourc
   );
 }
 
-function ConfirmForm({
+/**
+ * Distribute step (no-community flow): pick which contacts (search/country),
+ * pick/create one or more communities, and add the same set to all of them.
+ */
+function DistributeForm({
   result,
   source,
   importing,
-  onCommit,
+  availableCommunities,
+  onDistribute,
   onBack,
 }: {
   result: ParseResult;
   source: Source;
   importing: boolean;
-  onCommit: (tag: string, note: string) => void;
+  availableCommunities: Array<{ communityId: string; handle: string; name: string }>;
+  onDistribute: (opts: {
+    tag: string;
+    note: string;
+    existingCommunityIds: string[];
+    newCommunityNames: string[];
+    memberRows: Array<{
+      name?: string;
+      email?: string;
+      phone?: string;
+      phoneE164?: string;
+      country?: string;
+    }>;
+  }) => void;
   onBack: () => void;
 }) {
   const defaultTag = `${SOURCE_LABEL[source]} · ${new Date().toLocaleDateString(undefined, {
@@ -1318,15 +1503,271 @@ function ConfirmForm({
   })}`;
   const [tag, setTag] = useState(defaultTag);
   const [note, setNote] = useState('');
+  const [selectedExisting, setSelectedExisting] = useState<Set<string>>(new Set());
+  const [newNames, setNewNames] = useState<string[]>([]);
+  const [newNameInput, setNewNameInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [country, setCountry] = useState('all');
+
+  const baseSelected = useMemo(() => result.rows.filter((r) => r.selected), [result.rows]);
+  const countries = useMemo(() => {
+    const s = new Set<string>();
+    baseSelected.forEach((r) => r.country && s.add(r.country));
+    return [...s].sort();
+  }, [baseSelected]);
+  const members = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return baseSelected.filter((r) => {
+      if (country !== 'all' && r.country !== country) return false;
+      if (q && !`${r.name} ${r.email}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [baseSelected, search, country]);
+
+  const targetCount = selectedExisting.size + newNames.length;
+  const canSubmit = !importing && !!tag.trim() && targetCount > 0 && members.length > 0;
+
+  const toggleExisting = (id: string) =>
+    setSelectedExisting((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  const addNew = () => {
+    const v = newNameInput.trim();
+    if (v && !newNames.some((n) => n.toLowerCase() === v.toLowerCase())) {
+      setNewNames([...newNames, v]);
+    }
+    setNewNameInput('');
+  };
+
+  const submit = () =>
+    onDistribute({
+      tag: tag.trim(),
+      note: note.trim(),
+      existingCommunityIds: [...selectedExisting],
+      newCommunityNames: newNames,
+      memberRows: members.map((r) => ({
+        name: r.name || undefined,
+        email: r.email || undefined,
+        phone: r.phone || undefined,
+        phoneE164: r.phoneE164 || undefined,
+        country: r.country || undefined,
+      })),
+    });
+
+  const inputStyle = { background: V06.bgCard, border: `1.5px solid ${V06.ruleSoft}` } as const;
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="mb-3">
+        <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>
+          Add to communities
+        </h3>
+        <p className="text-[12.5px]" style={{ color: V06.warmMid }}>
+          Pick who to add, then choose one or more communities to add them to.
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto pr-1 space-y-5">
+        {/* Who to add */}
+        <div>
+          <FieldLabel>WHO TO ADD</FieldLabel>
+          <div className="flex gap-2">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name or email…"
+              className="flex-1 px-3.5 py-2.5 rounded-lg text-sm"
+              style={inputStyle}
+            />
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="px-3 py-2.5 rounded-lg text-sm"
+              style={inputStyle}
+            >
+              <option value="all">All countries</option>
+              {countries.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-[11.5px] mt-1.5" style={{ color: V06.warmMid }}>
+            <strong style={{ color: V06.ink }}>{members.length.toLocaleString()}</strong> of{' '}
+            {baseSelected.length.toLocaleString()} selected contacts match — these get added to every
+            community below.
+          </div>
+        </div>
+
+        {/* Communities */}
+        <div>
+          <FieldLabel>COMMUNITIES</FieldLabel>
+          {availableCommunities.length > 0 && (
+            <div className="space-y-1.5 mb-3 max-h-[180px] overflow-y-auto">
+              {availableCommunities.map((c) => {
+                const on = selectedExisting.has(c.communityId);
+                return (
+                  <button
+                    key={c.communityId}
+                    type="button"
+                    onClick={() => toggleExisting(c.communityId)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm"
+                    style={{
+                      background: on ? V06.bgSoft : V06.bgCard,
+                      border: `1.5px solid ${on ? V06.btnPrimaryBg : V06.ruleSoft}`,
+                      color: V06.ink,
+                    }}
+                  >
+                    <span
+                      className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: on ? V06.btnPrimaryBg : 'transparent',
+                        border: `1.5px solid ${on ? V06.btnPrimaryBg : V06.ruleSoft}`,
+                      }}
+                    >
+                      {on && <Check className="w-3 h-3 text-white" />}
+                    </span>
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Create new */}
+          <div className="flex gap-2">
+            <input
+              value={newNameInput}
+              onChange={(e) => setNewNameInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addNew();
+                }
+              }}
+              placeholder="Create a new community…"
+              className="flex-1 px-3.5 py-2.5 rounded-lg text-sm"
+              style={inputStyle}
+            />
+            <button
+              type="button"
+              onClick={addNew}
+              disabled={!newNameInput.trim()}
+              className="px-4 py-2.5 rounded-lg text-sm font-bold disabled:opacity-50"
+              style={{ background: V06.bgSoft, color: V06.ink }}
+            >
+              Add
+            </button>
+          </div>
+          {newNames.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {newNames.map((n) => (
+                <span
+                  key={n}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                  style={{ background: V06.bgSoft, color: V06.ink }}
+                >
+                  {n} (new)
+                  <button
+                    type="button"
+                    onClick={() => setNewNames(newNames.filter((x) => x !== n))}
+                    style={{ color: V06.warmMid }}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tag */}
+        <div>
+          <FieldLabel>TAG NAME</FieldLabel>
+          <input
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-lg text-sm"
+            style={inputStyle}
+          />
+          <div className="text-[11.5px] mt-1.5" style={{ color: V06.warmMid }}>
+            Applied to every contact in this batch, in each community.
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-auto pt-5 flex items-center justify-between gap-3">
+        <V06SecondaryButton onClick={onBack} disabled={importing}>
+          Back
+        </V06SecondaryButton>
+        <button
+          onClick={submit}
+          disabled={!canSubmit}
+          className="px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 disabled:opacity-60"
+          style={{ background: V06.btnPrimaryBg, color: 'white' }}
+        >
+          {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          Add to {targetCount || ''} {targetCount === 1 ? 'community' : 'communities'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmForm({
+  result,
+  source,
+  importing,
+  needsCommunity,
+  onCommit,
+  onBack,
+}: {
+  result: ParseResult;
+  source: Source;
+  importing: boolean;
+  needsCommunity: boolean;
+  onCommit: (tag: string, note: string, communityName?: string) => void;
+  onBack: () => void;
+}) {
+  const defaultTag = `${SOURCE_LABEL[source]} · ${new Date().toLocaleDateString(undefined, {
+    month: 'short',
+    year: 'numeric',
+  })}`;
+  const [tag, setTag] = useState(defaultTag);
+  const [note, setNote] = useState('');
+  const [communityName, setCommunityName] = useState('');
 
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>Tag this import</h3>
+        <h3 className="text-[15px] font-bold mb-1" style={{ color: V06.ink }}>
+          {needsCommunity ? 'Name your community' : 'Tag this import'}
+        </h3>
         <p className="text-[12.5px]" style={{ color: V06.warmMid }}>
-          Find this batch in your Audience later by the tag.
+          {needsCommunity
+            ? 'These contacts become the founding audience of a new community.'
+            : 'Find this batch in your Audience later by the tag.'}
         </p>
       </div>
+
+      {needsCommunity && (
+        <div className="mb-5">
+          <FieldLabel>COMMUNITY NAME</FieldLabel>
+          <input
+            value={communityName}
+            onChange={(e) => setCommunityName(e.target.value)}
+            placeholder="e.g. Magic Room"
+            className="w-full px-3.5 py-2.5 rounded-lg text-sm"
+            style={{ background: V06.bgCard, border: `1.5px solid ${V06.ruleSoft}` }}
+          />
+          <div className="text-[11.5px] mt-1.5" style={{ color: V06.warmMid }}>
+            We'll create this community and add the selected contacts to it.
+          </div>
+        </div>
+      )}
 
       <FieldLabel>TAG NAME</FieldLabel>
       <input
@@ -1356,13 +1797,18 @@ function ConfirmForm({
       <div className="mt-auto pt-6 flex items-center justify-between gap-3">
         <V06SecondaryButton onClick={onBack} disabled={importing}>Back</V06SecondaryButton>
         <button
-          onClick={() => onCommit(tag.trim(), note.trim())}
-          disabled={importing || !tag.trim() || result.selectedCount === 0}
+          onClick={() => onCommit(tag.trim(), note.trim(), communityName.trim())}
+          disabled={
+            importing ||
+            !tag.trim() ||
+            result.selectedCount === 0 ||
+            (needsCommunity && !communityName.trim())
+          }
           className="px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 disabled:opacity-60"
           style={{ background: V06.btnPrimaryBg, color: 'white' }}
         >
           {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          Confirm · Import{' '}
+          {needsCommunity ? 'Create · Import' : 'Confirm · Import'}{' '}
           <span
             className="px-2 py-0.5 rounded-md text-[11.5px]"
             style={{ background: 'rgba(255,255,255,0.18)' }}

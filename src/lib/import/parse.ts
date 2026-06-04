@@ -31,8 +31,9 @@ export interface ImportRow {
    *   - empty:     no email AND no phone
    *   - duplicate: dedup-key matches an earlier row in this file
    *   - existing:  dedup-key matches an existing community member
+   *   - junk:      AI cleanup judged this row not a real contact
    */
-  deselectedReason?: 'empty' | 'duplicate' | 'existing';
+  deselectedReason?: 'empty' | 'duplicate' | 'existing' | 'junk';
   /** Current selection state (mutable; UI flips this). */
   selected: boolean;
 }
@@ -49,6 +50,8 @@ export interface ParseResult {
     duplicates: number;
     /** Rows whose dedup key matches an existing community member. */
     existing: number;
+    /** Rows the AI cleanup pass judged to be junk / not a real contact. */
+    junk: number;
     total: number;
   };
   /** Total rows parsed (before any UI filtering). */
@@ -331,7 +334,7 @@ function emptyResult(): ParseResult {
     rows: [],
     headers: [],
     countryGroups: [],
-    autoDeselected: { empty: 0, duplicates: 0, existing: 0, total: 0 },
+    autoDeselected: { empty: 0, duplicates: 0, existing: 0, junk: 0, total: 0 },
     totalRows: 0,
     selectedCount: 0,
   };
@@ -349,6 +352,7 @@ function finalize(rows: ImportRow[], headerRow: string[]): ParseResult {
       empty: ds.empty,
       duplicates: ds.duplicates,
       existing: 0, // populated later by markExistingMembers()
+      junk: 0, // populated later by applyCleanResults()
       total: ds.empty + ds.duplicates,
     },
     totalRows: rows.length,
@@ -395,7 +399,72 @@ export function markExistingMembers(
     autoDeselected: {
       ...result.autoDeselected,
       existing,
-      total: result.autoDeselected.empty + result.autoDeselected.duplicates + existing,
+      total:
+        result.autoDeselected.empty +
+        result.autoDeselected.duplicates +
+        result.autoDeselected.junk +
+        existing,
+    },
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  AI cleanup application                                                    */
+/* -------------------------------------------------------------------------- */
+
+/** One cleaned row returned by the Gemini cleanup endpoint, keyed by `index`. */
+export interface CleanedRow {
+  index: number;
+  name?: string;
+  email?: string;
+  /** True when the row is junk / not a real contact and should be excluded. */
+  drop?: boolean;
+}
+
+/**
+ * Merge Gemini cleanup results back into a ParseResult:
+ *   - overwrite name/email with the cleaned values (when provided)
+ *   - rows flagged `drop` are deselected with reason 'junk' (unless they were
+ *     already auto-deselected for another reason — that reason is kept)
+ *
+ * Returns a new ParseResult so the dialog can swap state in one go, mirroring
+ * markExistingMembers().
+ */
+export function applyCleanResults(
+  result: ParseResult,
+  cleaned: CleanedRow[]
+): ParseResult {
+  if (cleaned.length === 0) return result;
+  const byIndex = new Map(cleaned.map((c) => [c.index, c]));
+
+  let junk = 0;
+  const rows = result.rows.map((r) => {
+    const c = byIndex.get(r.index);
+    if (!c) return r;
+    const next: ImportRow = { ...r };
+    if (typeof c.name === 'string') next.name = c.name;
+    if (typeof c.email === 'string') next.email = c.email.toLowerCase().trim();
+    if (c.drop && !next.deselectedReason) {
+      next.selected = false;
+      next.deselectedReason = 'junk';
+      junk += 1;
+    }
+    return next;
+  });
+
+  const selectedCount = rows.filter((r) => r.selected).length;
+  return {
+    ...result,
+    rows,
+    selectedCount,
+    autoDeselected: {
+      ...result.autoDeselected,
+      junk,
+      total:
+        result.autoDeselected.empty +
+        result.autoDeselected.duplicates +
+        result.autoDeselected.existing +
+        junk,
     },
   };
 }

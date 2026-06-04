@@ -27,7 +27,7 @@ interface CreateCommunityDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     existingCommunity?: Community | null;
-    onCommunityUpdated?: () => void;
+    onCommunityUpdated?: (created?: { handle: string; communityId: string }) => void;
 }
 
 const TagInput = ({ tags, setTags }: { tags: string[], setTags: (tags: string[]) => void }) => {
@@ -678,7 +678,7 @@ export function CreateCommunityDialog({ isOpen, onOpenChange, existingCommunity,
             });
             onOpenChange(false);
             setCurrentStep(0);
-            onCommunityUpdated?.(); // Refresh communities list
+            onCommunityUpdated?.({ handle: finalHandle, communityId }); // Refresh + expose new community
         } catch (error) {
             console.error("Error creating community: ", error);
             errorEmitter.emit('permission-error', new FirestorePermissionError({

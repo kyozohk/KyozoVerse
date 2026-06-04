@@ -213,7 +213,10 @@ export function CreateEventDialog({
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${idToken}` },
+        headers: { 
+          'Authorization': `Bearer ${idToken}`,
+          'x-user-id': user.uid
+        },
         body: formData,
       });
 
@@ -370,8 +373,8 @@ export function CreateEventDialog({
   return (
     <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className={`${existingEvent ? 'sm:max-w-[1200px]' : 'sm:max-w-[700px]'} max-h-[90vh] p-0 overflow-hidden`} style={{ backgroundColor: '#F5F0E8', '--page-bg-color': '#F5F0E8' } as React.CSSProperties}>
-        <div className="flex h-[80vh]">
+      <DialogContent className={`${existingEvent ? 'sm:max-w-[1200px]' : 'sm:max-w-[700px]'} h-[85vh] max-h-[85vh] p-0 overflow-hidden flex flex-col gap-0`} style={{ backgroundColor: '#F5F0E8', '--page-bg-color': '#F5F0E8' } as React.CSSProperties}>
+        <div className="flex flex-1 min-h-0">
           {/* Left Panel - Event Details (70% width in edit mode) */}
           <div className={`${existingEvent ? 'w-[70%]' : 'flex-1'} flex flex-col border-r`} style={{ borderColor: '#E8DFD1' }}>
             <DialogHeader className="p-6 pb-4">

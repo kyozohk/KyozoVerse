@@ -29,13 +29,14 @@ export interface BannerProps {
 
 export function Banner({
   title,
+  subtitle,
   ctas = [],
   leftCta,
   className,
   onDelete,
 }: BannerProps) {
   // Header is now minimal: title (left) + CTAs (right). All other props
-  // (backgroundImage, iconImage, location, subtitle, tags, height) are still
+  // (backgroundImage, iconImage, location, tags, height) are still
   // accepted for backward compatibility but no longer rendered.
   return (
     <div
@@ -58,9 +59,16 @@ export function Banner({
             {leftCta.label}
           </button>
         )}
-        <h1 className="text-3xl font-bold tracking-tight truncate" style={{ color: '#3D2E1F' }}>
-          {title}
-        </h1>
+        <div className="flex flex-col min-w-0">
+          <h1 className="text-3xl font-bold tracking-tight truncate" style={{ color: '#3D2E1F' }}>
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-sm mt-1" style={{ color: '#6B5F52' }}>
+              {subtitle}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Right: CTAs + optional delete */}

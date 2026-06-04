@@ -9,13 +9,15 @@ interface UserAvatarProps {
   className?: string;
 }
 
-// Generate a consistent color based on the name
+// Generate a consistent warm, earthy cohesive color based on the name
 function getColorFromName(name: string): string {
   const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52B788',
-    '#E76F51', '#2A9D8F', '#E9C46A', '#F4A261', '#264653',
-    '#8338EC', '#3A86FF', '#FB5607', '#FF006E', '#FFBE0B',
+    '#C4B5A3', // Muted warm taupe
+    '#D1C4B0', // Soft sand
+    '#BFAFA0', // Earth gray
+    '#CBBCA9', // Warm dust
+    '#B5A696', // Clay warm
+    '#D8CBB5', // Soft straw
   ];
   
   let hash = 0;

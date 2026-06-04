@@ -1,13 +1,15 @@
 'use client';
 
-import { Plus, Loader2 } from 'lucide-react';
-import React, { useEffect, useState, Suspense } from 'react';
+import { Plus, Loader2, Zap, ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/v2/page-layout';
 import { PageHeader } from '@/components/v2/page-header';
 import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { CommunityGridItem, CommunityListItem, CommunityCircleItem } from '@/components/v2/community-items';
 import { Button } from '@/components/ui/button';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
+import { ImportMembersDialog } from '@/components/community/import-members-dialog';
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
@@ -20,8 +22,13 @@ function CommunitiesContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [communities, setCommunities] = useState<CommunityWithId[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  // Reversed onboarding flow: import contacts → tag → create community.
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const { user } = useAuth();
   const { role: platformRole, permissions } = usePlatformRole();
+  const router = useRouter();
+  // Ensures the brand-new-user auto-open only fires once per mount.
+  const autoOpenedRef = useRef(false);
 
   const fetchCommunities = async () => {
     if (!user) {
@@ -131,6 +138,22 @@ function CommunitiesContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, platformRole]);
 
+  // New-user onboarding: a creator/owner with zero communities is guided
+  // straight into the reversed flow — auto-open the import dialog (once), which
+  // imports + tags contacts and creates their first community at the end.
+  useEffect(() => {
+    if (
+      !isLoading &&
+      communities.length === 0 &&
+      permissions?.canCreateCommunity &&
+      !autoOpenedRef.current
+    ) {
+      autoOpenedRef.current = true;
+      setIsImportOpen(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, communities.length, permissions]);
+
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, i) => (
@@ -157,6 +180,31 @@ function CommunitiesContent() {
           ) : undefined
         }
       />
+
+      {/* Automatically Integrate banner — reversed flow: import + tag contacts
+          first, then create the community from them. Aligned with the page
+          header's horizontal padding. */}
+      {permissions?.canCreateCommunity && (
+        <div className="px-6 md:px-8 -mt-2 mb-2">
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="w-full flex items-center gap-4 px-6 py-5 rounded-xl text-left transition-all hover:opacity-95 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+            style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}
+          >
+            <div className="w-11 h-11 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center">
+              <Zap className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-white text-base leading-tight">Automatically Integrate</p>
+              <p className="text-white/80 text-sm mt-1 leading-snug">
+                Import contacts, tag them, then spin up a community from them
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/80 flex-shrink-0" />
+          </button>
+        </div>
+      )}
+
       <EnhancedListView
         items={communities.map(c => {
           const mappedItem = {
@@ -191,15 +239,28 @@ function CommunitiesContent() {
         loadingComponent={<LoadingSkeleton />}
         urlField="handle"
       />
-      <CreateCommunityDialog 
-        isOpen={isCreateDialogOpen} 
+      <CreateCommunityDialog
+        isOpen={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onCommunityUpdated={() => {
-          // Refresh communities list after creating a new one
-          if (user) {
-            fetchCommunities();
-          }
+          if (user) fetchCommunities();
         }}
+      />
+
+      {/* Reversed onboarding: contacts → tag → community. No community prop, so
+          the dialog creates one at the end and routes into its audience. */}
+      <ImportMembersDialog
+        isOpen={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        availableCommunities={communities.map((c) => ({
+          communityId: c.communityId,
+          handle: c.handle,
+          name: c.name,
+        }))}
+        onSuccess={() => {
+          if (user) fetchCommunities();
+        }}
+        onComplete={(handle) => router.push(`/${handle}/audience`)}
       />
     </PageLayout>
   );

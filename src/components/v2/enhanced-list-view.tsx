@@ -51,6 +51,8 @@ interface EnhancedListViewProps<T> {
   defaultViewMode?: 'grid' | 'list' | 'circle';
   /** Optional row click handler for table mode (selects when selectable). */
   onRowClick?: (item: T) => void;
+  showTypeTabs?: boolean;
+  getType?: (item: T) => 'Member' | 'Contact';
 }
 
 export function EnhancedListView<T extends { id: string; tags?: string[] }>({
@@ -75,9 +77,13 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   isLoadingMore = false,
   defaultViewMode = 'grid',
   onRowClick,
+  showTypeTabs = false,
+  getType,
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>(defaultViewMode);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'Member' | 'Contact' | null>('Member');
+  const [showTags, setShowTags] = useState(false);
   // Sort state for table mode. `dir` cycles: asc → desc → null (no sort).
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
@@ -150,7 +156,8 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     setSelectedIds(newSelectedIds);
   };
 
-  const filteredItems = useMemo(() => {
+  // Filter items by search and tags (before active tab filtering so counts are accurate)
+  const itemsFilteredBySearchAndTags = useMemo(() => {
     let filtered = items;
 
     if (searchTerm) {
@@ -168,6 +175,30 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
         if (!item.tags || item.tags.length === 0) return false;
         return Array.from(selectedTags).some(tag => item.tags!.includes(tag));
       });
+    }
+
+    return filtered;
+  }, [items, searchTerm, searchKeys, selectedTags]);
+
+  // Calculate counts for Members and Contacts tabs based on search and tags filters
+  const tabCounts = useMemo(() => {
+    let memberCount = 0;
+    let contactCount = 0;
+    if (showTypeTabs && getType) {
+      itemsFilteredBySearchAndTags.forEach(item => {
+        const type = getType(item);
+        if (type === 'Member') memberCount++;
+        else if (type === 'Contact') contactCount++;
+      });
+    }
+    return { memberCount, contactCount };
+  }, [itemsFilteredBySearchAndTags, showTypeTabs, getType]);
+
+  const filteredItems = useMemo(() => {
+    let filtered = itemsFilteredBySearchAndTags;
+
+    if (showTypeTabs && getType && activeTab) {
+      filtered = filtered.filter(item => getType(item) === activeTab);
     }
 
     // Apply column sort if active. Falls through to filter-order when no
@@ -189,7 +220,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     }
 
     return filtered;
-  }, [items, searchTerm, searchKeys, selectedTags, sortKey, sortDir, columns]);
+  }, [itemsFilteredBySearchAndTags, showTypeTabs, getType, activeTab, sortKey, sortDir, columns]);
 
   const toggleSort = useCallback((key: string) => {
     if (sortKey !== key) {
@@ -326,7 +357,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ borderColor: '#A89882', backgroundColor: '#FAF5EC' }}>
+              <tr style={{ borderColor: '#E8DFD1', backgroundColor: '#FAF5EC' }}>
                 {selectable && (
                   <th className="w-10 px-4 py-3 text-left">
                     <input
@@ -349,17 +380,18 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                       {col.sortable ? (
                         <button
                           onClick={() => toggleSort(col.key)}
-                          className="inline-flex items-center gap-1.5 hover:text-[#3D2E1F] transition-colors"
+                          className="inline-flex items-center gap-1.5 hover:text-[#3D2E1F] transition-colors font-bold"
+                          style={{ color: '#3D2E1F' }}
                         >
+                          <span>{col.label}</span>
                           {isActive && sortDir === 'asc'
-                            ? <ChevronUp className="h-3.5 w-3.5" />
+                            ? <ChevronUp className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#3D2E1F' }} />
                             : isActive && sortDir === 'desc'
-                              ? <ChevronDown className="h-3.5 w-3.5" />
-                              : <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />}
-                          {col.label}
+                              ? <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#3D2E1F' }} />
+                              : <ChevronsUpDown className="h-3.5 w-3.5 opacity-40 flex-shrink-0" style={{ color: '#9B8A75' }} />}
                         </button>
                       ) : (
-                        col.label
+                        <span className="font-bold" style={{ color: '#3D2E1F' }}>{col.label}</span>
                       )}
                     </th>
                   );
@@ -380,10 +412,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                     }}
                     className={cn(
                       'border-b transition-colors',
-                      selected ? 'bg-[#F0E8DA]' : 'hover:bg-[#FAF5EC]',
+                      selected ? 'bg-[#FCFAF6]' : 'hover:bg-[#FCFAF6]/60',
                       (selectable || onRowClick) && 'cursor-pointer'
                     )}
-                    style={{ borderColor: '#F0E8DA' }}
+                    style={{ borderColor: '#E8DFD1' }}
                   >
                     {selectable && (
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -475,8 +507,83 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="p-6">
-        {availableTags.length > 0 && (
+      <div className="p-6 pb-0">
+        {/* Search row: full width */}
+        <div className="relative w-full mb-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: '#9B8A75' }} />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-12 pl-11 pr-4 rounded-md border-2 bg-transparent text-sm placeholder:text-[#9B8A75] focus:outline-none focus:ring-2 focus:ring-[#A89882] focus:ring-offset-0 transition-colors"
+            style={{ borderColor: '#E8DFD1', color: '#3D2E1F' }}
+          />
+        </div>
+
+        {showTypeTabs ? (
+          /* High-fidelity custom controls row for Audience page */
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-5 border-b pb-4" style={{ borderColor: '#E8DFD1' }}>
+            {/* Left side: Type Tabs */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('Member')}
+                className={cn(
+                  "px-5 py-2 rounded-full text-xs font-bold border transition-all",
+                  activeTab === 'Member'
+                    ? "bg-white border-[#3D2E1F] text-[#3D2E1F] shadow-sm"
+                    : "bg-white border-[#E8DFD1] text-[#6B5F52] hover:bg-[#FAF5EC]/50"
+                )}
+              >
+                Members ({tabCounts.memberCount})
+              </button>
+              <button
+                onClick={() => setActiveTab('Contact')}
+                className={cn(
+                  "px-5 py-2 rounded-full text-xs font-bold border transition-all",
+                  activeTab === 'Contact'
+                    ? "bg-white border-[#3D2E1F] text-[#3D2E1F] shadow-sm"
+                    : "bg-white border-[#E8DFD1] text-[#6B5F52] hover:bg-[#FAF5EC]/50"
+                )}
+              >
+                Contacts ({tabCounts.contactCount})
+              </button>
+            </div>
+
+            {/* Right side: Actions & Filters */}
+            <div className="flex items-center gap-3">
+              {permanentActions}
+              
+              <button
+                onClick={() => setShowTags(prev => !prev)}
+                className={cn(
+                  "h-10 px-5 rounded-md text-sm font-bold border transition-all",
+                  showTags || selectedTags.size > 0
+                    ? "bg-[#E8DFD1] border-[#A89882] text-[#3D2E1F]"
+                    : "bg-white border-[#E8DFD1] text-[#6B5F52] hover:bg-[#FAF5EC]/50"
+                )}
+              >
+                Filters{selectedTags.size > 0 ? ` (${selectedTags.size})` : ''}
+              </button>
+
+              {(searchTerm || selectedTags.size > 0 || activeTab !== 'Member') && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedTags(new Set());
+                    setActiveTab('Member');
+                    setShowTags(false);
+                  }}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-800 underline transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Standard fallback tags filtering if showTypeTabs is false (backward compatibility) */
+          availableTags.length > 0 && (
             <div className="mb-4">
               <div
                 ref={tagsContainerRef}
@@ -508,108 +615,126 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                 </Button>
               )}
             </div>
+          )
         )}
-        {/* Search row: full width */}
-        <div className="relative w-full mb-3">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: '#9B8A75' }} />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-12 pl-11 pr-4 rounded-md border-2 bg-transparent text-sm placeholder:text-[#9B8A75] focus:outline-none focus:ring-2 focus:ring-[#A89882] focus:ring-offset-0 transition-colors"
-            style={{ borderColor: '#A89882', color: '#3D2E1F' }}
-          />
-        </div>
 
-        {/* CTA row: select-all (left), permanent actions + view-mode (right) */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            {selectable && !isLoading && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSelectAll}
-                // KYPRO-47: disable (not just hide) when no items are visible so
-                // "Deselect All" can never appear on an empty list.
-                disabled={filteredItems.length === 0 || isSelectingAll}
-                className="gap-2 rounded-md border-2"
-                style={{
-                  borderColor: '#A89882',
-                  backgroundColor: 'transparent',
-                  color: '#3D2E1F',
-                }}
-              >
-                {/* KYPRO-47: show "Deselect All" ONLY when there's an actual
-                    non-empty selection; the old check (size === filteredItems.length)
-                    was true on an empty list because 0 === 0. */}
-                {isSelectingAll ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading all…
-                  </>
-                ) : selectedIds.size > 0 && selectedIds.size === filteredItems.length && filteredItems.length > 0 ? (
-                  <>
-                    <CheckSquare className="h-4 w-4" />
-                    Deselect All
-                  </>
-                ) : (
-                  <>
-                    <Square className="h-4 w-4" />
-                    Select All{hasMore && !searchTerm && selectedTags.size === 0 ? ` (${items.length}+)` : ''}
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {selectable && !isLoading && permanentActions && (
-              <div className="flex items-center gap-2">
-                {permanentActions}
-              </div>
-            )}
-            <div className="flex items-center gap-1 rounded-md border-2 p-1" style={{ borderColor: '#A89882', backgroundColor: 'transparent' }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "h-8 w-8 rounded",
-                  viewMode === 'list' && "shadow-sm"
-                )}
-                style={viewMode === 'list' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  "h-8 w-8 rounded",
-                  viewMode === 'grid' && "shadow-sm"
-                )}
-                style={viewMode === 'grid' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('circle')}
-                className={cn(
-                  "h-8 w-8 rounded",
-                  viewMode === 'circle' && "shadow-sm"
-                )}
-                style={viewMode === 'circle' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
-              >
-                <CircleUser className="h-4 w-4" />
-              </Button>
+        {/* Collapsible Tag Drawer for Audience filtering */}
+        {showTypeTabs && showTags && availableTags.length > 0 && (
+          <div className="mb-4 p-4 rounded-xl border-2 border-dashed bg-[#FCFAF6] transition-all" style={{ borderColor: '#DDD2BD' }}>
+            <p className="text-xs font-bold text-[#6B5F52] mb-2.5">Filter by Tag:</p>
+            <div ref={tagsContainerRef} className="flex flex-wrap gap-2">
+              {availableTags.map((tag) => {
+                const isSelected = selectedTags.has(tag.name);
+                return (
+                  <Button
+                    key={tag.id}
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleToggleTag(tag.name)}
+                    className="gap-1.5 rounded-full"
+                    style={
+                      isSelected
+                        ? { backgroundColor: '#3D2E20', color: 'white', borderColor: '#3D2E20' }
+                        : { borderColor: '#DDD2BD', color: '#6B5F52', backgroundColor: 'transparent' }
+                    }
+                  >
+                    <Tag className="h-3 w-3" />
+                    {tag.name}
+                  </Button>
+                );
+              })}
             </div>
           </div>
-        </div>
-        {selectable && selectedIds.size > 0 && !isLoading && (
-          <div className="mt-4 flex items-center justify-between">
+        )}
+
+        {/* Standard CTA Row: select-all (left), permanent actions + view-mode (right) */}
+        {!showTypeTabs && (
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              {selectable && !isLoading && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  disabled={filteredItems.length === 0 || isSelectingAll}
+                  className="gap-2 rounded-md border-2"
+                  style={{
+                    borderColor: '#A89882',
+                    backgroundColor: 'transparent',
+                    color: '#3D2E1F',
+                  }}
+                >
+                  {isSelectingAll ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading all…
+                    </>
+                  ) : selectedIds.size > 0 && selectedIds.size === filteredItems.length && filteredItems.length > 0 ? (
+                    <>
+                      <CheckSquare className="h-4 w-4" />
+                      Deselect All
+                    </>
+                  ) : (
+                    <>
+                      <Square className="h-4 w-4" />
+                      Select All{hasMore && !searchTerm && selectedTags.size === 0 ? ` (${items.length}+)` : ''}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {selectable && !isLoading && permanentActions && (
+                <div className="flex items-center gap-2">
+                  {permanentActions}
+                </div>
+              )}
+              <div className="flex items-center gap-1 rounded-md border-2 p-1" style={{ borderColor: '#A89882', backgroundColor: 'transparent' }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    "h-8 w-8 rounded",
+                    viewMode === 'list' && "shadow-sm"
+                  )}
+                  style={viewMode === 'list' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "h-8 w-8 rounded",
+                    viewMode === 'grid' && "shadow-sm"
+                  )}
+                  style={viewMode === 'grid' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode('circle')}
+                  className={cn(
+                    "h-8 w-8 rounded",
+                    viewMode === 'circle' && "shadow-sm"
+                  )}
+                  style={viewMode === 'circle' ? { backgroundColor: '#E8DFD1', color: '#3D2E1F' } : { color: '#5B4A3A' }}
+                >
+                  <CircleUser className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* If showTypeTabs is enabled, we hide the redundant Select All row to keep list clean */}
+
+        {!showTypeTabs && selectable && selectedIds.size > 0 && !isLoading && (
+          <div className="mt-2 mb-4 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               {selectedIds.size} of {filteredItems.length} selected
             </span>

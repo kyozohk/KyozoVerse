@@ -276,7 +276,7 @@ export default function RsvpPage() {
           <Banner
             backgroundImage={community.communityBackgroundImage}
             iconImage={community.communityProfileImage}
-            title={community.name}
+            title="RSVP"
             location={community.location}
             locationExtra={
               <span className="flex items-center gap-1 text-sm text-white/90">

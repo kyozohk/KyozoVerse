@@ -279,7 +279,7 @@ export default function IntegrationsPage() {
           <Banner
             backgroundImage={community.communityBackgroundImage}
             iconImage={community.communityProfileImage}
-            title={community.name}
+            title="Integrations"
             locationExtra={
               <span className="flex items-center gap-1 text-sm text-white/90">
                 {(community as any).visibility === 'private' ? <><Lock className="h-3.5 w-3.5" /> Private</> : <><Globe className="h-3.5 w-3.5" /> Public</>}

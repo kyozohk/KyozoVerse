@@ -17,13 +17,14 @@ import { InviteMemberDialog } from '@/components/community/invite-member-dialog'
 import { TagMembersDialog } from '@/components/community/tag-members-dialog';
 import { addTagsToCommunity } from '@/lib/community-tags';
 import { useAuth } from '@/hooks/use-auth';
-import { Tag, Zap, Upload, ChevronRight } from 'lucide-react';
+import { Tag, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCommunityAccess } from '@/hooks/use-community-access';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { communityAuth } from '@/firebase/community-auth';
 import { ImportMembersDialog } from '@/components/community/import-members-dialog';
 import { EmailSendDialog } from '@/components/broadcast/email-send-dialog';
+import { MemberDetailsDialog } from '@/components/community/member-details-dialog';
 import { Send } from 'lucide-react';
 
 interface MemberData {
@@ -63,12 +64,27 @@ function MembersContent() {
   const [selectedMembers, setSelectedMembers] = useState<MemberData[]>([]);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [selectedMemberForDetails, setSelectedMemberForDetails] = useState<MemberData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Pagination state
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // New-user onboarding: when redirected here with ?onboard=1 (after creating a
+  // first community from the empty Communities page), auto-launch the
+  // "Automatically Integrate" dialog so they go straight into importing.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('onboard') === '1') {
+      setIsImportOpen(true);
+      // Strip the flag so a refresh doesn't reopen it.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('onboard');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
 
   // Helper function to transform member docs to MemberData
   const transformMemberDoc = (memberDoc: any): MemberData => {
@@ -398,6 +414,29 @@ function MembersContent() {
     if (m.role === 'member' || m.role === 'owner' || m.role === 'admin') return 'Member';
     return 'Contact';
   };
+  const getTagStyle = (tag: string) => {
+    const lower = tag.toLowerCase();
+    if (lower.includes('vip') || lower.includes('core')) {
+      return { color: '#E05A47', backgroundColor: '#FFF5F2', border: '1px solid #FFE2DF' };
+    }
+    if (lower.includes('regular') || lower.includes('friend')) {
+      return { color: '#6B5F52', backgroundColor: '#F3EDE2', border: '1px solid #ECE3D2' };
+    }
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+      hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = [
+      { color: '#D97706', bg: '#FEF3C7', border: '#FDE68A' }, // Amber
+      { color: '#16A34A', bg: '#DCFCE7', border: '#BBF7D0' }, // Green
+      { color: '#2563EB', bg: '#DBEAFE', border: '#BFDBFE' }, // Blue
+      { color: '#7C3AED', bg: '#F3E8FF', border: '#E9D5FF' }, // Purple
+      { color: '#DB2777', bg: '#FCE7F3', border: '#FBCFE8' }, // Pink
+    ];
+    const selected = colors[Math.abs(hash) % colors.length];
+    return { color: selected.color, backgroundColor: selected.bg, border: `1px solid ${selected.border}` };
+  };
+
   const memberColumns: Column<MemberData>[] = [
     {
       key: 'name',
@@ -406,34 +445,22 @@ function MembersContent() {
       sortValue: (m) => m.name?.toLowerCase() || '',
       render: (m) => (
         <div className="flex items-center gap-3">
-          <UserAvatar imageUrl={m.imageUrl} name={m.name} size={32} />
-          <span className="font-medium">{m.name}</span>
+          <UserAvatar imageUrl={m.imageUrl} name={m.name} size={36} />
+          <div className="flex flex-col">
+            <span className="font-bold text-[#3D2E1F] text-[14px]">{m.name}</span>
+            <span className="text-[12px] text-[#6B5F52]">{m.email || '—'}</span>
+          </div>
         </div>
       ),
     },
     {
-      key: 'email',
-      label: 'Email',
+      key: 'userType',
+      label: 'User Type',
       sortable: true,
-      sortValue: (m) => m.email?.toLowerCase() || '',
-      render: (m) => <span style={{ color: '#5B4A3A' }}>{m.email || '—'}</span>,
-    },
-    {
-      key: 'phone',
-      label: 'Phone',
-      sortable: true,
-      sortValue: (m) => m.phone?.replace(/\D/g, '') || '',
+      sortValue: (m) => getUserType(m),
       render: (m) => (
-        <span style={{ color: '#5B4A3A' }} className="font-mono text-[12.5px]">
-          {m.country && (
-            <span
-              className="inline-block text-[10px] font-bold rounded px-1 py-0.5 mr-1.5 font-sans"
-              style={{ backgroundColor: '#F3EDE2', color: '#6B5F52' }}
-            >
-              {m.country}
-            </span>
-          )}
-          {m.phone || '—'}
+        <span className="text-[13px] text-[#3D2E1F]">
+          {getUserType(m)}
         </span>
       ),
     },
@@ -442,15 +469,18 @@ function MembersContent() {
       label: 'Tags',
       render: (m) => (
         <div className="flex flex-wrap gap-1.5">
-          {(m.tags || []).map((t) => (
-            <span
-              key={t}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-              style={{ backgroundColor: '#E3EBF9', color: '#2D6CDF' }}
-            >
-              {t}
-            </span>
-          ))}
+          {(m.tags || []).map((t) => {
+            const style = getTagStyle(t);
+            return (
+              <span
+                key={t}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold animate-fade-in"
+                style={style}
+              >
+                {t}
+              </span>
+            );
+          })}
         </div>
       ),
     },
@@ -459,7 +489,7 @@ function MembersContent() {
       label: 'Added',
       sortable: true,
       sortValue: (m) => m.joinedDate?.seconds || 0,
-      render: (m) => <span style={{ color: '#5B4A3A' }}>{formatJoined(m.joinedDate)}</span>,
+      render: (m) => <span className="text-[13px] text-[#6B5F52]">{formatJoined(m.joinedDate)}</span>,
     },
   ];
 
@@ -497,47 +527,23 @@ function MembersContent() {
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
           <Banner
             title="Audience"
+            subtitle="Manage your community members"
             ctas={canManage ? [
               ...(selectedMembers.length > 0 ? [{
                 label: `Message (${selectedMembers.length})`,
-                icon: <Send className="h-4 w-4" />,
                 onClick: () => setIsMessageDialogOpen(true),
               }] : []),
               {
-                label: 'Import',
-                icon: <Upload className="h-4 w-4" />,
-                onClick: () => setIsImportOpen(true),
+                label: 'Add Members',
+                onClick: () => setIsAddMemberOpen(true),
               },
               {
                 label: 'Invite Members',
-                icon: <Mail className="h-4 w-4" />,
                 onClick: () => setIsInviteDialogOpen(true),
-              },
-              {
-                label: 'Add Members',
-                icon: <UserPlus className="h-4 w-4" />,
-                onClick: () => setIsAddMemberOpen(true),
               },
             ] : []}
           />
           <div className="p-6">
-            {/* Automatically Integrate banner — shown when no members yet. */}
-            {!isLoading && members.length === 0 && canManage && (
-              <button
-                onClick={() => setIsImportOpen(true)}
-                className="mx-4 mb-6 flex items-center gap-4 px-6 py-5 rounded-xl text-left transition-all hover:opacity-95 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400/60"
-                style={{ width: 'calc(100% - 2rem)', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)' }}
-              >
-                <div className="w-11 h-11 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-base leading-tight">Automatically Integrate</p>
-                  <p className="text-white/80 text-sm mt-1 leading-snug">Consolidate contacts from multiple sources</p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-white/80 flex-shrink-0" />
-              </button>
-            )}
             <EnhancedListView
               items={members}
               columns={memberColumns}
@@ -554,21 +560,20 @@ function MembersContent() {
               selectable={canManage}
               defaultViewMode="list"
               onSelectionChange={(ids, items) => setSelectedMembers(items)}
+              onRowClick={(item) => setSelectedMemberForDetails(item)}
+              showTypeTabs={true}
+              getType={getUserType}
               permanentActions={
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => setIsTaggingOpen(true)}
-                  className="gap-2 rounded-md border-2"
+                  className="h-10 px-5 rounded-md text-sm font-bold transition-all hover:opacity-90"
                   style={{
-                    borderColor: '#A89882',
                     backgroundColor: '#E8DFD1',
                     color: '#3D2E1F',
                   }}
                 >
-                  <Tag className="h-4 w-4" />
-                  Manage Tag{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
-                </Button>
+                  Manage Tags{selectedMembers.length > 0 ? ` (${selectedMembers.length})` : ''}
+                </button>
               }
               isLoading={isLoading}
               loadingComponent={<LoadingSkeleton />}
@@ -644,6 +649,13 @@ function MembersContent() {
           title="Tag Audience Members"
         />
       )}
+
+      {/* Member Details Dialog */}
+      <MemberDetailsDialog
+        isOpen={selectedMemberForDetails !== null}
+        onClose={() => setSelectedMemberForDetails(null)}
+        member={selectedMemberForDetails}
+      />
       
     </div>
   );

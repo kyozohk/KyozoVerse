@@ -314,7 +314,7 @@ export default function GuestlistPage() {
             <Banner
               backgroundImage={community.communityBackgroundImage}
               iconImage={community.communityProfileImage}
-              title={community.name}
+              title="Guests"
               location={(community as any).location}
               locationExtra={
                 <span className="flex items-center gap-1 text-sm text-white/90">

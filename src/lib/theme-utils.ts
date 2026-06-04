@@ -53,7 +53,7 @@ export const communityNavItems: CommunityNavItem[] = [
     // { href: (handle) => `/${handle}/rsvp`, icon: RsvpIcon, label: 'RSVP', section: 'communities' },
     { href: (handle) => `/${handle}/inbox`, icon: InboxIcon, label: 'Inbox', section: 'communities' },
     // { href: (handle) => `/${handle}/integrations`, icon: IntegrationsIcon, label: 'Integrations', section: 'communities' },
-    // { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settings', section: 'communities' },
+    { href: (handle) => `/${handle}/settings`, icon: Settings, label: 'Settings', section: 'communities' },
     // { href: (handle) => `/${handle}/morefeatures`, icon: Plus, label: 'More Features', section: 'morefeatures' },
 ];
 
