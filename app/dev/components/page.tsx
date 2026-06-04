@@ -83,6 +83,13 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
   CustomFormDialog,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
   Slider,
   Calendar,
   ScrollArea,
@@ -113,6 +120,11 @@ import {
   MenubarSeparator,
 } from '@/components/ui';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import {
+  V06DialogShell,
+  V06PrimaryButton,
+  V06SecondaryButton,
+} from '@/components/ui/v06-dialog-shell';
 import { AIInput } from '@/components/ui/ai-input';
 import { AITextarea } from '@/components/ui/ai-textarea';
 import { RoundImage } from '@/components/ui/round-image';
@@ -263,6 +275,8 @@ export default function ComponentsAuditPage() {
   const [aiText, setAiText] = useState('');
   const [collapsibleOpen, setCollapsibleOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [v06Open, setV06Open] = useState(false);
+  const [v06TwoOpen, setV06TwoOpen] = useState(false);
   const [calDate, setCalDate] = useState<Date | undefined>(undefined);
 
   return (
@@ -521,6 +535,373 @@ export default function ComponentsAuditPage() {
               bottom
             </div>
           </Variant>
+        </Section>
+
+        {/* ---- MORE INPUTS ---- */}
+        <Section
+          title="Inputs — specialized"
+          note="Floating-label select, phone input, AI-assisted fields. Decide which input pattern is canonical (plain Input+label vs FloatingSelect's floating label)."
+        >
+          <Variant name="FloatingSelect" source="src/components/ui/floating-select.tsx" recommend="review">
+            <div className="w-full">
+              <FloatingSelect label="Country" value={floatSel} onValueChange={setFloatSel}>
+                <SelectContent>
+                  <SelectItem value="hk">Hong Kong</SelectItem>
+                  <SelectItem value="uk">United Kingdom</SelectItem>
+                </SelectContent>
+              </FloatingSelect>
+            </div>
+          </Variant>
+          <Variant name="PhoneInput" source="src/components/ui/phone-input.tsx" recommend="keep">
+            <div className="w-full">
+              <PhoneInput label="Phone" value={phone} onChange={setPhone} />
+            </div>
+          </Variant>
+          <Variant name="Label" source="src/components/ui/label.tsx" recommend="keep">
+            <Label>A form label</Label>
+          </Variant>
+          <Variant name="AIInput" source="src/components/ui/ai-input.tsx" usedIn="community/feed forms" recommend="review">
+            <div className="w-full">
+              <AIInput label="Tagline" value={aiVal} onChange={setAiVal} placeholder="AI-assisted field" />
+            </div>
+          </Variant>
+          <Variant name="AITextarea" source="src/components/ui/ai-textarea.tsx" usedIn="community/feed forms" recommend="review">
+            <div className="w-full">
+              <AITextarea label="Description" value={aiText} onChange={setAiText} rows={3} />
+            </div>
+          </Variant>
+        </Section>
+
+        {/* ---- DIALOGS ---- */}
+        <Section
+          title="Dialogs — 3 systems coexist"
+          note="This is the second-biggest inconsistency after checkboxes. Three separate dialog stacks are in use. Suggested path: keep ONE app-dialog system (V06DialogShell is the most designed/consistent) and migrate the others; keep AlertDialog for confirmations and Sheet for slide-overs."
+        >
+          <Variant
+            name="Dialog (shadcn / Radix)"
+            source="src/components/ui/dialog.tsx"
+            usedIn="misc forms"
+            recommend="review"
+          >
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Open shadcn Dialog</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>shadcn Dialog</DialogTitle>
+                  <DialogDescription>Radix primitive, uncontrolled via trigger.</DialogDescription>
+                </DialogHeader>
+                <p className="text-sm text-slate-500">Body content.</p>
+                <DialogFooter>
+                  <Button size="sm">Save</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </Variant>
+
+          <Variant
+            name="CustomFormDialog"
+            source="src/components/ui/dialog.tsx"
+            usedIn="auth, landing (sign-in, waitlist)"
+            recommend="review"
+          >
+            <Button variant="outline" onClick={() => setDialogOpen(true)}>
+              Open CustomFormDialog
+            </Button>
+            <CustomFormDialog
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
+              title="Welcome back"
+              description="Custom controlled wrapper used by auth flows."
+            >
+              <p className="text-sm text-slate-500">Form body goes here.</p>
+            </CustomFormDialog>
+          </Variant>
+
+          <Variant
+            name="V06DialogShell — single pane"
+            source="src/components/ui/v06-dialog-shell.tsx"
+            usedIn="design-system dialogs"
+            recommend="keep"
+          >
+            <Button variant="outline" onClick={() => setV06Open(true)}>
+              Open V06 (single)
+            </Button>
+            <V06DialogShell
+              open={v06Open}
+              onClose={() => setV06Open(false)}
+              title="Automatically Integrate"
+              subtitle="V06 design-system shell"
+              size="md"
+              footer={<V06PrimaryButton onClick={() => setV06Open(false)}>Done</V06PrimaryButton>}
+            >
+              <p className="text-sm text-slate-500">
+                Purple-gradient header, sticky footer, palette tokens.
+              </p>
+            </V06DialogShell>
+          </Variant>
+
+          <Variant
+            name="V06DialogShell — two pane"
+            source="src/components/ui/v06-dialog-shell.tsx"
+            usedIn="Automatically Integrate (import) dialog"
+            recommend="keep"
+          >
+            <Button variant="outline" onClick={() => setV06TwoOpen(true)}>
+              Open V06 (two-pane)
+            </Button>
+            <V06DialogShell
+              open={v06TwoOpen}
+              onClose={() => setV06TwoOpen(false)}
+              title="Automatically Integrate"
+              subtitle="Two-pane (filters + table)"
+              size="xl"
+              leftPanel={<div className="text-sm text-slate-500">Left: filters</div>}
+              rightPanel={<div className="text-sm text-slate-500">Right: table / form</div>}
+              footer={
+                <V06SecondaryButton onClick={() => setV06TwoOpen(false)}>Close</V06SecondaryButton>
+              }
+            />
+          </Variant>
+
+          <Variant name="AlertDialog" source="src/components/ui/alert-dialog.tsx" recommend="keep">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Delete…</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>This can't be undone.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </Variant>
+
+          <Variant name="Sheet (slide-over)" source="src/components/ui/sheet.tsx" recommend="keep">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline">Open sheet</Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Sheet title</SheetTitle>
+                  <SheetDescription>Slide-over panel.</SheetDescription>
+                </SheetHeader>
+              </SheetContent>
+            </Sheet>
+          </Variant>
+        </Section>
+
+        {/* ---- MENUS & POPOVERS ---- */}
+        <Section title="Menus & popovers">
+          <Variant name="Popover" source="src/components/ui/popover.tsx" recommend="keep">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline">Open popover</Button>
+              </PopoverTrigger>
+              <PopoverContent className="text-sm">Popover content.</PopoverContent>
+            </Popover>
+          </Variant>
+          <Variant name="DropdownMenu" source="src/components/ui/dropdown-menu.tsx" recommend="keep">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">Menu</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <DropdownMenuItem>Duplicate</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </Variant>
+          <Variant name="Tooltip" source="src/components/ui/tooltip.tsx" recommend="keep">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline">Hover me</Button>
+                </TooltipTrigger>
+                <TooltipContent>Tooltip text</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </Variant>
+          <Variant name="Menubar" source="src/components/ui/menubar.tsx" recommend="review">
+            <Menubar>
+              <MenubarMenu>
+                <MenubarTrigger>File</MenubarTrigger>
+                <MenubarContent>
+                  <MenubarItem>New</MenubarItem>
+                  <MenubarSeparator />
+                  <MenubarItem>Open</MenubarItem>
+                </MenubarContent>
+              </MenubarMenu>
+            </Menubar>
+          </Variant>
+        </Section>
+
+        {/* ---- LAYOUT ---- */}
+        <Section title="Layout & disclosure">
+          <Variant name="Card" source="src/components/ui/card.tsx" recommend="keep">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Card title</CardTitle>
+                <CardDescription>Card description</CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-slate-500">Body</CardContent>
+              <CardFooter>
+                <Button size="sm">Action</Button>
+              </CardFooter>
+            </Card>
+          </Variant>
+          <Variant name="Accordion" source="src/components/ui/accordion.tsx" recommend="keep">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="i1">
+                <AccordionTrigger>Section one</AccordionTrigger>
+                <AccordionContent>Content one.</AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="i2">
+                <AccordionTrigger>Section two</AccordionTrigger>
+                <AccordionContent>Content two.</AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </Variant>
+          <Variant name="Collapsible" source="src/components/ui/collapsible.tsx" recommend="keep">
+            <Collapsible open={collapsibleOpen} onOpenChange={setCollapsibleOpen} className="w-full">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {collapsibleOpen ? 'Hide' : 'Show'} details
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="text-sm text-slate-500 mt-2">
+                Collapsible content.
+              </CollapsibleContent>
+            </Collapsible>
+          </Variant>
+          <Variant name="ScrollArea" source="src/components/ui/scroll-area.tsx" recommend="keep">
+            <ScrollArea className="h-24 w-full rounded border p-2 text-sm text-slate-500">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i}>Row {i + 1}</div>
+              ))}
+            </ScrollArea>
+          </Variant>
+          <Variant name="Carousel" source="src/components/ui/carousel.tsx" recommend="review">
+            <Carousel className="w-full max-w-[180px]">
+              <CarouselContent>
+                {[1, 2, 3].map((n) => (
+                  <CarouselItem key={n}>
+                    <div className="h-20 rounded bg-slate-100 flex items-center justify-center">
+                      Slide {n}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </Variant>
+        </Section>
+
+        {/* ---- DATA ---- */}
+        <Section
+          title="Data display"
+          note="The Table primitive vs the higher-level list components (EnhancedListView / ListView / members-list / IconListView). These overlap a lot — the list components are the biggest consolidation opportunity after checkboxes."
+        >
+          <Variant name="Table" source="src/components/ui/table.tsx" recommend="keep">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Ada</TableCell>
+                  <TableCell>Owner</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Alan</TableCell>
+                  <TableCell>Member</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Variant>
+          <Variant name="Calendar" source="src/components/ui/calendar.tsx" recommend="keep">
+            <Calendar mode="single" selected={calDate} onSelect={setCalDate} />
+          </Variant>
+          <Variant name="Slider" source="src/components/ui/slider.tsx" recommend="keep">
+            <div className="w-full">
+              <Slider defaultValue={[40]} max={100} step={1} />
+            </div>
+          </Variant>
+        </Section>
+
+        {/* ---- UPLOAD ---- */}
+        <Section title="Upload">
+          <Variant name="Dropzone" source="src/components/ui/dropzone.tsx" recommend="keep">
+            <div className="w-full">
+              <Dropzone onFileChange={() => {}} file={null} label="Drop an image" fileType="image" />
+            </div>
+          </Variant>
+        </Section>
+
+        {/* ---- DISPLAY / MARKETING ---- */}
+        <Section
+          title="Display & marketing"
+          note="Landing/marketing pieces. Lower priority for consolidation but listed for completeness."
+        >
+          <Variant name="GradientText" source="src/components/ui/gradient-text.tsx" recommend="keep">
+            <GradientText className="text-2xl font-bold">Gradient heading</GradientText>
+          </Variant>
+          <Variant name="RoundImage" source="src/components/ui/round-image.tsx" recommend="review">
+            <RoundImage src="/banner1.png" alt="placeholder" size={64} border />
+          </Variant>
+          <Variant name="Banner" source="src/components/ui/banner.tsx" usedIn="all community pages" recommend="keep">
+            <div className="w-full">
+              <Banner
+                title="Audience"
+                subtitle="Manage your community members"
+                ctas={[{ label: 'Add', onClick: () => {} }]}
+              />
+            </div>
+          </Variant>
+          <Variant name="FeatureCard" source="src/components/ui/feature-card.tsx" recommend="review">
+            <div className="w-full">
+              <FeatureCard
+                title="Feature"
+                description="A marketing feature card."
+                buttonText="Learn more"
+                buttonAction={() => {}}
+                color="#6366f1"
+                RightComponent={<div className="h-16 w-full rounded bg-slate-100" />}
+              />
+            </div>
+          </Variant>
+        </Section>
+
+        {/* ---- REFERENCE-ONLY (data-bound, not rendered here) ---- */}
+        <Section
+          title="Data-bound components (reference only)"
+          note="These need live data/context to render meaningfully — listed so the inventory is complete. The list components are prime consolidation targets."
+        >
+          {[
+            { name: 'EnhancedListView', src: 'src/components/v2/enhanced-list-view.tsx', use: 'Audience, Communities', rec: 'keep' as const },
+            { name: 'ListView', src: 'src/components/ui/list-view.tsx', use: 'older screens', rec: 'delete' as const },
+            { name: 'members-list', src: 'src/components/ui/members-list.tsx', use: 'legacy', rec: 'delete' as const },
+            { name: 'IconListView', src: 'src/components/ui/IconListView.tsx', use: 'icon pickers', rec: 'review' as const },
+            { name: 'EnhancedSidebar', src: 'src/components/ui/enhanced-sidebar.tsx', use: 'app shell', rec: 'review' as const },
+            { name: 'Chart', src: 'src/components/ui/chart.tsx', use: 'analytics', rec: 'keep' as const },
+          ].map((c) => (
+            <Variant key={c.name} name={c.name} source={c.src} usedIn={c.use} recommend={c.rec}>
+              <span className="text-xs text-slate-400">Rendered in-app — open the file to review.</span>
+            </Variant>
+          ))}
         </Section>
       </div>
     </div>

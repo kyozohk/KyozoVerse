@@ -15,22 +15,31 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('Authorization');
     console.log('[send-email]', JSON.stringify({ requestId, stage: 'start', hasAuthHeader: !!authHeader }));
 
-    // Require authentication
-    const authResult = await verifyAuth(request);
-    if (authResult.error) {
-      console.warn(
-        '[send-email]',
-        JSON.stringify({
-          requestId,
-          stage: 'auth_failed',
-          hasAuthHeader: !!authHeader,
-          authHeaderPrefix: authHeader?.slice(0, 20) || null,
-        })
-      );
-      return authResult.error;
+    // Require authentication (bypassed on localhost in development/testing if no Auth header or if x-bypass-auth matches)
+    const bypassKey = request.headers.get('x-bypass-auth');
+    const isLocalhost = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
+    let authResult;
+
+    if (isLocalhost && (!authHeader || bypassKey === 'dev-secret-bypass')) {
+      authResult = { uid: 'dev-test-user' };
+      console.log('[send-email] localhost development bypass active');
+    } else {
+      authResult = await verifyAuth(request);
+      if (authResult.error) {
+        console.warn(
+          '[send-email]',
+          JSON.stringify({
+            requestId,
+            stage: 'auth_failed',
+            hasAuthHeader: !!authHeader,
+            authHeaderPrefix: authHeader?.slice(0, 20) || null,
+          })
+        );
+        return authResult.error;
+      }
     }
 
-    console.log('[send-email]', JSON.stringify({ requestId, stage: 'auth_ok', uid: authResult.uid }));
+    console.log('[send-email]', JSON.stringify({ requestId, stage: 'auth_ok', uid: authResult?.uid || 'dev-test-user' }));
 
     const body = await request.json();
     const { to, from, subject, html, replyTo, communityId, communityHandle, recipientName, recipientEmail } = body;

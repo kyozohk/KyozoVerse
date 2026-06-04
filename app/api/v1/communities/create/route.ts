@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
   if (authResult.error) return authResult.error;
   const uid = authResult.uid!;
 
-  let body: { name?: string; tags?: string[] };
+  let body: { name?: string; tags?: string[]; description?: string };
   try {
-    body = (await request.json()) as { name?: string; tags?: string[] };
+    body = (await request.json()) as { name?: string; tags?: string[]; description?: string };
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body', code: 'BAD_REQUEST' }, { status: 400 });
   }
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     isPrivate: false,
     visibility: 'public',
     tags: Array.isArray(body.tags) ? body.tags : [],
+    lore: (body.description || '').trim(),
     memberCount: 1,
     createdAt: FieldValue.serverTimestamp(),
     createdViaImport: true,

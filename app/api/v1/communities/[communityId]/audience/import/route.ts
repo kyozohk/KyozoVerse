@@ -75,7 +75,10 @@ interface RowInput {
 
 interface RequestBody {
   rows: RowInput[];
-  tag: string;
+  /** A single tag (legacy) … */
+  tag?: string;
+  /** … or multiple tags applied to every imported member. */
+  tags?: string[];
   note?: string;
   source: 'csv' | 'xlsx' | 'eventbrite' | 'gsheets';
 }
@@ -177,10 +180,18 @@ export async function POST(
       { status: 413 }
     );
   }
-  const tagName = (body.tag || '').trim();
-  if (!tagName) {
+  // Accept a single `tag` (legacy) or a `tags` array. De-dupe + trim.
+  const tagNames = Array.from(
+    new Set(
+      [...(Array.isArray(body.tags) ? body.tags : []), body.tag || '']
+        .map((t) => (t || '').trim())
+        .filter(Boolean)
+    )
+  );
+  const tagName = tagNames[0] || '';
+  if (tagNames.length === 0) {
     return NextResponse.json(
-      { error: 'tag is required', code: 'MISSING_FIELD' },
+      { error: 'At least one tag is required', code: 'MISSING_FIELD' },
       { status: 400 }
     );
   }
@@ -264,10 +275,12 @@ export async function POST(
   // Writes to communities/{id}/tags/{tagId} so the Manage Tag dialog and the
   // audience filter chips can find it. Idempotent via merge: re-running an
   // import with the same tag name is a no-op.
-  try {
-    await addTagToCommunityServer(communityId, tagName);
-  } catch (e) {
-    console.warn('[import] tag write failed (continuing):', (e as Error).message);
+  for (const t of tagNames) {
+    try {
+      await addTagToCommunityServer(communityId, t);
+    } catch (e) {
+      console.warn('[import] tag write failed (continuing):', (e as Error).message);
+    }
   }
 
   // ---- batched writes ------------------------------------------------
@@ -311,7 +324,7 @@ export async function POST(
         importTag: tagName,
         importNote: body.note || null,
         importSource: body.source,
-        tags: FieldValue.arrayUnion(tagName),
+        tags: FieldValue.arrayUnion(...tagNames),
         userDetails: {
           placeholder: true,
           displayName: row.name || '',

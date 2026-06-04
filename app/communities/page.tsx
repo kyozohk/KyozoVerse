@@ -9,7 +9,7 @@ import { EnhancedListView } from '@/components/v2/enhanced-list-view';
 import { CommunityGridItem, CommunityListItem, CommunityCircleItem } from '@/components/v2/community-items';
 import { Button } from '@/components/ui/button';
 import { CreateCommunityDialog } from '@/components/community/create-community-dialog';
-import { ImportMembersDialog } from '@/components/community/import-members-dialog';
+import { AutoIntegrateWizard } from '@/components/community/auto-integrate-wizard';
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
@@ -247,17 +247,12 @@ function CommunitiesContent() {
         }}
       />
 
-      {/* Reversed onboarding: contacts → tag → community. No community prop, so
-          the dialog creates one at the end and routes into its audience. */}
-      <ImportMembersDialog
+      {/* Reversed onboarding wizard (contacts → tag → communities + subdomains).
+          Full-screen step flow built on the reusable <ProcessFlow>. */}
+      <AutoIntegrateWizard
         isOpen={isImportOpen}
-        onOpenChange={setIsImportOpen}
-        availableCommunities={communities.map((c) => ({
-          communityId: c.communityId,
-          handle: c.handle,
-          name: c.name,
-        }))}
-        onSuccess={() => {
+        onClose={() => {
+          setIsImportOpen(false);
           if (user) fetchCommunities();
         }}
         onComplete={(handle) => router.push(`/${handle}/audience`)}
