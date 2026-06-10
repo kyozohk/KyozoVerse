@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Search, Grid, List, CircleUser, Check, CheckSquare, Square, Loader2, Tag, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface Column<T> {
   /** Stable key. Used for sort state and React keys. */
@@ -81,6 +82,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
   getType,
 }: EnhancedListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'circle'>(defaultViewMode);
+  const isMobile = useIsMobile();
+  // Mobile always renders the compact list (icon + details rows); the
+  // grid/circle toggles are desktop-only.
+  const effectiveViewMode = isMobile ? 'list' : viewMode;
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'Member' | 'Contact' | null>('Member');
   const [showTags, setShowTags] = useState(false);
@@ -351,8 +356,9 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     }
 
     // Table mode: when columns are provided and viewMode is 'list', render a
-    // sortable table matching the audience design.
-    if (columns && viewMode === 'list') {
+    // sortable table matching the audience design. Desktop-only — mobile falls
+    // through to the stacked card list, which fits a narrow screen.
+    if (columns && effectiveViewMode === 'list' && !isMobile) {
       return (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
@@ -454,12 +460,12 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
     }
 
     const ItemComponent =
-      viewMode === 'list' ? renderListItem
-      : viewMode === 'circle' ? renderCircleItem
+      effectiveViewMode === 'list' ? renderListItem
+      : effectiveViewMode === 'circle' ? renderCircleItem
       : renderGridItem;
-      
-    const className = 
-      viewMode === 'list' ? "flex flex-col gap-4"
+
+    const className =
+      effectiveViewMode === 'list' ? "flex flex-col gap-2 sm:gap-4"
       : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 
     return (
@@ -474,7 +480,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
               onClick={selectable ? () => toggleSelection(item.id) : undefined}
             >
               {selectable && (
-                <div className="absolute top-2 left-2 z-10">
+                <div className="absolute top-2 left-2 z-10 hidden sm:block">
                   <div 
                     className={cn(
                       "w-5 h-5 rounded border flex items-center justify-center transition-colors",
@@ -507,7 +513,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="p-6 pb-0">
+      <div className="p-3 pb-0 sm:p-6 sm:pb-0">
         {/* Search row: full width */}
         <div className="relative w-full mb-4">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: '#9B8A75' }} />
@@ -582,9 +588,10 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
             </div>
           </div>
         ) : (
-          /* Standard fallback tags filtering if showTypeTabs is false (backward compatibility) */
+          /* Standard fallback tags filtering if showTypeTabs is false (backward compatibility).
+             Hidden on mobile: the list keeps only the search bar on top. */
           availableTags.length > 0 && (
-            <div className="mb-4">
+            <div className="mb-4 hidden sm:block">
               <div
                 ref={tagsContainerRef}
                 className="flex flex-wrap gap-2"
@@ -689,7 +696,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
                   {permanentActions}
                 </div>
               )}
-              <div className="flex items-center gap-1 rounded-md border-2 p-1" style={{ borderColor: '#A89882', backgroundColor: 'transparent' }}>
+              <div className="hidden sm:flex items-center gap-1 rounded-md border-2 p-1" style={{ borderColor: '#A89882', backgroundColor: 'transparent' }}>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -747,7 +754,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-8 pt-1">
+      <div className="flex-1 overflow-y-auto px-3 pb-8 pt-1 sm:px-6">
         {renderContent()}
       </div>
     </div>

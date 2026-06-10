@@ -57,7 +57,10 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full h-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card text-card-foreground p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-lg",
+        "fixed z-50 grid w-full gap-4 border bg-card text-card-foreground p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        // Mobile: take over the whole screen. sm+: centered modal.
+        "inset-0 h-full max-h-[100dvh] overflow-y-auto",
+        "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:h-auto sm:max-h-[90vh] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg",
         className
       )}
       {...props}
@@ -149,11 +152,12 @@ export function CustomFormDialog({
   footer,
 }: CustomFormDialogProps) {
 
+  // Size constraints only apply at sm+; on mobile the dialog is full-screen.
   const sizeClasses = size === 'xl'
-      ? "w-full max-w-6xl max-h-[90vh]"
-      : size === 'large' 
-      ? "w-full max-w-2xl max-h-[90vh]"
-      : "w-full max-w-md max-h-[85vh]";
+      ? "w-full sm:max-w-6xl sm:max-h-[90vh]"
+      : size === 'large'
+      ? "w-full sm:max-w-2xl sm:max-h-[90vh]"
+      : "w-full sm:max-w-md sm:max-h-[85vh]";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -163,8 +167,11 @@ export function CustomFormDialog({
         />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl focus:outline-none flex flex-col",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+            "fixed z-50 shadow-2xl focus:outline-none flex flex-col",
+            // Mobile: full-screen. sm+: centered rounded modal.
+            "inset-0 h-full max-h-[100dvh] rounded-none",
+            "sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
             sizeClasses
           )}
           style={{ 
@@ -172,15 +179,15 @@ export function CustomFormDialog({
             border: '2px solid var(--page-content-border)'
           }}
         >
-          <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50 p-2" style={{ border: '2px solid var(--page-content-border)', backgroundColor: 'var(--page-content-bg)' }}>
+          <DialogPrimitive.Close className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50 p-2" style={{ border: '2px solid var(--page-content-border)', backgroundColor: 'var(--page-content-bg)' }}>
             <X className="h-5 w-5" style={{ color: '#6B5D52' }} />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
 
-          <div className="p-8 md:p-10 flex flex-col h-full overflow-hidden">
-            <DialogHeader className="flex-shrink-0 mb-6">
-              <DialogTitle 
-                className="font-normal text-left mb-3 text-3xl md:text-4xl"
+          <div className="p-5 sm:p-8 md:p-10 flex flex-col h-full overflow-hidden">
+            <DialogHeader className="flex-shrink-0 mb-4 sm:mb-6">
+              <DialogTitle
+                className="font-normal text-left mb-3 text-2xl sm:text-3xl md:text-4xl pr-10 sm:pr-0"
                 style={{ fontFamily: "'PT Sans', sans-serif", color: '#6B5D52' }}
               >
                 {title}
@@ -192,12 +199,12 @@ export function CustomFormDialog({
               )}
             </DialogHeader>
             
-            <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
-              <div className={cn("flex-1 min-h-0 overflow-y-auto pr-1", rightComponent && "w-1/2")}>
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4 md:gap-6 overflow-hidden">
+              <div className={cn("flex-1 min-h-0 overflow-y-auto pr-1", rightComponent && "md:w-1/2")}>
                 {children}
               </div>
               {rightComponent && (
-                <div className="w-1/2 min-h-0 overflow-y-auto border-l pl-6" style={{ borderColor: 'var(--page-content-border)' }}>
+                <div className="w-full md:w-1/2 min-h-0 overflow-y-auto border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6" style={{ borderColor: 'var(--page-content-border)' }}>
                   {rightComponent}
                 </div>
               )}

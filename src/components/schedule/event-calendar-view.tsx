@@ -5,6 +5,7 @@ import { Search, Grid, List, Calendar as CalendarIcon, ChevronLeft, ChevronRight
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface CalendarEvent {
   id: string;
@@ -41,6 +42,9 @@ export function EventCalendarView({
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
+  const isMobile = useIsMobile();
+  // Mobile only renders the list view; the calendar/cards toggles are desktop-only.
+  const effectiveViewMode: ViewMode = isMobile ? 'list' : viewMode;
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -422,7 +426,7 @@ export function EventCalendarView({
   return (
     <div className="flex-1 flex flex-col">
       {/* Controls */}
-      <div className="p-6 space-y-4">
+      <div className="p-3 sm:p-6 space-y-4">
         {/* Search and View Toggle */}
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
@@ -435,7 +439,7 @@ export function EventCalendarView({
               className="w-full h-11 pl-11 pr-4 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-colors"
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             {/* View Mode Toggle */}
             <div className="flex items-center gap-1 rounded-md bg-secondary p-1">
               <Button
@@ -479,7 +483,7 @@ export function EventCalendarView({
         </div>
 
         {/* Calendar Navigation (only for calendar view) */}
-        {viewMode === 'calendar' && (
+        {effectiveViewMode === 'calendar' && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
@@ -499,10 +503,10 @@ export function EventCalendarView({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 pb-8">
-        {viewMode === 'calendar' && renderCalendarView()}
-        {viewMode === 'cards' && renderCardsView()}
-        {viewMode === 'list' && renderListView()}
+      <div className="flex-1 overflow-y-auto px-3 pb-8 sm:px-6">
+        {effectiveViewMode === 'calendar' && renderCalendarView()}
+        {effectiveViewMode === 'cards' && renderCardsView()}
+        {effectiveViewMode === 'list' && renderListView()}
       </div>
     </div>
   );

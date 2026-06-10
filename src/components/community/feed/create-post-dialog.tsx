@@ -44,6 +44,11 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
   const [isPublic, setIsPublic] = useState(true);
   const [fillRow, setFillRow] = useState(false);
   const [isPoetry, setIsPoetry] = useState(false);
+  // Apple guideline 1.2.1(a) — creators mark content that exceeds the
+  // app's everyone-friendly bar so the mobile feed can age-gate it.
+  // Stored as `ageRating: "adult" | "everyone"` on the blog doc to match
+  // the Flutter Post.fromDoc parser at lib/models/post.dart.
+  const [isAdult, setIsAdult] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
   // File states
@@ -214,6 +219,13 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       setIsPublic(editPost.visibility === 'public');
       setFillRow(editPost.fillRow || false);
       setIsPoetry(editPost.isPoetry || false);
+      // Accept either the new `ageRating` string or a legacy `isAdult` flag.
+      const rawAge = (editPost as unknown as { ageRating?: string; isAdult?: boolean });
+      setIsAdult(
+        rawAge.ageRating === 'adult' ||
+          rawAge.ageRating === '17+' ||
+          rawAge.isAdult === true,
+      );
       setMediaUrl(editPost.content.mediaUrls?.[0] || null);
       setThumbnailUrl(editPost.content.thumbnailUrl || null);
     } else {
@@ -231,6 +243,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     setIsPublic(true);
     setFillRow(false);
     setIsPoetry(false);
+    setIsAdult(false);
     setIsSubmitting(false);
     setIsRecording(false);
     setRecordedBlob(null);
@@ -413,6 +426,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
         console.log('📦 Final content payload:', contentPayload);
 
+        const ageRating = isAdult ? 'adult' : 'everyone';
+
         if (editPost) {
             await updateDoc(doc(db, 'blogs', editPost.id), {
                 title,
@@ -420,6 +435,8 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 visibility: isPublic ? 'public' : 'private',
                 fillRow: fillRow,
                 isPoetry: postType === 'text' ? isPoetry : false,
+                ageRating,
+                isAdult, // legacy boolean for older clients
                 updatedAt: serverTimestamp()
             });
         } else {
@@ -435,7 +452,9 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
                 comments: 0,
                 visibility: (isPublic ? 'public' : 'private') as 'public' | 'private',
                 fillRow: fillRow,
-                isPoetry: postType === 'text' ? isPoetry : false
+                isPoetry: postType === 'text' ? isPoetry : false,
+                ageRating,
+                isAdult,
             };
             const docRef = await addDoc(collection(db, 'blogs'), newPostData);
             if (isPublic) {
@@ -509,10 +528,12 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       comments: 0,
       visibility: isPublic ? 'public' : 'private' as const,
       isPoetry: postType === 'text' ? isPoetry : false,
+      ageRating: (isAdult ? 'adult' : 'everyone') as 'adult' | 'everyone',
+      isAdult,
       _isPublicView: true,
     };
     return basePost;
-  }, [title, description, mediaUrl, file, thumbnailUrl, thumbnailFile, postType, user, communityId, communityHandle, isPublic, isPoetry]);
+  }, [title, description, mediaUrl, file, thumbnailUrl, thumbnailFile, postType, user, communityId, communityHandle, isPublic, isPoetry, isAdult]);
 
   // Render preview based on post type
   const renderPreview = () => {
@@ -608,7 +629,7 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
 
   const dialogFooter = (
     <div className="flex justify-between items-center gap-4">
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 flex-wrap">
         <Checkbox
           label="Make this post public"
           checked={isPublic}
@@ -619,6 +640,30 @@ export const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
           checked={fillRow}
           onCheckedChange={setFillRow}
         />
+        {/*
+          Apple guideline 1.2.1(a): creators flag content that exceeds the
+          app's everyone-friendly bar. The mobile feed hides posts marked
+          here from users whose declared age is under 17, and renders a
+          "17+" badge on the card so any viewer can identify the rating.
+        */}
+        <label className="inline-flex items-center gap-2 cursor-pointer">
+          <Checkbox
+            label=""
+            checked={isAdult}
+            onCheckedChange={setIsAdult}
+          />
+          <span className="text-sm select-none" style={{ color: '#5B4A3A' }}>
+            Adult content (17+)
+          </span>
+          {isAdult && (
+            <span
+              className="ml-1 inline-flex items-center rounded-full border border-[#282470]/35 bg-[#282470]/10 px-2 py-0.5 text-[10px] font-bold tracking-wide"
+              style={{ color: '#282470' }}
+            >
+              17+
+            </span>
+          )}
+        </label>
       </div>
       <div className="flex gap-3">
         <Button

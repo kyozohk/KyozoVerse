@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Globe, Lock, PlusCircle, Users, Calendar, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Banner } from '@/components/ui/banner';
 import { Card } from '@/components/ui/card';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
@@ -307,9 +308,17 @@ export default function GuestlistPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-      <div className="p-8 flex-1 overflow-auto">
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+    <div className="h-full md:h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-3 sm:p-8 flex-1 overflow-auto">
+        {/* Mobile: Create Guestlist action on top */}
+        <div className="flex gap-2 mb-3 md:hidden">
+          <Button className="flex-1" onClick={() => setIsCreateDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Guestlist
+          </Button>
+        </div>
+        <div className="overflow-hidden sm:rounded-2xl sm:border-2 sm:border-[color:var(--page-content-border)]" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+          <div className="hidden md:block">
           {community && (
             <Banner
               backgroundImage={community.communityBackgroundImage}
@@ -334,6 +343,7 @@ export default function GuestlistPage() {
               height="16rem"
             />
           )}
+          </div>
           <EnhancedListView
             items={guestlists}
             renderGridItem={renderGuestlistGridItem}

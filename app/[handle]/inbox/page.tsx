@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { db } from '@/firebase/firestore';
 import { collection, query, where, orderBy, onSnapshot, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage, Input } from '@/components/ui';
-import { Search, Mail, MessageSquare, Lock, Globe, Inbox, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Search, Mail, MessageSquare, Lock, Globe, Inbox, ArrowUpRight, ArrowDownLeft, ChevronLeft } from 'lucide-react';
 import { Community } from '@/lib/types';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
@@ -287,10 +287,11 @@ function InboxContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-      <div className="p-8 flex-1 overflow-hidden flex flex-col">
+    <div className="h-full md:h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-3 sm:p-8 flex-1 overflow-hidden flex flex-col">
         {/* Single container with Banner and Inbox Content */}
-        <div className="flex-1 rounded-2xl overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+        <div className="flex-1 overflow-hidden flex flex-col sm:rounded-2xl sm:border-2 sm:border-[color:var(--page-content-border)]" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+          <div className="hidden md:block">
           {community && (
             <Banner
               backgroundImage={community.communityBackgroundImage}
@@ -310,10 +311,15 @@ function InboxContent() {
               height="16rem"
             />
           )}
-          {/* Inbox Content */}
+          </div>
+          {/* Inbox Content. Mobile is master-detail: the conversation list and
+              the message thread swap based on selection. */}
           <div className="flex-1 flex overflow-hidden">
           {/* Left sidebar - Conversations list */}
-          <div className="w-80 border-r flex flex-col" style={{ borderColor: '#E8DFD1' }}>
+          <div
+            className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 md:border-r flex-col`}
+            style={{ borderColor: '#E8DFD1' }}
+          >
             {/* Filter Toggles */}
             <div className="p-4 border-b" style={{ borderColor: '#E8DFD1' }}>
               <div className="flex gap-2 mb-3">
@@ -414,12 +420,22 @@ function InboxContent() {
           </div>
 
           {/* Right side - Messages */}
-          <div className="flex-1 flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
+          <div
+            className={`${selectedConversationId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}
+            style={{ backgroundColor: '#FAF8F5' }}
+          >
             {selectedConversationId && selectedConversation ? (
               <>
                 {/* Chat header */}
                 <div className="p-4 border-b bg-white" style={{ borderColor: '#E8DFD1' }}>
                   <div className="flex items-center gap-3 mb-3">
+                    <button
+                      onClick={() => setSelectedConversationId(null)}
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md hover:bg-[#E8DFD1] md:hidden"
+                      aria-label="Back to conversations"
+                    >
+                      <ChevronLeft className="h-5 w-5 text-[#5B4A3A]" />
+                    </button>
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={selectedConversation.recipientAvatar || undefined} />
                       <AvatarFallback style={{ backgroundColor: '#5B4A3A', color: 'white' }}>

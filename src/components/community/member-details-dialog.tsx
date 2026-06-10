@@ -3,17 +3,21 @@
 import React, { useEffect, useState } from 'react';
 import { V06DialogShell } from '@/components/ui/v06-dialog-shell';
 import { db } from '@/firebase/firestore';
-import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
-import { 
-  Mail, 
-  Calendar, 
-  RotateCw, 
-  Send, 
-  Users, 
-  Tag, 
-  Key, 
-  UserPlus, 
-  Globe, 
+import { collection, query, where, getDocs, getDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  Mail,
+  Calendar,
+  Cake,
+  Pencil,
+  Check,
+  X as XIcon,
+  RotateCw,
+  Send,
+  Users,
+  Tag,
+  Key,
+  UserPlus,
+  Globe,
   Lock,
   User
 } from 'lucide-react';
@@ -38,20 +42,30 @@ interface MemberDetailsDialogProps {
 export function MemberDetailsDialog({ isOpen, onClose, member }: MemberDetailsDialogProps) {
   const [userCommunities, setUserCommunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  // Apple guideline 1.2.1(a): age-gating on the mobile app reads
+  // `users/{uid}.birthYear`. Operators can set or update it from here for
+  // existing members who pre-date the in-app signup form.
+  const [birthYear, setBirthYear] = useState<number | null>(null);
+  const [editingAge, setEditingAge] = useState(false);
+  const [ageDraft, setAgeDraft] = useState<string>('');
+  const [savingAge, setSavingAge] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !member?.userId) return;
 
-    const fetchUserCommunities = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       try {
         const q = query(
           collection(db, 'communityMembers'),
           where('userId', '==', member.userId)
         );
-        const snap = await getDocs(q);
-        const memberships = snap.docs.map(doc => doc.data());
+        const [memberSnap, userSnap] = await Promise.all([
+          getDocs(q),
+          getDoc(doc(db, 'users', member.userId)),
+        ]);
 
+        const memberships = memberSnap.docs.map(d => d.data());
         const communityDetails = await Promise.all(
           memberships.map(async (m) => {
             const commSnap = await getDoc(doc(db, 'communities', m.communityId));
@@ -65,17 +79,76 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: MemberDetailsDi
             return null;
           })
         );
-
         setUserCommunities(communityDetails.filter(Boolean));
+
+        const userData = userSnap.exists() ? userSnap.data() : null;
+        const rawYear = (userData?.birthYear as number | undefined) ?? null;
+        setBirthYear(rawYear);
+        setAgeDraft(rawYear != null ? String(rawYear) : '');
+        setEditingAge(false);
       } catch (e) {
-        console.error('Error fetching user communities:', e);
+        console.error('Error fetching member detail:', e);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserCommunities();
+    fetchAll();
   }, [isOpen, member?.userId]);
+
+  const saveBirthYear = async () => {
+    if (!member?.userId) return;
+    const trimmed = ageDraft.trim();
+    if (trimmed === '') {
+      // Clearing the field is allowed — it puts the user back to the
+      // conservative "no age = treat as minor" default in the mobile app.
+      setSavingAge(true);
+      try {
+        await setDoc(
+          doc(db, 'users', member.userId),
+          {
+            birthYear: null,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+        setBirthYear(null);
+        setEditingAge(false);
+      } catch (e) {
+        console.error('Failed to clear birthYear:', e);
+        alert('Could not clear age. See console.');
+      } finally {
+        setSavingAge(false);
+      }
+      return;
+    }
+    const year = Number(trimmed);
+    const now = new Date().getFullYear();
+    if (!Number.isInteger(year) || year < 1900 || year > now) {
+      alert(`Enter a valid year between 1900 and ${now}.`);
+      return;
+    }
+    setSavingAge(true);
+    try {
+      await setDoc(
+        doc(db, 'users', member.userId),
+        {
+          birthYear: year,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+      setBirthYear(year);
+      setEditingAge(false);
+    } catch (e) {
+      console.error('Failed to save birthYear:', e);
+      alert('Could not save age. See console.');
+    } finally {
+      setSavingAge(false);
+    }
+  };
+
+  const ageThisYear = birthYear != null ? new Date().getFullYear() - birthYear : null;
 
   if (!member) return null;
 
@@ -169,6 +242,87 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: MemberDetailsDi
                 <Calendar className="h-4 w-4" style={{ color: '#9B8A75' }} />
                 <span>Joined: {formatJoined(member.joinedDate)}</span>
               </div>
+            </div>
+
+            {/*
+              Apple guideline 1.2.1(a): the mobile app gates 17+ content on
+              this user's declared birth year. Operators can set it here for
+              members who pre-date the in-app signup form.
+            */}
+            <div className="mt-3 flex items-center gap-2 justify-center sm:justify-start text-sm text-[#6B5F52]">
+              <Cake className="h-4 w-4" style={{ color: '#9B8A75' }} />
+              {editingAge ? (
+                <>
+                  <span>Year of birth:</span>
+                  <input
+                    type="number"
+                    min={1900}
+                    max={new Date().getFullYear()}
+                    value={ageDraft}
+                    onChange={(e) => setAgeDraft(e.target.value)}
+                    placeholder="e.g. 1995"
+                    className="w-24 rounded-md border px-2 py-1 text-sm"
+                    style={{ borderColor: '#DDD2BD' }}
+                    autoFocus
+                    disabled={savingAge}
+                  />
+                  <button
+                    type="button"
+                    onClick={saveBirthYear}
+                    disabled={savingAge}
+                    className="inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs font-semibold disabled:opacity-50"
+                    style={{ backgroundColor: '#FAF5EC', borderColor: '#DDD2BD', color: '#3D2E1F' }}
+                  >
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    {savingAge ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingAge(false);
+                      setAgeDraft(birthYear != null ? String(birthYear) : '');
+                    }}
+                    disabled={savingAge}
+                    className="inline-flex items-center justify-center rounded-md px-2 py-1 text-xs font-semibold text-[#6B5F52] hover:bg-[#FAF5EC] disabled:opacity-50"
+                  >
+                    <XIcon className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>
+                    Year of birth:{' '}
+                    {birthYear != null ? (
+                      <>
+                        <strong className="text-[#3D2E1F]">{birthYear}</strong>
+                        {ageThisYear != null && (
+                          <span className="ml-1 text-[#9B8A75]">
+                            (~{ageThisYear} yrs)
+                          </span>
+                        )}
+                        {ageThisYear != null && ageThisYear < 17 && (
+                          <span
+                            className="ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide"
+                            style={{ backgroundColor: '#FEF3C7', borderColor: '#FACC15', color: '#854D0E' }}
+                          >
+                            Minor — 17+ posts hidden
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <em className="text-[#9B8A75]">not set</em>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingAge(true)}
+                    className="inline-flex items-center justify-center rounded-md p-1 text-[#6B5F52] hover:bg-[#FAF5EC]"
+                    aria-label="Edit year of birth"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

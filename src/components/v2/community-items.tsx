@@ -68,29 +68,29 @@ export const CommunityGridItem = ({ item, isSelected, urlField = 'id' }: Communi
 
 export const CommunityListItem = ({ item, isSelected, urlField = 'id' }: CommunityItemProps) => (
   <Link href={`/${item[urlField] || item.id}`}>
-    <Card 
+    <Card
       className={cn(
-        "flex items-center p-4 cursor-pointer transition-all hover:bg-accent/50",
+        "flex items-center p-3 sm:p-4 cursor-pointer transition-all hover:bg-accent/50",
         isSelected && "ring-2 ring-ring bg-accent/50"
       )}
       style={{ borderColor: 'var(--page-content-border)' }}
     >
-    <CommunityImage 
-      src={item.imageUrl} 
-      alt={item.name} 
-      width={64} 
-      height={64} 
-      containerClassName="rounded-md overflow-hidden"
-      className="aspect-square object-cover" 
+    <CommunityImage
+      src={item.imageUrl}
+      alt={item.name}
+      width={64}
+      height={64}
+      containerClassName="rounded-md overflow-hidden flex-shrink-0"
+      className="aspect-square object-cover"
     />
-    <div className="ml-4 flex-grow">
-      <h3 className="text-lg font-semibold">{item.name}</h3>
+    <div className="ml-3 sm:ml-4 flex-grow min-w-0">
+      <h3 className="text-base sm:text-lg font-semibold truncate">{item.name}</h3>
       <div className="flex items-center text-sm text-muted-foreground">
         <Users className="mr-2 h-4 w-4" />
         <span>{item.memberCount.toLocaleString()} {item.memberCount === 1 ? 'member' : 'members'}</span>
       </div>
         {item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="hidden sm:flex flex-wrap gap-2 pt-2">
                 {item.tags.slice(0, 5).map(tag => (
                     <div key={tag} className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold">
                         {tag}

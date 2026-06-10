@@ -24,6 +24,13 @@ import Link from 'next/link';
 import { FeedStats } from '@/components/community/feed-stats';
 import { Banner } from '@/components/ui/banner';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
+import { Button } from '@/components/ui/button';
+import {
+  MobilePostCard,
+  MobileFeedFilterBar,
+  matchesMobileFeedFilter,
+  type MobileFeedFilter,
+} from '@/components/community/feed/mobile-post-card';
 
 export default function CommunityFeedPage() {
   const { user } = useAuth();
@@ -51,6 +58,7 @@ export default function CommunityFeedPage() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [memberCount, setMemberCount] = useState<number>(0);
+  const [mobileFilter, setMobileFilter] = useState<MobileFeedFilter>('all');
 
   useEffect(() => {
     async function fetchMembers() {
@@ -234,10 +242,31 @@ export default function CommunityFeedPage() {
     return null;
   }
 
+  // Mobile feed mirrors the kyozo_flutter community feed: filter pills on top,
+  // then a single column of post cards.
+  const mobileFeedPosts = filteredPosts.filter(p => matchesMobileFeedFilter(p, mobileFilter));
+
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-      <div className="p-8 flex-1 overflow-auto">
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+    <div className="h-full md:h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-3 sm:p-8 flex-1 overflow-auto">
+        {/* Mobile: compose actions on top (the Flutter app is read-only; creation stays web-side) */}
+        {canCreatePost && (
+          <div className="flex gap-2 mb-3 md:hidden">
+            {buttonConfig.map((config) => (
+              <Button
+                key={config.type}
+                variant="outline"
+                className="flex-1 px-2"
+                onClick={() => handleSelectPostType(config.type)}
+              >
+                <config.icon className="mr-1.5 h-4 w-4" />
+                {config.label}
+              </Button>
+            ))}
+          </div>
+        )}
+        <div className="overflow-hidden sm:rounded-2xl sm:border-2 sm:border-[color:var(--page-content-border)]" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+          <div className="hidden md:block">
           {community && (
             <Banner
               backgroundImage={community.communityBackgroundImage}
@@ -269,9 +298,12 @@ export default function CommunityFeedPage() {
               height="16rem"
             />
           )}
-          <div className="p-6">
-            <FeedStats posts={posts} />
-          
+          </div>
+          <div className="p-2 sm:p-6">
+            <div className="hidden md:block">
+              <FeedStats posts={posts} />
+            </div>
+
           {loading ? (
             <div className="masonry-feed-columns"><FeedSkeletons /></div>
           ) : filteredPosts.length === 0 ? (
@@ -283,6 +315,25 @@ export default function CommunityFeedPage() {
             </div>
           ) : (
             <>
+              {/* Mobile: kyozo_flutter-style feed — filter pills + single column of post cards */}
+              <div className="md:hidden">
+                <div className="sticky top-0 z-10 px-1 pb-3 pt-1" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+                  <MobileFeedFilterBar value={mobileFilter} onChange={setMobileFilter} />
+                </div>
+                {mobileFeedPosts.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-muted-foreground">
+                    No posts for this filter.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 px-1 pb-6">
+                    {mobileFeedPosts.map(post => (
+                      <MobilePostCard key={post.id} post={post} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="hidden md:block">
               {/* First audio post - full width at top */}
               {firstAudioPost && (
                 <div className="mb-8">
@@ -355,6 +406,7 @@ export default function CommunityFeedPage() {
                   
                   return rows;
                 })()}
+              </div>
               </div>
             </>
           )}

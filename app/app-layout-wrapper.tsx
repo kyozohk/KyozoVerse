@@ -24,9 +24,9 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <MainSidebar expanded={isMainRoute} />
-      <main 
-        className="min-h-screen overflow-auto"
-        style={{ marginLeft: isMainRoute ? '240px' : '80px' }}
+      {/* Mobile (<md): the main sidebar is hidden, so content gets the full width. */}
+      <main
+        className={`min-h-screen overflow-auto ${isMainRoute ? 'md:ml-[240px]' : 'md:ml-[80px]'}`}
       >
         {children}
       </main>

@@ -522,28 +522,49 @@ function MembersContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-      <div className="p-8 flex-1 overflow-auto">
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
-          <Banner
-            title="Audience"
-            subtitle="Manage your community members"
-            ctas={canManage ? [
-              ...(selectedMembers.length > 0 ? [{
-                label: `Message (${selectedMembers.length})`,
-                onClick: () => setIsMessageDialogOpen(true),
-              }] : []),
-              {
-                label: 'Add Members',
-                onClick: () => setIsAddMemberOpen(true),
-              },
-              {
-                label: 'Invite Members',
-                onClick: () => setIsInviteDialogOpen(true),
-              },
-            ] : []}
-          />
-          <div className="p-6">
+    <div className="h-full md:h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-3 sm:p-8 flex-1 overflow-auto">
+        {/* Mobile: Add Member / Invite actions on top, before search and list */}
+        {canManage && (
+          <div className="flex flex-wrap gap-2 mb-3 md:hidden">
+            <Button className="flex-1" onClick={() => setIsAddMemberOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Members
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setIsInviteDialogOpen(true)}>
+              <Mail className="mr-2 h-4 w-4" />
+              Invite Members
+            </Button>
+            {selectedMembers.length > 0 && (
+              <Button variant="outline" className="flex-1" onClick={() => setIsMessageDialogOpen(true)}>
+                <Send className="mr-2 h-4 w-4" />
+                Message ({selectedMembers.length})
+              </Button>
+            )}
+          </div>
+        )}
+        <div className="overflow-hidden sm:rounded-2xl sm:border-2 sm:border-[color:var(--page-content-border)]" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+          <div className="hidden md:block">
+            <Banner
+              title="Audience"
+              subtitle="Manage your community members"
+              ctas={canManage ? [
+                ...(selectedMembers.length > 0 ? [{
+                  label: `Message (${selectedMembers.length})`,
+                  onClick: () => setIsMessageDialogOpen(true),
+                }] : []),
+                {
+                  label: 'Add Members',
+                  onClick: () => setIsAddMemberOpen(true),
+                },
+                {
+                  label: 'Invite Members',
+                  onClick: () => setIsInviteDialogOpen(true),
+                },
+              ] : []}
+            />
+          </div>
+          <div className="p-1 sm:p-6">
             <EnhancedListView
               items={members}
               columns={memberColumns}

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { PlusCircle, Check } from 'lucide-react';
+import { PlusCircle, Check, ChevronLeft } from 'lucide-react';
 import {
   Avatar,
   AvatarFallback,
@@ -20,12 +20,14 @@ import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import { communityNavItems } from '@/lib/theme-utils';
 import { RoundImage } from '@/components/ui/round-image';
 import { usePlatformRole } from '@/hooks/use-platform-role';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
   const { permissions, loading: roleLoading } = usePlatformRole();
   const pathname = usePathname();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,11 @@ export default function CommunitySidebar() {
 
   return (
     <div
-      className={`hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow fixed left-20 top-0 h-screen overflow-hidden z-30`}
+      className={
+        isMobile
+          ? 'relative block h-full w-full overflow-hidden sidebar'
+          : `hidden border-r lg:block w-64 sidebar transition-all duration-200 sidebar-shadow fixed left-20 top-0 h-screen overflow-hidden z-30`
+      }
       style={{
         backgroundColor: 'hsl(var(--sidebar-background))',
       }}
@@ -196,6 +202,15 @@ export default function CommunitySidebar() {
       {!showCommunityList && (
         <div className="relative z-10 flex h-full max-h-screen flex-col p-2">
           <div className="flex h-[80px] items-center border-b">
+            {isMobile && (
+              <button
+                onClick={() => router.push('/communities')}
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md hover:bg-accent"
+                aria-label="Back to communities"
+              >
+                <ChevronLeft className="h-6 w-6 text-foreground" />
+              </button>
+            )}
             {loading ? (
               <Skeleton className="h-10 w-full" />
             ) : communities.length > 0 && selectedCommunityHandle ? (
@@ -232,10 +247,10 @@ export default function CommunitySidebar() {
           </div>
 
           <div className="flex-1 py-2">
-            <div className="grid items-start px-2 text-sm font-medium">
+            {/* <div className="grid items-start px-2 text-sm font-medium">
                 The Loop
-            </div>
-            <hr className="my-2" />
+            </div> */}
+            {/* <hr className="my-2" /> */}
 
             <nav className="grid items-start px-2 text-sm font-medium">
               {selectedCommunityHandle && communityNavItems.map((item) => {

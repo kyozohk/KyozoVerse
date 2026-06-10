@@ -7,6 +7,7 @@ import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
 import { Globe, Lock, PlusCircle } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
+import { Button } from '@/components/ui/button';
 import { PageLoadingSkeleton } from '@/components/community/page-loading-skeleton';
 import { CreateEventDialog } from '@/components/schedule/create-event-dialog';
 import { EventDetailDialog } from '@/components/schedule/event-detail-dialog';
@@ -158,10 +159,25 @@ export default function SchedulePage() {
     );
   }
 
+  const openCreateForToday = () => {
+    const today = new Date();
+    const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    setSelectedDate(todayFormatted);
+    setIsCreateDialogOpen(true);
+  };
+
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
-      <div className="p-8 flex-1 overflow-auto">
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)', border: '2px solid var(--page-content-border)' }}>
+    <div className="h-full md:h-screen flex flex-col" style={{ backgroundColor: 'var(--page-bg-color)' }}>
+      <div className="p-3 sm:p-8 flex-1 overflow-auto">
+        {/* Mobile: Create Event action on top */}
+        <div className="flex gap-2 mb-3 md:hidden">
+          <Button className="flex-1" onClick={openCreateForToday}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Event
+          </Button>
+        </div>
+        <div className="overflow-hidden sm:rounded-2xl sm:border-2 sm:border-[color:var(--page-content-border)]" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+          <div className="hidden md:block">
           {community && (
             <Banner
               backgroundImage={community.communityBackgroundImage}
@@ -181,17 +197,12 @@ export default function SchedulePage() {
               ctas={[{
                 label: 'Create Event',
                 icon: <PlusCircle className="h-4 w-4" />,
-                onClick: () => {
-                  // Set today's date as default when opening via header button
-                  const today = new Date();
-                  const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                  setSelectedDate(todayFormatted);
-                  setIsCreateDialogOpen(true);
-                },
+                onClick: openCreateForToday,
               }]}
               height="16rem"
             />
           )}
+          </div>
           <EventCalendarView
             events={events}
             isLoading={loading}
