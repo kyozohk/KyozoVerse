@@ -43,13 +43,13 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
   return (
     <div className="inputWrapper my-2 relative">
       <div
-        className="flex items-center gap-4 p-4 rounded-lg border border-dotted"
+        className="flex items-center gap-4 p-4 rounded-lg border border-dotted overflow-x-auto no-scrollbar"
         style={{ borderWidth: '1px', borderColor: borderColor }}
       >
       {profileImageOptions.map((src) => (
         <div
           key={src}
-          className="relative w-12 h-12 rounded-full cursor-pointer transition-all"
+          className="relative w-12 h-12 flex-shrink-0 rounded-full cursor-pointer transition-all"
           onClick={() => handlePresetClick(src)}
         >
           <Image
@@ -67,7 +67,7 @@ export function ProfileImageSelector({ selectedImage, onSelectImage, onSelectFil
         </div>
       ))}
       <div
-        className="relative w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer"
+        className="relative w-12 h-12 flex-shrink-0 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer"
         style={{ borderColor: activeColor, color: activeColor }}
         onClick={handleBrowseClick}
       >

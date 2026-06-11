@@ -426,7 +426,7 @@ export function EventCalendarView({
   return (
     <div className="flex-1 flex flex-col">
       {/* Controls */}
-      <div className="p-3 sm:p-6 space-y-4">
+      <div className="px-0 pt-3 pb-0 sm:p-6 space-y-4">
         {/* Search and View Toggle */}
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
@@ -503,7 +503,7 @@ export function EventCalendarView({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 pb-8 sm:px-6">
+      <div className="flex-1 overflow-y-auto px-0 pb-8 pt-3 sm:px-6 sm:pt-0">
         {effectiveViewMode === 'calendar' && renderCalendarView()}
         {effectiveViewMode === 'cards' && renderCardsView()}
         {effectiveViewMode === 'list' && renderListView()}

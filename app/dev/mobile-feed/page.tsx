@@ -6,6 +6,8 @@
  */
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
 import {
   MobilePostCard,
   MobileFeedFilterBar,
@@ -108,18 +110,35 @@ const MOCK_POSTS: (Post & { id: string })[] = [
 ];
 
 export default function MobileFeedPreviewPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState<MobileFeedFilter>('all');
   const posts = MOCK_POSTS.filter(p => matchesMobileFeedFilter(p, filter));
 
   return (
-    <div className="mx-auto max-w-md p-3" style={{ backgroundColor: 'var(--page-content-bg)' }}>
-      <div className="sticky top-0 z-10 pb-3 pt-1" style={{ backgroundColor: 'var(--page-content-bg)' }}>
-        <MobileFeedFilterBar value={filter} onChange={setFilter} />
-      </div>
-      <div className="flex flex-col gap-3 pb-6">
-        {posts.map(post => (
-          <MobilePostCard key={post.id} post={post} />
-        ))}
+    <div className="flex h-[100dvh] flex-col overflow-hidden" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+      {/* Same back header the community layout renders on real nav pages */}
+      <header
+        className="flex h-14 flex-shrink-0 items-center gap-1 border-b px-2"
+        style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}
+      >
+        <button
+          onClick={() => router.back()}
+          className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent"
+          aria-label="Back"
+        >
+          <ChevronLeft className="h-6 w-6 text-foreground" />
+        </button>
+        <span className="truncate text-base font-semibold text-foreground">Feed</span>
+      </header>
+      <div className="mx-auto w-full max-w-md flex-1 overflow-y-auto p-3">
+        <div className="sticky top-0 z-10 pb-3 pt-1" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+          <MobileFeedFilterBar value={filter} onChange={setFilter} />
+        </div>
+        <div className="flex flex-col gap-3 pb-6">
+          {posts.map(post => (
+            <MobilePostCard key={post.id} post={post} />
+          ))}
+        </div>
       </div>
     </div>
   );

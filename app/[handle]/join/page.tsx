@@ -5,9 +5,15 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { Community } from '@/lib/types';
-import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Loader2, Eye, EyeOff, CheckCircle, BookUser } from 'lucide-react';
 import { Input, CustomButton, PasswordInput } from '@/components/ui';
 import Image from 'next/image';
+import { PrivacyPolicyDialog } from '@/components/auth/privacy-policy-dialog';
+
+// First-party "remember me" for the join form: after a successful join on
+// this device, we keep the visitor's details so scanning any community QR
+// later prefills the whole form.
+const JOIN_PROFILE_KEY = 'kyozo:join-profile';
 
 export default function JoinCommunityPage() {
   const params = useParams();
@@ -30,6 +36,52 @@ export default function JoinCommunityPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyDialogOpen, setPrivacyDialogOpen] = useState(false);
+  const [contactPickerSupported, setContactPickerSupported] = useState(false);
+
+  // Auto-prefill: URL params win (already in state); otherwise restore the
+  // profile remembered from a previous join on this device.
+  useEffect(() => {
+    setContactPickerSupported(
+      typeof navigator !== 'undefined' && 'contacts' in navigator && 'select' in (navigator as any).contacts
+    );
+    try {
+      const saved = localStorage.getItem(JOIN_PROFILE_KEY);
+      if (!saved) return;
+      const profile = JSON.parse(saved);
+      setFirstName(prev => prev || profile.firstName || '');
+      setLastName(prev => prev || profile.lastName || '');
+      setEmail(prev => prev || profile.email || '');
+      setPhone(prev => prev || profile.phone || '');
+    } catch {
+      // Corrupt/blocked storage — manual entry still works.
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Android Chrome: let the visitor pick their own contact card and fill
+  // everything at once. (iOS fills via the keyboard's AutoFill Contact.)
+  const handleFillFromContacts = async () => {
+    try {
+      const contacts = await (navigator as any).contacts.select(
+        ['name', 'email', 'tel'],
+        { multiple: false }
+      );
+      const c = contacts?.[0];
+      if (!c) return;
+      const fullName: string = (c.name?.[0] || '').trim();
+      if (fullName) {
+        const [first, ...rest] = fullName.split(/\s+/);
+        setFirstName(first);
+        setLastName(rest.join(' '));
+      }
+      if (c.email?.[0]) setEmail(c.email[0]);
+      if (c.tel?.[0]) setPhone(c.tel[0]);
+    } catch {
+      // Picker dismissed/unavailable — manual entry still works.
+    }
+  };
 
   // Fetch community data
   useEffect(() => {
@@ -71,6 +123,10 @@ export default function JoinCommunityPage() {
       setError('Passwords do not match');
       return;
     }
+    if (!privacyAccepted) {
+      setError('Please agree to the Privacy Policy to join');
+      return;
+    }
 
     if (!community?.communityId) {
       setError('Community not found');
@@ -102,6 +158,17 @@ export default function JoinCommunityPage() {
       if (!res.ok) {
         setError(data.error || 'Failed to create account. Please try again.');
         return;
+      }
+
+      // Remember the visitor's details on this device so the next community
+      // QR they scan prefills the form.
+      try {
+        localStorage.setItem(
+          JOIN_PROFILE_KEY,
+          JSON.stringify({ firstName, lastName, email, phone })
+        );
+      } catch {
+        // Storage blocked — not critical.
       }
 
       setSuccess(true);
@@ -179,16 +246,26 @@ export default function JoinCommunityPage() {
         )}
 
         {/* Form Card */}
-        <div className={`bg-white rounded-2xl shadow-xl mx-4 ${bannerImage ? 'mt-4 pt-14' : 'mt-8'} pb-8 px-6`}>
-          {/* Community Info */}
+        <div className={`bg-white rounded-2xl shadow-xl mx-4 ${bannerImage ? 'mt-4 pt-14' : 'mt-8 pt-8'} pb-8 px-6`}>
+          {/* Community branding — the person is joining this community */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold" style={{ color: '#5B4A3A' }}>{community.name}</h1>
-            {community.tagline && (
-              <p className="text-sm mt-1" style={{ color: '#8B7355' }}>{community.tagline}</p>
+            {!bannerImage && logoImage && (
+              <div className="mx-auto mb-4 relative w-20 h-20 rounded-full overflow-hidden border-4 shadow-md" style={{ borderColor: '#E8DFD1' }}>
+                <Image src={logoImage} alt={community.name} fill className="object-cover" />
+              </div>
             )}
-            <p className="text-sm mt-3" style={{ color: '#5B4A3A' }}>
-              You've been invited to join this community!
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#8B7355' }}>
+              You're invited to join the community
             </p>
+            <h1 className="text-3xl font-bold mt-1" style={{ color: '#5B4A3A' }}>{community.name}</h1>
+            {community.tagline && (
+              <p className="text-sm mt-2" style={{ color: '#8B7355' }}>{community.tagline}</p>
+            )}
+            {community.memberCount > 0 && (
+              <p className="text-xs mt-2" style={{ color: '#8B7355' }}>
+                {community.memberCount.toLocaleString()} {community.memberCount === 1 ? 'member' : 'members'}
+              </p>
+            )}
           </div>
 
           {/* Error Message */}
@@ -200,10 +277,26 @@ export default function JoinCommunityPage() {
 
           {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {contactPickerSupported && (
+              <button
+                type="button"
+                onClick={handleFillFromContacts}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-lg border border-dashed text-sm font-semibold transition-colors hover:bg-[#FAF5EC]"
+                style={{ borderColor: '#E07B39', color: '#E07B39' }}
+              >
+                <BookUser className="h-4 w-4" />
+                Fill with my contact info
+              </button>
+            )}
+            {/* autocomplete attributes let iOS/Android fill the visitor's own
+                contact details with one tap (AutoFill Contact / saved info) —
+                a website cannot read these silently. */}
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="First Name"
                 type="text"
+                name="given-name"
+                autoComplete="given-name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
@@ -211,6 +304,8 @@ export default function JoinCommunityPage() {
               <Input
                 label="Last Name"
                 type="text"
+                name="family-name"
+                autoComplete="family-name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
@@ -220,6 +315,8 @@ export default function JoinCommunityPage() {
             <Input
               label="Email Address"
               type="email"
+              name="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -228,6 +325,8 @@ export default function JoinCommunityPage() {
             <Input
               label="Phone Number (optional)"
               type="tel"
+              name="tel"
+              autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -251,9 +350,33 @@ export default function JoinCommunityPage() {
                 required
               />             
             </div>
+            {/* Privacy policy consent */}
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={privacyAccepted}
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                className="mt-0.5 h-5 w-5 rounded accent-[#5B4A3A] cursor-pointer"
+              />
+              <span className="text-sm" style={{ color: '#5B4A3A' }}>
+                I agree to the{' '}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPrivacyDialogOpen(true);
+                  }}
+                  className="underline font-semibold"
+                  style={{ color: '#5B4A3A' }}
+                >
+                  Privacy Policy
+                </button>
+              </span>
+            </label>
+
              <CustomButton
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !privacyAccepted}
                         className="w-full flex-1"
                         style={{ backgroundColor: '#E8DFD1', color: '#5B4A3A', border: 'none' }}
                         
@@ -279,6 +402,7 @@ export default function JoinCommunityPage() {
           <p className="text-xs" style={{ color: '#8B7355' }}>Powered by KyozoVerse</p>
         </div>
       </div>
+      <PrivacyPolicyDialog open={privacyDialogOpen} onOpenChange={setPrivacyDialogOpen} />
     </div>
   );
 }

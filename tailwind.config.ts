@@ -3,6 +3,9 @@ import type {Config} from 'tailwindcss';
 export default {
   darkMode: ['class'],
   content: [
+    // Root app/ is the LIVE App Router tree (src/app is shadowed) — it must
+    // be scanned or classes used only there silently produce no CSS.
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',

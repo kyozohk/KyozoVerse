@@ -43,7 +43,8 @@ export default function CommunityLayout({
     const navItem = communityNavItems.find(
       item => item.href(handle).split('/').filter(Boolean)[1] === segments[1]
     );
-    const navLabel = navItem?.label ?? segments[1].charAt(0).toUpperCase() + segments[1].slice(1);
+    const navLabel = navItem?.label
+      ?? (segments[1] === 'qr' ? 'Join QR' : segments[1].charAt(0).toUpperCase() + segments[1].slice(1));
     const backPath = segments.length > 2 ? `/${segments.slice(0, -1).join('/')}` : `/${handle}`;
 
     return (

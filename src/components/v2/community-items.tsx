@@ -71,6 +71,8 @@ export const CommunityListItem = ({ item, isSelected, urlField = 'id' }: Communi
     <Card
       className={cn(
         "flex items-center p-3 sm:p-4 cursor-pointer transition-all hover:bg-accent/50",
+        // Mobile: flat row — no card chrome, just a hairline divider.
+        "rounded-none border-0 border-b shadow-none sm:rounded-lg sm:border sm:shadow-sm",
         isSelected && "ring-2 ring-ring bg-accent/50"
       )}
       style={{ borderColor: 'var(--page-content-border)' }}

@@ -299,7 +299,7 @@ export default function CommunityFeedPage() {
             />
           )}
           </div>
-          <div className="p-2 sm:p-6">
+          <div className="p-0 sm:p-6">
             <div className="hidden md:block">
               <FeedStats posts={posts} />
             </div>
@@ -317,7 +317,7 @@ export default function CommunityFeedPage() {
             <>
               {/* Mobile: kyozo_flutter-style feed — filter pills + single column of post cards */}
               <div className="md:hidden">
-                <div className="sticky top-0 z-10 px-1 pb-3 pt-1" style={{ backgroundColor: 'var(--page-content-bg)' }}>
+                <div className="sticky top-0 z-10 pb-3 pt-2" style={{ backgroundColor: 'var(--page-content-bg)' }}>
                   <MobileFeedFilterBar value={mobileFilter} onChange={setMobileFilter} />
                 </div>
                 {mobileFeedPosts.length === 0 ? (
@@ -325,7 +325,7 @@ export default function CommunityFeedPage() {
                     No posts for this filter.
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 px-1 pb-6">
+                  <div className="flex flex-col gap-3 pb-6">
                     {mobileFeedPosts.map(post => (
                       <MobilePostCard key={post.id} post={post} />
                     ))}

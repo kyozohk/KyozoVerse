@@ -9,7 +9,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <div style={{ backgroundColor: 'var(--page-content-bg)' }}>
-      <div className="p-4 sm:p-6 md:p-8">
+      <div className="px-0 py-4 sm:p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-grow">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>

@@ -13,7 +13,8 @@ import { THEME_COLORS } from "@/lib/theme-colors";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Plus } from "lucide-react";
+import { Plus, BookUser, QrCode } from "lucide-react";
+import { QrContactScanner, type ScannedContact } from './qr-contact-scanner';
 import { joinCommunity } from "@/lib/community-utils";
 import { doc, updateDoc, increment, getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firestore";
@@ -65,6 +66,49 @@ export function MemberDialog({
   const [error, setError] = useState<string | null>(null);
   
   const [existingUser, setExistingUser] = useState<User | null>(null);
+
+  // Contact Picker API — supported on Android Chrome/Edge; not on iOS, where
+  // the autocomplete attributes below let Safari's AutoFill Contact fill the
+  // form from the keyboard instead.
+  const [contactPickerSupported, setContactPickerSupported] = useState(false);
+  useEffect(() => {
+    setContactPickerSupported(
+      typeof navigator !== 'undefined' && 'contacts' in navigator && 'select' in (navigator as any).contacts
+    );
+  }, []);
+
+  // QR contact scan — for meeting someone in person: they show their contact
+  // QR (vCard/MECARD) and it fills the form. Works on iOS and Android.
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const handleScannedContact = useCallback((c: ScannedContact) => {
+    setScannerOpen(false);
+    if (c.firstName) setFirstName(c.firstName);
+    if (c.lastName) setLastName(c.lastName);
+    if (c.email) setEmail(c.email);
+    if (c.phone) setPhone(c.phone);
+  }, []);
+
+  const handlePickContact = async () => {
+    try {
+      const contacts = await (navigator as any).contacts.select(
+        ['name', 'email', 'tel'],
+        { multiple: false }
+      );
+      const c = contacts?.[0];
+      if (!c) return; // user cancelled
+      const fullName: string = (c.name?.[0] || '').trim();
+      if (fullName) {
+        const [first, ...rest] = fullName.split(/\s+/);
+        setFirstName(first);
+        setLastName(rest.join(' '));
+      }
+      if (c.email?.[0]) setEmail(c.email[0]);
+      if (c.tel?.[0]) setPhone(c.tel[0]);
+    } catch {
+      // Picker unavailable or dismissed — the manual form still works.
+    }
+  };
 
   const resetForm = useCallback(() => {
     setFirstName('');
@@ -377,14 +421,42 @@ export function MemberDialog({
                 )}
                 {/* KYPRO-39: required fields get an asterisk so users know what's mandatory
                     before attempting submission. */}
+                {mode === 'add' && (
+                  <div className="flex gap-2">
+                    {contactPickerSupported && (
+                      <button
+                        type="button"
+                        onClick={handlePickContact}
+                        className="flex-1 flex items-center justify-center gap-2 h-11 rounded-lg border border-dashed text-sm font-semibold transition-colors hover:bg-[#FAF5EC]"
+                        style={{ borderColor: '#E07B39', color: '#E07B39' }}
+                      >
+                        <BookUser className="h-4 w-4" />
+                        From contacts
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setScannerOpen(true)}
+                      className="flex-1 flex items-center justify-center gap-2 h-11 rounded-lg border border-dashed text-sm font-semibold transition-colors hover:bg-[#FAF5EC]"
+                      style={{ borderColor: '#E07B39', color: '#E07B39' }}
+                    >
+                      <QrCode className="h-4 w-4" />
+                      Scan contact QR
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                     <Input
                         label="First Name *"
+                        name="given-name"
+                        autoComplete="given-name"
                         value={firstName}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
                     />
                     <Input
                         label="Last Name *"
+                        name="family-name"
+                        autoComplete="family-name"
                         value={lastName}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
                     />
@@ -392,6 +464,8 @@ export function MemberDialog({
               <Input
                 label="Email *"
                 type="email"
+                name="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               />
@@ -409,13 +483,13 @@ export function MemberDialog({
               {/* Banner Selection */}
               <div className="inputWrapper my-2 relative">
                 <div
-                  className="flex items-center gap-3 p-4 rounded-lg border border-dotted"
+                  className="flex items-center gap-3 p-4 rounded-lg border border-dotted overflow-x-auto no-scrollbar"
                   style={{ borderWidth: '1px', borderColor: '#E8DFD1' }}
                 >
                   {DEFAULT_BANNERS.map((banner) => (
                     <div
                       key={banner.id}
-                      className="relative w-20 h-12 rounded-lg cursor-pointer transition-all overflow-hidden"
+                      className="relative w-20 h-12 flex-shrink-0 rounded-lg cursor-pointer transition-all overflow-hidden"
                       onClick={() => {
                         setCoverUrl(banner.url);
                         setCoverFile(null);
@@ -438,7 +512,7 @@ export function MemberDialog({
                   
                   {/* Custom Upload Button */}
                   <div
-                    className="relative w-20 h-12 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer"
+                    className="relative w-20 h-12 flex-shrink-0 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer"
                     style={{ borderColor: '#E07B39', color: '#E07B39' }}
                     onClick={() => {
                       const input = document.createElement('input');
@@ -498,7 +572,7 @@ export function MemberDialog({
               {/* KYPRO-13: the old bottom-of-form error was below the fold; the top
                   error panel above is the single source of truth now. */}
             </div>
-            <div className="flex-shrink-0 mt-auto pt-6 flex flex-row justify-end gap-3">
+            <div className="flex-shrink-0 mt-auto pt-4 sm:pt-6 flex flex-row justify-end gap-3 border-t sm:border-t-0" style={{ borderColor: '#E8DFD1' }}>
                 <CustomButton
                 variant="outline"
                 onClick={() => onOpenChange(false)}
@@ -520,6 +594,11 @@ export function MemberDialog({
           </div>
         )}
       </div>
+      <QrContactScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScannedContact}
+      />
     </CustomFormDialog>
   );
 }

@@ -21,6 +21,8 @@ import { communityNavItems } from '@/lib/theme-utils';
 import { RoundImage } from '@/components/ui/round-image';
 import { usePlatformRole } from '@/hooks/use-platform-role';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { QRCodeSVG } from 'qrcode.react';
+import Link from 'next/link';
 
 export default function CommunitySidebar() {
   const { user } = useAuth();
@@ -36,6 +38,14 @@ export default function CommunitySidebar() {
   const [showCommunityList, setShowCommunityList] = useState(false);
 
   const canCreateCommunity = !roleLoading && !!permissions?.canCreateCommunity;
+
+  // Join-QR shown under the nav: encodes the public signup link for the
+  // selected community on whatever host serves the app (mobile.kyozo.com in
+  // production, the LAN IP during phone testing).
+  const [origin, setOrigin] = useState('');
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     const pathParts = pathname.split('/');
@@ -272,6 +282,30 @@ export default function CommunitySidebar() {
               })}
             </nav>
             <hr className="my-2" />
+
+            {/* Join QR — scan to open this community's public signup page.
+                Tapping it opens the full-screen QR view. */}
+            {selectedCommunityHandle && origin && (
+              <Link
+                href={`/${selectedCommunityHandle}/qr`}
+                className="mt-4 flex flex-col items-center gap-2"
+              >
+                <div
+                  className="rounded-2xl bg-white p-3 shadow-sm"
+                  style={{ border: '2px solid var(--page-content-border)' }}
+                >
+                  <QRCodeSVG
+                    value={`${origin}/${selectedCommunityHandle}/join?src=qr`}
+                    size={isMobile ? 168 : 120}
+                    level="M"
+                    marginSize={1}
+                  />
+                </div>
+                <span className="text-xs" style={{ color: '#8B7355' }}>
+                  Scan to join {selectedCommunity?.name ?? 'this community'}
+                </span>
+              </Link>
+            )}
           </div>
         </div>
       )}

@@ -564,7 +564,7 @@ function MembersContent() {
               ] : []}
             />
           </div>
-          <div className="p-1 sm:p-6">
+          <div className="p-0 sm:p-6">
             <EnhancedListView
               items={members}
               columns={memberColumns}

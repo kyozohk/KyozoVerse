@@ -227,8 +227,8 @@ export default function GuestlistPage() {
   );
 
   const renderGuestlistListItem = (guestlist: Guestlist) => (
-    <Card 
-      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+    <Card
+      className="p-4 cursor-pointer hover:shadow-md transition-shadow rounded-none border-0 border-b shadow-none sm:rounded-lg sm:border sm:shadow-sm"
       onClick={() => handleGuestlistClick(guestlist)}
     >
       <div className="flex items-center gap-4">

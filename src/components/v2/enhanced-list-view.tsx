@@ -465,7 +465,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
       : renderGridItem;
 
     const className =
-      effectiveViewMode === 'list' ? "flex flex-col gap-2 sm:gap-4"
+      effectiveViewMode === 'list' ? "flex flex-col gap-0 sm:gap-4"
       : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 
     return (
@@ -513,7 +513,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="p-3 pb-0 sm:p-6 sm:pb-0">
+      <div className="px-0 pt-3 pb-0 sm:p-6 sm:pb-0">
         {/* Search row: full width */}
         <div className="relative w-full mb-4">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: '#9B8A75' }} />
@@ -529,13 +529,13 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
 
         {showTypeTabs ? (
           /* High-fidelity custom controls row for Audience page */
-          <div className="flex items-center justify-between flex-wrap gap-4 mb-5 border-b pb-4" style={{ borderColor: '#E8DFD1' }}>
-            {/* Left side: Type Tabs */}
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-wrap gap-3 sm:gap-4 mb-3 pb-0 border-b-0 sm:mb-5 sm:pb-4 sm:border-b" style={{ borderColor: '#E8DFD1' }}>
+            {/* Left side: Type Tabs — full width on mobile */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setActiveTab('Member')}
                 className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold border transition-all",
+                  "flex-1 sm:flex-none px-5 py-2 rounded-full text-xs font-bold border transition-all",
                   activeTab === 'Member'
                     ? "bg-white border-[#3D2E1F] text-[#3D2E1F] shadow-sm"
                     : "bg-white border-[#E8DFD1] text-[#6B5F52] hover:bg-[#FAF5EC]/50"
@@ -546,7 +546,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
               <button
                 onClick={() => setActiveTab('Contact')}
                 className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold border transition-all",
+                  "flex-1 sm:flex-none px-5 py-2 rounded-full text-xs font-bold border transition-all",
                   activeTab === 'Contact'
                     ? "bg-white border-[#3D2E1F] text-[#3D2E1F] shadow-sm"
                     : "bg-white border-[#E8DFD1] text-[#6B5F52] hover:bg-[#FAF5EC]/50"
@@ -556,14 +556,18 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
               </button>
             </div>
 
-            {/* Right side: Actions & Filters */}
-            <div className="flex items-center gap-3">
-              {permanentActions}
-              
+            {/* Right side: Actions & Filters — full width on mobile */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              {permanentActions && (
+                <div className="flex-1 sm:flex-none [&>*]:w-full sm:[&>*]:w-auto">
+                  {permanentActions}
+                </div>
+              )}
+
               <button
                 onClick={() => setShowTags(prev => !prev)}
                 className={cn(
-                  "h-10 px-5 rounded-md text-sm font-bold border transition-all",
+                  "flex-1 sm:flex-none h-10 px-5 rounded-md text-sm font-bold border transition-all",
                   showTags || selectedTags.size > 0
                     ? "bg-[#E8DFD1] border-[#A89882] text-[#3D2E1F]"
                     : "bg-white border-[#E8DFD1] text-[#6B5F52] hover:bg-[#FAF5EC]/50"
@@ -754,7 +758,7 @@ export function EnhancedListView<T extends { id: string; tags?: string[] }>({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-8 pt-1 sm:px-6">
+      <div className="flex-1 overflow-y-auto px-0 pb-8 pt-1 sm:px-6">
         {renderContent()}
       </div>
     </div>

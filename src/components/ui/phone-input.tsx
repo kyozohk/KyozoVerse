@@ -192,7 +192,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
         <input
           type="tel"
           id={inputId}
-          name={name}
+          name={name ?? 'tel'}
+          autoComplete="tel"
           value={phoneNumber}
           onChange={handlePhoneNumberChange}
           placeholder=" "

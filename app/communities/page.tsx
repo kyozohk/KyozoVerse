@@ -185,7 +185,7 @@ function CommunitiesContent() {
           first, then create the community from them. Aligned with the page
           header's horizontal padding. */}
       {permissions?.canCreateCommunity && (
-        <div className="px-4 sm:px-6 md:px-8 -mt-2 mb-2">
+        <div className="px-0 sm:px-6 md:px-8 -mt-2 mb-2">
           <button
             onClick={() => setIsImportOpen(true)}
             className="w-full flex items-center gap-3 sm:gap-4 px-4 py-4 sm:px-6 sm:py-5 rounded-xl text-left transition-all hover:opacity-95 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400/60"
